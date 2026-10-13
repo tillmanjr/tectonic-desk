@@ -10,11 +10,14 @@ describe("MapPlates", () => {
     const path = geoPath(frameFor(GLOBAL).projection);
     const features = (plateSegments as PlateSegment[]).map(plateFeature);
     const w = mount(MapPlates, { props: { path, features } });
-    const paths = w.findAll("path");
+    const paths = w.findAll("path.line");
     expect(paths).toHaveLength(4);
     expect(paths[0]?.attributes("stroke-dasharray")).toBe("6 3");
     expect(paths[2]?.attributes("stroke-dasharray")).toBeUndefined();
     expect(paths[2]?.attributes("stroke-width")).toBe("2.2");
-    expect(paths[2]?.find("title").text()).toContain("Subduction · PA-NA");
+    const hits = w.findAll("path.hit");
+    expect(hits).toHaveLength(4);
+    expect(hits[2]?.attributes("stroke-width")).toBe("14");
+    expect(hits[2]?.find("title").text()).toContain("Subduction · PA-NA");
   });
 });

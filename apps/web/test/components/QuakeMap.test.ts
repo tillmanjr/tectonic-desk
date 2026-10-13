@@ -22,7 +22,7 @@ describe("QuakeMap", () => {
     await flushPromises();
     expect(w.find("svg").attributes("viewBox")).toBe("0 0 1000 520");
     expect(w.findAll("svg > g > g").length).toBeGreaterThanOrEqual(3);
-    expect(w.findComponent({ name: "MapPlates" }).findAll("path")).toHaveLength(4);
+    expect(w.findComponent({ name: "MapPlates" }).findAll("path.line")).toHaveLength(4);
     expect(w.findComponent({ name: "MapTeeth" }).findAll("path")).toHaveLength(1);
     expect(w.findAll("g.bb")).toHaveLength(0);
     const buttons = w.findAll(".zbtn");
