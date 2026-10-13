@@ -10,8 +10,10 @@ import { fakeApi, status } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
 import { event, GLOBAL, WC } from "../support/events.js";
 import { fakeTheme, NOW } from "../support/mount.js";
+import { stubWorld } from "../support/world.js";
 
 async function mountApp(path = "/", api: ApiClient = fakeApi()) {
+  stubWorld();
   const router = createAppRouter(createMemoryHistory());
   await router.push(path);
   const theme = fakeTheme();
@@ -34,6 +36,7 @@ async function mountApp(path = "/", api: ApiClient = fakeApi()) {
 describe("App", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -139,6 +142,7 @@ describe("App", () => {
         return () => h(RouterView);
       },
     });
+    stubWorld();
     mount(Root, { global: { plugins: [router], stubs: { StatusLine: Probe } } });
     await flushPromises();
     expect(router.currentRoute.value.query.event).toBeUndefined();
@@ -146,6 +150,7 @@ describe("App", () => {
 
   it("falls back to a real api client, clock and theme when none are provided", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     const router = createAppRouter(createMemoryHistory());
     await router.push("/");
     const wrapper = mount({ render: () => h(RouterView) }, { global: { plugins: [router] } });

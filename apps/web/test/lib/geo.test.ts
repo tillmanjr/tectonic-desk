@@ -1,4 +1,4 @@
-import { geoPath } from "d3-geo";
+import { geoPath, type GeoProjection } from "d3-geo";
 import { describe, expect, it, vi } from "vitest";
 import {
   frameFor,
@@ -9,6 +9,7 @@ import {
   plateFeature,
   regionBasemap,
   worldBasemap,
+  zoomTransformFor,
 } from "../../src/lib/geo.js";
 import { GLOBAL, SQUARE_OBJECTS, squareTopology, WC } from "../support/events.js";
 
@@ -36,6 +37,17 @@ describe("frameFor", () => {
     expect(centre).not.toBeNull();
     if (centre) expect(Math.abs(centre[0] - 500)).toBeLessThan(5);
     expect(graticuleFor(wc).type).toBe("MultiLineString");
+  });
+  it("zoomTransformFor centres a point at 6x globally, 3x regionally, identity when unprojectable", () => {
+    const g = zoomTransformFor(frameFor(GLOBAL), 0, 0);
+    expect(g.k).toBe(6);
+    const p = frameFor(GLOBAL).projection([0, 0]);
+    expect(p).not.toBeNull();
+    if (p) expect(g.applyX(p[0])).toBeCloseTo(500, 6);
+    expect(zoomTransformFor(frameFor(WC), -122, 47).k).toBe(3);
+    const invisible = (): null => null;
+    const far = { ...frameFor(GLOBAL), projection: invisible as unknown as GeoProjection };
+    expect(zoomTransformFor(far, 0, 0).k).toBe(1);
   });
   it("pathOf returns an empty string for empty geometry", () => {
     const p = geoPath(frameFor(GLOBAL).projection);

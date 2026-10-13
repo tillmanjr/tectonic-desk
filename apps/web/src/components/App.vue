@@ -2,6 +2,7 @@
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MajorEvents from "./MajorEvents.vue";
+import QuakeMap from "./QuakeMap.vue";
 import RegionTabs from "./RegionTabs.vue";
 import StatsStrip from "./StatsStrip.vue";
 import StatusLine from "./StatusLine.vue";
@@ -111,6 +112,7 @@ onUnmounted(() => {
       <StatsStrip />
       <p class="sectionlabel">{{ majorLabel(region) }}</p>
       <MajorEvents />
+      <QuakeMap />
     </template>
     <footer class="foot">
       <p>

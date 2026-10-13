@@ -8,6 +8,7 @@ import {
   type GeoPermissibleObjects,
   type GeoProjection,
 } from "d3-geo";
+import { zoomIdentity, type ZoomTransform } from "d3-zoom";
 import type { Feature, FeatureCollection, LineString, MultiLineString } from "geojson";
 import { feature, mesh } from "topojson-client";
 import type { Objects, Topology } from "topojson-specification";
@@ -77,6 +78,14 @@ export function frameFor(region: ApiRegion): MapFrame {
       { type: "MultiPoint", coordinates: points },
     );
   return { width, height, projection, global: false };
+}
+
+/** The transform that centres a point at a fixed magnification, or identity if it cannot be projected. */
+export function zoomTransformFor(frame: MapFrame, lon: number, lat: number): ZoomTransform {
+  const p = frame.projection([lon, lat]);
+  if (p === null) return zoomIdentity;
+  const k = frame.global ? 6 : 3;
+  return zoomIdentity.translate(frame.width / 2 - k * p[0], frame.height / 2 - k * p[1]).scale(k);
 }
 
 export function graticuleFor(frame: MapFrame): MultiLineString {
