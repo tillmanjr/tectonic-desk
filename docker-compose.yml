@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tectonic-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tectonic
+      POSTGRES_PASSWORD: tectonic
+      POSTGRES_DB: tectonic
+    ports:
+      - "5433:5432"
+    volumes:
+      - tectonic-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tectonic -d tectonic"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  tectonic-pgdata:
