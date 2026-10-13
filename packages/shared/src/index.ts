@@ -1,3 +1,5 @@
+export * from "./mechanism/planes.js";
+
 export type MechanismKind = "mt" | "fm";
 
 /** An earthquake as received from USGS, before storage bookkeeping. */
@@ -19,12 +21,18 @@ export interface Event {
   cdi: number | null;
   mmi: number | null;
   tsunami: boolean;
+  /** USGS event type: earthquake, quarry blast, explosion, ... */
+  eventType: string | null;
+  /** Product types the feed advertises for this event, e.g. "moment-tensor". */
+  types: string[];
   raw: Record<string, unknown>;
 }
 
 export interface StoredEvent extends Event {
   firstSeen: Date;
   lastSeen: Date;
+  /** The event `updated` stamp at the last products fetch; null if never fetched. */
+  detailCheckedUpdated: Date | null;
 }
 
 /** A moment tensor or first-motion focal mechanism product for an event. */

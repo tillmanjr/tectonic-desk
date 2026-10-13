@@ -4,3 +4,4 @@ coverage
 quake
 pnpm-lock.yaml
 apps/server/drizzle/migrations
+apps/server/test/fixtures
