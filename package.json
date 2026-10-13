@@ -15,17 +15,21 @@
     "format:check": "prettier --check .",
     "test": "pnpm shared:build && pnpm -r test",
     "test:coverage": "pnpm shared:build && pnpm -r test:coverage",
-    "dev": "pnpm --filter @tectonic/server dev",
+    "dev": "pnpm -r --parallel dev",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter @tectonic/server db:generate",
     "db:migrate": "pnpm --filter @tectonic/server db:migrate",
-    "ingest": "pnpm --filter @tectonic/server ingest"
+    "ingest": "pnpm --filter @tectonic/server ingest",
+    "dev:server": "pnpm --filter @tectonic/server dev",
+    "dev:web": "pnpm --filter @tectonic/web dev"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@vue/eslint-config-typescript": "14.9.0",
     "eslint": "10.12.0",
     "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-vue": "10.11.1",
     "globals": "17.13.0",
     "prettier": "3.9.10",
     "typescript": "5.9.3",
