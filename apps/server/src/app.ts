@@ -2,8 +2,12 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import { registerErrorHandlers } from "./api/errors.js";
 import type { Db } from "./db/client.js";
 import { loadGeoAssets, type GeoAssets } from "./geo/assets.js";
+import { eventRoutes } from "./routes/events.js";
 import { geoRoutes } from "./routes/geo.js";
 import { healthRoutes } from "./routes/health.js";
+import { regionRoutes } from "./routes/regions.js";
+import { runRoutes } from "./routes/runs.js";
+import { statusRoutes } from "./routes/status.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -35,6 +39,10 @@ export function buildApp({
   app.decorate("geo", loadGeoAssets(geoDir));
   registerErrorHandlers(app);
   void app.register(healthRoutes);
+  void app.register(regionRoutes);
+  void app.register(eventRoutes);
+  void app.register(statusRoutes);
+  void app.register(runRoutes);
   void app.register(geoRoutes);
   return app;
 }
