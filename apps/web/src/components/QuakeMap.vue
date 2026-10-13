@@ -52,6 +52,7 @@ const plateSegments = shallowRef<PlateSegment[]>([]);
 const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
 const basemap = shallowRef<Basemap | null>(null);
 const tip = ref<Tip | null>(null);
+const hoveredPlate = ref<number | null>(null);
 
 const zoomBehavior = d3zoom<SVGSVGElement, unknown>()
   .scaleExtent([1, 40])
@@ -140,8 +141,13 @@ function onHover(payload: { e: ApiEvent; x: number; y: number }): void {
   const type = e.magType === null ? "" : ` ${e.magType}`;
   showTip(`M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)}`, payload.x, payload.y);
 }
-function onPlateHover(payload: { title: string; x: number; y: number }): void {
+function onPlateHover(payload: { index: number; title: string; x: number; y: number }): void {
+  hoveredPlate.value = payload.index;
   showTip(payload.title, payload.x, payload.y);
+}
+function onPlateLeave(): void {
+  hoveredPlate.value = null;
+  tip.value = null;
 }
 
 watch(
@@ -194,9 +200,15 @@ onMounted(() => {
           :path="view.path"
           :features="plates"
           @hover="onPlateHover"
-          @leave="tip = null"
+          @leave="onPlateLeave"
         />
-        <MapTeeth v-if="showTeeth" :frame="view.frame" :segments="plateSegments" :k="transform.k" />
+        <MapTeeth
+          v-if="showTeeth"
+          :frame="view.frame"
+          :segments="plateSegments"
+          :k="transform.k"
+          :highlight="hoveredPlate"
+        />
         <MapEvents
           :frame="view.frame"
           :events="events"

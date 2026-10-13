@@ -3,7 +3,13 @@ import { computed } from "vue";
 import type { MapFrame, PlateSegment } from "../lib/geo.js";
 import { polarity, teethPath, type ProjectedPoint } from "../lib/teeth.js";
 
-const props = defineProps<{ frame: MapFrame; segments: PlateSegment[]; k: number }>();
+const props = defineProps<{
+  frame: MapFrame;
+  segments: PlateSegment[];
+  k: number;
+  /** Index into `segments` of the boundary under the pointer, if any. */
+  highlight: number | null;
+}>();
 
 const projected = computed(() =>
   props.segments.flatMap((s, i) => {
@@ -20,6 +26,13 @@ const teeth = computed(() =>
 
 <template>
   <g>
-    <path v-for="t in teeth" :key="t.key" :d="t.d" style="fill: var(--plate)" fill-opacity="0.9" />
+    <path
+      v-for="t in teeth"
+      :key="t.key"
+      :class="{ hot: t.key === highlight }"
+      :d="t.d"
+      :style="{ fill: t.key === highlight ? 'var(--accent)' : 'var(--plate)' }"
+      fill-opacity="0.9"
+    />
   </g>
 </template>
