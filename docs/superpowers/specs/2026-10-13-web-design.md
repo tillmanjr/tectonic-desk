@@ -19,19 +19,19 @@ more than one solution per event, and links that should survive a reload.
 
 ## Decisions
 
-| Topic      | Choice                                                                                                                                              |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rendering  | Vue templates render the SVG and the table; D3 modules are used as libraries for projection, scales and zoom. No d3-selection, no d3-axis           |
-| Refresh    | poll `GET /api/status` every 60 s; refetch the region's events when `lastSuccessfulFeed` changes. No sockets, no SSE                                |
-| URL state  | vue-router, history mode: `/`, `/:region`, selection in `?event=id`                                                                                 |
-| Basemap    | `world-atlas@2.0.2` `countries-50m.json` bundled in the web app as a lazy chunk; plates and West Coast outlines from `GET /api/geo/:name`           |
-| Math       | tensor, axes, radiation and faulting-style functions move into `packages/shared`; only the canvas raster stays in the web app                       |
-| Time       | UTC first, then the browser's local time with its zone abbreviation; "ago" from the browser clock                                                   |
-| State      | one `Catalog` object created in `App.vue`, passed by provide/inject; composables, no Pinia                                                          |
-| Testing    | Vitest 5 + happy-dom + Vue Test Utils, 100% thresholds on `apps/web/src` excluding `main.ts`; the API client is an interface faked in tests         |
-| Lint       | eslint-plugin-vue flat recommended plus the repo's typescript-eslint strict and stylistic type-checked rules on `.vue` files; vue-tsc for typecheck |
-| Deployment | `deploy/nginx.conf`, multi-stage Dockerfiles for web and server, compose `prod` profile running postgres, server and web; nginx on host port 8080   |
-| Dev        | `pnpm dev` runs server and web in parallel; Vite proxies `/api` to `127.0.0.1:3000`                                                                 |
+| Topic      | Choice                                                                                                                                                                                  |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rendering  | Vue templates render the SVG and the table; D3 modules are used as libraries for projection, scales and zoom. d3-selection and d3-transition only attach the zoom behaviour; no d3-axis |
+| Refresh    | poll `GET /api/status` every 60 s; refetch the region's events when `lastSuccessfulFeed` changes. No sockets, no SSE                                                                    |
+| URL state  | vue-router, history mode: `/`, `/:region`, selection in `?event=id`                                                                                                                     |
+| Basemap    | `world-atlas@2.0.2` `countries-50m.json` bundled in the web app as a lazy chunk; plates and West Coast outlines from `GET /api/geo/:name`                                               |
+| Math       | tensor, axes, radiation and faulting-style functions move into `packages/shared`; only the canvas raster stays in the web app                                                           |
+| Time       | UTC first, then the browser's local time with its zone abbreviation; "ago" from the browser clock                                                                                       |
+| State      | one `Catalog` object created in `App.vue`, passed by provide/inject; composables, no Pinia                                                                                              |
+| Testing    | Vitest 5 + happy-dom + Vue Test Utils, 100% thresholds on `apps/web/src` excluding `main.ts`; the API client is an interface faked in tests                                             |
+| Lint       | eslint-plugin-vue flat recommended plus the repo's typescript-eslint strict and stylistic type-checked rules on `.vue` files; vue-tsc for typecheck                                     |
+| Deployment | `deploy/nginx.conf`, multi-stage Dockerfiles for web and server, compose `prod` profile running postgres, server and web; nginx on host port 8080                                       |
+| Dev        | `pnpm dev` runs server and web in parallel; Vite proxies `/api` to `127.0.0.1:3000`                                                                                                     |
 
 ## 1. Shared additions (`packages/shared/src/mechanism/`)
 
