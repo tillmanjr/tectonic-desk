@@ -1,7 +1,16 @@
-import type { BBox, Event, EventWithMechanisms, StoredEvent } from "@tectonic/shared";
+import type {
+  BBox,
+  Event,
+  EventWithMechanisms,
+  StoredEvent,
+  StoredMechanism,
+} from "@tectonic/shared";
 import {
   and,
   arrayOverlaps,
+  asc,
+  count,
+  countDistinct,
   desc,
   eq,
   gte,
@@ -14,9 +23,10 @@ import {
   type SQL,
 } from "drizzle-orm";
 import type { Db } from "../db/client.js";
-import { events } from "../db/schema.js";
+import { events, mechanisms } from "../db/schema.js";
 import { eventToRow, rowToEvent } from "../mappers/events.js";
 import { rowToMechanism } from "../mappers/mechanisms.js";
+import { listPreferredMechanisms } from "./mechanisms.js";
 
 export interface UpsertResult {
   inserted: number;
@@ -143,13 +153,75 @@ export async function listEvents(db: Db, filter: ListEventsFilter = {}): Promise
   return rows.map(rowToEvent);
 }
 
+/** `listEvents` plus each event's preferred mechanisms, fetched in one query. */
+export async function listEventsWithPreferred(
+  db: Db,
+  filter: ListEventsFilter = {},
+): Promise<EventWithMechanisms[]> {
+  const list = await listEvents(db, filter);
+  const byEvent = new Map<string, StoredMechanism[]>();
+  for (const m of await listPreferredMechanisms(
+    db,
+    list.map((e) => e.id),
+  )) {
+    const bucket = byEvent.get(m.eventId);
+    if (bucket) bucket.push(m);
+    else byEvent.set(m.eventId, [m]);
+  }
+  return list.map((e) => ({ ...e, mechanisms: byEvent.get(e.id) ?? [] }));
+}
+
 export async function getEvent(db: Db, id: string): Promise<EventWithMechanisms | null> {
   const row = await db.query.events.findFirst({
     where: eq(events.id, id),
-    with: { mechanisms: true },
+    with: {
+      mechanisms: {
+        orderBy: (m, o) => [o.asc(m.kind), o.desc(m.preferred), o.asc(m.source), o.asc(m.code)],
+      },
+    },
   });
   if (!row) return null;
   return { ...rowToEvent(row), mechanisms: row.mechanisms.map(rowToMechanism) };
+}
+
+export interface CatalogStats {
+  events: { total: number; newest: Date | null; oldest: Date | null; withMechanism: number };
+  mechanisms: { total: number };
+}
+
+/** The first row of an aggregate query, which Postgres always returns. */
+function single<T>(rows: T[]): T {
+  const first = rows[0];
+  if (first === undefined) throw new Error("aggregate query returned no row");
+  return first;
+}
+
+export async function catalogStats(db: Db): Promise<CatalogStats> {
+  const eventCount = single(await db.select({ total: count() }).from(events));
+  const [newest] = await db
+    .select({ time: events.time })
+    .from(events)
+    .orderBy(desc(events.time))
+    .limit(1);
+  const [oldest] = await db
+    .select({ time: events.time })
+    .from(events)
+    .orderBy(asc(events.time))
+    .limit(1);
+  const mechCount = single(
+    await db
+      .select({ total: count(), withMechanism: countDistinct(mechanisms.eventId) })
+      .from(mechanisms),
+  );
+  return {
+    events: {
+      total: eventCount.total,
+      newest: newest?.time ?? null,
+      oldest: oldest?.time ?? null,
+      withMechanism: mechCount.withMechanism,
+    },
+    mechanisms: { total: mechCount.total },
+  };
 }
 
 const MECHANISM_TYPES = ["moment-tensor", "focal-mechanism"];

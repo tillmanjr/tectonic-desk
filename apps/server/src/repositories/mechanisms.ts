@@ -1,8 +1,8 @@
-import type { Mechanism } from "@tectonic/shared";
-import { and, eq, sql, type SQL } from "drizzle-orm";
+import type { Mechanism, StoredMechanism } from "@tectonic/shared";
+import { and, asc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { mechanisms } from "../db/schema.js";
-import { mechanismToRow } from "../mappers/mechanisms.js";
+import { mechanismToRow, rowToMechanism } from "../mappers/mechanisms.js";
 
 const excluded = (column: string): SQL => sql.raw(`excluded."${column}"`);
 
@@ -59,4 +59,18 @@ export async function deleteMechanism(db: Db, key: MechanismKey): Promise<void> 
         eq(mechanisms.code, key.code),
       ),
     );
+}
+
+/** Preferred rows for the given events, ordered by event then kind. Empty input returns empty. */
+export async function listPreferredMechanisms(
+  db: Db,
+  eventIds: string[],
+): Promise<StoredMechanism[]> {
+  if (eventIds.length === 0) return [];
+  const rows = await db
+    .select()
+    .from(mechanisms)
+    .where(and(inArray(mechanisms.eventId, eventIds), eq(mechanisms.preferred, true)))
+    .orderBy(asc(mechanisms.eventId), asc(mechanisms.kind));
+  return rows.map(rowToMechanism);
 }
