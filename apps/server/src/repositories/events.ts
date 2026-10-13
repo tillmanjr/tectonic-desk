@@ -1,5 +1,5 @@
 import type { BBox, Event, EventWithMechanisms, StoredEvent } from "@tectonic/shared";
-import { and, desc, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { events } from "../db/schema.js";
 import { eventToRow, rowToEvent } from "../mappers/events.js";
@@ -98,12 +98,12 @@ export async function upsertEvents(db: Db, batch: Event[]): Promise<UpsertResult
 
 /** Longitude wraps when minLon > maxLon, so the box crosses the antimeridian. */
 function bboxCondition(b: BBox): SQL {
-  const lat = and(gte(events.latitude, b.minLat), lte(events.latitude, b.maxLat));
+  const lat = sql`${events.latitude} between ${b.minLat} and ${b.maxLat}`;
   const lon =
     b.minLon <= b.maxLon
-      ? and(gte(events.longitude, b.minLon), lte(events.longitude, b.maxLon))
-      : or(gte(events.longitude, b.minLon), lte(events.longitude, b.maxLon));
-  return and(lat, lon) as SQL;
+      ? sql`${events.longitude} between ${b.minLon} and ${b.maxLon}`
+      : sql`(${events.longitude} >= ${b.minLon} or ${events.longitude} <= ${b.maxLon})`;
+  return sql`(${lat} and ${lon})`;
 }
 
 export async function listEvents(db: Db, filter: ListEventsFilter = {}): Promise<StoredEvent[]> {
