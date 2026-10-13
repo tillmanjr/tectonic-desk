@@ -648,6 +648,7 @@ a {
 .magtype {
   color: var(--muted);
   font-size: 11px;
+  margin-left: 4px;
 }
 .hint {
   font-family: var(--f-ui);

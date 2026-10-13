@@ -60,9 +60,10 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/wc");
     expect(api.events).toHaveBeenCalledTimes(2);
-    await wrapper.find(".mcard").trigger("click");
+    await wrapper.find("tr.ev").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.event).toBe("us1");
+    expect(wrapper.find("tr.ev").classes()).toContain("sel");
     await wrapper.findAll("[role=tab]")[0]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/");

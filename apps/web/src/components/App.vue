@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import CatalogTable from "./CatalogTable.vue";
+import DepthChart from "./DepthChart.vue";
+import FrequencyMagnitudeChart from "./FrequencyMagnitudeChart.vue";
+import MagnitudeTimeChart from "./MagnitudeTimeChart.vue";
 import MajorEvents from "./MajorEvents.vue";
 import QuakeMap from "./QuakeMap.vue";
 import RegionTabs from "./RegionTabs.vue";
@@ -113,6 +117,14 @@ onUnmounted(() => {
       <p class="sectionlabel">{{ majorLabel(region) }}</p>
       <MajorEvents />
       <QuakeMap />
+      <section class="grid2">
+        <CatalogTable />
+        <div class="charts">
+          <MagnitudeTimeChart />
+          <FrequencyMagnitudeChart />
+          <DepthChart />
+        </div>
+      </section>
     </template>
     <footer class="foot">
       <p>
