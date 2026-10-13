@@ -16,12 +16,13 @@ export interface EventsQuery {
 
 export type GeoName = "plates" | "wc-land" | "wc-states";
 
+/** Function-typed properties (not methods) so tests can reference the spies unbound. */
 export interface ApiClient {
-  regions(): Promise<ApiRegion[]>;
-  events(query: EventsQuery): Promise<ApiEventList>;
-  event(id: string): Promise<ApiEventDetail>;
-  status(): Promise<ApiStatus>;
-  geo(name: GeoName): Promise<unknown>;
+  regions: () => Promise<ApiRegion[]>;
+  events: (query: EventsQuery) => Promise<ApiEventList>;
+  event: (id: string) => Promise<ApiEventDetail>;
+  status: () => Promise<ApiStatus>;
+  geo: (name: GeoName) => Promise<unknown>;
 }
 
 export class ApiRequestError extends Error {

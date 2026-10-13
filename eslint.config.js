@@ -19,6 +19,7 @@ export default defineConfigWithVueTs(
   vueTsConfigs.stylisticTypeChecked,
   { languageOptions: { globals: globals.node } },
   { files: ["apps/web/**/*.{ts,vue}"], languageOptions: { globals: globals.browser } },
+  { files: ["**/test/**"], rules: { "vue/one-component-per-file": "off" } },
   { files: ["**/*.js"], ...tseslint.configs.disableTypeChecked },
   prettier,
 );

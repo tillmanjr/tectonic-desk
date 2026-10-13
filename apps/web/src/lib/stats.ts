@@ -60,8 +60,8 @@ export function hasSolution(e: ApiEvent): boolean {
 export interface Summary {
   count: number;
   last24h: number;
-  largest: ApiEvent | null;
-  deepest: ApiEvent | null;
+  largest: { e: ApiEvent; mag: number } | null;
+  deepest: { e: ApiEvent; km: number } | null;
   withSolution: number;
 }
 
@@ -79,13 +79,7 @@ export function summary(events: ApiEvent[], now: Date): Summary {
       deepest = { e, km: e.depthKm };
     }
   }
-  return {
-    count: events.length,
-    last24h,
-    largest: largest?.e ?? null,
-    deepest: deepest?.e ?? null,
-    withSolution,
-  };
+  return { count: events.length, last24h, largest, deepest, withSolution };
 }
 
 const byMagDesc = (a: ApiEvent, b: ApiEvent): number => magOf(b) - magOf(a);

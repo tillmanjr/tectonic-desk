@@ -67,8 +67,8 @@ describe("summary", () => {
     expect(summary([a, b, c, d], now)).toEqual({
       count: 4,
       last24h: 2,
-      largest: a,
-      deepest: b,
+      largest: { e: a, mag: 6.2 },
+      deepest: { e: b, km: 500 },
       withSolution: 1,
     });
     expect(summary([], now)).toEqual({
