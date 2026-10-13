@@ -1,0 +1,38 @@
+{
+  "name": "tectonic-desk",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "shared:build": "pnpm --filter @tectonic/shared build",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm shared:build && pnpm -r typecheck",
+    "lint": "pnpm shared:build && eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm shared:build && pnpm -r test",
+    "test:coverage": "pnpm shared:build && pnpm -r test:coverage",
+    "dev": "pnpm --filter @tectonic/server dev",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @tectonic/server db:generate",
+    "db:migrate": "pnpm --filter @tectonic/server db:migrate"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

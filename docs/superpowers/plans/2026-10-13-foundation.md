@@ -24,33 +24,34 @@
 
 ## File map
 
-| Path | Responsibility |
-| --- | --- |
-| `package.json`, `pnpm-workspace.yaml` | workspace root, scripts, root dev deps |
-| `.node-version`, `.gitattributes`, `.editorconfig`, `.prettierrc`, `.prettierignore` | toolchain conventions |
-| `tsconfig.base.json` | shared compiler options |
-| `eslint.config.js` | root flat config, type-aware |
-| `docker-compose.yml`, `.env.example` | local Postgres on 5433 |
-| `packages/shared/src/index.ts` | domain types: Event, Mechanism, BBox |
-| `apps/web/package.json`, `apps/web/README.md` | placeholder |
-| `apps/server/src/config.ts` | zod env validation |
-| `apps/server/src/logging.ts` | pino options from config |
-| `apps/server/src/db/schema.ts` | Drizzle tables and relations |
-| `apps/server/src/db/client.ts` | `createDb(url)` |
-| `apps/server/src/db/migrate.ts`, `migrate-cli.ts` | migration runner and CLI entry |
-| `apps/server/drizzle/migrations/` | drizzle-kit output |
-| `apps/server/src/mappers/events.ts`, `mechanisms.ts` | row <-> domain |
-| `apps/server/src/repositories/events.ts`, `mechanisms.ts` | upsert and query |
-| `apps/server/src/routes/health.ts` | GET /api/health |
-| `apps/server/src/app.ts`, `index.ts` | buildApp and entry |
-| `apps/server/test/setup/postgres.ts` | Testcontainers helper |
-| `README.md`, `CLAUDE.md` | root docs |
+| Path                                                                                 | Responsibility                         |
+| ------------------------------------------------------------------------------------ | -------------------------------------- |
+| `package.json`, `pnpm-workspace.yaml`                                                | workspace root, scripts, root dev deps |
+| `.node-version`, `.gitattributes`, `.editorconfig`, `.prettierrc`, `.prettierignore` | toolchain conventions                  |
+| `tsconfig.base.json`                                                                 | shared compiler options                |
+| `eslint.config.js`                                                                   | root flat config, type-aware           |
+| `docker-compose.yml`, `.env.example`                                                 | local Postgres on 5433                 |
+| `packages/shared/src/index.ts`                                                       | domain types: Event, Mechanism, BBox   |
+| `apps/web/package.json`, `apps/web/README.md`                                        | placeholder                            |
+| `apps/server/src/config.ts`                                                          | zod env validation                     |
+| `apps/server/src/logging.ts`                                                         | pino options from config               |
+| `apps/server/src/db/schema.ts`                                                       | Drizzle tables and relations           |
+| `apps/server/src/db/client.ts`                                                       | `createDb(url)`                        |
+| `apps/server/src/db/migrate.ts`, `migrate-cli.ts`                                    | migration runner and CLI entry         |
+| `apps/server/drizzle/migrations/`                                                    | drizzle-kit output                     |
+| `apps/server/src/mappers/events.ts`, `mechanisms.ts`                                 | row <-> domain                         |
+| `apps/server/src/repositories/events.ts`, `mechanisms.ts`                            | upsert and query                       |
+| `apps/server/src/routes/health.ts`                                                   | GET /api/health                        |
+| `apps/server/src/app.ts`, `index.ts`                                                 | buildApp and entry                     |
+| `apps/server/test/setup/postgres.ts`                                                 | Testcontainers helper                  |
+| `README.md`, `CLAUDE.md`                                                             | root docs                              |
 
 ---
 
 ### Task 1: Workspace scaffold, lint, typecheck
 
 **Files:**
+
 - Create: `package.json`, `pnpm-workspace.yaml`, `.node-version`, `.gitattributes`, `.editorconfig`, `.prettierrc`, `.prettierignore`, `tsconfig.base.json`, `eslint.config.js`
 - Create: `packages/shared/package.json`, `packages/shared/tsconfig.json`, `packages/shared/tsconfig.build.json`, `packages/shared/src/index.ts`
 - Create: `apps/web/package.json`, `apps/web/README.md`
@@ -58,12 +59,14 @@
 - Modify: `.gitignore`
 
 **Interfaces:**
+
 - Produces: `@tectonic/shared` exporting `Event`, `StoredEvent`, `Mechanism`, `StoredMechanism`, `EventWithMechanisms`, `BBox`, `MechanismKind`.
 - Produces: root scripts `build`, `typecheck`, `lint`, `format`, `test`, `test:coverage`.
 
 - [ ] **Step 1: Root config files**
 
 `package.json`:
+
 ```json
 {
   "name": "tectonic-desk",
@@ -100,6 +103,7 @@
 ```
 
 `pnpm-workspace.yaml`:
+
 ```yaml
 packages:
   - apps/*
@@ -109,6 +113,7 @@ packages:
 `.node-version`: `24`
 
 `.gitattributes`:
+
 ```
 * text=auto eol=lf
 *.png binary
@@ -116,6 +121,7 @@ packages:
 ```
 
 `.editorconfig`:
+
 ```
 root = true
 [*]
@@ -127,11 +133,13 @@ indent_size = 2
 ```
 
 `.prettierrc`:
+
 ```json
 { "endOfLine": "lf", "printWidth": 100, "singleQuote": false, "trailingComma": "all" }
 ```
 
 `.prettierignore`:
+
 ```
 node_modules
 dist
@@ -144,6 +152,7 @@ apps/server/drizzle/migrations
 Append to `.gitignore`: `*.tsbuildinfo` and `.env.*.local`.
 
 `tsconfig.base.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -167,6 +176,7 @@ Append to `.gitignore`: `*.tsbuildinfo` and `.env.*.local`.
 ```
 
 `eslint.config.js`:
+
 ```js
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
@@ -193,6 +203,7 @@ export default defineConfig(
 - [ ] **Step 2: packages/shared**
 
 `packages/shared/package.json`:
+
 ```json
 {
   "name": "@tectonic/shared",
@@ -209,20 +220,29 @@ export default defineConfig(
 ```
 
 `packages/shared/tsconfig.json`:
+
 ```json
 { "extends": "../../tsconfig.base.json", "include": ["src"] }
 ```
 
 `packages/shared/tsconfig.build.json`:
+
 ```json
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "rootDir": "src", "outDir": "dist", "declaration": true, "declarationMap": true, "composite": true },
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true
+  },
   "include": ["src"]
 }
 ```
 
 `packages/shared/src/index.ts`:
+
 ```ts
 export type MechanismKind = "mt" | "fm";
 
@@ -307,11 +327,13 @@ export interface BBox {
 - [ ] **Step 3: apps/web placeholder**
 
 `apps/web/package.json`:
+
 ```json
 { "name": "@tectonic/web", "version": "0.0.0", "private": true, "type": "module" }
 ```
 
 `apps/web/README.md`:
+
 ```md
 # @tectonic/web
 
@@ -321,6 +343,7 @@ Placeholder. The Vue 3 + Vite port of the `quake/` prototype is sub-project 4.
 - [ ] **Step 4: apps/server skeleton**
 
 `apps/server/package.json`:
+
 ```json
 {
   "name": "@tectonic/server",
@@ -359,6 +382,7 @@ Placeholder. The Vue 3 + Vite port of the `quake/` prototype is sub-project 4.
 ```
 
 `apps/server/tsconfig.json` (typecheck and lint: everything):
+
 ```json
 {
   "extends": "../../tsconfig.base.json",
@@ -369,6 +393,7 @@ Placeholder. The Vue 3 + Vite port of the `quake/` prototype is sub-project 4.
 ```
 
 `apps/server/tsconfig.build.json`:
+
 ```json
 {
   "extends": "../../tsconfig.base.json",
@@ -379,6 +404,7 @@ Placeholder. The Vue 3 + Vite port of the `quake/` prototype is sub-project 4.
 ```
 
 `apps/server/vitest.config.ts`:
+
 ```ts
 import { defineConfig } from "vitest/config";
 
@@ -398,6 +424,7 @@ export default defineConfig({
 ```
 
 `apps/server/src/index.ts` (stub, replaced in Task 7):
+
 ```ts
 console.log("tectonic-desk server: not implemented yet");
 ```
@@ -422,15 +449,18 @@ git commit -m "chore: scaffold pnpm workspace with shared types, server skeleton
 ### Task 2: Docker Compose, env, config validation
 
 **Files:**
+
 - Create: `docker-compose.yml`, `.env.example`
 - Create: `apps/server/src/config.ts`, `apps/server/test/config.test.ts`
 
 **Interfaces:**
+
 - Produces: `loadConfig(env?: Record<string, string | undefined>): Config` with `Config = { DATABASE_URL: string; PORT: number; HOST: string; LOG_LEVEL: LogLevel; NODE_ENV: "development" | "test" | "production" }`, throws `ConfigError`.
 
 - [ ] **Step 1: Compose and env example**
 
 `docker-compose.yml`:
+
 ```yaml
 services:
   postgres:
@@ -456,6 +486,7 @@ volumes:
 ```
 
 `.env.example`:
+
 ```
 # Copy to .env at the repo root. Host port 5433 because 5432 is taken on the dev machine.
 DATABASE_URL=postgres://tectonic:tectonic@localhost:5433/tectonic
@@ -468,6 +499,7 @@ NODE_ENV=development
 - [ ] **Step 2: Failing test**
 
 `apps/server/test/config.test.ts`:
+
 ```ts
 import { describe, expect, it } from "vitest";
 import { ConfigError, loadConfig } from "../src/config.js";
@@ -487,7 +519,13 @@ describe("loadConfig", () => {
   });
 
   it("coerces PORT and accepts overrides", () => {
-    const c = loadConfig({ ...valid, PORT: "8080", HOST: "0.0.0.0", LOG_LEVEL: "debug", NODE_ENV: "production" });
+    const c = loadConfig({
+      ...valid,
+      PORT: "8080",
+      HOST: "0.0.0.0",
+      LOG_LEVEL: "debug",
+      NODE_ENV: "production",
+    });
     expect(c.PORT).toBe(8080);
     expect(c.HOST).toBe("0.0.0.0");
     expect(c.LOG_LEVEL).toBe("debug");
@@ -515,6 +553,7 @@ Expected: FAIL, cannot find module `../src/config.js`.
 - [ ] **Step 3: Implementation**
 
 `apps/server/src/config.ts`:
+
 ```ts
 import { z } from "zod";
 
@@ -559,11 +598,13 @@ git commit -m "feat(server): docker compose on 5433 and zod-validated config"
 ### Task 3: Drizzle schema, client, migrations, Testcontainers helper
 
 **Files:**
+
 - Create: `apps/server/drizzle.config.ts`, `apps/server/src/db/schema.ts`, `apps/server/src/db/client.ts`, `apps/server/src/db/migrate.ts`, `apps/server/src/db/migrate-cli.ts`
 - Create: `apps/server/drizzle/migrations/0000_*.sql` and `meta/` (generated)
 - Create: `apps/server/test/setup/postgres.ts`, `apps/server/test/db/migrate.test.ts`
 
 **Interfaces:**
+
 - Produces: `createDb(url): { db: Db; pool: pg.Pool; close(): Promise<void> }`, `type Db = NodePgDatabase<typeof schema>`.
 - Produces: `runMigrations(db: Db): Promise<void>`.
 - Produces: test helper `startPostgres(): Promise<TestDb>` where `TestDb = { db: Db; truncate(): Promise<void>; stop(): Promise<void> }`, and `dockerAvailable(): Promise<boolean>`.
@@ -571,6 +612,7 @@ git commit -m "feat(server): docker compose on 5433 and zod-validated config"
 - [ ] **Step 1: Schema**
 
 `apps/server/src/db/schema.ts`:
+
 ```ts
 import { relations, sql } from "drizzle-orm";
 import {
@@ -681,6 +723,7 @@ export type MechanismInsert = typeof mechanisms.$inferInsert;
 - [ ] **Step 2: Client, migrator, CLI, drizzle config**
 
 `apps/server/src/db/client.ts`:
+
 ```ts
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
@@ -702,13 +745,16 @@ export function createDb(connectionString: string): DbHandle {
 ```
 
 `apps/server/src/db/migrate.ts`:
+
 ```ts
 import { fileURLToPath } from "node:url";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type { Db } from "./client.js";
 
 /** Resolves to apps/server/drizzle/migrations from both src/db and dist/db. */
-export const migrationsFolder = fileURLToPath(new URL("../../drizzle/migrations/", import.meta.url));
+export const migrationsFolder = fileURLToPath(
+  new URL("../../drizzle/migrations/", import.meta.url),
+);
 
 export async function runMigrations(db: Db): Promise<void> {
   await migrate(db, { migrationsFolder });
@@ -716,6 +762,7 @@ export async function runMigrations(db: Db): Promise<void> {
 ```
 
 `apps/server/src/db/migrate-cli.ts`:
+
 ```ts
 import { loadConfig } from "../config.js";
 import { createDb } from "./client.js";
@@ -732,6 +779,7 @@ try {
 ```
 
 `apps/server/drizzle.config.ts`:
+
 ```ts
 import { defineConfig } from "drizzle-kit";
 
@@ -755,6 +803,7 @@ Expected: `apps/server/drizzle/migrations/0000_<name>.sql` plus `meta/_journal.j
 - [ ] **Step 4: Testcontainers helper**
 
 `apps/server/test/setup/postgres.ts`:
+
 ```ts
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -801,6 +850,7 @@ export async function startPostgres(): Promise<TestDb> {
 - [ ] **Step 5: Migration test**
 
 `apps/server/test/db/migrate.test.ts`:
+
 ```ts
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -866,17 +916,20 @@ git commit -m "feat(server): drizzle schema for events and mechanisms, migration
 ### Task 4: Mappers
 
 **Files:**
+
 - Create: `apps/server/src/mappers/events.ts`, `apps/server/src/mappers/mechanisms.ts`
 - Create: `apps/server/test/mappers/events.test.ts`, `apps/server/test/mappers/mechanisms.test.ts`
 - Create: `apps/server/test/fixtures.ts`
 
 **Interfaces:**
+
 - Produces: `rowToEvent(row: EventRow): StoredEvent`, `eventToRow(e: Event): EventInsert`, `rowToMechanism(row: MechanismRow): StoredMechanism`, `mechanismToRow(m: Mechanism): MechanismInsert`.
 - Produces: fixtures `makeEvent(overrides?: Partial<Event>): Event`, `makeMechanism(overrides?: Partial<Mechanism>): Mechanism`.
 
 - [ ] **Step 1: Fixtures**
 
 `apps/server/test/fixtures.ts`:
+
 ```ts
 import type { Event, Mechanism } from "@tectonic/shared";
 
@@ -944,6 +997,7 @@ export function makeMechanism(overrides: Partial<Mechanism> = {}): Mechanism {
 - [ ] **Step 2: Failing tests**
 
 `apps/server/test/mappers/events.test.ts`:
+
 ```ts
 import { describe, expect, it } from "vitest";
 import { eventToRow, rowToEvent } from "../../src/mappers/events.js";
@@ -956,18 +1010,29 @@ describe("event mappers", () => {
     expect(row).not.toHaveProperty("firstSeen");
     expect(row).not.toHaveProperty("lastSeen");
     const seen = new Date("2026-10-12T07:00:00Z");
-    const back = rowToEvent({ ...row, tsunami: row.tsunami ?? false, firstSeen: seen, lastSeen: seen });
+    const back = rowToEvent({
+      ...row,
+      tsunami: row.tsunami ?? false,
+      firstSeen: seen,
+      lastSeen: seen,
+    });
     expect(back).toEqual({ ...e, firstSeen: seen, lastSeen: seen });
   });
 
   it("drops unknown row columns", () => {
-    const row = { ...eventToRow(makeEvent()), firstSeen: new Date(), lastSeen: new Date(), extra: 1 };
+    const row = {
+      ...eventToRow(makeEvent()),
+      firstSeen: new Date(),
+      lastSeen: new Date(),
+      extra: 1,
+    };
     expect(rowToEvent(row)).not.toHaveProperty("extra");
   });
 });
 ```
 
 `apps/server/test/mappers/mechanisms.test.ts`:
+
 ```ts
 import { describe, expect, it } from "vitest";
 import { mechanismToRow, rowToMechanism } from "../../src/mappers/mechanisms.js";
@@ -995,6 +1060,7 @@ Expected: FAIL, modules not found.
 - [ ] **Step 3: Implementation**
 
 `apps/server/src/mappers/events.ts`:
+
 ```ts
 import type { Event, StoredEvent } from "@tectonic/shared";
 import type { EventInsert, EventRow } from "../db/schema.js";
@@ -1049,6 +1115,7 @@ export function eventToRow(e: Event): EventInsert {
 ```
 
 `apps/server/src/mappers/mechanisms.ts`:
+
 ```ts
 import type { Mechanism, StoredMechanism } from "@tectonic/shared";
 import type { MechanismInsert, MechanismRow } from "../db/schema.js";
@@ -1141,9 +1208,11 @@ git commit -m "feat(server): mappers between shared domain types and drizzle row
 ### Task 5: Events repository
 
 **Files:**
+
 - Create: `apps/server/src/repositories/events.ts`, `apps/server/test/repositories/events.test.ts`
 
 **Interfaces:**
+
 - Produces: `upsertEvents(db: Db, events: Event[]): Promise<UpsertResult>` with `UpsertResult = { inserted: number; updated: number; skipped: number }`.
 - Produces: `listEvents(db: Db, filter?: ListEventsFilter): Promise<StoredEvent[]>` with `ListEventsFilter = { since?: Date; until?: Date; minMag?: number; bbox?: BBox; limit?: number }`.
 - Produces: `getEvent(db: Db, id: string): Promise<EventWithMechanisms | null>` (mechanisms array populated in Task 6; empty here).
@@ -1151,6 +1220,7 @@ git commit -m "feat(server): mappers between shared domain types and drizzle row
 - [ ] **Step 1: Failing tests**
 
 `apps/server/test/repositories/events.test.ts`:
+
 ```ts
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -1210,7 +1280,9 @@ describe.skipIf(!docker)("events repository", () => {
     const e = makeEvent();
     await upsertEvents(t.db, [e]);
     const first = await getEvent(t.db, e.id);
-    await t.db.execute(sql`update events set last_seen = last_seen - interval '1 hour', first_seen = first_seen - interval '1 hour'`);
+    await t.db.execute(
+      sql`update events set last_seen = last_seen - interval '1 hour', first_seen = first_seen - interval '1 hour'`,
+    );
     const aged = await getEvent(t.db, e.id);
     await upsertEvents(t.db, [{ ...e, updated: new Date(e.updated.getTime() - 1000) }]);
     const after = await getEvent(t.db, e.id);
@@ -1235,10 +1307,34 @@ describe.skipIf(!docker)("events repository", () => {
   describe("listEvents", () => {
     beforeEach(async () => {
       await upsertEvents(t.db, [
-        makeEvent({ id: "a", time: new Date("2026-10-10T00:00:00Z"), mag: 4.5, latitude: 40, longitude: -120 }),
-        makeEvent({ id: "b", time: new Date("2026-10-11T00:00:00Z"), mag: 5.5, latitude: 10, longitude: 100 }),
-        makeEvent({ id: "c", time: new Date("2026-10-12T00:00:00Z"), mag: 6.5, latitude: -18, longitude: 179.5 }),
-        makeEvent({ id: "d", time: new Date("2026-10-12T01:00:00Z"), mag: null, latitude: -18, longitude: -179.5 }),
+        makeEvent({
+          id: "a",
+          time: new Date("2026-10-10T00:00:00Z"),
+          mag: 4.5,
+          latitude: 40,
+          longitude: -120,
+        }),
+        makeEvent({
+          id: "b",
+          time: new Date("2026-10-11T00:00:00Z"),
+          mag: 5.5,
+          latitude: 10,
+          longitude: 100,
+        }),
+        makeEvent({
+          id: "c",
+          time: new Date("2026-10-12T00:00:00Z"),
+          mag: 6.5,
+          latitude: -18,
+          longitude: 179.5,
+        }),
+        makeEvent({
+          id: "d",
+          time: new Date("2026-10-12T01:00:00Z"),
+          mag: null,
+          latitude: -18,
+          longitude: -179.5,
+        }),
       ]);
     });
 
@@ -1259,12 +1355,16 @@ describe.skipIf(!docker)("events repository", () => {
     });
 
     it("filters by a plain bbox", async () => {
-      const r = await listEvents(t.db, { bbox: { minLat: 27, maxLat: 53, minLon: -136, maxLon: -104 } });
+      const r = await listEvents(t.db, {
+        bbox: { minLat: 27, maxLat: 53, minLon: -136, maxLon: -104 },
+      });
       expect(r.map((e) => e.id)).toEqual(["a"]);
     });
 
     it("filters by a bbox that crosses the antimeridian", async () => {
-      const r = await listEvents(t.db, { bbox: { minLat: -30, maxLat: 0, minLon: 170, maxLon: -170 } });
+      const r = await listEvents(t.db, {
+        bbox: { minLat: -30, maxLat: 0, minLon: 170, maxLon: -170 },
+      });
       expect(r.map((e) => e.id)).toEqual(["d", "c"]);
     });
 
@@ -1289,6 +1389,7 @@ Expected: FAIL, module not found.
 - [ ] **Step 2: Implementation**
 
 `apps/server/src/repositories/events.ts`:
+
 ```ts
 import type { BBox, Event, EventWithMechanisms, StoredEvent } from "@tectonic/shared";
 import { and, desc, eq, gte, inArray, lte, or, sql, type SQL } from "drizzle-orm";
@@ -1372,7 +1473,12 @@ export async function upsertEvents(db: Db, batch: Event[]): Promise<UpsertResult
       await tx
         .update(events)
         .set({ lastSeen: sql`now()` })
-        .where(inArray(events.id, chunk.map((e) => e.id)));
+        .where(
+          inArray(
+            events.id,
+            chunk.map((e) => e.id),
+          ),
+        );
     }
   });
   return result;
@@ -1435,14 +1541,17 @@ git commit -m "feat(server): events repository with revision-aware upsert and fi
 ### Task 6: Mechanisms repository
 
 **Files:**
+
 - Create: `apps/server/src/repositories/mechanisms.ts`, `apps/server/test/repositories/mechanisms.test.ts`
 
 **Interfaces:**
+
 - Produces: `upsertMechanism(db: Db, m: Mechanism): Promise<void>`.
 
 - [ ] **Step 1: Failing tests**
 
 `apps/server/test/repositories/mechanisms.test.ts`:
+
 ```ts
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { getEvent, upsertEvents } from "../../src/repositories/events.js";
@@ -1490,7 +1599,9 @@ describe.skipIf(!docker)("mechanisms repository", () => {
   });
 
   it("rejects a mechanism for an unknown event", async () => {
-    await expect(upsertMechanism(t.db, makeMechanism({ eventId: "missing" }))).rejects.toThrow(/foreign key/i);
+    await expect(upsertMechanism(t.db, makeMechanism({ eventId: "missing" }))).rejects.toThrow(
+      /foreign key/i,
+    );
   });
 });
 
@@ -1507,6 +1618,7 @@ Expected: FAIL, module not found.
 - [ ] **Step 2: Implementation**
 
 `apps/server/src/repositories/mechanisms.ts`:
+
 ```ts
 import type { Mechanism } from "@tectonic/shared";
 import { sql, type SQL } from "drizzle-orm";
@@ -1572,24 +1684,29 @@ git commit -m "feat(server): mechanisms repository upsert on product key"
 ### Task 7: Fastify app, health route, logging, entry point
 
 **Files:**
+
 - Create: `apps/server/src/logging.ts`, `apps/server/src/routes/health.ts`, `apps/server/src/app.ts`
 - Modify: `apps/server/src/index.ts` (replace stub)
 - Create: `apps/server/test/logging.test.ts`, `apps/server/test/routes/health.test.ts`, `apps/server/test/app.test.ts`
 
 **Interfaces:**
+
 - Produces: `buildApp({ db, logger? }): FastifyInstance` with `app.db` decorated.
 - Produces: `buildLoggerOptions(config: Pick<Config, "LOG_LEVEL" | "NODE_ENV">): FastifyServerOptions["logger"]`.
 
 - [ ] **Step 1: Failing tests**
 
 `apps/server/test/logging.test.ts`:
+
 ```ts
 import { describe, expect, it } from "vitest";
 import { buildLoggerOptions } from "../src/logging.js";
 
 describe("buildLoggerOptions", () => {
   it("uses plain JSON logging in production", () => {
-    expect(buildLoggerOptions({ LOG_LEVEL: "warn", NODE_ENV: "production" })).toEqual({ level: "warn" });
+    expect(buildLoggerOptions({ LOG_LEVEL: "warn", NODE_ENV: "production" })).toEqual({
+      level: "warn",
+    });
   });
 
   it("pretty prints outside production", () => {
@@ -1602,6 +1719,7 @@ describe("buildLoggerOptions", () => {
 ```
 
 `apps/server/test/routes/health.test.ts` (unit, fake db, no Docker):
+
 ```ts
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../../src/app.js";
@@ -1631,6 +1749,7 @@ describe("GET /api/health", () => {
 ```
 
 `apps/server/test/app.test.ts` (integration):
+
 ```ts
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
@@ -1669,6 +1788,7 @@ Expected: FAIL, modules not found.
 - [ ] **Step 2: Implementation**
 
 `apps/server/src/logging.ts`:
+
 ```ts
 import type { FastifyServerOptions } from "fastify";
 import type { Config } from "./config.js";
@@ -1685,6 +1805,7 @@ export function buildLoggerOptions(
 ```
 
 `apps/server/src/routes/health.ts`:
+
 ```ts
 import { sql } from "drizzle-orm";
 import type { FastifyPluginAsync } from "fastify";
@@ -1704,6 +1825,7 @@ export const healthRoutes: FastifyPluginAsync = async (app) => {
 ```
 
 `apps/server/src/app.ts`:
+
 ```ts
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { Db } from "./db/client.js";
@@ -1729,6 +1851,7 @@ export function buildApp({ db, logger = false }: AppOptions): FastifyInstance {
 ```
 
 `apps/server/src/index.ts`:
+
 ```ts
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
@@ -1770,6 +1893,7 @@ git commit -m "feat(server): fastify app with health route, logger options and e
 ### Task 8: Live smoke, docs, final verification
 
 **Files:**
+
 - Create: `README.md`, `CLAUDE.md` (root)
 - Create: `.env` (local only, gitignored)
 
@@ -1781,6 +1905,7 @@ pnpm db:up
 docker compose ps   # wait for healthy
 pnpm db:migrate
 ```
+
 Expected: `migrations applied`.
 
 - [ ] **Step 2: Run the server and hit health**
@@ -1792,7 +1917,8 @@ Expected: `{"status":"ok","db":"ok"}`. Stop the dev server afterwards.
 - [ ] **Step 3: Root docs**
 
 `README.md`:
-```md
+
+````md
 # Tectonic Desk
 
 An earth-sciences dashboard: earthquakes now, volcanoes next, space weather considered after that.
@@ -1819,19 +1945,21 @@ pnpm db:up
 pnpm db:migrate
 pnpm dev                 # http://127.0.0.1:3000/api/health
 ```
+````
 
 ## Scripts
 
-| Script | What it does |
-| --- | --- |
-| `pnpm test` | all tests; integration tests need Docker (Testcontainers) |
-| `pnpm test:coverage` | tests with 100% thresholds on `apps/server/src` |
-| `pnpm lint` / `pnpm format` | ESLint (type-aware) / Prettier |
-| `pnpm typecheck` | tsc across the workspace |
-| `pnpm build` | compile `packages/shared` then `apps/server` to `dist/` |
-| `pnpm db:generate` | generate a migration from `apps/server/src/db/schema.ts` |
-| `pnpm db:migrate` | apply migrations to `DATABASE_URL` |
-```
+| Script                      | What it does                                              |
+| --------------------------- | --------------------------------------------------------- |
+| `pnpm test`                 | all tests; integration tests need Docker (Testcontainers) |
+| `pnpm test:coverage`        | tests with 100% thresholds on `apps/server/src`           |
+| `pnpm lint` / `pnpm format` | ESLint (type-aware) / Prettier                            |
+| `pnpm typecheck`            | tsc across the workspace                                  |
+| `pnpm build`                | compile `packages/shared` then `apps/server` to `dist/`   |
+| `pnpm db:generate`          | generate a migration from `apps/server/src/db/schema.ts`  |
+| `pnpm db:migrate`           | apply migrations to `DATABASE_URL`                        |
+
+````
 
 `CLAUDE.md` (root):
 ```md
@@ -1851,7 +1979,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 
 ## Commands
 `pnpm test`, `pnpm test:coverage`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm db:up`, `pnpm db:migrate`, `pnpm dev`.
-```
+````
 
 - [ ] **Step 4: Final verification and commit**
 

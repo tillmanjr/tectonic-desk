@@ -22,18 +22,18 @@ and implementation pass:
 
 ## Decisions
 
-| Topic | Choice |
-| --- | --- |
-| Language | TypeScript, strict, ESM |
-| Runtime | Node 24 LTS |
-| Package manager | pnpm workspaces |
-| Server | Fastify |
-| Database | PostgreSQL 16 via Docker Compose |
-| DB access and migrations | Drizzle ORM + drizzle-kit, generated SQL checked in |
-| Tests | Vitest, v8 coverage, Testcontainers for Postgres |
-| Lint and format | ESLint flat config with typescript-eslint, Prettier |
-| Front end (later) | Vue 3 + Vite; placeholder package only in Foundation |
-| Git | One repo at `tectonic-desk/`, `quake/` committed untouched |
+| Topic                    | Choice                                                     |
+| ------------------------ | ---------------------------------------------------------- |
+| Language                 | TypeScript, strict, ESM                                    |
+| Runtime                  | Node 24 LTS                                                |
+| Package manager          | pnpm workspaces                                            |
+| Server                   | Fastify                                                    |
+| Database                 | PostgreSQL 16 via Docker Compose                           |
+| DB access and migrations | Drizzle ORM + drizzle-kit, generated SQL checked in        |
+| Tests                    | Vitest, v8 coverage, Testcontainers for Postgres           |
+| Lint and format          | ESLint flat config with typescript-eslint, Prettier        |
+| Front end (later)        | Vue 3 + Vite; placeholder package only in Foundation       |
+| Git                      | One repo at `tectonic-desk/`, `quake/` committed untouched |
 
 ## 1. Repository layout
 
@@ -105,51 +105,51 @@ longitude columns with a composite index suffice.
 
 ### `events`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | text PK | USGS event id, e.g. `us6000u1q2` |
-| `time` | timestamptz not null | origin time |
-| `updated` | timestamptz not null | USGS revision stamp |
-| `latitude` | double precision not null | |
-| `longitude` | double precision not null | |
-| `depth_km` | double precision | nullable |
-| `mag` | double precision | nullable |
-| `mag_type` | text | nullable |
-| `place` | text | nullable |
-| `net` | text | nullable |
-| `status` | text | `automatic` or `reviewed`, nullable |
-| `alert` | text | PAGER level, nullable |
-| `sig` | integer | nullable |
-| `felt` | integer | nullable |
-| `cdi` | double precision | nullable |
-| `mmi` | double precision | nullable |
-| `tsunami` | boolean not null default false | |
-| `first_seen` | timestamptz not null default now() | |
-| `last_seen` | timestamptz not null default now() | |
-| `raw` | jsonb not null | full USGS properties object |
+| Column       | Type                               | Notes                               |
+| ------------ | ---------------------------------- | ----------------------------------- |
+| `id`         | text PK                            | USGS event id, e.g. `us6000u1q2`    |
+| `time`       | timestamptz not null               | origin time                         |
+| `updated`    | timestamptz not null               | USGS revision stamp                 |
+| `latitude`   | double precision not null          |                                     |
+| `longitude`  | double precision not null          |                                     |
+| `depth_km`   | double precision                   | nullable                            |
+| `mag`        | double precision                   | nullable                            |
+| `mag_type`   | text                               | nullable                            |
+| `place`      | text                               | nullable                            |
+| `net`        | text                               | nullable                            |
+| `status`     | text                               | `automatic` or `reviewed`, nullable |
+| `alert`      | text                               | PAGER level, nullable               |
+| `sig`        | integer                            | nullable                            |
+| `felt`       | integer                            | nullable                            |
+| `cdi`        | double precision                   | nullable                            |
+| `mmi`        | double precision                   | nullable                            |
+| `tsunami`    | boolean not null default false     |                                     |
+| `first_seen` | timestamptz not null default now() |                                     |
+| `last_seen`  | timestamptz not null default now() |                                     |
+| `raw`        | jsonb not null                     | full USGS properties object         |
 
 Indexes: `time`, `(latitude, longitude)`, `mag`.
 
 ### `mechanisms`
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | serial PK | |
-| `event_id` | text not null, FK events(id) on delete cascade | |
-| `kind` | text not null, check in (`mt`, `fm`) | moment tensor or first-motion focal mechanism |
-| `source` | text not null | USGS product source network |
-| `code` | text not null | USGS product code |
-| `preferred` | boolean not null default false | |
-| `strike1 dip1 rake1 strike2 dip2 rake2` | double precision | nullable |
-| `t_azimuth t_plunge p_azimuth p_plunge n_azimuth n_plunge` | double precision | nullable |
-| `mrr mtt mpp mrt mrp mtp` | double precision | nullable |
-| `scalar_moment` | double precision | nullable, N m |
-| `mw` | double precision | nullable |
-| `depth_km` | double precision | nullable, centroid depth |
-| `percent_dc` | double precision | nullable, always a fraction 0..1 |
-| `planes_reconstructed` | boolean not null default false | true when planes derived from P and T axes |
-| `product_updated` | timestamptz | nullable |
-| `raw` | jsonb not null | full product properties |
+| Column                                                     | Type                                           | Notes                                         |
+| ---------------------------------------------------------- | ---------------------------------------------- | --------------------------------------------- |
+| `id`                                                       | serial PK                                      |                                               |
+| `event_id`                                                 | text not null, FK events(id) on delete cascade |                                               |
+| `kind`                                                     | text not null, check in (`mt`, `fm`)           | moment tensor or first-motion focal mechanism |
+| `source`                                                   | text not null                                  | USGS product source network                   |
+| `code`                                                     | text not null                                  | USGS product code                             |
+| `preferred`                                                | boolean not null default false                 |                                               |
+| `strike1 dip1 rake1 strike2 dip2 rake2`                    | double precision                               | nullable                                      |
+| `t_azimuth t_plunge p_azimuth p_plunge n_azimuth n_plunge` | double precision                               | nullable                                      |
+| `mrr mtt mpp mrt mrp mtp`                                  | double precision                               | nullable                                      |
+| `scalar_moment`                                            | double precision                               | nullable, N m                                 |
+| `mw`                                                       | double precision                               | nullable                                      |
+| `depth_km`                                                 | double precision                               | nullable, centroid depth                      |
+| `percent_dc`                                               | double precision                               | nullable, always a fraction 0..1              |
+| `planes_reconstructed`                                     | boolean not null default false                 | true when planes derived from P and T axes    |
+| `product_updated`                                          | timestamptz                                    | nullable                                      |
+| `raw`                                                      | jsonb not null                                 | full product properties                       |
 
 Unique: `(event_id, kind, source, code)`. Index: `event_id`.
 

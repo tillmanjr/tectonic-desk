@@ -1,0 +1,6 @@
+node_modules
+dist
+coverage
+quake
+pnpm-lock.yaml
+apps/server/drizzle/migrations
