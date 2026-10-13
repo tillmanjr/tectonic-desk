@@ -48,7 +48,15 @@ function clear(): void {
 </script>
 
 <template>
-  <section class="filters" aria-label="Filters">
+  <section class="filters" aria-label="Refine">
+    <span class="ftitle">Refine</span>
+    <span
+      class="finfo"
+      role="img"
+      aria-label="These settings refine the map, catalog and charts; the summary tiles and major events are unaffected"
+      title="These settings refine the map, catalog and charts. The summary tiles and major events are unaffected."
+      >i</span
+    >
     <span class="flabel">Magnitude</span>
     <input
       type="number"
@@ -112,8 +120,7 @@ function clear(): void {
         >Showing {{ catalog.filtered.value.length }} of
         {{ catalog.windowEvents.value.length }} events<template v-if="ranged">
           in the selected dates</template
-        >
-        · summary tiles and major events are unfiltered</template
+        ></template
       >
       <template v-else>All {{ catalog.events.value.length }} events shown</template>
     </span>
