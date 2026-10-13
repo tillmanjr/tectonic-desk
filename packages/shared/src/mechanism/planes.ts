@@ -1,3 +1,5 @@
+import { axisVector, type Vec3 } from "./tensor.js";
+
 const RAD = Math.PI / 180;
 
 export interface Axis {
@@ -11,15 +13,6 @@ export interface NodalPlane {
   strike: number;
   dip: number;
   rake: number;
-}
-
-type Vec3 = [number, number, number];
-
-/** Unit vector in the north-east-down frame. */
-function axisVector(a: Axis): Vec3 {
-  const az = a.azimuth * RAD;
-  const pl = a.plunge * RAD;
-  return [Math.cos(pl) * Math.cos(az), Math.cos(pl) * Math.sin(az), Math.sin(pl)];
 }
 
 /** Strike, dip and rake of the plane with normal `n` and slip `d` (Aki & Richards). */

@@ -1,4 +1,7 @@
 export * from "./mechanism/planes.js";
+export * from "./mechanism/tensor.js";
+export * from "./mechanism/classify.js";
+export * from "./mechanism/solution.js";
 export * from "./api.js";
 
 export type MechanismKind = "mt" | "fm";
