@@ -1,0 +1,444 @@
+<title>Tectonic Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: instrument-panel dashboard — header + summary strip, map as the hero instrument, catalog and charts below; detail opens as a side panel (bottom sheet on phones). */
+:root{
+  --bg:#e9edf0; --panel:#ffffff; --ink:#14202a; --muted:#56636e; --line:#d3dae0;
+  --ocean:#d9e4ea; --land:#f6f7f4; --border:#b9c2c9; --accent:#0a6a85; --plate:#7b4f9a;
+  --shallow:#d2442a; --inter:#d99a00; --deep:#2b72b3; --tension:#ffffff;
+  --sev-red:#c62828; --sev-orange:#e06a00; --sev-yellow:#c9a400; --sev-green:#2e8b57;
+  --f-ui:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1216; --panel:#141c22; --ink:#e3e9ed; --muted:#8e9ba6; --line:#24313a;
+  --ocean:#0e1920; --land:#1c262d; --border:#3a4852; --accent:#55b6d1; --plate:#b48ad6;
+  --shallow:#f0603f; --inter:#f2b632; --deep:#5aa2e6; --tension:#e9eef1;
+  --sev-red:#ff5a4e; --sev-orange:#ff9a3c; --sev-yellow:#f2d03b; --sev-green:#4cc489; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1216; --panel:#141c22; --ink:#e3e9ed; --muted:#8e9ba6; --line:#24313a;
+  --ocean:#0e1920; --land:#1c262d; --border:#3a4852; --accent:#55b6d1; --plate:#b48ad6;
+  --shallow:#f0603f; --inter:#f2b632; --deep:#5aa2e6; --tension:#e9eef1;
+  --sev-red:#ff5a4e; --sev-orange:#ff9a3c; --sev-yellow:#f2d03b; --sev-green:#4cc489; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.4}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:14px 40px;display:flex;flex-direction:column;gap:14px}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px 20px}
+h1{margin:0;font-size:28px;font-weight:700;letter-spacing:.01em;line-height:1.05}
+h1 small{display:block;font-size:13px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
+.snap{font-family:var(--f-data);font-size:11.5px;color:var(--muted);border:1px dashed var(--border);padding:4px 8px;border-radius:4px}
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px}
+.tabs button{font:600 14px var(--f-ui);border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:6px;cursor:pointer;text-align:left;line-height:1.15}
+.tabs button small{display:block;font:400 11px var(--f-data);opacity:.85}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--panel)}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.stat .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.stat .v{font:500 26px var(--f-data);margin-top:2px;line-height:1.1}
+.stat .s{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.major{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.mcard{display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--sevc,var(--line));border-radius:6px;padding:9px 10px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%}
+.mcard:hover{border-color:var(--accent)}
+.mcard img,.mcard .dot{width:50px;height:50px}
+.mcard .dot{display:grid;place-items:center;font:600 13px var(--f-data);color:var(--muted)}
+.mcard .t{font-weight:600;font-size:15px;line-height:1.2}
+.mcard .m{font:500 12px var(--f-data);color:var(--muted);margin-top:3px}
+.pill{display:inline-block;font:600 10.5px var(--f-ui);letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:99px;border:1px solid currentColor;margin-left:4px;vertical-align:1px}
+.sectionlabel{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:0 0 -4px}
+.mapcard{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.maptools{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font-size:13.5px}
+.maptools label{display:flex;gap:5px;align-items:center;cursor:pointer}
+.maptools .sp{flex:1}
+.zbtn{font:600 14px var(--f-data);width:30px;height:28px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:5px;cursor:pointer}
+#map{display:block;width:100%;height:auto;background:var(--ocean);touch-action:none;cursor:grab}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);align-items:center}
+.legend .sw{display:inline-flex;align-items:center;gap:5px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%}
+.legend svg{vertical-align:middle}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;min-width:0}
+.panel h2{margin:0 0 8px;font-size:16px;font-weight:600}
+.panel h2 span{font-weight:400;color:var(--muted);font-size:13px;margin-left:6px}
+.tablewrap{max-height:430px;overflow:auto;border-top:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{position:sticky;top:0;background:var(--panel);text-align:left;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap}
+td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+td.num{white-space:nowrap}
+tr.ev{cursor:pointer}
+tr.ev:hover td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+tr.ev.sel td{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.dchip{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.mt{color:var(--accent);font-size:11px;font-weight:600}
+.charts{display:flex;flex-direction:column;gap:14px}
+.chart svg{width:100%;height:auto;display:block}
+.chart .cap{font-size:12.5px;color:var(--muted);margin-top:4px}
+.axis text{fill:var(--muted);font:10.5px var(--f-data)}
+.axis path,.axis line{stroke:var(--border)}
+.gridl line{stroke:var(--line)}
+#detail{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--panel);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.18);transform:translateX(105%);transition:transform .22s ease;z-index:20;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#detail.open{transform:none}
+#detail .hd{display:flex;justify-content:space-between;align-items:start;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+#detail .hd .mag{font:500 34px var(--f-data);line-height:1}
+#detail .hd .place{font-size:17px;font-weight:600;margin-top:4px}
+#detail .close{font:600 20px var(--f-ui);border:1px solid var(--line);background:var(--panel);color:var(--ink);width:34px;height:34px;border-radius:6px;cursor:pointer;flex:none}
+#detail .bd{overflow:auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:14px}
+dl.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:0;font-size:14px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;font-family:var(--f-data);font-size:13px;font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:anywhere}
+.mechbox{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+.mechbox img{width:150px;height:150px}
+.mechbox .style{font-weight:700;font-size:17px}
+.mechbox p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
+h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted)}
+a{color:var(--accent)}
+.foot{font-size:12.5px;color:var(--muted);max-width:90ch}
+.foot p{margin:4px 0}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--panel);font:12px var(--f-ui);padding:5px 8px;border-radius:4px;white-space:nowrap;transform:translate(-50%,-130%);z-index:5}
+@media (max-width:900px){.grid2{grid-template-columns:minmax(0,1fr)}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){
+  #detail{top:auto;left:0;width:100%;height:78%;border-left:0;border-top:1px solid var(--line);border-radius:12px 12px 0 0;transform:translateY(105%)}
+  .mechbox{grid-template-columns:110px 1fr}.mechbox img{width:110px;height:110px}
+  h1{font-size:24px}.tabs{width:100%}.tabs button{flex:1}
+}
+@media (prefers-reduced-motion:reduce){#detail{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div><h1>Tectonic Desk<small>Earthquakes · focal mechanisms · plate boundaries</small></h1></div>
+    <div class="tabs" role="tablist" aria-label="Region">
+      <button role="tab" id="tab-global" aria-selected="true" data-r="global">Global<small>M4.5+ · past 7 days</small></button>
+      <button role="tab" id="tab-wc" aria-selected="false" data-r="wc">West Coast US<small>M2.5+ · past 30 days</small></button>
+    </div>
+  </header>
+  <div class="snap" id="snap"></div>
+  <section class="stats" id="stats" aria-label="Summary"></section>
+  <p class="sectionlabel" id="majorlabel">Major events</p>
+  <section class="major" id="major"></section>
+  <section class="mapcard">
+    <div class="maptools">
+      <label><input type="checkbox" id="opt-mech" checked> Focal mechanisms</label>
+      <label><input type="checkbox" id="opt-plates" checked> Plate boundaries</label>
+      <span class="sp"></span>
+      <button class="zbtn" id="zin" aria-label="Zoom in">+</button><button class="zbtn" id="zout" aria-label="Zoom out">−</button><button class="zbtn" id="zreset" aria-label="Reset view" style="width:auto;padding:0 8px">Reset</button>
+    </div>
+    <svg id="map" role="img" aria-label="Map of earthquake epicenters"></svg>
+    <div class="tip" id="tip" hidden></div>
+    <div class="legend" id="legend"></div>
+  </section>
+  <section class="grid2">
+    <div class="panel">
+      <h2>Catalog <span id="catcount"></span></h2>
+      <div class="tablewrap"><table id="cat"><thead><tr>
+        <th data-k="t">Time (UTC)</th><th data-k="mag">M</th><th data-k="depth">Depth</th><th data-k="place">Location</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="charts">
+      <div class="panel chart"><h2>Magnitude through time</h2><svg id="c-time"></svg><div class="cap" id="cap-time"></div></div>
+      <div class="panel chart"><h2>Frequency–magnitude</h2><svg id="c-gr"></svg><div class="cap" id="cap-gr"></div></div>
+      <div class="panel chart"><h2>Depth distribution</h2><svg id="c-depth"></svg><div class="cap" id="cap-depth"></div></div>
+    </div>
+  </section>
+  <footer class="foot">
+    <p><b>Data.</b> Earthquake parameters from the USGS ANSS Comprehensive Catalog (ComCat), retrieved once at the time shown above. This prototype does not update. Mechanisms are each event's preferred USGS product (moment tensor where available, otherwise first-motion focal mechanism), drawn as lower-hemisphere equal-area projections with compressional quadrants shaded. Where a solution reports only P and T axes, the double couple is reconstructed from those axes. Significance, felt reports, MMI and PAGER alert are shown only for events whose detail record was read.</p>
+    <p><b>Plate boundaries.</b> Bird (2003), <i>An updated digital model of plate boundaries</i>, G³ 4(3), 1027 (PB2002), via the fraxen/tectonicplates repository; segment class and relative velocity from the PB2002 step file. Basemap: Natural Earth via world-atlas and us-atlas.</p>
+  </footer>
+</div>
+
+<aside id="detail" aria-label="Event detail" aria-hidden="true">
+  <div class="hd"><div><div class="mag num" id="d-mag"></div><div class="place" id="d-place"></div></div><button class="close" id="d-close" aria-label="Close detail">×</button></div>
+  <div class="bd" id="d-body"></div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+/*__DATA__*/
+</script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const SNAP_MS=Date.parse(SNAPSHOT.replace("Z",":00Z"));
+const R=Math.PI/180;
+
+/* ---------- catalog ---------- */
+function parseCSV(txt){
+  const lines=txt.trim().split("\n");lines.shift();
+  return lines.map(l=>{const m=l.match(/^([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),"(.*)"$/);
+    return {t:Date.parse(m[1]),iso:m[1],lat:+m[2],lon:+m[3],depth:+m[4],mag:+m[5],magType:m[6],id:m[7],place:m[8]};});
+}
+const mech={};MECH.forEach(m=>{if(m.dc!=null&&m.dc>1)m.dc/=100;mech[m.id]=m;});
+const REG={
+  global:{name:"Global",sub:"M4.5+ · past 7 days",ev:parseCSV(GLOBAL_CSV),mc:4.5},
+  wc:{name:"West Coast US",sub:"M2.5+ · past 30 days",ev:parseCSV(WC_CSV),mc:2.5}
+};
+Object.values(REG).forEach(r=>r.ev.forEach(e=>{e.mech=mech[e.id]||null;e.det=e.mech||DETAIL_ONLY[e.id]||null;}));
+
+/* ---------- focal mechanism math (NED; Aki & Richards) ---------- */
+function sdrM(s,d,r){s*=R;d*=R;r*=R;const sd=Math.sin(d),cd=Math.cos(d),s2d=Math.sin(2*d),c2d=Math.cos(2*d),sr=Math.sin(r),cr=Math.cos(r),ss=Math.sin(s),cs=Math.cos(s),s2s=Math.sin(2*s),c2s=Math.cos(2*s);
+  const xx=-(sd*cr*s2s+s2d*sr*ss*ss),xy=sd*cr*c2s+.5*s2d*sr*s2s,xz=-(cd*cr*cs+c2d*sr*ss),yy=sd*cr*s2s-s2d*sr*cs*cs,yz=-(cd*cr*ss-c2d*sr*cs),zz=s2d*sr;
+  return [[xx,xy,xz],[xy,yy,yz],[xz,yz,zz]];}
+function axv(az,pl){az*=R;pl*=R;return [Math.cos(pl)*Math.cos(az),Math.cos(pl)*Math.sin(az),Math.sin(pl)];}
+function axesM(m){const t=axv(m.tAz,m.tPl),p=axv(m.pAz,m.pPl);return [0,1,2].map(i=>[0,1,2].map(j=>t[i]*t[j]-p[i]*p[j]));}
+function planeFrom(n,d){if(n[2]>0){n=n.map(x=>-x);d=d.map(x=>-x);}const dip=Math.acos(Math.min(1,-n[2]));let st=Math.atan2(-n[0],n[1]);if(st<0)st+=2*Math.PI;
+  const sl=-d[2]/Math.sin(dip),cl=d[0]*Math.cos(st)+d[1]*Math.sin(st);return [st/R,dip/R,Math.atan2(sl,cl)/R];}
+function planesOf(m){
+  if(m.s1!=null)return {p1:[m.s1,m.d1,m.r1],p2:[m.s2,m.d2,m.r2],derived:false};
+  const t=axv(m.tAz,m.tPl),p=axv(m.pAz,m.pPl),n=t.map((x,i)=>(x+p[i])/Math.SQRT2),d=t.map((x,i)=>(x-p[i])/Math.SQRT2);
+  return {p1:planeFrom(n,d),p2:planeFrom(d,n),derived:true};}
+function tensorOf(m){return m.s1!=null?sdrM(m.s1,m.d1,m.r1):axesM(m);}
+function axesOf(m){ // P and T axes (az, plunge) — from product or from planes
+  if(m.tAz!=null)return {t:[m.tAz,m.tPl],p:[m.pAz,m.pPl]};
+  const M=tensorOf(m);let best={t:null,p:null,tv:-9,pv:9};
+  for(let az=0;az<360;az+=2)for(let pl=0;pl<=90;pl+=2){const v=axv(az,pl);let a=0;for(let i=0;i<3;i++)for(let j=0;j<3;j++)a+=v[i]*M[i][j]*v[j];
+    if(a>best.tv){best.tv=a;best.t=[az,pl];}if(a<best.pv){best.pv=a;best.p=[az,pl];}}
+  return {t:best.t,p:best.p};}
+const bbCache=new Map();
+function beachball(m,px,fill,showAxes){
+  const key=m.id+px+fill+(showAxes?1:0)+css("--tension")+css("--ink");if(bbCache.has(key))return bbCache.get(key);
+  const sc=2,N=px*sc,c=document.createElement("canvas");c.width=c.height=N;const g=c.getContext("2d");const img=g.createImageData(N,N);
+  const M=tensorOf(m),col=d3.color(fill),ten=d3.color(css("--tension")),ink=d3.color(css("--ink")),r0=N/2-1.5*sc;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const dx=(x+.5-N/2)/r0,dy=(N/2-y-.5)/r0,rr=dx*dx+dy*dy;if(rr>1)continue;
+    const r=Math.sqrt(rr),inc=2*Math.asin(Math.min(1,r/Math.SQRT2)),az=Math.atan2(dx,dy);
+    const v=[Math.sin(inc)*Math.cos(az),Math.sin(inc)*Math.sin(az),Math.cos(inc)];let a=0;for(let i=0;i<3;i++)for(let j=0;j<3;j++)a+=v[i]*M[i][j]*v[j];
+    const k=(y*N+x)*4,cc=a>0?col:ten;img.data[k]=cc.r;img.data[k+1]=cc.g;img.data[k+2]=cc.b;img.data[k+3]=255;}
+  g.putImageData(img,0,0);
+  g.beginPath();g.arc(N/2,N/2,r0,0,2*Math.PI);g.lineWidth=Math.max(1.2,N/70);g.strokeStyle=ink.formatRgb();g.stroke();
+  if(showAxes){const ax=axesOf(m);const pt=(az,pl)=>{const inc=(90-pl)*R,r=Math.SQRT2*Math.sin(inc/2)*r0;return [N/2+r*Math.sin(az*R),N/2-r*Math.cos(az*R)];};
+    g.font=`600 ${N/11}px "IBM Plex Mono",monospace`;g.textAlign="center";g.textBaseline="middle";
+    [["T",ax.t,col,ten],["P",ax.p,ten,col]].forEach(([lab,a,bgc])=>{if(!a)return;const [x,y]=pt(a[0],a[1]);g.beginPath();g.arc(x,y,N/15,0,2*Math.PI);g.fillStyle=ink.formatRgb();g.fill();g.fillStyle=ten.formatRgb();g.fillText(lab,x,y+1);});}
+  const url=c.toDataURL();bbCache.set(key,url);return url;}
+
+/* ---------- classification helpers ---------- */
+function style(m){const {p1}=planesOf(m),r=p1[2];const a=Math.abs(r);
+  let s,sense="";
+  if(r>=30&&r<=150)s="Reverse";else if(r<=-30&&r>=-150)s="Normal";else s="Strike-slip";
+  const oblique=(a>20&&a<70)||(a>110&&a<160);
+  if(s==="Reverse"&&p1[1]<=35&&!oblique)s="Thrust";
+  return (oblique?"Oblique ":"")+s;}
+function ssSense(pl){const r=pl[2];return Math.abs(r)<90?"left-lateral":"right-lateral";}
+const depthCol=z=>z<70?css("--shallow"):z<300?css("--inter"):css("--deep");
+const depthClass=z=>z<70?"shallow (<70 km)":z<300?"intermediate (70–300 km)":"deep (≥300 km)";
+const alertCol=a=>({red:"--sev-red",orange:"--sev-orange",yellow:"--sev-yellow",green:"--sev-green"})[a];
+const fmtT=t=>new Date(t).toISOString().slice(0,16).replace("T"," ");
+const fmtPT=t=>new Date(t).toLocaleString("en-US",{timeZone:"America/Los_Angeles",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})+" Pacific";
+function ago(t){const h=(SNAP_MS-t)/36e5;return h<1?`${Math.max(1,Math.round(h*60))} min`:h<48?`${h.toFixed(h<10?1:0)} h`:`${(h/24).toFixed(1)} d`;}
+const fmtM0=v=>{if(v==null)return "—";const e=Math.floor(Math.log10(v));return `${(v/10**e).toFixed(2)}×10^${e} N·m`.replace("^","")+"";};
+function m0html(v){if(v==null)return "—";const e=Math.floor(Math.log10(v));return `${(v/10**e).toFixed(2)} × 10<sup>${e}</sup> N·m`;}
+function dist(a,b){const p1=a.lat*R,p2=b.lat*R,dl=(b.lon-a.lon)*R;return 6371*Math.acos(Math.min(1,Math.sin(p1)*Math.sin(p2)+Math.cos(p1)*Math.cos(p2)*Math.cos(dl)));}
+function sequenceOf(e,list){ // later events within 150 km of an M>=6.5 mainshock
+  if(e.mag<6.5||parentSeq(e,list))return null;const af=list.filter(o=>o.t>e.t&&dist(e,o)<=150);
+  return {n:af.length,maxAf:af.reduce((a,o)=>o.mag>a.mag?o:a,{mag:0}),span:(SNAP_MS-e.t)/36e5};}
+function parentSeq(e,list){return list.find(o=>o.mag>=6.5&&o.t<e.t&&dist(o,e)<=150)||null;}
+
+/* ---------- state ---------- */
+let region="global",sel=null,sortKey="t",sortDir=-1;
+$("#snap").textContent=`Static snapshot · USGS ComCat · retrieved ${SNAPSHOT.replace("T"," ").replace("Z"," UTC")} · not live`;
+
+/* ---------- geo ---------- */
+const world=WORLD,wcLand=WCLAND,wcStates=WCSTATES;
+const landG=topojson.feature(world,world.objects.land);
+const bordersG=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
+const wcLandG=topojson.feature(wcLand,wcLand.objects[Object.keys(wcLand.objects)[0]]);
+const wcStatesG=topojson.mesh(wcStates,wcStates.objects[Object.keys(wcStates.objects)[0]],(a,b)=>a!==b);
+const plateFeat=PLATES.map(p=>({type:"Feature",properties:{b:p.b,c:p.c,v:p.v},geometry:{type:"LineString",coordinates:p.p}}));
+const PCLS={sub:{n:"Subduction",w:2.2,dash:null},conv:{n:"Other convergent",w:1.4,dash:null},spread:{n:"Spreading / rift",w:1.2,dash:"1 2.5"},trans:{n:"Transform",w:1.2,dash:"6 3"}};
+
+const svg=d3.select("#map");const W=1000;let H=520;
+const gRoot=svg.append("g"),gBase=gRoot.append("g"),gPlates=gRoot.append("g"),gEv=gRoot.append("g"),gMech=gRoot.append("g");
+let proj,path,zk=1;
+const zoom=d3.zoom().scaleExtent([1,40]).on("zoom",ev=>{zk=ev.transform.k;gRoot.attr("transform",ev.transform);rescale();});
+svg.call(zoom).on("dblclick.zoom",null);
+function setupProj(){
+  if(region==="global"){H=520;proj=d3.geoNaturalEarth1().rotate([-150,0]).fitExtent([[6,6],[W-6,H-6]],{type:"Sphere"});}
+  else{H=700;proj=d3.geoConicConformal().parallels([33,45]).rotate([120,0]).clipExtent([[0,0],[W,H]]).fitExtent([[10,10],[W-10,H-10]],{type:"MultiPoint",coordinates:[[-130,32],[-114,32],[-130,50],[-114,50],[-122,51]]});}
+  path=d3.geoPath(proj);svg.attr("viewBox",`0 0 ${W} ${H}`);
+  svg.transition().duration(0).call(zoom.transform,d3.zoomIdentity);
+}
+function drawBase(){
+  gBase.selectAll("*").remove();
+  if(region==="global"){gBase.append("path").attr("d",path({type:"Sphere"})).attr("fill",css("--ocean"));
+    gBase.append("path").attr("d",path(d3.geoGraticule10())).attr("fill","none").attr("stroke",css("--line")).attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");
+    gBase.append("path").attr("d",path(landG)).attr("fill",css("--land")).attr("stroke",css("--border")).attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");
+    gBase.append("path").attr("d",path(bordersG)).attr("fill","none").attr("stroke",css("--border")).attr("stroke-width",.35).attr("vector-effect","non-scaling-stroke");}
+  else{gBase.append("rect").attr("width",W).attr("height",H).attr("fill",css("--ocean"));
+    gBase.append("path").attr("d",path(d3.geoGraticule().step([2,2])())).attr("fill","none").attr("stroke",css("--line")).attr("stroke-width",.5).attr("vector-effect","non-scaling-stroke");
+    gBase.append("path").attr("d",path(wcLandG)).attr("fill",css("--land")).attr("stroke",css("--border")).attr("stroke-width",.7).attr("vector-effect","non-scaling-stroke");
+    gBase.append("path").attr("d",path(wcStatesG)).attr("fill","none").attr("stroke",css("--border")).attr("stroke-width",.6).attr("stroke-dasharray","3 2").attr("vector-effect","non-scaling-stroke");}
+  gPlates.selectAll("*").remove();
+  gPlates.selectAll("path").data(plateFeat).join("path").attr("d",d=>path(d)).attr("fill","none").attr("stroke",css("--plate"))
+    .attr("stroke-width",d=>PCLS[d.properties.c].w).attr("stroke-dasharray",d=>PCLS[d.properties.c].dash).attr("stroke-opacity",.85).attr("vector-effect","non-scaling-stroke")
+    .append("title").text(d=>`${PCLS[d.properties.c].n} · ${d.properties.b} · ${d.properties.v} mm/yr relative (PB2002)`);
+  gPlates.style("display",$("#opt-plates").checked?null:"none");
+}
+const rad=(m,mc)=>region==="global"?1.6+Math.pow(Math.max(0,m-mc+.4),1.55)*2.6:1.8+Math.pow(Math.max(0,m-mc+.3),1.5)*2.6;
+const mechSize=(m)=>region==="global"?Math.max(16,(m-4)*9):Math.max(15,(m-2.4)*11);
+function drawEvents(){
+  const r=REG[region],ev=[...r.ev].sort((a,b)=>a.mag-b.mag),showMech=$("#opt-mech").checked;
+  const pts=ev.filter(e=>proj([e.lon,e.lat]));
+  gEv.selectAll("circle").data(pts.filter(e=>!(showMech&&e.mech)),d=>d.id).join("circle")
+    .attr("cx",d=>proj([d.lon,d.lat])[0]).attr("cy",d=>proj([d.lon,d.lat])[1])
+    .attr("fill",d=>depthCol(d.depth)).attr("fill-opacity",.78).attr("stroke",css("--ink")).attr("stroke-opacity",.55)
+    .attr("vector-effect","non-scaling-stroke").attr("stroke-width",d=>d.id===sel?2.2:.6).style("cursor","pointer")
+    .on("click",(ev,d)=>{ev.stopPropagation();openDetail(d);}).on("mouseenter",showTip).on("mouseleave",hideTip);
+  gMech.selectAll("g.bb").data(showMech?pts.filter(e=>e.mech):[],d=>d.id).join(enter=>{const g=enter.append("g").attr("class","bb").style("cursor","pointer");g.append("image");g.append("circle").attr("class","ring");return g;})
+    .attr("data-x",d=>proj([d.lon,d.lat])[0]).attr("data-y",d=>proj([d.lon,d.lat])[1])
+    .each(function(d){const s=mechSize(d.mag);d3.select(this).select("image").attr("href",beachball(d.mech,64,depthCol(d.depth),false)).attr("data-s",s);
+      d3.select(this).select("circle.ring").attr("fill","none").attr("stroke",css("--accent")).attr("stroke-width",2.5).attr("vector-effect","non-scaling-stroke").attr("display",d.id===sel?null:"none").attr("data-s",s);})
+    .on("click",(ev,d)=>{ev.stopPropagation();openDetail(d);}).on("mouseenter",showTip).on("mouseleave",hideTip);
+  rescale();
+}
+function rescale(){
+  const mc=REG[region].mc,k=Math.pow(zk,.75);
+  gEv.selectAll("circle").attr("r",d=>rad(d.mag,mc)/k*(d.id===sel?1.25:1));
+  gMech.selectAll("g.bb").each(function(){const g=d3.select(this),x=+g.attr("data-x"),y=+g.attr("data-y"),im=g.select("image"),s=+im.attr("data-s")/k;
+    im.attr("x",x-s/2).attr("y",y-s/2).attr("width",s).attr("height",s);g.select("circle.ring").attr("cx",x).attr("cy",y).attr("r",s/2+2/zk);});
+}
+const tip=$("#tip");
+function showTip(ev,d){const b=$("#map").getBoundingClientRect(),c=$(".mapcard").getBoundingClientRect();tip.hidden=false;tip.textContent=`M${d.mag.toFixed(1)} ${d.magType} · ${Math.round(d.depth)} km · ${d.place}`;
+  tip.style.left=(ev.clientX-c.left)+"px";tip.style.top=(ev.clientY-c.top)+"px";}
+function hideTip(){tip.hidden=true;}
+svg.on("click",()=>{});
+$("#zin").onclick=()=>svg.transition().duration(250).call(zoom.scaleBy,1.8);
+$("#zout").onclick=()=>svg.transition().duration(250).call(zoom.scaleBy,1/1.8);
+$("#zreset").onclick=()=>svg.transition().duration(300).call(zoom.transform,d3.zoomIdentity);
+$("#opt-mech").onchange=drawEvents;
+$("#opt-plates").onchange=()=>gPlates.style("display",$("#opt-plates").checked?null:"none");
+function zoomTo(d){const [x,y]=proj([d.lon,d.lat]);const k=region==="global"?6:3;
+  svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity.translate(W/2-k*x,H/2-k*y).scale(k));}
+
+function drawLegend(){
+  const mc=REG[region].mc,ms=region==="global"?[4.5,5.5,6.5,7.5]:[2.5,3.5,4.5];
+  const sizes=ms.map(m=>{const r=rad(m,mc);return `<span class="sw"><svg width="${2*r+2}" height="${2*r+2}"><circle cx="${r+1}" cy="${r+1}" r="${r}" fill="none" stroke="${css("--muted")}"/></svg>M${m}</span>`;}).join("");
+  const plates=Object.values(PCLS).map(p=>`<span class="sw"><svg width="26" height="8"><line x1="1" y1="4" x2="25" y2="4" stroke="${css("--plate")}" stroke-width="${p.w+.4}" ${p.dash?`stroke-dasharray="${p.dash}"`:""}/></svg>${p.n}</span>`).join("");
+  $("#legend").innerHTML=`<span class="sw"><i style="background:${css("--shallow")}"></i>0–70 km</span><span class="sw"><i style="background:${css("--inter")}"></i>70–300 km</span><span class="sw"><i style="background:${css("--deep")}"></i>≥300 km</span>${sizes}<span class="sw">Beachball: shaded = compressional (P-wave first motion up)</span>${plates}`;
+}
+
+/* ---------- summaries ---------- */
+function drawStats(){
+  const r=REG[region],ev=r.ev,big=ev.reduce((a,e)=>e.mag>a.mag?e:a),deep=ev.reduce((a,e)=>e.depth>a.depth?e:a),nm=ev.filter(e=>e.mech).length;
+  const day=ev.filter(e=>SNAP_MS-e.t<=864e5).length;
+  $("#stats").innerHTML=`
+   <div class="stat"><div class="k">Events</div><div class="v">${ev.length}</div><div class="s">${day} in the last 24 h</div></div>
+   <div class="stat"><div class="k">Largest</div><div class="v">M${big.mag.toFixed(1)}</div><div class="s" title="${big.place}">${big.place}</div></div>
+   <div class="stat"><div class="k">Mechanisms</div><div class="v">${nm}</div><div class="s">solutions retrieved</div></div>
+   <div class="stat"><div class="k">Deepest</div><div class="v">${Math.round(deep.depth)}<span style="font-size:15px"> km</span></div><div class="s" title="${deep.place}">${deep.place}</div></div>`;
+}
+function drawMajor(){
+  const r=REG[region];let list;
+  if(region==="global"){list=r.ev.filter(e=>e.mag>=6||(e.det&&e.det.alert)).sort((a,b)=>b.mag-a.mag);$("#majorlabel").textContent="Major events · M6+ or a PAGER alert";}
+  else{list=[...r.ev].sort((a,b)=>b.mag-a.mag).slice(0,4);$("#majorlabel").textContent="Largest events in the region";}
+  $("#major").innerHTML="";
+  list.forEach(e=>{const seq=sequenceOf(e,r.ev),a=e.det&&e.det.alert;
+    const b=document.createElement("button");b.className="mcard";if(a)b.style.setProperty("--sevc",css(alertCol(a)));
+    b.innerHTML=`${e.mech?`<img alt="" src="${beachball(e.mech,50,depthCol(e.depth),false)}">`:`<span class="dot">no MT</span>`}
+      <span><span class="t">M${e.mag.toFixed(1)} · ${e.place}</span>${a?`<span class="pill" style="color:${css(alertCol(a))}">PAGER ${a}</span>`:""}${e.det&&e.det.tsu?`<span class="pill" style="color:${css("--accent")}">Tsunami flag</span>`:""}
+      <div class="m">${fmtT(e.t)} UTC · ${ago(e.t)} ago · ${Math.round(e.depth)} km${e.mech?" · "+style(e.mech):""}</div>
+      ${seq&&seq.n?`<div class="m">Followed by ${seq.n} events ≥M${r.mc} within 150 km; largest M${seq.maxAf.mag.toFixed(1)}</div>`:""}</span>`;
+    b.onclick=()=>{openDetail(e);zoomTo(e);};$("#major").append(b);});
+}
+function drawTable(){
+  const r=REG[region],tb=$("#cat tbody");
+  const rows=[...r.ev].sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (x<y?-1:x>y?1:0)*sortDir;});
+  $("#catcount").textContent=`${r.ev.length} events · tap a row for detail`;
+  tb.innerHTML=rows.map(e=>`<tr class="ev${e.id===sel?" sel":""}" data-id="${e.id}" tabindex="0"><td class="num">${fmtT(e.t).slice(5)}</td><td class="num">${e.mag.toFixed(1)}<span style="color:var(--muted);font-size:11px"> ${e.magType}</span></td><td class="num"><span class="dchip" style="background:${depthCol(e.depth)}"></span>${e.depth.toFixed(0)}</td><td>${e.place}${e.mech?' <span class="mt">MT</span>':""}</td></tr>`).join("");
+  tb.querySelectorAll("tr").forEach(tr=>{const go=()=>{const e=r.ev.find(x=>x.id===tr.dataset.id);openDetail(e);zoomTo(e);};tr.onclick=go;tr.onkeydown=k=>{if(k.key==="Enter")go();};});
+}
+document.querySelectorAll("#cat th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=k==="place"?1:-1;}drawTable();});
+
+/* ---------- charts ---------- */
+function axisStyle(g){g.attr("class","axis");}
+function chartTime(){
+  const r=REG[region],ev=r.ev,w=520,h=200,m={l:34,r:10,t:8,b:24},s=d3.select("#c-time").attr("viewBox",`0 0 ${w} ${h}`);s.selectAll("*").remove();
+  const x=d3.scaleUtc().domain([d3.min(ev,e=>e.t),SNAP_MS]).range([m.l,w-m.r]),y=d3.scaleLinear().domain([r.mc,Math.ceil(d3.max(ev,e=>e.mag))]).nice().range([h-m.b,m.t]);
+  s.append("g").attr("class","gridl").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(w-m.l-m.r)).tickFormat("")).call(g=>g.select(".domain").remove());
+  s.append("g").call(axisStyle).attr("transform",`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(region==="global"?7:6).tickFormat(d3.utcFormat("%b %-d")));
+  s.append("g").call(axisStyle).attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5));
+  s.selectAll("line.stem").data(ev).join("line").attr("x1",e=>x(e.t)).attr("x2",e=>x(e.t)).attr("y1",h-m.b).attr("y2",e=>y(e.mag)).attr("stroke",css("--border")).attr("stroke-width",.6);
+  s.selectAll("circle").data([...ev].sort((a,b)=>a.mag-b.mag)).join("circle").attr("cx",e=>x(e.t)).attr("cy",e=>y(e.mag)).attr("r",e=>e.id===sel?5:3).attr("fill",e=>depthCol(e.depth)).attr("stroke",e=>e.id===sel?css("--ink"):"none").attr("stroke-width",1.5).style("cursor","pointer").on("click",(v,e)=>{openDetail(e);zoomTo(e);}).append("title").text(e=>`M${e.mag} ${e.place}`);
+  const big=ev.reduce((a,e)=>e.mag>a.mag?e:a),seq=sequenceOf(big,ev);
+  $("#cap-time").textContent=seq&&seq.n?`The M${big.mag.toFixed(1)} ${big.place.replace(/^.* of /,"")} event and its ${seq.n} following events within 150 km account for ${Math.round((seq.n+1)/ev.length*100)}% of this window.`:`Each stem is one event; color is depth class.`;
+}
+function bvalue(ev,mc){const ms=ev.map(e=>e.mag).filter(m=>m>=mc-1e-9),n=ms.length,mean=d3.mean(ms),b=Math.LOG10E/(mean-(mc-0.05));
+  const sb=2.3*b*b*Math.sqrt(d3.sum(ms,m=>(m-mean)**2)/(n*(n-1)));return {b,sb,n};}
+function chartGR(){
+  const r=REG[region],ev=r.ev,w=520,h=200,m={l:40,r:10,t:8,b:28},s=d3.select("#c-gr").attr("viewBox",`0 0 ${w} ${h}`);s.selectAll("*").remove();
+  const bins=d3.range(r.mc,d3.max(ev,e=>e.mag)+0.1001,0.1).map(v=>+v.toFixed(1));
+  const cum=bins.map(b=>({m:b,n:ev.filter(e=>e.mag>=b-1e-9).length})).filter(d=>d.n>0);
+  const inc=bins.map(b=>({m:b,n:ev.filter(e=>Math.abs(e.mag-b)<0.05).length})).filter(d=>d.n>0);
+  const x=d3.scaleLinear().domain([r.mc-0.1,d3.max(bins)+0.1]).range([m.l,w-m.r]),y=d3.scaleLog().domain([0.8,ev.length*1.3]).range([h-m.b,m.t]);
+  s.append("g").attr("class","gridl").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4).tickSize(-(w-m.l-m.r)).tickFormat("")).call(g=>g.select(".domain").remove());
+  s.append("g").call(axisStyle).attr("transform",`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(8));
+  s.append("g").call(axisStyle).attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4,"~s"));
+  s.selectAll("rect").data(inc).join("rect").attr("x",d=>x(d.m-0.045)).attr("width",d=>x(0.09)-x(0)).attr("y",d=>y(d.n)).attr("height",d=>y(0.8)-y(d.n)).attr("fill",css("--border")).attr("opacity",.7);
+  s.append("path").datum(cum).attr("fill","none").attr("stroke",css("--accent")).attr("stroke-width",1.6).attr("d",d3.line().x(d=>x(d.m)).y(d=>y(d.n)).curve(d3.curveStepAfter));
+  s.selectAll("circle").data(cum).join("circle").attr("cx",d=>x(d.m)).attr("cy",d=>y(d.n)).attr("r",2.2).attr("fill",css("--accent"));
+  const {b,sb,n}=bvalue(ev,r.mc);
+  const a=Math.log10(n)+b*r.mc;s.append("line").attr("x1",x(r.mc)).attr("y1",y(n)).attr("x2",x(a/b)).attr("y2",y(1)).attr("stroke",css("--ink")).attr("stroke-dasharray","4 3").attr("stroke-width",1);
+  s.append("text").attr("x",w-m.r-4).attr("y",m.t+12).attr("text-anchor","end").attr("fill",css("--ink")).style("font","500 12px var(--f-data)").text(`b = ${b.toFixed(2)} ± ${sb.toFixed(2)}`);
+  $("#cap-gr").textContent=`Cumulative N(≥M) with incremental counts behind. b from the Aki (1965) maximum-likelihood estimator, Shi & Bolt (1982) uncertainty, Mc taken as the ${r.mc} catalog floor. Mixed magnitude types (${[...new Set(ev.map(e=>e.magType))].join(", ")}); clustered sequences are not declustered, so treat it as descriptive.`;
+}
+function chartDepth(){
+  const r=REG[region],ev=r.ev,w=520,h=region==="global"?220:180,m={l:40,r:10,t:8,b:28},s=d3.select("#c-depth").attr("viewBox",`0 0 ${w} ${h}`);s.selectAll("*").remove();
+  const maxD=region==="global"?700:35;
+  const x=d3.scaleLinear().domain([r.mc-0.1,Math.ceil(d3.max(ev,e=>e.mag))+0.1]).range([m.l,w-m.r]),y=d3.scaleLinear().domain([Math.min(0,d3.min(ev,e=>e.depth)),maxD]).range([m.t,h-m.b]);
+  s.append("g").attr("class","gridl").attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6).tickSize(-(w-m.l-m.r)).tickFormat("")).call(g=>g.select(".domain").remove());
+  if(region==="global")[70,300].forEach(z=>s.append("line").attr("x1",m.l).attr("x2",w-m.r).attr("y1",y(z)).attr("y2",y(z)).attr("stroke",css("--muted")).attr("stroke-dasharray","2 3"));
+  s.append("g").call(axisStyle).attr("transform",`translate(0,${h-m.b})`).call(d3.axisBottom(x).ticks(8));
+  s.append("g").call(axisStyle).attr("transform",`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6));
+  s.append("text").attr("x",m.l+4).attr("y",h-m.b-6).attr("fill",css("--muted")).style("font","10.5px var(--f-data)").text("depth km ↓ · magnitude →");
+  s.selectAll("circle").data(ev).join("circle").attr("cx",e=>x(e.mag)).attr("cy",e=>y(Math.min(e.depth,maxD))).attr("r",e=>e.id===sel?5:3).attr("fill",e=>depthCol(e.depth)).attr("fill-opacity",.8).attr("stroke",e=>e.id===sel?css("--ink"):"none").attr("stroke-width",1.5).style("cursor","pointer").on("click",(v,e)=>{openDetail(e);zoomTo(e);}).append("title").text(e=>`M${e.mag} · ${e.depth.toFixed(0)} km · ${e.place}`);
+  const sh=ev.filter(e=>e.depth<70).length,im=ev.filter(e=>e.depth>=70&&e.depth<300).length,dp=ev.filter(e=>e.depth>=300).length;
+  $("#cap-depth").textContent=region==="global"?`${sh} shallow, ${im} intermediate, ${dp} deep. Most of the deep events lie in the Tonga–Fiji–Kermadec slab.`:`Crustal seismicity; ${ev.filter(e=>e.depth<0).length} events have negative depth (above the datum, as reported by the network).`;
+}
+
+/* ---------- detail ---------- */
+function openDetail(e){
+  sel=e.id;const r=REG[region],m=e.mech,det=e.det||{};
+  $("#d-mag").innerHTML=`M${e.mag.toFixed(e.mag%1?2:1).replace(/0$/,"")} <span style="font-size:15px;color:var(--muted)">${e.magType}</span>`;
+  $("#d-place").textContent=e.place;
+  let h=`<dl class="kv"><dt>Origin time</dt><dd>${e.iso.replace("T"," ").replace("Z"," UTC")}</dd><dt></dt><dd>${fmtPT(e.t)} · ${ago(e.t)} before snapshot</dd>
+    <dt>Epicenter</dt><dd>${Math.abs(e.lat).toFixed(3)}°${e.lat>=0?"N":"S"}, ${Math.abs(e.lon).toFixed(3)}°${e.lon>=0?"E":"W"}</dd>
+    <dt>Depth</dt><dd><span class="dchip" style="background:${depthCol(e.depth)}"></span>${e.depth.toFixed(1)} km · ${depthClass(e.depth)}</dd>
+    <dt>Event ID</dt><dd>${e.id}</dd></dl>`;
+  if(m){const P=planesOf(m),st=style(m),ax=axesOf(m);
+    const pf=p=>`${p[0].toFixed(0).padStart(3,"0")}° / ${p[1].toFixed(0)}° / ${p[2].toFixed(0)}°`;
+    const ss=st.includes("Strike-slip")?`<p>${ssSense(P.p1)} on plane 1 (${P.p1[0].toFixed(0)}°) or ${ssSense(P.p2)} on plane 2 (${P.p2[0].toFixed(0)}°).</p>`:"";
+    h+=`<div><h3>${m.k==="mt"?"Moment tensor":"Focal mechanism (first motion)"}</h3><div class="mechbox"><img alt="Beachball diagram" src="${beachball(m,150,depthCol(e.depth),true)}">
+      <div><div class="style">${st}</div>${ss}<p>Lower hemisphere, equal area. Shaded quadrants are compressional; T and P mark the tension and pressure axes.</p></div></div></div>
+      <dl class="kv"><dt>Nodal plane 1</dt><dd>${pf(P.p1)}</dd><dt>Nodal plane 2</dt><dd>${pf(P.p2)}</dd><dt></dt><dd style="font-family:var(--f-ui);color:var(--muted)">strike / dip / rake${P.derived?" · reconstructed from P/T axes":""}</dd>
+      <dt>T axis</dt><dd>${ax.t?`az ${Math.round(ax.t[0])}° · plunge ${Math.round(ax.t[1])}°`:"—"}</dd><dt>P axis</dt><dd>${ax.p?`az ${Math.round(ax.p[0])}° · plunge ${Math.round(ax.p[1])}°`:"—"}</dd>
+      ${m.k==="mt"?`<dt>Scalar moment</dt><dd>${m0html(m.m0)}</dd><dt>Moment magnitude</dt><dd>${m.mw!=null?m.mw+" "+m.mt:"—"}</dd><dt>Centroid depth</dt><dd>${m.z!=null?m.z+" km":"—"}</dd><dt>Double couple</dt><dd>${m.dc!=null?Math.round(m.dc*100)+"%":"—"}${m.dc!=null&&m.dc<0.5?" · large non-DC component; planes less diagnostic":""}</dd>`:""}
+      <dt>Solution source</dt><dd>${m.src} network</dd></dl>`;}
+  else h+=`<p class="note">No moment tensor or focal mechanism ${e.det?"in the preferred products":"was retrieved for this event"} in this snapshot.</p>`;
+  const imp=[];if(det.sig!=null)imp.push(`<dt>Significance</dt><dd>${det.sig}</dd>`);if(det.felt!=null)imp.push(`<dt>DYFI reports</dt><dd>${det.felt.toLocaleString()}</dd>`);
+  if(det.mmi!=null)imp.push(`<dt>Max MMI (ShakeMap)</dt><dd>${det.mmi.toFixed(1)}</dd>`);if(det.alert)imp.push(`<dt>PAGER alert</dt><dd style="color:${css(alertCol(det.alert))};font-weight:600">${det.alert.toUpperCase()}</dd>`);
+  if(det.tsu)imp.push(`<dt>Tsunami flag</dt><dd>Set (NTWC/PTWC information exists; not itself a warning)</dd>`);
+  if(imp.length)h+=`<div><h3>Impact</h3><dl class="kv">${imp.join("")}</dl></div>`;
+  const seq=sequenceOf(e,r.ev),par=parentSeq(e,r.ev);
+  if(seq&&seq.n)h+=`<div><h3>Sequence</h3><p class="note" style="margin:0">${seq.n} later events ≥M${r.mc} within 150 km in the ${seq.span.toFixed(0)} h to the snapshot; largest M${seq.maxAf.mag.toFixed(1)}.</p></div>`;
+  if(par)h+=`<div><h3>Sequence</h3><p class="note" style="margin:0">Within 150 km of, and after, the M${par.mag.toFixed(1)} event of ${fmtT(par.t)} UTC. <a href="#" id="d-par">Open that event</a></p></div>`;
+  h+=`<p><a href="https://earthquake.usgs.gov/earthquakes/eventpage/${e.id}" target="_blank" rel="noopener">USGS event page</a> · ShakeMap, DYFI, finite fault and the full product set</p>`;
+  $("#d-body").innerHTML=h;
+  if(par)$("#d-par").onclick=ev=>{ev.preventDefault();openDetail(par);zoomTo(par);};
+  $("#detail").classList.add("open");$("#detail").setAttribute("aria-hidden","false");
+  drawEvents();chartTime();chartDepth();document.querySelectorAll("#cat tr.ev").forEach(tr=>tr.classList.toggle("sel",tr.dataset.id===sel));
+}
+$("#d-close").onclick=()=>{$("#detail").classList.remove("open");$("#detail").setAttribute("aria-hidden","true");sel=null;drawEvents();chartTime();chartDepth();drawTable();};
+document.addEventListener("keydown",k=>{if(k.key==="Escape")$("#d-close").click();});
+
+/* ---------- region switching ---------- */
+function render(){setupProj();drawBase();drawEvents();drawLegend();drawStats();drawMajor();drawTable();chartTime();chartGR();chartDepth();}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{if(b.dataset.r===region)return;region=b.dataset.r;sel=null;
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));$("#d-close").click();render();
+  try{localStorage.setItem("td-region",region);}catch(_){} });
+try{const s=localStorage.getItem("td-region");if(s&&REG[s]){region=s;document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x.dataset.r===s));}}catch(_){}
+render();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{bbCache.clear();render();});
+new MutationObserver(()=>{bbCache.clear();render();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>
