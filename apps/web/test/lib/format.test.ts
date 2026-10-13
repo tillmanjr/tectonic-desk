@@ -19,8 +19,8 @@ describe("time formatting", () => {
     expect(fmtUtc(iso)).toBe("2026-10-13 12:23");
     expect(fmtUtc(iso, true)).toBe("2026-10-13 12:23:45");
     expect(fmtUtcTime(iso)).toBe("12:23");
-    expect(fmtUtcShort(iso)).toBe("Oct 13 12:23 UTC");
-    expect(fmtUtcShort("2026-01-05T03:07:00Z")).toBe("Jan 5 03:07 UTC");
+    expect(fmtUtcShort(iso)).toBe("Oct 13, 12:23 UTC");
+    expect(fmtUtcShort("2026-01-05T03:07:00Z")).toBe("Jan 5, 03:07 UTC");
   });
   it("formats local time with a zone abbreviation", () => {
     expect(fmtLocal(iso, "America/Los_Angeles")).toBe("Oct 13, 5:23 AM PDT");
