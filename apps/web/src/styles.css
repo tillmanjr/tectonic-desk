@@ -666,3 +666,7 @@ a {
 .hint-sw {
   font-style: italic;
 }
+.map.locked {
+  touch-action: auto;
+  cursor: default;
+}

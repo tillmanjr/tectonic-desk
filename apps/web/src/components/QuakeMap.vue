@@ -48,14 +48,20 @@ const transform = shallowRef<ZoomTransform>(zoomIdentity);
 const showMech = ref(true);
 const showPlates = ref(true);
 const showTeeth = ref(true);
+/** When set, wheel, drag and touch leave the map alone (the page scrolls); buttons and zoom-to-event still work. */
+const locked = ref(true);
 const plateSegments = shallowRef<PlateSegment[]>([]);
 const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
 const basemap = shallowRef<Basemap | null>(null);
 const tip = ref<Tip | null>(null);
 const hoveredPlate = ref<number | null>(null);
 
-const zoomBehavior = d3zoom<SVGSVGElement, unknown>()
-  .scaleExtent([1, 40])
+const zoomBehavior = d3zoom<SVGSVGElement, unknown>().scaleExtent([1, 40]);
+const defaultFilter = zoomBehavior.filter();
+zoomBehavior
+  .filter(function (this: SVGSVGElement, ev: Event, d: unknown) {
+    return !locked.value && defaultFilter.call(this, ev, d);
+  })
   .on("zoom", (ev: D3ZoomEvent<SVGSVGElement, unknown>) => {
     transform.value = ev.transform;
   });
@@ -176,6 +182,10 @@ onMounted(() => {
       <label><input v-model="showPlates" type="checkbox" /> Plate boundaries</label>
       <label><input v-model="showTeeth" type="checkbox" /> Subduction teeth</label>
       <span class="sp"></span>
+      <label
+        title="Wheel and drag scroll the page instead of moving the map; the buttons and clicking an event still zoom"
+        ><input v-model="locked" type="checkbox" /> Lock map</label
+      >
       <button type="button" class="zbtn" aria-label="Zoom in" @click="scaleBy(1.8)">+</button>
       <button type="button" class="zbtn" aria-label="Zoom out" @click="scaleBy(1 / 1.8)">−</button>
       <button
@@ -191,6 +201,7 @@ onMounted(() => {
     <svg
       ref="svgEl"
       class="map"
+      :class="{ locked }"
       role="img"
       aria-label="Map of earthquake epicenters"
       :viewBox="`0 0 ${String(view.frame.width)} ${String(view.frame.height)}`"

@@ -109,6 +109,26 @@ describe("QuakeMap", () => {
     expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "wc-land")).toHaveLength(1);
   });
 
+  it("ignores wheel and drag while locked, and zooms with the wheel once unlocked", async () => {
+    stubWorld();
+    const ctx = await makeContext();
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    const svg = w.find("svg");
+    // happy-dom's SVGPoint lacks matrixTransform; d3 then falls back to getBoundingClientRect.
+    Object.defineProperty(svg.element, "createSVGPoint", { value: undefined });
+    expect(svg.classes()).toContain("locked");
+    await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
+    expect(w.find("svg > g").attributes("transform")).toBe("translate(0,0) scale(1)");
+    await w.findAll(".zbtn")[0]?.trigger("click");
+    expect(w.find("svg > g").attributes("transform")).toContain("scale(1.8");
+    await w.findAll(".zbtn")[2]?.trigger("click");
+    await w.findAll("input[type=checkbox]")[3]?.setValue(false);
+    expect(svg.classes()).not.toContain("locked");
+    await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
+    expect(w.find("svg > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
+  });
+
   it("uses animated transitions by default and throws without a region", async () => {
     stubWorld();
     const ctx = await makeContext();
