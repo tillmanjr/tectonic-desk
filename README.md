@@ -75,6 +75,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   has landed. It turns amber after 30 minutes without a sync and red when the API is unreachable.
 - Theme follows the system by default; the toggle cycles auto, light, dark.
 - The focal-mechanism math lives in `packages/shared`; only the canvas raster is in the web app.
+- Subduction teeth point toward the overriding plate, read from Bird's `/` and `\` boundary titles;
+  the plate tooltip says which plate subducts under which.
 
 ## Deployment
 

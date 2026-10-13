@@ -11,7 +11,7 @@ describe("MapPlates", () => {
     const features = (plateSegments as PlateSegment[]).map(plateFeature);
     const w = mount(MapPlates, { props: { path, features } });
     const paths = w.findAll("path");
-    expect(paths).toHaveLength(3);
+    expect(paths).toHaveLength(4);
     expect(paths[0]?.attributes("stroke-dasharray")).toBe("6 3");
     expect(paths[2]?.attributes("stroke-dasharray")).toBeUndefined();
     expect(paths[2]?.attributes("stroke-width")).toBe("2.2");

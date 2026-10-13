@@ -27,15 +27,21 @@ const plates = Object.values(PLATE_CLASSES);
     </span>
     <span class="sw">Beachball: shaded = compressional (P-wave first motion up)</span>
     <span v-for="p in plates" :key="p.name" class="sw">
-      <svg width="26" height="8">
+      <svg width="26" height="10">
         <line
           x1="1"
-          y1="4"
+          y1="7"
           x2="25"
-          y2="4"
+          y2="7"
           style="stroke: var(--plate)"
           :stroke-width="p.width + 0.4"
           :stroke-dasharray="p.dash ?? undefined"
+        />
+        <path
+          v-if="p.teeth"
+          class="teeth"
+          d="M6,7L9,1.5L12,7ZM16,7L19,1.5L22,7Z"
+          style="fill: var(--plate)"
         />
       </svg>
       {{ p.name }}

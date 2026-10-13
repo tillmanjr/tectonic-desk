@@ -37,6 +37,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 - State is a `Catalog`, a `StatusPoll`, a `Clock` and a `Theme`, created in `App.vue` and provided under the keys in `src/lib/keys.ts`. Tests mount components with `mountWith(component, ctx)` from `test/support/mount.ts`; `makeContext()` builds a loaded catalog over `fakeApi()`.
 - Region and selection live in the route (`/:region`, `?event=id`); components call the injected `SELECT` function, never the router.
 - Mechanism math (tensor, axes, classification, `planesOf`) is in `packages/shared/src/mechanism`; `src/lib/beachball.ts` only rasterises. Tests stub the canvas with `stubCanvas()`.
+- Subduction polarity comes from the PB2002 title slash (`src/lib/teeth.ts`, `polarity`); teeth are laid in projected space by `teethPath` and keep a constant screen size.
 - `.vue` files are linted type-aware through `@vue/eslint-config-typescript`; `vue-tsc` typechecks. Interfaces that tests spy on (`ApiClient`) use function-typed properties, not methods, so the unbound-method rule stays on.
 - Production: `deploy/nginx.conf`, the two Dockerfiles and the compose `prod` profile. nginx serves `dist/` and proxies `/api` to the `server` container.
 

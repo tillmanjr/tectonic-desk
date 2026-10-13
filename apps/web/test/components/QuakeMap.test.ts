@@ -22,7 +22,8 @@ describe("QuakeMap", () => {
     await flushPromises();
     expect(w.find("svg").attributes("viewBox")).toBe("0 0 1000 520");
     expect(w.findAll("svg > g > g").length).toBeGreaterThanOrEqual(3);
-    expect(w.findComponent({ name: "MapPlates" }).findAll("path")).toHaveLength(3);
+    expect(w.findComponent({ name: "MapPlates" }).findAll("path")).toHaveLength(4);
+    expect(w.findComponent({ name: "MapTeeth" }).findAll("path")).toHaveLength(1);
     expect(w.findAll("g.bb")).toHaveLength(0);
     const buttons = w.findAll(".zbtn");
     await buttons[0]?.trigger("click");
@@ -34,6 +35,8 @@ describe("QuakeMap", () => {
     expect(w.findComponent({ name: "MapPlates" }).exists()).toBe(false);
     await w.findAll("input[type=checkbox]")[0]?.setValue(false);
     expect(w.findComponent({ name: "MapEvents" }).findAll("circle")).toHaveLength(1);
+    await w.findAll("input[type=checkbox]")[2]?.setValue(false);
+    expect(w.findComponent({ name: "MapTeeth" }).exists()).toBe(false);
   });
 
   it("zooms to the selected event and shows a tooltip on hover", async () => {

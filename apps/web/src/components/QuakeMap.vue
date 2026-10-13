@@ -10,6 +10,7 @@ import MapBasemap from "./MapBasemap.vue";
 import MapEvents from "./MapEvents.vue";
 import MapLegend from "./MapLegend.vue";
 import MapPlates from "./MapPlates.vue";
+import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
 import { mustRef } from "../lib/dom.js";
 import { fmtMag, placeOf } from "../lib/format.js";
@@ -46,6 +47,8 @@ const cardEl = ref<HTMLElement | null>(null);
 const transform = shallowRef<ZoomTransform>(zoomIdentity);
 const showMech = ref(true);
 const showPlates = ref(true);
+const showTeeth = ref(true);
+const plateSegments = shallowRef<PlateSegment[]>([]);
 const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
 const basemap = shallowRef<Basemap | null>(null);
 const tip = ref<Tip | null>(null);
@@ -120,6 +123,7 @@ async function loadBasemap(r: ApiRegion): Promise<void> {
 async function loadPlates(): Promise<void> {
   try {
     const segments = (await api.geo("plates")) as PlateSegment[];
+    plateSegments.value = segments;
     plates.value = segments.map(plateFeature);
   } catch (e) {
     console.error("plate boundaries failed to load", e);
@@ -160,6 +164,7 @@ onMounted(() => {
     <div class="maptools">
       <label><input v-model="showMech" type="checkbox" /> Focal mechanisms</label>
       <label><input v-model="showPlates" type="checkbox" /> Plate boundaries</label>
+      <label><input v-model="showTeeth" type="checkbox" /> Subduction teeth</label>
       <span class="sp"></span>
       <button type="button" class="zbtn" aria-label="Zoom in" @click="scaleBy(1.8)">+</button>
       <button type="button" class="zbtn" aria-label="Zoom out" @click="scaleBy(1 / 1.8)">−</button>
@@ -183,6 +188,7 @@ onMounted(() => {
       <g :transform="transform.toString()">
         <MapBasemap :frame="view.frame" :path="view.path" :basemap="basemap" />
         <MapPlates v-if="showPlates" :path="view.path" :features="plates" />
+        <MapTeeth v-if="showTeeth" :frame="view.frame" :segments="plateSegments" :k="transform.k" />
         <MapEvents
           :frame="view.frame"
           :events="events"
