@@ -19,6 +19,8 @@ export function makeEvent(overrides: Partial<Event> = {}): Event {
     cdi: null,
     mmi: 2.823,
     tsunami: false,
+    eventType: "earthquake",
+    types: ["origin", "phase-data"],
     raw: { title: "M 5.5 - 122 km W of Neiafu, Tonga" },
     ...overrides,
   };

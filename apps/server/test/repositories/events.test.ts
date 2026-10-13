@@ -1,6 +1,12 @@
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { getEvent, listEvents, upsertEvents } from "../../src/repositories/events.js";
+import {
+  getEvent,
+  listDetailCandidates,
+  listEvents,
+  markDetailChecked,
+  upsertEvents,
+} from "../../src/repositories/events.js";
 import { makeEvent } from "../fixtures.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
@@ -146,6 +152,38 @@ describe.skipIf(!docker)("events repository", () => {
       expect((await listEvents(t.db, { limit: 2 })).length).toBe(2);
       expect((await listEvents(t.db, { limit: 99999 })).length).toBe(4);
       await expect(listEvents(t.db, { limit: 0 })).rejects.toThrow(/limit/);
+    });
+  });
+
+  describe("detail candidates", () => {
+    it("selects events advertising a mechanism that were never checked or were revised since", async () => {
+      const updated = new Date("2026-10-12T06:00:00Z");
+      await upsertEvents(t.db, [
+        makeEvent({
+          id: "mt-new",
+          types: ["origin", "moment-tensor"],
+          time: new Date("2026-10-12T03:00:00Z"),
+        }),
+        makeEvent({
+          id: "fm-new",
+          types: ["focal-mechanism"],
+          time: new Date("2026-10-12T02:00:00Z"),
+        }),
+        makeEvent({ id: "plain", types: ["origin"], time: new Date("2026-10-12T04:00:00Z") }),
+        makeEvent({ id: "checked", types: ["moment-tensor"], updated }),
+        makeEvent({
+          id: "revised",
+          types: ["moment-tensor"],
+          updated,
+          time: new Date("2026-10-12T01:00:00Z"),
+        }),
+      ]);
+      await markDetailChecked(t.db, "checked", updated);
+      await markDetailChecked(t.db, "revised", new Date("2026-10-12T05:00:00Z"));
+      const ids = (await listDetailCandidates(t.db, 10)).map((c) => c.id);
+      expect(ids).toEqual(["mt-new", "fm-new", "revised"]);
+      expect((await listDetailCandidates(t.db, 1)).map((c) => c.id)).toEqual(["mt-new"]);
+      expect((await getEvent(t.db, "checked"))?.detailCheckedUpdated).toEqual(updated);
     });
   });
 });

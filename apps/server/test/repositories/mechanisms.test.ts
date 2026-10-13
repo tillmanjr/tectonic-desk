@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { getEvent, upsertEvents } from "../../src/repositories/events.js";
-import { upsertMechanism } from "../../src/repositories/mechanisms.js";
+import { deleteMechanism, upsertMechanism } from "../../src/repositories/mechanisms.js";
 import { makeEvent, makeMechanism } from "../fixtures.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
@@ -41,6 +41,14 @@ describe.skipIf(!docker)("mechanisms repository", () => {
     await upsertMechanism(t.db, makeMechanism({ kind: "mt", source: "us", code: "a" }));
     await upsertMechanism(t.db, makeMechanism({ kind: "fm", source: "nc", code: "b" }));
     expect((await getEvent(t.db, "us6000u1pl"))?.mechanisms).toHaveLength(2);
+  });
+
+  it("deletes one product by key and leaves the others", async () => {
+    await upsertMechanism(t.db, makeMechanism({ code: "a" }));
+    await upsertMechanism(t.db, makeMechanism({ code: "b" }));
+    await deleteMechanism(t.db, { eventId: "us6000u1pl", kind: "mt", source: "us", code: "a" });
+    const got = await getEvent(t.db, "us6000u1pl");
+    expect(got?.mechanisms.map((m) => m.code)).toEqual(["b"]);
   });
 
   it("rejects a mechanism for an unknown event", async () => {

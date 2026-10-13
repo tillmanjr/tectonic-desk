@@ -18,10 +18,16 @@ describe("event mappers", () => {
       ...makeEvent(),
       firstSeen: seen,
       lastSeen: seen,
+      detailCheckedUpdated: null,
       extra: 1,
     };
     const back = rowToEvent(row);
-    expect(back).toEqual({ ...makeEvent(), firstSeen: seen, lastSeen: seen });
+    expect(back).toEqual({
+      ...makeEvent(),
+      firstSeen: seen,
+      lastSeen: seen,
+      detailCheckedUpdated: null,
+    });
     expect(back).not.toHaveProperty("extra");
   });
 });

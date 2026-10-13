@@ -30,7 +30,9 @@ export async function startPostgres(): Promise<TestDb> {
   return {
     db,
     truncate: async () => {
-      await db.execute(sql`truncate table mechanisms, events restart identity cascade`);
+      await db.execute(
+        sql`truncate table mechanisms, events, ingest_runs restart identity cascade`,
+      );
     },
     stop: async () => {
       await close();

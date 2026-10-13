@@ -35,6 +35,12 @@ export const events = pgTable(
     cdi: doublePrecision("cdi"),
     mmi: doublePrecision("mmi"),
     tsunami: boolean("tsunami").notNull().default(false),
+    eventType: text("event_type"),
+    types: text("types")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    detailCheckedUpdated: timestamp("detail_checked_updated", tz),
     firstSeen: timestamp("first_seen", tz).notNull().defaultNow(),
     lastSeen: timestamp("last_seen", tz).notNull().defaultNow(),
     raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
@@ -98,7 +104,33 @@ export const mechanismsRelations = relations(mechanisms, ({ one }) => ({
   event: one(events, { fields: [mechanisms.eventId], references: [events.id] }),
 }));
 
+export const ingestRuns = pgTable(
+  "ingest_runs",
+  {
+    id: serial("id").primaryKey(),
+    kind: text("kind").$type<"feed_day" | "feed_week" | "backfill" | "details">().notNull(),
+    startedAt: timestamp("started_at", tz).notNull(),
+    finishedAt: timestamp("finished_at", tz),
+    ok: boolean("ok"),
+    eventsInserted: integer("events_inserted").notNull().default(0),
+    eventsUpdated: integer("events_updated").notNull().default(0),
+    eventsSkipped: integer("events_skipped").notNull().default(0),
+    detailsFetched: integer("details_fetched").notNull().default(0),
+    mechanismsUpserted: integer("mechanisms_upserted").notNull().default(0),
+    error: text("error"),
+    detail: jsonb("detail").$type<Record<string, unknown>>().notNull().default({}),
+  },
+  (t) => [
+    index("ingest_runs_kind_started_idx").on(t.kind, t.startedAt.desc()),
+    check(
+      "ingest_runs_kind_check",
+      sql`${t.kind} in ('feed_day', 'feed_week', 'backfill', 'details')`,
+    ),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type EventInsert = typeof events.$inferInsert;
 export type MechanismRow = typeof mechanisms.$inferSelect;
 export type MechanismInsert = typeof mechanisms.$inferInsert;
+export type IngestRunRow = typeof ingestRuns.$inferSelect;

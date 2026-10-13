@@ -1,8 +1,10 @@
-import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { drizzle, type NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
+import type { PgDatabase } from "drizzle-orm/pg-core";
 import pg from "pg";
 import * as schema from "./schema.js";
 
-export type Db = NodePgDatabase<typeof schema>;
+/** Accepts both the pool-backed database and a transaction inside it. */
+export type Db = PgDatabase<NodePgQueryResultHKT, typeof schema>;
 
 export interface DbHandle {
   db: Db;

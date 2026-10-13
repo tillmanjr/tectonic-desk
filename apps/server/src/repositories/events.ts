@@ -1,5 +1,18 @@
 import type { BBox, Event, EventWithMechanisms, StoredEvent } from "@tectonic/shared";
-import { and, desc, eq, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  arrayOverlaps,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { events } from "../db/schema.js";
 import { eventToRow, rowToEvent } from "../mappers/events.js";
@@ -42,6 +55,8 @@ const updateSet = {
   cdi: excluded("cdi"),
   mmi: excluded("mmi"),
   tsunami: excluded("tsunami"),
+  eventType: excluded("event_type"),
+  types: excluded("types"),
   raw: excluded("raw"),
 };
 
@@ -135,4 +150,28 @@ export async function getEvent(db: Db, id: string): Promise<EventWithMechanisms 
   });
   if (!row) return null;
   return { ...rowToEvent(row), mechanisms: row.mechanisms.map(rowToMechanism) };
+}
+
+const MECHANISM_TYPES = ["moment-tensor", "focal-mechanism"];
+
+/** Events advertising a mechanism product whose detail has not been fetched since their last revision. */
+export async function listDetailCandidates(
+  db: Db,
+  limit: number,
+): Promise<{ id: string; updated: Date }[]> {
+  return db
+    .select({ id: events.id, updated: events.updated })
+    .from(events)
+    .where(
+      and(
+        arrayOverlaps(events.types, MECHANISM_TYPES),
+        or(isNull(events.detailCheckedUpdated), lt(events.detailCheckedUpdated, events.updated)),
+      ),
+    )
+    .orderBy(desc(events.time), desc(events.id))
+    .limit(limit);
+}
+
+export async function markDetailChecked(db: Db, id: string, updated: Date): Promise<void> {
+  await db.update(events).set({ detailCheckedUpdated: updated }).where(eq(events.id, id));
 }

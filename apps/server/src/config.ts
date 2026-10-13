@@ -6,6 +6,11 @@ const schema = z.object({
   HOST: z.string().min(1).default("127.0.0.1"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  INGEST_ENABLED: z.stringbool().default(true),
+  INGEST_DAY_INTERVAL_MS: z.coerce.number().int().min(60_000).default(300_000),
+  INGEST_WEEK_INTERVAL_MS: z.coerce.number().int().min(300_000).default(3_600_000),
+  USGS_BASE_URL: z.url().default("https://earthquake.usgs.gov"),
+  USGS_USER_AGENT: z.string().min(1).default("tectonic-desk/0.0 (+local)"),
 });
 
 export type Config = z.infer<typeof schema>;

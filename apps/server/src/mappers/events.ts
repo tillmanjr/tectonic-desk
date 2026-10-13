@@ -20,9 +20,12 @@ export function rowToEvent(row: EventRow): StoredEvent {
     cdi: row.cdi,
     mmi: row.mmi,
     tsunami: row.tsunami,
+    eventType: row.eventType,
+    types: row.types,
     raw: row.raw,
     firstSeen: row.firstSeen,
     lastSeen: row.lastSeen,
+    detailCheckedUpdated: row.detailCheckedUpdated,
   };
 }
 
@@ -45,6 +48,8 @@ export function eventToRow(e: Event): EventInsert {
     cdi: e.cdi,
     mmi: e.mmi,
     tsunami: e.tsunami,
+    eventType: e.eventType,
+    types: e.types,
     raw: e.raw,
   };
 }

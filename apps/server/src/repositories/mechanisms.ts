@@ -1,5 +1,5 @@
 import type { Mechanism } from "@tectonic/shared";
-import { sql, type SQL } from "drizzle-orm";
+import { and, eq, sql, type SQL } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { mechanisms } from "../db/schema.js";
 import { mechanismToRow } from "../mappers/mechanisms.js";
@@ -44,4 +44,19 @@ export async function upsertMechanism(db: Db, m: Mechanism): Promise<void> {
       target: [mechanisms.eventId, mechanisms.kind, mechanisms.source, mechanisms.code],
       set: updateSet,
     });
+}
+
+export type MechanismKey = Pick<Mechanism, "eventId" | "kind" | "source" | "code">;
+
+export async function deleteMechanism(db: Db, key: MechanismKey): Promise<void> {
+  await db
+    .delete(mechanisms)
+    .where(
+      and(
+        eq(mechanisms.eventId, key.eventId),
+        eq(mechanisms.kind, key.kind),
+        eq(mechanisms.source, key.source),
+        eq(mechanisms.code, key.code),
+      ),
+    );
 }
