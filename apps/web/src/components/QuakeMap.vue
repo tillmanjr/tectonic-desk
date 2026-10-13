@@ -207,20 +207,20 @@ onMounted(() => {
         "
         @click="locked = !locked"
       >
-        <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
-          <rect x="8" y="3" width="12" height="22" rx="6" fill="currentColor" />
-          <line x1="14" y1="3" x2="14" y2="11" stroke="var(--panel)" stroke-width="1.5" />
-          <rect x="13" y="6" width="2" height="4" rx="1" fill="var(--panel)" />
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+          <rect
+            x="10"
+            y="5"
+            width="12"
+            height="22"
+            rx="6"
+            :style="{ fill: locked ? 'var(--muted)' : 'var(--ink)' }"
+          />
+          <line x1="16" y1="5" x2="16" y2="13" stroke="var(--panel)" stroke-width="1.5" />
+          <rect x="15" y="8" width="2" height="4" rx="1" fill="var(--panel)" />
           <g v-if="locked" class="slash">
-            <circle cx="14" cy="14" r="12" fill="none" stroke="var(--sev-red)" stroke-width="2.5" />
-            <line
-              x1="5.5"
-              y1="5.5"
-              x2="22.5"
-              y2="22.5"
-              stroke="var(--sev-red)"
-              stroke-width="2.5"
-            />
+            <circle cx="16" cy="16" r="14.5" fill="none" stroke="var(--muted)" stroke-width="2.2" />
+            <line x1="5.8" y1="5.8" x2="26.2" y2="26.2" stroke="var(--muted)" stroke-width="2.2" />
           </g>
         </svg>
       </button>
