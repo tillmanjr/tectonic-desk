@@ -3,6 +3,7 @@ import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CatalogTable from "./CatalogTable.vue";
 import DepthChart from "./DepthChart.vue";
+import DetailPanel from "./DetailPanel.vue";
 import FrequencyMagnitudeChart from "./FrequencyMagnitudeChart.vue";
 import MagnitudeTimeChart from "./MagnitudeTimeChart.vue";
 import MajorEvents from "./MajorEvents.vue";
@@ -142,4 +143,5 @@ onUnmounted(() => {
       </p>
     </footer>
   </div>
+  <DetailPanel />
 </template>

@@ -40,11 +40,16 @@ describe("App", () => {
     vi.useRealTimers();
   });
 
-  it("boots into the routed region", async () => {
+  it("boots into the routed region and selection", async () => {
     stubCanvas();
-    const { wrapper } = await mountApp("/wc?event=us1");
+    const { wrapper, router } = await mountApp("/wc?event=us1");
     expect(wrapper.find("[role=tab][aria-selected=true]").text()).toContain("West Coast");
     expect(wrapper.find(".sectionlabel").text()).toBe("Largest events in the region");
+    expect(wrapper.find(".detail").classes()).toContain("open");
+    expect(wrapper.find(".detail .mag").text()).toContain("M5.5");
+    await router.replace({ query: {} });
+    await flushPromises();
+    expect(wrapper.find(".detail").classes()).not.toContain("open");
   });
 
   it("redirects an unknown region to global", async () => {
@@ -64,6 +69,9 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.query.event).toBe("us1");
     expect(wrapper.find("tr.ev").classes()).toContain("sel");
+    await wrapper.find(".detail .close").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.event).toBeUndefined();
     await wrapper.findAll("[role=tab]")[0]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/");
