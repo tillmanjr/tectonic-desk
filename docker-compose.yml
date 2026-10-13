@@ -17,5 +17,31 @@ services:
       timeout: 3s
       retries: 10
 
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    profiles: [prod]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://tectonic:tectonic@postgres:5432/tectonic
+      INGEST_ENABLED: "true"
+      HOST: 0.0.0.0
+      PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    profiles: [prod]
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+
 volumes:
   tectonic-pgdata:

@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "drizzle",
+    "data"
+  ],
   "scripts": {
     "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/index.ts",
     "start": "node --env-file-if-exists=../../.env dist/index.js",

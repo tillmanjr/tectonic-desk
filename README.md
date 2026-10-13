@@ -6,9 +6,10 @@ Written for a reader with formal geology training.
 ## Layout
 
 - `apps/server` Fastify + Drizzle + Postgres (TypeScript), with the USGS ingest
-- `apps/web` placeholder for the Vue 3 + Vite front end
+- `apps/web` Vue 3 + Vite front end (the port of the prototype)
 - `packages/shared` domain types and focal-mechanism math shared by server and web
 - `quake/` the original static prototype, frozen as historical reference
+- `deploy/` nginx config for the production image
 - `docs/superpowers` design specs and implementation plans
 
 ## Prerequisites
@@ -23,7 +24,7 @@ cp .env.example .env              # Postgres is exposed on host port 5433
 pnpm db:up
 pnpm db:migrate
 pnpm ingest backfill --days 90    # optional: load history (several minutes)
-pnpm dev                          # http://127.0.0.1:3000/api/health
+pnpm dev                          # web on http://localhost:5173, API on http://127.0.0.1:3000
 ```
 
 ## Ingest
@@ -63,15 +64,35 @@ defaults to seven days ago), `minMag`, `bbox=minLon,minLat,maxLon,maxLat` (minLo
 crosses the antimeridian), `limit` (default 500, max 5000). Dates in responses are ISO 8601 UTC.
 Types for every response are in `packages/shared/src/api.ts`.
 
+## Front end
+
+`apps/web` is the Vue 3 + Vite port of the prototype. `pnpm dev` runs the server and Vite together;
+the page is at http://localhost:5173 and `/api` is proxied to port 3000.
+
+- `/` is the Global view, `/wc` the West Coast view; `?event=<id>` opens the detail panel, so links
+  are shareable.
+- The status line polls `GET /api/status` every minute and refetches the catalog when a feed sync
+  has landed. It turns amber after 30 minutes without a sync and red when the API is unreachable.
+- Theme follows the system by default; the toggle cycles auto, light, dark.
+- The focal-mechanism math lives in `packages/shared`; only the canvas raster is in the web app.
+
+## Deployment
+
+`docker compose --profile prod up --build -d` builds and runs Postgres, the API (with ingest) and
+nginx serving the built front end on http://localhost:8080 (`/api` is proxied). The server runs
+migrations on start. `docker compose --profile prod down` stops everything; the data volume is kept.
+
 ## Scripts
 
 | Script                          | What it does                                                   |
 | ------------------------------- | -------------------------------------------------------------- |
+| `pnpm dev`                      | server and web together (Vite on 5173, API on 3000)            |
+| `pnpm dev:server` / `dev:web`   | one of them                                                    |
 | `pnpm test`                     | all tests; integration tests need Docker (Testcontainers)      |
 | `pnpm test:coverage`            | tests with 100% thresholds on server and shared                |
 | `pnpm lint` / `pnpm format`     | ESLint (type-aware) / Prettier                                 |
 | `pnpm typecheck`                | tsc across the workspace                                       |
-| `pnpm build`                    | compile `packages/shared` then `apps/server` to `dist/`        |
+| `pnpm build`                    | compile shared, server and web to their `dist/`                |
 | `pnpm db:generate`              | generate a migration from `apps/server/src/db/schema.ts`       |
 | `pnpm db:migrate`               | apply migrations to `DATABASE_URL`                             |
 | `pnpm db:up` / `pnpm db:down`   | start / stop the compose Postgres                              |
