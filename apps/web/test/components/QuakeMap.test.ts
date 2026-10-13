@@ -20,17 +20,17 @@ describe("QuakeMap", () => {
     const ctx = await makeContext();
     const w = mountWith(QuakeMap, ctx, { animate: false });
     await flushPromises();
-    expect(w.find("svg").attributes("viewBox")).toBe("0 0 1000 520");
-    expect(w.findAll("svg > g > g").length).toBeGreaterThanOrEqual(3);
+    expect(w.find("svg.map").attributes("viewBox")).toBe("0 0 1000 520");
+    expect(w.findAll("svg.map > g > g").length).toBeGreaterThanOrEqual(3);
     expect(w.findComponent({ name: "MapPlates" }).findAll("path.line")).toHaveLength(4);
     expect(w.findComponent({ name: "MapTeeth" }).findAll("path")).toHaveLength(1);
     expect(w.findAll("g.bb")).toHaveLength(0);
     const buttons = w.findAll(".zbtn");
     await buttons[0]?.trigger("click");
-    expect(w.find("svg > g").attributes("transform")).toContain("scale(1.8");
+    expect(w.find("svg.map > g").attributes("transform")).toContain("scale(1.8");
     await buttons[1]?.trigger("click");
     await buttons[2]?.trigger("click");
-    expect(w.find("svg > g").attributes("transform")).toBe("translate(0,0) scale(1)");
+    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
     await w.findAll("input[type=checkbox]")[1]?.setValue(false);
     expect(w.findComponent({ name: "MapPlates" }).exists()).toBe(false);
     await w.findAll("input[type=checkbox]")[0]?.setValue(false);
@@ -53,7 +53,7 @@ describe("QuakeMap", () => {
     await flushPromises();
     ctx.catalog.select("us1");
     await flushPromises();
-    expect(w.find("svg > g").attributes("transform")).toContain("scale(6)");
+    expect(w.find("svg.map > g").attributes("transform")).toContain("scale(6)");
     const circles = w.findComponent({ name: "MapEvents" }).findAll("circle");
     await circles[1]?.trigger("mouseenter", { clientX: 40, clientY: 50 });
     expect(w.find(".tip").text()).toBe("M5.5 mww · 195 km · 122 km W of Neiafu, Tonga");
@@ -70,7 +70,7 @@ describe("QuakeMap", () => {
     expect(w.findComponent({ name: "MapTeeth" }).find("path.hot").exists()).toBe(false);
     ctx.catalog.select("missing");
     await flushPromises();
-    expect(w.find("svg > g").attributes("transform")).toContain("scale(6)");
+    expect(w.find("svg.map > g").attributes("transform")).toContain("scale(6)");
   });
 
   it("switches to the region basemap, resets the zoom, caches it, and logs basemap and plate failures", async () => {
@@ -94,17 +94,17 @@ describe("QuakeMap", () => {
     await w.findAll(".zbtn")[0]?.trigger("click");
     await ctx.catalog.setRegion("wc");
     await flushPromises();
-    expect(w.find("svg").attributes("viewBox")).toBe("0 0 1000 700");
-    expect(w.find("svg > g").attributes("transform")).toBe("translate(0,0) scale(1)");
+    expect(w.find("svg.map").attributes("viewBox")).toBe("0 0 1000 700");
+    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
     expect(api.geo).toHaveBeenCalledWith("wc-land");
     await ctx.catalog.setRegion("global");
     await flushPromises();
     resolveStates(squareTopology);
     await flushPromises();
-    expect(w.find("rect").exists()).toBe(false);
+    expect(w.findComponent({ name: "MapBasemap" }).find("rect").exists()).toBe(false);
     await ctx.catalog.setRegion("wc");
     await flushPromises();
-    expect(w.find("rect").exists()).toBe(true);
+    expect(w.findComponent({ name: "MapBasemap" }).find("rect").exists()).toBe(true);
     expect(w.findComponent({ name: "MapBasemap" }).findAll("path").length).toBe(3);
     expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "wc-land")).toHaveLength(1);
   });
@@ -114,19 +114,23 @@ describe("QuakeMap", () => {
     const ctx = await makeContext();
     const w = mountWith(QuakeMap, ctx, { animate: false });
     await flushPromises();
-    const svg = w.find("svg");
+    const svg = w.find("svg.map");
     // happy-dom's SVGPoint lacks matrixTransform; d3 then falls back to getBoundingClientRect.
     Object.defineProperty(svg.element, "createSVGPoint", { value: undefined });
     expect(svg.classes()).toContain("locked");
     await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
-    expect(w.find("svg > g").attributes("transform")).toBe("translate(0,0) scale(1)");
+    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
     await w.findAll(".zbtn")[0]?.trigger("click");
-    expect(w.find("svg > g").attributes("transform")).toContain("scale(1.8");
+    expect(w.find("svg.map > g").attributes("transform")).toContain("scale(1.8");
     await w.findAll(".zbtn")[2]?.trigger("click");
-    await w.findAll("input[type=checkbox]")[3]?.setValue(false);
+    expect(w.find(".maplock").attributes("aria-pressed")).toBe("true");
+    expect(w.find(".maplock .slash").exists()).toBe(true);
+    await w.find(".maplock").trigger("click");
+    expect(w.find(".maplock").attributes("aria-pressed")).toBe("false");
+    expect(w.find(".maplock .slash").exists()).toBe(false);
     expect(svg.classes()).not.toContain("locked");
     await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
-    expect(w.find("svg > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
+    expect(w.find("svg.map > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
   });
 
   it("uses animated transitions by default and throws without a region", async () => {
@@ -136,7 +140,7 @@ describe("QuakeMap", () => {
     await flushPromises();
     await w.findAll(".zbtn")[0]?.trigger("click");
     await w.findAll(".zbtn")[2]?.trigger("click");
-    expect(w.find("svg").exists()).toBe(true);
+    expect(w.find("svg.map").exists()).toBe(true);
     const empty = createCatalog(fakeApi(), () => ctx.now);
     expect(() => mountWith(QuakeMap, { ...ctx, catalog: empty })).toThrow("no region selected");
   });

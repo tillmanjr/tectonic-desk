@@ -670,3 +670,25 @@ a {
   touch-action: auto;
   cursor: default;
 }
+.mapwrap {
+  position: relative;
+}
+.maplock {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0.92;
+}
+.maplock:hover {
+  border-color: var(--accent);
+}

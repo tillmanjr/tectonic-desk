@@ -182,10 +182,6 @@ onMounted(() => {
       <label><input v-model="showPlates" type="checkbox" /> Plate boundaries</label>
       <label><input v-model="showTeeth" type="checkbox" /> Subduction teeth</label>
       <span class="sp"></span>
-      <label
-        title="Wheel and drag scroll the page instead of moving the map; the buttons and clicking an event still zoom"
-        ><input v-model="locked" type="checkbox" /> Lock map</label
-      >
       <button type="button" class="zbtn" aria-label="Zoom in" @click="scaleBy(1.8)">+</button>
       <button type="button" class="zbtn" aria-label="Zoom out" @click="scaleBy(1 / 1.8)">−</button>
       <button
@@ -198,43 +194,74 @@ onMounted(() => {
         Reset
       </button>
     </div>
-    <svg
-      ref="svgEl"
-      class="map"
-      :class="{ locked }"
-      role="img"
-      aria-label="Map of earthquake epicenters"
-      :viewBox="`0 0 ${String(view.frame.width)} ${String(view.frame.height)}`"
-    >
-      <g :transform="transform.toString()">
-        <MapBasemap :frame="view.frame" :path="view.path" :basemap="basemap" />
-        <MapPlates
-          v-if="showPlates"
-          :path="view.path"
-          :features="plates"
-          @hover="onPlateHover"
-          @leave="onPlateLeave"
-        />
-        <MapTeeth
-          v-if="showTeeth"
-          :frame="view.frame"
-          :segments="plateSegments"
-          :k="transform.k"
-          :highlight="hoveredPlate"
-        />
-        <MapEvents
-          :frame="view.frame"
-          :events="events"
-          :k="transform.k"
-          :selected-id="selectedId"
-          :show-mech="showMech"
-          :min-mag="view.minMag"
-          @select="select"
-          @hover="onHover"
-          @leave="tip = null"
-        />
-      </g>
-    </svg>
+    <div class="mapwrap">
+      <button
+        type="button"
+        class="maplock"
+        :aria-pressed="locked"
+        aria-label="Lock map"
+        :title="
+          locked
+            ? 'Map locked: wheel and drag scroll the page. Click to pan and zoom by hand.'
+            : 'Map unlocked: wheel and drag move the map. Click to lock it.'
+        "
+        @click="locked = !locked"
+      >
+        <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+          <rect x="8" y="3" width="12" height="22" rx="6" fill="currentColor" />
+          <line x1="14" y1="3" x2="14" y2="11" stroke="var(--panel)" stroke-width="1.5" />
+          <rect x="13" y="6" width="2" height="4" rx="1" fill="var(--panel)" />
+          <g v-if="locked" class="slash">
+            <circle cx="14" cy="14" r="12" fill="none" stroke="var(--sev-red)" stroke-width="2.5" />
+            <line
+              x1="5.5"
+              y1="5.5"
+              x2="22.5"
+              y2="22.5"
+              stroke="var(--sev-red)"
+              stroke-width="2.5"
+            />
+          </g>
+        </svg>
+      </button>
+      <svg
+        ref="svgEl"
+        class="map"
+        :class="{ locked }"
+        role="img"
+        aria-label="Map of earthquake epicenters"
+        :viewBox="`0 0 ${String(view.frame.width)} ${String(view.frame.height)}`"
+      >
+        <g :transform="transform.toString()">
+          <MapBasemap :frame="view.frame" :path="view.path" :basemap="basemap" />
+          <MapPlates
+            v-if="showPlates"
+            :path="view.path"
+            :features="plates"
+            @hover="onPlateHover"
+            @leave="onPlateLeave"
+          />
+          <MapTeeth
+            v-if="showTeeth"
+            :frame="view.frame"
+            :segments="plateSegments"
+            :k="transform.k"
+            :highlight="hoveredPlate"
+          />
+          <MapEvents
+            :frame="view.frame"
+            :events="events"
+            :k="transform.k"
+            :selected-id="selectedId"
+            :show-mech="showMech"
+            :min-mag="view.minMag"
+            @select="select"
+            @hover="onHover"
+            @leave="tip = null"
+          />
+        </g>
+      </svg>
+    </div>
     <MapTooltip :tip="tip" />
     <MapLegend :frame="view.frame" :min-mag="view.minMag" />
   </section>

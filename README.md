@@ -76,7 +76,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
 - Theme follows the system by default; the toggle cycles auto, light, dark.
 - The focal-mechanism math lives in `packages/shared`; only the canvas raster is in the web app.
 - The map is locked by default: wheel and drag scroll the page; the buttons and clicking an event
-  still zoom. Untick "Lock map" to pan and zoom by hand.
+  still zoom. The mouse icon in the map's top-right corner toggles the lock; a red slash means
+  locked.
 - Subduction teeth point toward the overriding plate, read from Bird's `/` and `\` boundary titles;
   the plate tooltip says which plate subducts under which.
 
