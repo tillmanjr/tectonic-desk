@@ -47,6 +47,15 @@ describe("MagnitudeTimeChart", () => {
     await w.find("circle").trigger("click");
     expect(ctx.select).toHaveBeenCalledWith("small");
   });
+  it("ends the axis at the date range's last day when one is set", async () => {
+    const { ctx, w } = await chart([after, main]);
+    const before = w.findAll(".axis text").map((t) => t.text());
+    ctx.catalog.setRange({ since: "2026-10-09T00:00:00.000Z", until: "2026-10-10T23:59:59.999Z" });
+    await nextTick();
+    const after2 = w.findAll(".axis text").map((t) => t.text());
+    expect(after2).not.toEqual(before);
+    expect(after2.join(" ")).not.toContain("Oct 13");
+  });
   it("uses a local time scale when the zone is local", async () => {
     const { ctx, w } = await chart([after, main]);
     ctx.zone.value = "local";

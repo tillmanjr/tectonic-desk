@@ -25,9 +25,11 @@ const data = computed(() => {
   const evs = all.filter((e): e is Dated => e.mag !== null);
   if (evs.length === 0) return null;
   const now = clock.now.value;
+  const win = catalog.range.value;
+  const end = win === null ? now : new Date(win.until);
   const minT = Math.min(...evs.map((e) => Date.parse(e.time)));
   const x = (zone.value === "utc" ? scaleUtc() : scaleTime())
-    .domain([new Date(minT), now])
+    .domain([new Date(minT), end])
     .range([M.l, W - M.r]);
   const y = scaleLinear()
     .domain([catalog.floor.value, Math.ceil(Math.max(...evs.map((e) => e.mag)))])
