@@ -141,9 +141,11 @@ function onHover(payload: { e: ApiEvent; x: number; y: number }): void {
   const type = e.magType === null ? "" : ` ${e.magType}`;
   showTip(`M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)}`, payload.x, payload.y);
 }
+/** Boundary tooltips follow the pointer, so lift them clear of the cursor. */
+const PLATE_TIP_LIFT = 10;
 function onPlateHover(payload: { index: number; title: string; x: number; y: number }): void {
   hoveredPlate.value = payload.index;
-  showTip(payload.title, payload.x, payload.y);
+  showTip(payload.title, payload.x, payload.y - PLATE_TIP_LIFT);
 }
 function onPlateLeave(): void {
   hoveredPlate.value = null;
