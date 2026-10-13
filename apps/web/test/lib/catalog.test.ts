@@ -1,6 +1,7 @@
 import type { ApiEventList } from "@tectonic/shared";
 import { describe, expect, it, vi } from "vitest";
 import { createCatalog, EVENT_LIMIT, eventsQueryFor } from "../../src/lib/catalog.js";
+import { EMPTY_FILTER } from "../../src/lib/filters.js";
 import { fakeApi } from "../support/api.js";
 import { event, GLOBAL, WC } from "../support/events.js";
 
@@ -47,6 +48,27 @@ describe("createCatalog", () => {
     expect(await c.setRegion("wc")).toBe(true);
     expect(api.events).toHaveBeenCalledTimes(1);
     expect(await c.setRegion("mars")).toBe(false);
+  });
+  it("filters the list and raises the floor with the magnitude minimum", async () => {
+    const api = fakeApi({
+      events: vi.fn().mockResolvedValue({
+        events: [event({ id: "a", mag: 4.6 }), event({ id: "b", mag: 6 })],
+        count: 2,
+        truncated: false,
+        query: {},
+      }),
+    });
+    const c = createCatalog(api, now);
+    expect(c.floor.value).toBe(0);
+    await c.init();
+    await c.setRegion("global");
+    expect(c.filtered.value).toHaveLength(2);
+    expect(c.floor.value).toBe(4.5);
+    c.setFilter({ ...EMPTY_FILTER, minMag: 5 });
+    expect(c.filtered.value.map((e) => e.id)).toEqual(["b"]);
+    expect(c.floor.value).toBe(5);
+    c.setFilter({ ...EMPTY_FILTER, minMag: 3 });
+    expect(c.floor.value).toBe(4.5);
   });
   it("clears the selection on a region switch and keeps it on refetch", async () => {
     const api = fakeApi();

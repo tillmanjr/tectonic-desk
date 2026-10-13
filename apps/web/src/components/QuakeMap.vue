@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<{ animate?: boolean }>(), { animate: true
 
 const api = useInjected(API);
 const catalog = useInjected(CATALOG);
-const { events, selectedId, selected } = catalog;
+const { filtered: events, selectedId, selected } = catalog;
 const select = useInjected(SELECT);
 
 const view = computed(() => {

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import FrequencyMagnitudeChart from "../../src/components/FrequencyMagnitudeChart.vue";
 import { fakeApi } from "../support/api.js";
+import { EMPTY_FILTER } from "../../src/lib/filters.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 
@@ -14,7 +15,8 @@ async function chart(mags: (number | null)[], types: (string | null)[] = []) {
       .fn()
       .mockResolvedValue({ events, count: events.length, truncated: false, query: {} }),
   });
-  return mountWith(FrequencyMagnitudeChart, await makeContext({ api }));
+  const ctx = await makeContext({ api });
+  return Object.assign(mountWith(FrequencyMagnitudeChart, ctx), { ctx });
 }
 
 describe("FrequencyMagnitudeChart", () => {
@@ -26,6 +28,10 @@ describe("FrequencyMagnitudeChart", () => {
     expect(w.find("text.bval").text()).toMatch(/^b = \d\.\d\d ± \d\.\d\d$/);
     expect(w.find(".cap").text()).toContain("Mixed magnitude types (mb, mww)");
     expect(w.find(".cap").text()).toContain("Mc taken as the 4.5 catalog floor");
+    w.ctx.catalog.setFilter({ ...EMPTY_FILTER, minMag: 5 });
+    await w.vm.$nextTick();
+    expect(w.find(".cap").text()).toContain("Mc taken as the 5 filter minimum");
+    expect(w.findAll("rect").length).toBeGreaterThan(0);
   });
   it("skips the fit with a single event and says so when empty", async () => {
     const one = await chart([4.9]);

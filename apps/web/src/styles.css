@@ -697,3 +697,51 @@ a {
 .maplock:hover {
   border-color: var(--accent);
 }
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+}
+.filters .flabel {
+  font-weight: 600;
+  margin-left: 6px;
+}
+.filters .flabel:first-child {
+  margin-left: 0;
+}
+.filters .fto {
+  color: var(--muted);
+}
+.filters input {
+  width: 68px;
+  font: 500 13px var(--f-data);
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 4px 6px;
+}
+.filters .fclear {
+  font: 600 13px var(--f-ui);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  padding: 4px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 6px;
+}
+.filters .fclear:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+.filters .fcount {
+  color: var(--muted);
+  margin-left: auto;
+}

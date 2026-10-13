@@ -75,6 +75,10 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   has landed. It turns amber after 30 minutes without a sync and red when the API is unreachable.
 - Theme follows the system by default; the toggle cycles auto, light, dark.
 - The focal-mechanism math lives in `packages/shared`; only the canvas raster is in the web app.
+- The filter bar above the map narrows magnitude and depth (inclusive, either bound optional) for
+  the map, catalog and charts; the summary tiles and major events stay unfiltered. Filters live in
+  the URL (`minMag`, `maxMag`, `minDepth`, `maxDepth`); the magnitude minimum cannot go below the
+  view's floor, and the b-value's Mc rises with it.
 - The map is locked by default: wheel and drag scroll the page; the buttons and clicking an event
   still zoom. The mouse icon in the map's top-right corner toggles the lock; a red slash means
   locked.

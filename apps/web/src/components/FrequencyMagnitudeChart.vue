@@ -13,8 +13,9 @@ const catalog = useInjected(CATALOG);
 
 const data = computed(() => {
   const region = catalog.requireRegion();
-  const mc = region.minMag;
-  const all = catalog.events.value;
+  const mc = catalog.floor.value;
+  const raised = mc > region.minMag;
+  const all = catalog.filtered.value;
   const mags = all.flatMap((e) => (e.mag === null ? [] : [e.mag]));
   if (mags.length === 0) return null;
   const bins = magnitudeBins(mags, mc);
@@ -53,7 +54,7 @@ const data = computed(() => {
     label,
     xTicks: ticksOf(x, 8),
     yTicks: ticksOf(y, 4, "~s"),
-    caption: `Cumulative N(≥M) with incremental counts behind. b from the Aki (1965) maximum-likelihood estimator, Shi & Bolt (1982) uncertainty, Mc taken as the ${String(mc)} catalog floor. Mixed magnitude types (${types}); clustered sequences are not declustered, so treat it as descriptive.`,
+    caption: `Cumulative N(≥M) with incremental counts behind. b from the Aki (1965) maximum-likelihood estimator, Shi & Bolt (1982) uncertainty, Mc taken as the ${String(mc)} ${raised ? "filter minimum" : "catalog floor"}. Mixed magnitude types (${types}); clustered sequences are not declustered, so treat it as descriptive.`,
   };
 });
 </script>

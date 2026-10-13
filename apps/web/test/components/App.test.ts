@@ -99,6 +99,30 @@ describe("App", () => {
     expect(wrapper.find(".banner.error").exists()).toBe(false);
   });
 
+  it("round-trips the filters through the URL and keeps them across a region switch", async () => {
+    stubCanvas();
+    const { wrapper, router } = await mountApp("/?minMag=3&maxDepth=200");
+    const inputs = wrapper.findAll<HTMLInputElement>(".filters input");
+    expect(inputs[0]?.element.value).toBe("4.5");
+    expect(inputs[3]?.element.value).toBe("200");
+    expect(wrapper.find(".filters").text()).toContain("Showing 1 of 1 events");
+    await inputs[1]?.setValue("7");
+    await flushPromises();
+    expect(router.currentRoute.value.query).toMatchObject({
+      minMag: "4.5",
+      maxMag: "7",
+      maxDepth: "200",
+    });
+    await wrapper.findAll("[role=tab]")[1]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/wc");
+    expect(router.currentRoute.value.query.maxDepth).toBe("200");
+    await wrapper.find(".filters .fclear").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query).toEqual({});
+    expect(wrapper.find(".filters").text()).toContain("All 1 events shown");
+  });
+
   it("shows the truncation banner", async () => {
     const api = fakeApi({
       events: vi

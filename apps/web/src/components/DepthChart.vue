@@ -36,7 +36,7 @@ const data = computed<Data>(() => {
   const global = region.id === "global";
   const H = global ? 220 : 180;
   const maxD = global ? 700 : 35;
-  const all = catalog.events.value;
+  const all = catalog.filtered.value;
   const evs = all.filter((e): e is Plotted => e.mag !== null && e.depthKm !== null);
   const noDepth = all.filter((e) => e.depthKm === null).length;
   if (evs.length === 0) {
@@ -50,7 +50,7 @@ const data = computed<Data>(() => {
     };
   }
   const x = scaleLinear()
-    .domain([region.minMag - 0.1, Math.ceil(Math.max(...evs.map((e) => e.mag))) + 0.1])
+    .domain([catalog.floor.value - 0.1, Math.ceil(Math.max(...evs.map((e) => e.mag))) + 0.1])
     .range([M.l, W - M.r]);
   const y = scaleLinear()
     .domain([Math.min(0, ...evs.map((e) => e.depthKm)), maxD])

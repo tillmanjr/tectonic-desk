@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import CatalogTable from "./CatalogTable.vue";
 import DepthChart from "./DepthChart.vue";
 import DetailPanel from "./DetailPanel.vue";
+import FilterBar from "./FilterBar.vue";
 import FrequencyMagnitudeChart from "./FrequencyMagnitudeChart.vue";
 import MagnitudeTimeChart from "./MagnitudeTimeChart.vue";
 import MajorEvents from "./MajorEvents.vue";
@@ -16,7 +17,8 @@ import { createApiClient } from "../lib/api.js";
 import { clearBeachballCache } from "../lib/beachball.js";
 import { createCatalog, EVENT_LIMIT } from "../lib/catalog.js";
 import { createClock } from "../lib/clock.js";
-import { API, CATALOG, CLOCK, SELECT, STATUS, THEME } from "../lib/keys.js";
+import { filterQuery, parseFilter, type EventFilter } from "../lib/filters.js";
+import { API, CATALOG, CLOCK, SELECT, SET_FILTER, STATUS, THEME } from "../lib/keys.js";
 import { majorLabel } from "../lib/stats.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -36,6 +38,7 @@ provide(THEME, theme);
 provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(SELECT, select);
+provide(SET_FILTER, setFilter);
 
 const route = useRoute();
 const router = useRouter();
@@ -49,6 +52,7 @@ const routeEvent = computed(() => {
   const q = route.query.event;
   return typeof q === "string" ? q : null;
 });
+const routeFilter = computed(() => parseFilter(route.query, region.value?.minMag ?? 0));
 
 async function applyRegion(id: string): Promise<void> {
   const ok = await catalog.setRegion(id);
@@ -58,9 +62,15 @@ async function boot(): Promise<void> {
   await catalog.init();
   await applyRegion(routeRegion.value);
   catalog.select(routeEvent.value);
+  catalog.setFilter(routeFilter.value);
 }
 function pickRegion(id: string): void {
-  void router.push(id === "global" ? "/" : `/${id}`);
+  const query = { ...route.query };
+  delete query.event;
+  void router.push({ path: id === "global" ? "/" : `/${id}`, query });
+}
+function setFilter(f: EventFilter): void {
+  void router.replace({ query: { ...route.query, ...filterQuery(f) } });
 }
 function select(id: string | null): void {
   const query = { ...route.query };
@@ -78,6 +88,9 @@ watch(routeRegion, (id) => {
 });
 watch(routeEvent, (id) => {
   catalog.select(id);
+});
+watch(routeFilter, (f) => {
+  catalog.setFilter(f);
 });
 watch(theme.resolved, () => {
   clearBeachballCache();
@@ -117,6 +130,7 @@ onUnmounted(() => {
       <StatsStrip />
       <p class="sectionlabel">{{ majorLabel(region) }}</p>
       <MajorEvents />
+      <FilterBar />
       <QuakeMap />
       <section class="grid2">
         <CatalogTable />

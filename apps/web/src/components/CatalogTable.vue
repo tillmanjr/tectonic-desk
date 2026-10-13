@@ -14,7 +14,7 @@ const COLS: { key: SortKey; label: string }[] = [
   { key: "place", label: "Location" },
 ];
 
-const { events, selectedId } = useInjected(CATALOG);
+const { events: all, filtered: events, selectedId } = useInjected(CATALOG);
 const select = useInjected(SELECT);
 const sortKey = ref<SortKey>("time");
 const sortDir = ref<1 | -1>(-1);
@@ -47,7 +47,11 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
 <template>
   <div class="panel">
     <h2>
-      Catalog <span>{{ events.length }} events · tap a row for detail</span>
+      Catalog
+      <span v-if="events.length !== all.length"
+        >{{ events.length }} of {{ all.length }} events · tap a row for detail</span
+      >
+      <span v-else>{{ events.length }} events · tap a row for detail</span>
     </h2>
     <div class="tablewrap">
       <table class="cat">

@@ -20,7 +20,7 @@ const select = useInjected(SELECT);
 
 const data = computed(() => {
   const region = catalog.requireRegion();
-  const all = catalog.events.value;
+  const all = catalog.filtered.value;
   const evs = all.filter((e): e is Dated => e.mag !== null);
   if (evs.length === 0) return null;
   const now = clock.now.value;
@@ -29,7 +29,7 @@ const data = computed(() => {
     .domain([new Date(minT), now])
     .range([M.l, W - M.r]);
   const y = scaleLinear()
-    .domain([region.minMag, Math.ceil(Math.max(...evs.map((e) => e.mag)))])
+    .domain([catalog.floor.value, Math.ceil(Math.max(...evs.map((e) => e.mag)))])
     .nice()
     .range([H - M.b, M.t]);
   const marks = [...evs]

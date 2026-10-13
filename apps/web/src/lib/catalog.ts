@@ -1,6 +1,7 @@
 import type { ApiEvent, ApiRegion } from "@tectonic/shared";
 import { computed, ref, shallowRef, type ComputedRef, type Ref, type ShallowRef } from "vue";
 import { errorMessage, type ApiClient, type EventsQuery } from "./api.js";
+import { applyFilter, EMPTY_FILTER, type EventFilter } from "./filters.js";
 
 export const EVENT_LIMIT = 2000;
 
@@ -26,6 +27,12 @@ export interface Catalog {
   error: Ref<string | null>;
   selectedId: Ref<string | null>;
   selected: ComputedRef<ApiEvent | null>;
+  /** Magnitude and depth bounds applied to the map, table and charts. */
+  filter: Ref<EventFilter>;
+  filtered: ComputedRef<ApiEvent[]>;
+  /** Effective magnitude floor: the preset's, raised by the filter minimum. */
+  floor: ComputedRef<number>;
+  setFilter(f: EventFilter): void;
   /** The active region; throws when none is set (components below the region guard never see that). */
   requireRegion(): ApiRegion;
   /** Loads the region presets. */
@@ -47,6 +54,13 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
   const selectedId = ref<string | null>(null);
   const region = computed(() => regions.value.find((r) => r.id === regionId.value) ?? null);
   const selected = computed(() => events.value.find((e) => e.id === selectedId.value) ?? null);
+  const filter = ref<EventFilter>(EMPTY_FILTER);
+  const filtered = computed(() => applyFilter(events.value, filter.value));
+  const floor = computed(() => {
+    const base = region.value?.minMag ?? 0;
+    const min = filter.value.minMag;
+    return min === null ? base : Math.max(base, min);
+  });
   let seq = 0;
 
   async function load(r: ApiRegion): Promise<void> {
@@ -75,6 +89,12 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
     error,
     selectedId,
     selected,
+    filter,
+    filtered,
+    floor,
+    setFilter(f) {
+      filter.value = f;
+    },
     requireRegion() {
       const r = region.value;
       if (r === null) throw new Error("no region selected");

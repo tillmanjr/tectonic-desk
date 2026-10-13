@@ -2,6 +2,7 @@ import type { VueWrapper } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import CatalogTable from "../../src/components/CatalogTable.vue";
 import { fakeApi } from "../support/api.js";
+import { EMPTY_FILTER } from "../../src/lib/filters.js";
 import { event, mech } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 
@@ -58,6 +59,13 @@ describe("CatalogTable", () => {
     expect(rows[1]?.findAll("td")[1]?.text()).toBe("—");
     expect(rows[1]?.findAll("td")[2]?.text()).toBe("—");
     expect(rows[0]?.findAll("td")[1]?.text()).toBe("5.5mww");
+  });
+  it("shows the filtered count and rows when a filter is active", async () => {
+    const { ctx, w } = await table();
+    ctx.catalog.setFilter({ ...EMPTY_FILTER, minMag: 6 });
+    await w.vm.$nextTick();
+    expect(w.find("h2").text()).toContain("1 of 4 events");
+    expect(ids(w)).toEqual(["b"]);
   });
   it("sorts by each column and toggles direction, nulls last on the way down", async () => {
     const { w } = await table();
