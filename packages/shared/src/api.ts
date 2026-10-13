@@ -8,8 +8,10 @@ export type Json<T> = {
 export type ApiMechanism = Omit<Json<StoredMechanism>, "raw">;
 
 /** A listed event. `mechanisms` holds the preferred product per kind. */
-export interface ApiEvent
-  extends Omit<Json<StoredEvent>, "raw" | "firstSeen" | "lastSeen" | "detailCheckedUpdated"> {
+export interface ApiEvent extends Omit<
+  Json<StoredEvent>,
+  "raw" | "firstSeen" | "lastSeen" | "detailCheckedUpdated"
+> {
   mechanisms: ApiMechanism[];
 }
 
