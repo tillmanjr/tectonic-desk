@@ -12,13 +12,18 @@ describe("MapPlates", () => {
     const w = mount(MapPlates, { props: { path, features } });
     await w.findAll("path.hit")[3]?.trigger("mousemove", { clientX: 12, clientY: 34 });
     expect(w.emitted("hover")?.[0]?.[0]).toMatchObject({
+      index: 3,
       title:
         "Subduction · NA/JF · 35 mm/yr relative (PB2002) · Juan de Fuca subducts under North America",
       x: 12,
       y: 34,
     });
+    expect(w.findAll("path.line")[3]?.classes()).toContain("hot");
+    expect(Number(w.findAll("path.line")[3]?.attributes("stroke-width"))).toBeCloseTo(3.4, 6);
+    expect(w.findAll("path.line")[2]?.classes()).not.toContain("hot");
     await w.findAll("path.hit")[3]?.trigger("mouseleave");
     expect(w.emitted("leave")).toHaveLength(1);
+    expect(w.findAll("path.line.hot")).toHaveLength(0);
   });
   it("draws one path per segment with class styling", () => {
     const path = geoPath(frameFor(GLOBAL).projection);

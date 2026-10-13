@@ -37,9 +37,14 @@ const segments: PlateSegment[] = [
 
 describe("MapTeeth", () => {
   it("draws one path per subduction segment with a polarity and re-lays on zoom", async () => {
-    const w = mount(MapTeeth, { props: { frame: frameFor(GLOBAL), segments, k: 1 } });
+    const w = mount(MapTeeth, {
+      props: { frame: frameFor(GLOBAL), segments, k: 1, highlight: null },
+    });
     const paths = w.findAll("path");
     expect(paths).toHaveLength(1);
+    expect(paths[0]?.classes()).not.toContain("hot");
+    await w.setProps({ highlight: 0 });
+    expect(w.find("path").classes()).toContain("hot");
     const d1 = paths[0]?.attributes("d") ?? "";
     expect(d1.startsWith("M")).toBe(true);
     await w.setProps({ k: 8 });

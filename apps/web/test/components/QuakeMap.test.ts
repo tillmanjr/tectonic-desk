@@ -63,8 +63,10 @@ describe("QuakeMap", () => {
     expect(w.find(".tip").text()).toBe("M— · — km · unknown location");
     await w.findAll("path.hit")[3]?.trigger("mousemove", { clientX: 40, clientY: 50 });
     expect(w.find(".tip").text()).toContain("Juan de Fuca subducts under North America");
+    expect(w.findComponent({ name: "MapTeeth" }).find("path.hot").exists()).toBe(true);
     await w.findAll("path.hit")[3]?.trigger("mouseleave");
     expect(w.find(".tip").exists()).toBe(false);
+    expect(w.findComponent({ name: "MapTeeth" }).find("path.hot").exists()).toBe(false);
     ctx.catalog.select("missing");
     await flushPromises();
     expect(w.find("svg > g").attributes("transform")).toContain("scale(6)");
