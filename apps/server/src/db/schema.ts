@@ -1,3 +1,4 @@
+import type { RunKind } from "@tectonic/shared";
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
@@ -108,7 +109,7 @@ export const ingestRuns = pgTable(
   "ingest_runs",
   {
     id: serial("id").primaryKey(),
-    kind: text("kind").$type<"feed_day" | "feed_week" | "backfill" | "details">().notNull(),
+    kind: text("kind").$type<RunKind>().notNull(),
     startedAt: timestamp("started_at", tz).notNull(),
     finishedAt: timestamp("finished_at", tz),
     ok: boolean("ok"),

@@ -1,8 +1,10 @@
+import type { RunKind } from "@tectonic/shared";
 import { eq } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { ingestRuns, type IngestRunRow } from "../db/schema.js";
 
-export type RunKind = IngestRunRow["kind"];
+export type { RunKind } from "@tectonic/shared";
+export const RUN_KINDS = ["feed_day", "feed_week", "backfill", "details"] as const;
 
 export interface RunResult {
   ok: boolean;

@@ -1,4 +1,5 @@
 export * from "./mechanism/planes.js";
+export * from "./api.js";
 
 export type MechanismKind = "mt" | "fm";
 
