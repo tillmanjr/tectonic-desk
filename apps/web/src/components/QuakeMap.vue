@@ -130,16 +130,18 @@ async function loadPlates(): Promise<void> {
   }
 }
 
-function onHover(payload: { e: ApiEvent; x: number; y: number }): void {
+function showTip(text: string, x: number, y: number): void {
   const card = mustRef(cardEl, "map card").getBoundingClientRect();
+  tip.value = { text, x: x - card.left, y: y - card.top };
+}
+function onHover(payload: { e: ApiEvent; x: number; y: number }): void {
   const { e } = payload;
   const depth = e.depthKm === null ? "—" : String(Math.round(e.depthKm));
   const type = e.magType === null ? "" : ` ${e.magType}`;
-  tip.value = {
-    text: `M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)}`,
-    x: payload.x - card.left,
-    y: payload.y - card.top,
-  };
+  showTip(`M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)}`, payload.x, payload.y);
+}
+function onPlateHover(payload: { title: string; x: number; y: number }): void {
+  showTip(payload.title, payload.x, payload.y);
 }
 
 watch(
@@ -187,7 +189,13 @@ onMounted(() => {
     >
       <g :transform="transform.toString()">
         <MapBasemap :frame="view.frame" :path="view.path" :basemap="basemap" />
-        <MapPlates v-if="showPlates" :path="view.path" :features="plates" />
+        <MapPlates
+          v-if="showPlates"
+          :path="view.path"
+          :features="plates"
+          @hover="onPlateHover"
+          @leave="tip = null"
+        />
         <MapTeeth v-if="showTeeth" :frame="view.frame" :segments="plateSegments" :k="transform.k" />
         <MapEvents
           :frame="view.frame"

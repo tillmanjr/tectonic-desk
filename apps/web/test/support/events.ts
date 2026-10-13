@@ -130,7 +130,7 @@ export const plateSegments = [
     ],
   },
   {
-    b: "JF/NA",
+    b: "NA/JF",
     c: "sub",
     v: 35,
     p: [

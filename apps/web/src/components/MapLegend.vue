@@ -47,8 +47,8 @@ const plates = Object.values(PLATE_CLASSES);
       {{ p.name }}
     </span>
     <span class="sw hint-sw"
-      >Rest the pointer on a boundary line for the plate pair, relative velocity and, on subduction
-      zones, which plate goes under.</span
+      >Point at a boundary line for the plate pair, relative velocity and, on subduction zones,
+      which plate goes under.</span
     >
   </div>
 </template>

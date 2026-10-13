@@ -4,6 +4,14 @@ import type { Feature, LineString } from "geojson";
 import { pathOf, PLATE_CLASSES, type PlateProps } from "../lib/geo.js";
 
 defineProps<{ path: GeoPath; features: Feature<LineString, PlateProps>[] }>();
+const emit = defineEmits<{
+  hover: [payload: { title: string; x: number; y: number }];
+  leave: [];
+}>();
+
+function hover(ev: MouseEvent, f: Feature<LineString, PlateProps>): void {
+  emit("hover", { title: f.properties.title, x: ev.clientX, y: ev.clientY });
+}
 </script>
 
 <template>
@@ -14,12 +22,12 @@ defineProps<{ path: GeoPath; features: Feature<LineString, PlateProps>[] }>();
         :d="pathOf(path, f)"
         fill="none"
         stroke="transparent"
-        stroke-width="14"
+        stroke-width="10"
         vector-effect="non-scaling-stroke"
         style="pointer-events: stroke"
-      >
-        <title>{{ f.properties.title }}</title>
-      </path>
+        @mousemove="hover($event, f)"
+        @mouseleave="emit('leave')"
+      />
       <path
         class="line"
         :d="pathOf(path, f)"

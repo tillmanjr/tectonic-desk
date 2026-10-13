@@ -12,7 +12,7 @@ describe("MapLegend", () => {
     expect(g.text()).toContain("shaded = compressional");
     expect(g.text()).toContain("Subduction");
     expect(g.findAll("path.teeth")).toHaveLength(1);
-    expect(g.text()).toContain("Rest the pointer on a boundary line");
+    expect(g.text()).toContain("Point at a boundary line");
     const r = mount(MapLegend, { props: { frame: frameFor(WC), minMag: 2.5 } });
     expect(r.text()).toContain("M4.5");
     expect(r.text()).not.toContain("M7.5");
