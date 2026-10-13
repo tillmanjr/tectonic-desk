@@ -56,11 +56,13 @@ describe("QuakeMap", () => {
     expect(w.find("svg.map > g").attributes("transform")).toContain("scale(6)");
     const circles = w.findComponent({ name: "MapEvents" }).findAll("circle");
     await circles[1]?.trigger("mouseenter", { clientX: 40, clientY: 50 });
-    expect(w.find(".tip").text()).toBe("M5.5 mww · 195 km · 122 km W of Neiafu, Tonga");
+    expect(w.find(".tip").text()).toBe(
+      "M5.5 mww · 195 km · 122 km W of Neiafu, Tonga · Oct 12 04:38 UTC",
+    );
     await circles[1]?.trigger("mouseleave");
     expect(w.find(".tip").exists()).toBe(false);
     await circles[0]?.trigger("mouseenter", { clientX: 40, clientY: 50 });
-    expect(w.find(".tip").text()).toBe("M— · — km · unknown location");
+    expect(w.find(".tip").text()).toBe("M— · — km · unknown location · Oct 12 04:38 UTC");
     await w.findAll("path.hit")[3]?.trigger("mousemove", { clientX: 40, clientY: 50 });
     expect(w.find(".tip").text()).toContain("Juan de Fuca subducts under North America");
     expect(w.find(".tip").attributes("style")).toContain("top: 40px");

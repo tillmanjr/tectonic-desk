@@ -5,6 +5,14 @@ export function fmtUtc(iso: string, seconds = false): string {
     .replace("T", " ");
 }
 
+const MONTH = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" });
+
+/** "Oct 13 12:23 UTC": month, day, hour and minute, for tooltips. */
+export function fmtUtcShort(iso: string): string {
+  const d = new Date(iso);
+  return `${MONTH.format(d)} ${String(d.getUTCDate())} ${d.toISOString().slice(11, 16)} UTC`;
+}
+
 export function fmtUtcTime(iso: string): string {
   return new Date(iso).toISOString().slice(11, 16);
 }

@@ -13,7 +13,7 @@ import MapPlates from "./MapPlates.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
 import { mustRef } from "../lib/dom.js";
-import { fmtMag, placeOf } from "../lib/format.js";
+import { fmtMag, fmtUtcShort, placeOf } from "../lib/format.js";
 import {
   frameFor,
   loadWorld,
@@ -145,7 +145,11 @@ function onHover(payload: { e: ApiEvent; x: number; y: number }): void {
   const { e } = payload;
   const depth = e.depthKm === null ? "—" : String(Math.round(e.depthKm));
   const type = e.magType === null ? "" : ` ${e.magType}`;
-  showTip(`M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)}`, payload.x, payload.y);
+  showTip(
+    `M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)} · ${fmtUtcShort(e.time)}`,
+    payload.x,
+    payload.y,
+  );
 }
 /** Boundary tooltips follow the pointer, so lift them clear of the cursor. */
 const PLATE_TIP_LIFT = 10;
