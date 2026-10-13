@@ -42,6 +42,27 @@ The server polls USGS while it runs (`INGEST_ENABLED`, default true):
 
 Set `INGEST_ENABLED=false` on a second API instance so only one process polls.
 
+## API
+
+All routes return JSON. Bad input is 400 `{ error, issues: [{ path, message }] }`, an unknown
+id or path is 404 `{ error }`, anything else is 500 `{ error }`. Successful responses carry a
+short `Cache-Control`.
+
+| Route                 | Returns                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `GET /api/health`     | `{ status, db }`, 503 when the database does not answer                                    |
+| `GET /api/regions`    | the view presets: id, name, subtitle, minMag, days, bbox                                   |
+| `GET /api/events`     | `{ events, count, truncated, query }`; each event carries its preferred mechanism per kind |
+| `GET /api/events/:id` | the event with every mechanism product and the raw USGS properties as `usgs`               |
+| `GET /api/status`     | catalog totals, latest ingest run per kind, last successful feed time                      |
+| `GET /api/runs`       | ingest run history, `?kind=feed_day\|feed_week\|backfill\|details&limit=N`                 |
+| `GET /api/geo/:name`  | `plates`, `wc-land`, `wc-states` from `apps/server/data/geo`, with an ETag                 |
+
+`GET /api/events` filters: `since` and `until` (ISO 8601 date-time or `YYYY-MM-DD`; `since`
+defaults to seven days ago), `minMag`, `bbox=minLon,minLat,maxLon,maxLat` (minLon > maxLon
+crosses the antimeridian), `limit` (default 500, max 5000). Dates in responses are ISO 8601 UTC.
+Types for every response are in `packages/shared/src/api.ts`.
+
 ## Scripts
 
 | Script                          | What it does                                                   |

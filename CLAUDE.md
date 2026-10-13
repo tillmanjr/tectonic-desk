@@ -5,7 +5,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 ## Repo rules
 
 - `quake/` is the frozen prototype. Never modify it. Its `CLAUDE.md` holds the verified focal-mechanism conventions and USGS endpoint notes; consult it, do not edit it.
-- pnpm workspace: `apps/server` (Fastify, Drizzle, Postgres, USGS ingest), `apps/web` (Vue, later), `packages/shared` (domain types and mechanism math, no third-party runtime deps).
+- pnpm workspace: `apps/server` (Fastify, Drizzle, Postgres, USGS ingest, API), `apps/web` (Vue, later), `packages/shared` (domain and API types, mechanism math, no third-party runtime deps).
 - Specs live in `docs/superpowers/specs`, plans in `docs/superpowers/plans`. Each sub-project (Foundation, Ingest, API, Front end) gets its own.
 - TypeScript strict, ESM, NodeNext. Imports of local files use the `.js` extension.
 - Repositories are plain functions taking a `Db` first. No classes, no singletons. `Db` accepts both the pool handle and a transaction.
@@ -21,6 +21,16 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 - USGS feed properties are numbers; product properties are strings. Parsers live in `apps/server/src/usgs/parse.ts`. Fixtures under `apps/server/test/fixtures/usgs` are trimmed real responses from 2026-10-13.
 - Mechanism conventions from `quake/CLAUDE.md` still apply: percent-double-couple stored as a fraction, planes reconstructed from T and P axes when absent and flagged `planes_reconstructed`.
 
+## API
+
+- Response types live in `packages/shared/src/api.ts`, derived from the domain types through `Json<T>` (dates become ISO strings). Add a field to the domain type and the DTO follows; never hand-copy a DTO.
+- `raw` never leaves the server except as `usgs` on `GET /api/events/:id`.
+- Route handlers throw `HttpError` (`badRequest(issues)`, `notFound()`); the app-level handler renders `{ error, issues? }`. Query parsing goes through `parseOrThrow` in `src/api/schemas.ts`.
+- Every successful response sets `Cache-Control` via `cacheFor(reply, seconds)`.
+- `buildApp({ db, now, geoDir })`: inject `now` in tests for deterministic default windows and stamps.
+- Geo files under `apps/server/data/geo` are copies of the prototype's; regenerate, never edit.
+- nginx will serve `apps/web` and proxy `/api`; the server has no CORS, static, or compression plugins.
+
 ## Commands
 
-`pnpm test`, `pnpm test:coverage`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm db:up`, `pnpm db:migrate`, `pnpm dev`, `pnpm ingest feed day|week`, `pnpm ingest backfill --days N`.
+`pnpm test`, `pnpm test:coverage`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm db:up`, `pnpm db:migrate`, `pnpm dev` (serves `/api/*` on port 3000), `pnpm ingest feed day|week`, `pnpm ingest backfill --days N`.
