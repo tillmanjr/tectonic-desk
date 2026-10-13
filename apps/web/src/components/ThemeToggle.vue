@@ -5,7 +5,12 @@ const theme = useInjected(THEME);
 </script>
 
 <template>
-  <button type="button" class="theme-btn" title="Cycle auto, light, dark" @click="theme.cycle()">
+  <button
+    type="button"
+    class="theme-btn fixed"
+    title="Cycle auto, light, dark"
+    @click="theme.cycle()"
+  >
     Theme: {{ theme.mode.value }}
   </button>
 </template>

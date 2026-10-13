@@ -748,3 +748,10 @@ a {
 .filters input.fdate {
   width: 140px;
 }
+.theme-btn.fixed {
+  min-width: 7.2em;
+  text-align: center;
+}
+.filters .flabel.fdates {
+  min-width: 6.6em;
+}

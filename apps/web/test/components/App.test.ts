@@ -137,7 +137,7 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.query.tz).toBe("local");
     expect(wrapper.find("th").text()).toBe("Time (local)");
-    expect(wrapper.find(".filters").text()).toContain("Dates (local time)");
+    expect(wrapper.find(".filters").text()).toContain("Dates (local)");
     await wrapper.find("button[title^='Show every date']").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.tz).toBeUndefined();

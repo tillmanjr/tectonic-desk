@@ -60,7 +60,7 @@ describe("FilterBar", () => {
     expect(w.text()).toContain("Showing 1 of 1 events in the selected dates");
     ctx.zone.value = "local";
     await nextTick();
-    expect(w.text()).toContain("Dates (local time)");
+    expect(w.text()).toContain("Dates (local)");
   });
   it("has no lower date bound before the catalog reports its oldest event", async () => {
     const api = fakeApi({

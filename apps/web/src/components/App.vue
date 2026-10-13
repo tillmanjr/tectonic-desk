@@ -145,7 +145,7 @@ onUnmounted(() => {
         <RegionTabs @pick="pickRegion" />
         <button
           type="button"
-          class="theme-btn"
+          class="theme-btn fixed"
           title="Show every date and time in UTC or in your browser's zone"
           @click="toggleZone"
         >

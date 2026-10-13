@@ -24,7 +24,7 @@ const ranged = computed(() => hasRange(catalog.filter.value));
 const bounds = computed(() =>
   dateBoundsFor(status.status.value?.events.oldest ?? null, clock.now.value, zone.value),
 );
-const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local time"));
+const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
 
 const text = (k: NumberKey | DateKey): string => {
   const v = catalog.filter.value[k];
@@ -86,7 +86,7 @@ function clear(): void {
       aria-label="Maximum depth"
       @change="changeNumber('maxDepth', $event)"
     />
-    <span class="flabel">Dates ({{ zoneName }})</span>
+    <span class="flabel fdates">Dates ({{ zoneName }})</span>
     <input
       type="date"
       class="fdate"
