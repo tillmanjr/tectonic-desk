@@ -7,6 +7,7 @@ import {
   pathOf,
   PLATE_CLASSES,
   plateFeature,
+  type PlateSegment,
   regionBasemap,
   worldBasemap,
   zoomTransformFor,
@@ -70,6 +71,30 @@ describe("plates", () => {
     });
     expect(f.geometry.coordinates).toHaveLength(2);
     expect(f.properties.title).toBe("Transform · AF-AN · 13.2 mm/yr relative (PB2002)");
+    expect(f.properties.overriding).toBeNull();
+  });
+  it("names the polarity on subduction steps and falls back to codes", () => {
+    const seg = (b: string, c: PlateSegment["c"]): PlateSegment => ({
+      b,
+      c,
+      v: 60,
+      p: [
+        [0, 0],
+        [1, 1],
+      ],
+    });
+    const ke = plateFeature(seg("KE/PA", "sub"));
+    expect(ke.properties.overriding).toBe("left");
+    expect(ke.properties.title).toContain("Pacific subducts under Kermadec");
+    const nz = plateFeature(seg("NZ\\SA", "sub"));
+    expect(nz.properties.overriding).toBe("right");
+    expect(nz.properties.title).toContain("Nazca subducts under South America");
+    expect(plateFeature(seg("XX/PA", "sub")).properties.title).toContain(
+      "Pacific subducts under XX",
+    );
+    expect(plateFeature(seg("PA/AU", "trans")).properties.overriding).toBeNull();
+    expect(plateFeature(seg("PA-NA", "sub")).properties.overriding).toBeNull();
+    expect(PLATE_CLASSES.sub.teeth).toBe(true);
   });
 });
 

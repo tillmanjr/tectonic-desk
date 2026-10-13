@@ -17,6 +17,7 @@ import type { Objects, Topology } from "topojson-specification";
 export type Topo = Topology<Objects<Record<string, unknown>>>;
 type TopoObject = Topo["objects"][string];
 import worldUrl from "world-atlas/countries-50m.json?url";
+import { polarity, type Overriding } from "./teeth.js";
 
 export { worldUrl };
 
@@ -99,15 +100,80 @@ export function pathOf(path: GeoPath, object: GeoPermissibleObjects): string {
 
 export type PlateClass = "sub" | "conv" | "spread" | "trans";
 
-export const PLATE_CLASSES: Record<
-  PlateClass,
-  { name: string; width: number; dash: string | null }
-> = {
-  sub: { name: "Subduction", width: 2.2, dash: null },
-  conv: { name: "Other convergent", width: 1.4, dash: null },
-  spread: { name: "Spreading / rift", width: 1.2, dash: "1 2.5" },
-  trans: { name: "Transform", width: 1.2, dash: "6 3" },
+export interface PlateClassStyle {
+  name: string;
+  width: number;
+  dash: string | null;
+  /** Drawn with teeth on the overriding side. */
+  teeth: boolean;
+}
+
+export const PLATE_CLASSES: Record<PlateClass, PlateClassStyle> = {
+  sub: { name: "Subduction", width: 2.2, dash: null, teeth: true },
+  conv: { name: "Other convergent", width: 1.4, dash: null, teeth: false },
+  spread: { name: "Spreading / rift", width: 1.2, dash: "1 2.5", teeth: false },
+  trans: { name: "Transform", width: 1.2, dash: "6 3", teeth: false },
 };
+
+/** PB2002 plate identifiers (Bird 2003, table 1). */
+export const PLATE_NAMES: Record<string, string> = {
+  AF: "Africa",
+  AM: "Amur",
+  AN: "Antarctica",
+  AP: "Altiplano",
+  AR: "Arabia",
+  AS: "Aegean Sea",
+  AT: "Anatolia",
+  AU: "Australia",
+  BH: "Birds Head",
+  BR: "Balmoral Reef",
+  BS: "Banda Sea",
+  BU: "Burma",
+  CA: "Caribbean",
+  CL: "Caroline",
+  CO: "Cocos",
+  CR: "Conway Reef",
+  EA: "Easter",
+  EU: "Eurasia",
+  FT: "Futuna",
+  GP: "Galapagos",
+  IN: "India",
+  JF: "Juan de Fuca",
+  JZ: "Juan Fernandez",
+  KE: "Kermadec",
+  MA: "Mariana",
+  MN: "Manus",
+  MO: "Maoke",
+  MS: "Molucca Sea",
+  NA: "North America",
+  NB: "North Bismarck",
+  ND: "North Andes",
+  NH: "New Hebrides",
+  NI: "Niuafo'ou",
+  NZ: "Nazca",
+  OK: "Okhotsk",
+  ON: "Okinawa",
+  PA: "Pacific",
+  PM: "Panama",
+  PS: "Philippine Sea",
+  RI: "Rivera",
+  SA: "South America",
+  SB: "South Bismarck",
+  SC: "Scotia",
+  SL: "Shetland",
+  SO: "Somalia",
+  SS: "Solomon Sea",
+  SU: "Sunda",
+  SW: "Sandwich",
+  TI: "Timor",
+  TO: "Tonga",
+  WL: "Woodlark",
+  YA: "Yangtze",
+};
+
+export function plateName(code: string): string {
+  return PLATE_NAMES[code] ?? code;
+}
 
 /** One PB2002 segment as served by `GET /api/geo/plates`. */
 export interface PlateSegment {
@@ -120,16 +186,25 @@ export interface PlateSegment {
 export interface PlateProps {
   cls: PlateClass;
   title: string;
+  /** Which plate overrides on a subduction step; null elsewhere. */
+  overriding: Overriding | null;
 }
 
 export function plateFeature(s: PlateSegment): Feature<LineString, PlateProps> {
   const cls = PLATE_CLASSES[s.c];
+  const overriding = s.c === "sub" ? polarity(s.b) : null;
+  let title = `${cls.name} · ${s.b} · ${String(s.v)} mm/yr relative (PB2002)`;
+  if (overriding !== null) {
+    const left = plateName(s.b.slice(0, 2));
+    const right = plateName(s.b.slice(3, 5));
+    title +=
+      overriding === "left"
+        ? ` · ${right} subducts under ${left}`
+        : ` · ${left} subducts under ${right}`;
+  }
   return {
     type: "Feature",
-    properties: {
-      cls: s.c,
-      title: `${cls.name} · ${s.b} · ${String(s.v)} mm/yr relative (PB2002)`,
-    },
+    properties: { cls: s.c, title, overriding },
     geometry: { type: "LineString", coordinates: s.p },
   };
 }
