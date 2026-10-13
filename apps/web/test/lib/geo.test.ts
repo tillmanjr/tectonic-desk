@@ -1,0 +1,113 @@
+import { geoPath } from "d3-geo";
+import { describe, expect, it, vi } from "vitest";
+import {
+  frameFor,
+  graticuleFor,
+  loadWorld,
+  pathOf,
+  PLATE_CLASSES,
+  plateFeature,
+  regionBasemap,
+  worldBasemap,
+} from "../../src/lib/geo.js";
+import { GLOBAL, SQUARE_OBJECTS, squareTopology, WC } from "../support/events.js";
+
+describe("frameFor", () => {
+  it("fits the sphere for the global view", () => {
+    const f = frameFor(GLOBAL);
+    expect(f.global).toBe(true);
+    expect([f.width, f.height]).toEqual([1000, 520]);
+    expect(f.projection([0, 0])).not.toBeNull();
+    expect(graticuleFor(f).type).toBe("MultiLineString");
+  });
+  it("fits a conic projection to the region's frame points or its bbox", () => {
+    const wc = frameFor(WC);
+    expect(wc.global).toBe(false);
+    expect(wc.height).toBe(700);
+    const seattle = wc.projection([-122.3, 47.6]);
+    expect(seattle).not.toBeNull();
+    if (seattle) expect(seattle[1]).toBeLessThan(wc.height / 2);
+    const other = frameFor({
+      ...WC,
+      id: "global",
+      bbox: { minLon: -10, minLat: 40, maxLon: 10, maxLat: 50 },
+    });
+    const centre = other.projection([0, 45]);
+    expect(centre).not.toBeNull();
+    if (centre) expect(Math.abs(centre[0] - 500)).toBeLessThan(5);
+    expect(graticuleFor(wc).type).toBe("MultiLineString");
+  });
+  it("pathOf returns an empty string for empty geometry", () => {
+    const p = geoPath(frameFor(GLOBAL).projection);
+    expect(pathOf(p, { type: "MultiPoint", coordinates: [] })).toBe("");
+    expect(pathOf(p, { type: "Sphere" })).toMatch(/^M/);
+  });
+});
+
+describe("plates", () => {
+  it("has four classes and converts segments to features", () => {
+    expect(Object.keys(PLATE_CLASSES)).toEqual(["sub", "conv", "spread", "trans"]);
+    const f = plateFeature({
+      b: "AF-AN",
+      c: "trans",
+      v: 13.2,
+      p: [
+        [0, -54],
+        [1, -54],
+      ],
+    });
+    expect(f.geometry.coordinates).toHaveLength(2);
+    expect(f.properties.title).toBe("Transform · AF-AN · 13.2 mm/yr relative (PB2002)");
+  });
+});
+
+describe("basemaps", () => {
+  it("extracts land and borders from the world topology", () => {
+    const b = worldBasemap(squareTopology);
+    expect(b.land.type).toBe("FeatureCollection");
+    expect(b.borders.type).toBe("MultiLineString");
+    expect(() => worldBasemap({ ...squareTopology, objects: {} })).toThrow("land");
+    expect(() =>
+      worldBasemap({ ...squareTopology, objects: { land: SQUARE_OBJECTS.land } }),
+    ).toThrow("countries");
+  });
+  it("wraps a single geometry into a collection", () => {
+    const single = {
+      ...squareTopology,
+      objects: {
+        land: { type: "Polygon" as const, arcs: [[0]] },
+        countries: SQUARE_OBJECTS.countries,
+      },
+    };
+    expect(worldBasemap(single).land.features).toHaveLength(1);
+  });
+  it("extracts the first object of the region land and states files", () => {
+    const b = regionBasemap(squareTopology, squareTopology);
+    expect(b.land.type).toBe("FeatureCollection");
+    expect(b.borders.type).toBe("MultiLineString");
+    expect(() => regionBasemap({ ...squareTopology, objects: {} }, squareTopology)).toThrow(
+      "no objects",
+    );
+  });
+  it("loads the world topology over fetch", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: () => Promise.resolve(squareTopology) });
+    await expect(loadWorld(fetchFn)).resolves.toEqual(squareTopology);
+    expect(String(fetchFn.mock.calls[0]?.[0])).toContain("countries-50m");
+    const bad = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 503, json: () => Promise.resolve(null) });
+    await expect(loadWorld(bad)).rejects.toThrow("503");
+  });
+  it("defaults to the global fetch", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve(squareTopology) }),
+    );
+    await expect(loadWorld()).resolves.toEqual(squareTopology);
+    vi.unstubAllGlobals();
+  });
+});
