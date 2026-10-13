@@ -132,9 +132,11 @@ inject a stub client and clock.
   `{ candidates, fetched, failed, mechanismsUpserted }`.
 - `backfill(ctx, { days, window = 30 })`: for each window from `now - days`
   forward, `fetchQuery` with `minmagnitude=2.5`, `orderby=time-asc`,
-  `limit=20000`. If a page returns exactly the cap, split the window in half
-  and recurse. Upsert each page. Then loop `syncDetails` with `limit: 200`
-  until `candidates` is 0. Records one `backfill` run row.
+  `limit=20000`. Upsert each page. If a page returns exactly the cap, fetch
+  the next page from the last event's time (cursor paging; the upsert makes
+  the one-event overlap harmless). A cursor that cannot advance fails the
+  run. Then loop `syncDetails` with `limit: 200` until no candidate is left
+  or a pass fetches nothing. Records one `backfill` run row.
 - Repository additions: `listDetailCandidates(db, limit)`,
   `markDetailChecked(db, id, updated)`, `deleteMechanism(db, key)`, and an
   `ingestRuns` repository with `startRun`, `finishRun`.
@@ -179,7 +181,7 @@ inject a stub client and clock.
   overlap guard and stop while in flight.
 - Integration tests with Testcontainers for `syncFeed`, `syncDetails`
   (candidate selection, DELETE handling, stamp update, per-event failure),
-  `backfill` (window split on cap), and the runs table.
+  `backfill` (cursor paging on cap, stuck cursor), and the runs table.
 - Coverage thresholds remain 100% on both `apps/server/src` and
   `packages/shared/src`.
 
