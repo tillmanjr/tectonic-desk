@@ -1,0 +1,61 @@
+import type { Event, Mechanism } from "@tectonic/shared";
+
+export function makeEvent(overrides: Partial<Event> = {}): Event {
+  return {
+    id: "us6000u1pl",
+    time: new Date("2026-10-12T04:38:12.859Z"),
+    updated: new Date("2026-10-12T06:00:00.000Z"),
+    latitude: -18.723,
+    longitude: -175.1452,
+    depthKm: 195.212,
+    mag: 5.5,
+    magType: "mww",
+    place: "122 km W of Neiafu, Tonga",
+    net: "us",
+    status: "reviewed",
+    alert: "green",
+    sig: 465,
+    felt: null,
+    cdi: null,
+    mmi: 2.823,
+    tsunami: false,
+    raw: { title: "M 5.5 - 122 km W of Neiafu, Tonga" },
+    ...overrides,
+  };
+}
+
+export function makeMechanism(overrides: Partial<Mechanism> = {}): Mechanism {
+  return {
+    eventId: "us6000u1pl",
+    kind: "mt",
+    source: "us",
+    code: "us6000u1pl_mww",
+    preferred: true,
+    strike1: 12.67,
+    dip1: 68.63,
+    rake1: -126.14,
+    strike2: 256.15,
+    dip2: 41.23,
+    rake2: -33.56,
+    tAzimuth: 128,
+    tPlunge: 16,
+    pAzimuth: 240,
+    pPlunge: 52,
+    nAzimuth: null,
+    nPlunge: null,
+    mrr: null,
+    mtt: null,
+    mpp: null,
+    mrt: null,
+    mrp: null,
+    mtp: null,
+    scalarMoment: 1.9e17,
+    mw: 5.5,
+    depthKm: 190.5,
+    percentDc: 0.8949,
+    planesReconstructed: false,
+    productUpdated: new Date("2026-10-12T05:30:00.000Z"),
+    raw: { "derived-magnitude-type": "Mww" },
+    ...overrides,
+  };
+}
