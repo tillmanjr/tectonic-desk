@@ -1,11 +1,21 @@
 import { mount, type VueWrapper } from "@vue/test-utils";
 import { vi, type Mock } from "vitest";
-import { defineComponent, h, provide, type Component } from "vue";
+import { defineComponent, h, provide, ref, type Component, type Ref } from "vue";
 import type { ApiClient } from "../../src/lib/api.js";
 import { createCatalog, type Catalog } from "../../src/lib/catalog.js";
 import { createClock, type Clock } from "../../src/lib/clock.js";
 import type { EventFilter } from "../../src/lib/filters.js";
-import { API, CATALOG, CLOCK, SELECT, SET_FILTER, STATUS, THEME } from "../../src/lib/keys.js";
+import type { Zone } from "../../src/lib/format.js";
+import {
+  API,
+  CATALOG,
+  CLOCK,
+  SELECT,
+  SET_FILTER,
+  STATUS,
+  THEME,
+  ZONE,
+} from "../../src/lib/keys.js";
 import { createStatusPoll, type StatusPoll } from "../../src/lib/status.js";
 import { createTheme, type Theme } from "../../src/lib/theme.js";
 import { fakeApi } from "./api.js";
@@ -18,6 +28,7 @@ export interface Context {
   theme: Theme;
   select: Mock<(id: string | null) => void>;
   setFilter: Mock<(f: EventFilter) => void>;
+  zone: Ref<Zone>;
   now: Date;
 }
 
@@ -62,6 +73,7 @@ export async function makeContext(
     theme: fakeTheme(),
     select: vi.fn(),
     setFilter: vi.fn(),
+    zone: ref<Zone>("utc"),
     now,
   };
 }
@@ -81,6 +93,7 @@ export function mountWith(
       provide(THEME, ctx.theme);
       provide(SELECT, ctx.select);
       provide(SET_FILTER, ctx.setFilter);
+      provide(ZONE, ctx.zone);
       return () => h(component, props);
     },
   });

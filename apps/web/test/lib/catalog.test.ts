@@ -6,6 +6,7 @@ import { fakeApi } from "../support/api.js";
 import { event, GLOBAL, WC } from "../support/events.js";
 
 const now = () => new Date("2026-10-13T12:00:00Z");
+const flush = () => new Promise((r) => setTimeout(r, 0));
 const list = (id: string, truncated = false) => ({
   events: [event({ id })],
   count: 1,
@@ -69,6 +70,71 @@ describe("createCatalog", () => {
     expect(c.floor.value).toBe(5);
     c.setFilter({ ...EMPTY_FILTER, minMag: 3 });
     expect(c.floor.value).toBe(4.5);
+  });
+  it("loads a date range beside the preset window, and reloads it with the region and on refetch", async () => {
+    const api = fakeApi();
+    vi.mocked(api.events).mockImplementation((q) =>
+      Promise.resolve(list(q.until === undefined ? "preset" : "ranged", q.until !== undefined)),
+    );
+    const c = createCatalog(api, now);
+    await c.init();
+    await c.setRegion("global");
+    const win = { since: "2026-10-01T00:00:00.000Z", until: "2026-10-05T23:59:59.999Z" };
+    c.setRange(win);
+    c.setRange({ ...win });
+    await flush();
+    expect(c.range.value).toEqual(win);
+    expect(c.windowEvents.value[0]?.id).toBe("ranged");
+    expect(c.filtered.value[0]?.id).toBe("ranged");
+    expect(c.events.value[0]?.id).toBe("preset");
+    expect(c.truncated.value).toBe(true);
+    expect(api.events).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(api.events).mock.calls[1]?.[0]).toMatchObject(win);
+    await c.refetch();
+    expect(api.events).toHaveBeenCalledTimes(4);
+    await c.setRegion("wc");
+    expect(api.events).toHaveBeenCalledTimes(6);
+    expect(c.windowEvents.value[0]?.id).toBe("ranged");
+    c.setRange(null);
+    expect(c.windowEvents.value[0]?.id).toBe("preset");
+    expect(api.events).toHaveBeenCalledTimes(6);
+  });
+  it("reports a failed range load, drops stale range answers, and waits for a region", async () => {
+    const api = fakeApi();
+    const c = createCatalog(api, now);
+    c.setRange({ since: "2026-10-01T00:00:00.000Z", until: "2026-10-02T00:00:00.000Z" });
+    expect(api.events).not.toHaveBeenCalled();
+    await c.init();
+    await c.setRegion("global");
+    expect(api.events).toHaveBeenCalledTimes(2);
+    vi.mocked(api.events).mockRejectedValueOnce(new Error("range down"));
+    c.setRange({ since: "2026-10-03T00:00:00.000Z", until: "2026-10-04T00:00:00.000Z" });
+    await flush();
+    expect(c.error.value).toBe("range down");
+    expect(c.loading.value).toBe(false);
+    let resolveFirst: (v: ApiEventList) => void = () => undefined;
+    let rejectSecond: (e: Error) => void = () => undefined;
+    vi.mocked(api.events)
+      .mockImplementationOnce(
+        () =>
+          new Promise((r) => {
+            resolveFirst = r;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((_, r) => {
+            rejectSecond = r;
+          }),
+      );
+    c.setRange({ since: "2026-10-05T00:00:00.000Z", until: "2026-10-06T00:00:00.000Z" });
+    c.setRange({ since: "2026-10-07T00:00:00.000Z", until: "2026-10-08T00:00:00.000Z" });
+    c.setRange(null);
+    resolveFirst(list("stale"));
+    rejectSecond(new Error("stale failure"));
+    await flush();
+    expect(c.windowEvents.value[0]?.id).toBe("us1");
+    expect(c.error.value).toBeNull();
   });
   it("clears the selection on a region switch and keeps it on refetch", async () => {
     const api = fakeApi();

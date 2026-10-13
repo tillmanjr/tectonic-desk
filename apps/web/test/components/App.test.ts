@@ -123,6 +123,26 @@ describe("App", () => {
     expect(wrapper.find(".filters").text()).toContain("All 1 events shown");
   });
 
+  it("switches every time to the browser zone and loads a date range", async () => {
+    stubCanvas();
+    const { wrapper, router, api } = await mountApp("/?since=2026-10-01&until=2026-10-05");
+    await flushPromises();
+    expect(vi.mocked(api.events).mock.calls.at(-1)?.[0]).toMatchObject({
+      since: "2026-10-01T00:00:00.000Z",
+      until: "2026-10-05T23:59:59.999Z",
+    });
+    expect(wrapper.find(".filters").text()).toContain("in the selected dates");
+    expect(wrapper.find("th").text()).toBe("Time (UTC)");
+    await wrapper.find("button[title^='Show every date']").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.tz).toBe("local");
+    expect(wrapper.find("th").text()).toBe("Time (local)");
+    expect(wrapper.find(".filters").text()).toContain("Dates (local time)");
+    await wrapper.find("button[title^='Show every date']").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.tz).toBeUndefined();
+  });
+
   it("shows the truncation banner", async () => {
     const api = fakeApi({
       events: vi

@@ -17,8 +17,15 @@ import { createApiClient } from "../lib/api.js";
 import { clearBeachballCache } from "../lib/beachball.js";
 import { createCatalog, EVENT_LIMIT } from "../lib/catalog.js";
 import { createClock } from "../lib/clock.js";
-import { filterQuery, parseFilter, type EventFilter } from "../lib/filters.js";
-import { API, CATALOG, CLOCK, SELECT, SET_FILTER, STATUS, THEME } from "../lib/keys.js";
+import {
+  dateBoundsFor,
+  filterQuery,
+  parseFilter,
+  rangeInstants,
+  type EventFilter,
+} from "../lib/filters.js";
+import type { Zone } from "../lib/format.js";
+import { API, CATALOG, CLOCK, SELECT, SET_FILTER, STATUS, THEME, ZONE } from "../lib/keys.js";
 import { majorLabel } from "../lib/stats.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -43,6 +50,9 @@ provide(SET_FILTER, setFilter);
 const route = useRoute();
 const router = useRouter();
 const { region, error, truncated } = catalog;
+const zone = computed<Zone>(() => (route.query.tz === "local" ? "local" : "utc"));
+const oldest = computed(() => status.status.value?.events.oldest ?? null);
+provide(ZONE, zone);
 
 const routeRegion = computed(() => {
   const p = route.params.region;
@@ -52,7 +62,16 @@ const routeEvent = computed(() => {
   const q = route.query.event;
   return typeof q === "string" ? q : null;
 });
-const routeFilter = computed(() => parseFilter(route.query, region.value?.minMag ?? 0));
+const routeFilter = computed(() =>
+  parseFilter(
+    route.query,
+    region.value?.minMag ?? 0,
+    dateBoundsFor(oldest.value, clock.now.value, zone.value),
+  ),
+);
+const routeRange = computed(() =>
+  rangeInstants(routeFilter.value, zone.value, oldest.value, clock.now.value),
+);
 
 async function applyRegion(id: string): Promise<void> {
   const ok = await catalog.setRegion(id);
@@ -63,6 +82,7 @@ async function boot(): Promise<void> {
   await applyRegion(routeRegion.value);
   catalog.select(routeEvent.value);
   catalog.setFilter(routeFilter.value);
+  catalog.setRange(routeRange.value);
 }
 function pickRegion(id: string): void {
   const query = { ...route.query };
@@ -71,6 +91,12 @@ function pickRegion(id: string): void {
 }
 function setFilter(f: EventFilter): void {
   void router.replace({ query: { ...route.query, ...filterQuery(f) } });
+}
+function toggleZone(): void {
+  const query = { ...route.query };
+  if (zone.value === "utc") query.tz = "local";
+  else delete query.tz;
+  void router.replace({ query });
 }
 function select(id: string | null): void {
   const query = { ...route.query };
@@ -91,6 +117,9 @@ watch(routeEvent, (id) => {
 });
 watch(routeFilter, (f) => {
   catalog.setFilter(f);
+});
+watch(routeRange, (r) => {
+  catalog.setRange(r);
 });
 watch(theme.resolved, () => {
   clearBeachballCache();
@@ -114,6 +143,14 @@ onUnmounted(() => {
       </div>
       <div class="hdr-right">
         <RegionTabs @pick="pickRegion" />
+        <button
+          type="button"
+          class="theme-btn"
+          title="Show every date and time in UTC or in your browser's zone"
+          @click="toggleZone"
+        >
+          Times: {{ zone === "utc" ? "UTC" : "local" }}
+        </button>
         <ThemeToggle />
       </div>
     </header>

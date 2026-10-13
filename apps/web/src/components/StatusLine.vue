@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { ago, fmtInt, fmtUtc, fmtUtcTime } from "../lib/format.js";
-import { CLOCK, STATUS, useInjected } from "../lib/keys.js";
+import { ago, fmtClock, fmtInt, fmtStamp } from "../lib/format.js";
+import { CLOCK, STATUS, useInjected, ZONE } from "../lib/keys.js";
 
 const STALE_MS = 30 * 60_000;
 const poll = useInjected(STATUS);
 const clock = useInjected(CLOCK);
+const zone = useInjected(ZONE);
 
 const state = computed<{ cls: string; text: string }>(() => {
   const since = poll.errorSince.value;
   if (since !== null) {
-    return { cls: "bad", text: `API unreachable since ${fmtUtcTime(since.toISOString())} UTC` };
+    return {
+      cls: "bad",
+      text: `API unreachable since ${fmtClock(since.toISOString(), zone.value)}`,
+    };
   }
   const s = poll.status.value;
   if (s === null) return { cls: "", text: "Connecting to the catalog…" };
@@ -21,7 +25,7 @@ const state = computed<{ cls: string; text: string }>(() => {
   const age = now.getTime() - Date.parse(s.lastSuccessfulFeed);
   return {
     cls: age > STALE_MS ? "warn" : "",
-    text: `Live · USGS ComCat · feed synced ${fmtUtc(s.lastSuccessfulFeed)} UTC · ${ago(s.lastSuccessfulFeed, now)} ago`,
+    text: `Live · USGS ComCat · feed synced ${fmtStamp(s.lastSuccessfulFeed, zone.value)} · ${ago(s.lastSuccessfulFeed, now)} ago`,
   };
 });
 

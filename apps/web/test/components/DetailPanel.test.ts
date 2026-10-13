@@ -102,6 +102,11 @@ describe("DetailPanel", () => {
     expect(w.find(".mag").text()).toContain("M7.2");
     expect(t).toContain("2026-10-10 00:00:00 UTC");
     expect(t).toContain("3.5 d ago");
+    ctx.zone.value = "local";
+    await flushPromises();
+    expect(text(w)).toContain("2026-10-10 00:00 UTC · 3.5 d ago");
+    ctx.zone.value = "utc";
+    await flushPromises();
     expect(t).toContain("0.000°N, 0.000°E");
     expect(t).toContain("195.2 km · intermediate (70–300 km)");
     expect(t).toContain("Moment tensor");

@@ -745,3 +745,6 @@ a {
   color: var(--muted);
   margin-left: auto;
 }
+.filters input.fdate {
+  width: 140px;
+}

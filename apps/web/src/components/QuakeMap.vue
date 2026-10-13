@@ -13,7 +13,7 @@ import MapPlates from "./MapPlates.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
 import { mustRef } from "../lib/dom.js";
-import { fmtMag, fmtUtcShort, placeOf } from "../lib/format.js";
+import { fmtMag, fmtShort, placeOf } from "../lib/format.js";
 import {
   frameFor,
   loadWorld,
@@ -26,7 +26,7 @@ import {
   type Topo,
   zoomTransformFor,
 } from "../lib/geo.js";
-import { API, CATALOG, SELECT, useInjected } from "../lib/keys.js";
+import { API, CATALOG, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import type { Tip } from "../lib/tip.js";
 
 const props = withDefaults(defineProps<{ animate?: boolean }>(), { animate: true });
@@ -35,6 +35,7 @@ const api = useInjected(API);
 const catalog = useInjected(CATALOG);
 const { filtered: events, selectedId, selected } = catalog;
 const select = useInjected(SELECT);
+const zone = useInjected(ZONE);
 
 const view = computed(() => {
   const r = catalog.requireRegion();
@@ -146,7 +147,7 @@ function onHover(payload: { e: ApiEvent; x: number; y: number }): void {
   const depth = e.depthKm === null ? "—" : String(Math.round(e.depthKm));
   const type = e.magType === null ? "" : ` ${e.magType}`;
   showTip(
-    `M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)} · ${fmtUtcShort(e.time)}`,
+    `M${fmtMag(e.mag)}${type} · ${depth} km · ${placeOf(e)} · ${fmtShort(e.time, zone.value)}`,
     payload.x,
     payload.y,
   );

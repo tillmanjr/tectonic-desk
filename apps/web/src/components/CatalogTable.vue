@@ -2,13 +2,13 @@
 import type { ApiEvent } from "@tectonic/shared";
 import { computed, ref } from "vue";
 import { depthColor } from "../lib/depth.js";
-import { fmtMag, fmtUtc, placeOf } from "../lib/format.js";
-import { CATALOG, SELECT, useInjected } from "../lib/keys.js";
+import { fmtMag, fmtStamp, placeOf } from "../lib/format.js";
+import { CATALOG, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { preferredMechanism } from "../lib/stats.js";
 
 type SortKey = "time" | "mag" | "depthKm" | "place";
 const COLS: { key: SortKey; label: string }[] = [
-  { key: "time", label: "Time (UTC)" },
+  { key: "time", label: "Time" },
   { key: "mag", label: "M" },
   { key: "depthKm", label: "Depth" },
   { key: "place", label: "Location" },
@@ -16,6 +16,7 @@ const COLS: { key: SortKey; label: string }[] = [
 
 const { events: all, filtered: events, selectedId } = useInjected(CATALOG);
 const select = useInjected(SELECT);
+const zone = useInjected(ZONE);
 const sortKey = ref<SortKey>("time");
 const sortDir = ref<1 | -1>(-1);
 
@@ -58,7 +59,10 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
         <thead>
           <tr>
             <th v-for="c in COLS" :key="c.key" :aria-sort="ariaSort(c.key)" @click="sortBy(c.key)">
-              {{ c.label }}
+              {{ c.label
+              }}<template v-if="c.key === 'time'">
+                ({{ zone === "utc" ? "UTC" : "local" }})</template
+              >
             </th>
           </tr>
         </thead>
@@ -73,7 +77,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
             @click="select(e.id)"
             @keydown.enter="select(e.id)"
           >
-            <td class="num">{{ fmtUtc(e.time).slice(5) }}</td>
+            <td class="num">{{ fmtStamp(e.time, zone, { date: "monthday", label: false }) }}</td>
             <td class="num">
               {{ fmtMag(e.mag)
               }}<span v-if="e.magType !== null" class="magtype">{{ e.magType }}</span>

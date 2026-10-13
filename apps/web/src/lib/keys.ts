@@ -1,8 +1,9 @@
-import { inject, type InjectionKey } from "vue";
+import { inject, type InjectionKey, type Ref } from "vue";
 import type { ApiClient } from "./api.js";
 import type { Catalog } from "./catalog.js";
 import type { Clock } from "./clock.js";
 import type { EventFilter } from "./filters.js";
+import type { Zone } from "./format.js";
 import type { StatusPoll } from "./status.js";
 import type { Theme } from "./theme.js";
 
@@ -15,6 +16,8 @@ export const THEME: InjectionKey<Theme> = Symbol("theme");
 export const SELECT: InjectionKey<(id: string | null) => void> = Symbol("select");
 /** Replace the event filter (written to the URL by App). */
 export const SET_FILTER: InjectionKey<(f: EventFilter) => void> = Symbol("setFilter");
+/** The zone every date and time is shown in. */
+export const ZONE: InjectionKey<Readonly<Ref<Zone>>> = Symbol("zone");
 
 export function useInjected<T>(key: InjectionKey<T>): T {
   const value = inject(key);

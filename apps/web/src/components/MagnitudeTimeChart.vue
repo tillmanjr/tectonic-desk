@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { ApiEvent } from "@tectonic/shared";
-import { scaleLinear, scaleUtc } from "d3-scale";
+import { scaleLinear, scaleTime, scaleUtc } from "d3-scale";
 import { computed } from "vue";
 import ChartAxes from "./ChartAxes.vue";
 import { ticksOf } from "../lib/charts.js";
 import { depthColor } from "../lib/depth.js";
 import { fmtMag, placeOf } from "../lib/format.js";
-import { CATALOG, CLOCK, SELECT, useInjected } from "../lib/keys.js";
+import { CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { sequenceOf } from "../lib/sequence.js";
 
 const W = 520;
@@ -17,6 +17,7 @@ type Dated = ApiEvent & { mag: number };
 const catalog = useInjected(CATALOG);
 const clock = useInjected(CLOCK);
 const select = useInjected(SELECT);
+const zone = useInjected(ZONE);
 
 const data = computed(() => {
   const region = catalog.requireRegion();
@@ -25,7 +26,7 @@ const data = computed(() => {
   if (evs.length === 0) return null;
   const now = clock.now.value;
   const minT = Math.min(...evs.map((e) => Date.parse(e.time)));
-  const x = scaleUtc()
+  const x = (zone.value === "utc" ? scaleUtc() : scaleTime())
     .domain([new Date(minT), now])
     .range([M.l, W - M.r]);
   const y = scaleLinear()

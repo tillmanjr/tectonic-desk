@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import FilterBar from "../../src/components/FilterBar.vue";
 import { EMPTY_FILTER } from "../../src/lib/filters.js";
-import { fakeApi } from "../support/api.js";
+import { fakeApi, status } from "../support/api.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 
@@ -24,6 +24,7 @@ describe("FilterBar", () => {
     const w = mountWith(FilterBar, ctx);
     const inputs = w.findAll("input");
     expect(inputs[0]?.attributes("min")).toBe("4.5");
+    expect(w.text()).toContain("Dates (UTC)");
     expect(w.text()).toContain("All 2 events shown");
     expect(w.find("button").attributes("disabled")).toBeDefined();
     await inputs[0]?.setValue("5.5");
@@ -38,10 +39,40 @@ describe("FilterBar", () => {
     await nextTick();
     expect(inputs[0]?.element.value).toBe("5.5");
     expect(inputs[3]?.element.value).toBe("200");
-    expect(w.text()).toContain("Showing 1 of 2 events");
+    expect(w.text()).toContain("Showing 1 of 2 events · summary tiles");
     expect(w.find("button").attributes("disabled")).toBeUndefined();
     await w.find("button").trigger("click");
     expect(ctx.setFilter).toHaveBeenLastCalledWith(EMPTY_FILTER);
+  });
+  it("bounds the date inputs by the catalog's oldest day and today, in the active zone", async () => {
+    const ctx = await makeContext();
+    const w = mountWith(FilterBar, ctx);
+    const dates = w.findAll<HTMLInputElement>("input.fdate");
+    expect(dates[0]?.attributes("min")).toBe("2026-07-15");
+    expect(dates[0]?.attributes("max")).toBe("2026-10-13");
+    await dates[0]?.setValue("2026-10-01");
+    expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, since: "2026-10-01" });
+    await dates[1]?.setValue("2026-10-05");
+    expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, until: "2026-10-05" });
+    ctx.catalog.setFilter({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" });
+    await nextTick();
+    expect(dates[0]?.element.value).toBe("2026-10-01");
+    expect(w.text()).toContain("Showing 1 of 1 events in the selected dates");
+    ctx.zone.value = "local";
+    await nextTick();
+    expect(w.text()).toContain("Dates (local time)");
+  });
+  it("has no lower date bound before the catalog reports its oldest event", async () => {
+    const api = fakeApi({
+      status: vi
+        .fn()
+        .mockResolvedValue(
+          status({ events: { total: 0, newest: null, oldest: null, withMechanism: 0 } }),
+        ),
+    });
+    const ctx = await makeContext({ api });
+    const w = mountWith(FilterBar, ctx);
+    expect(w.find("input.fdate").attributes("min")).toBeUndefined();
   });
   it("ignores change events from something other than an input", async () => {
     const ctx = await makeContext();

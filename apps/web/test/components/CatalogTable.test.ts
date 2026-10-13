@@ -49,6 +49,7 @@ describe("CatalogTable", () => {
   it("lists events newest first with tags, chips and the selected row", async () => {
     const { w } = await table();
     expect(w.find("h2").text()).toContain("4 events");
+    expect(w.find("th").text()).toBe("Time (UTC)");
     expect(ids(w)).toEqual(["a", "c", "b", "d"]);
     const rows = w.findAll("tr.ev");
     expect(rows[0]?.text()).toContain("MT");

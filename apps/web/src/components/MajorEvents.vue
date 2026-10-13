@@ -2,8 +2,8 @@
 import { faultingStyle, planesOf, type ApiEvent, type ApiMechanism } from "@tectonic/shared";
 import { computed } from "vue";
 import BeachballImage from "./BeachballImage.vue";
-import { ago, fmtMag, fmtUtc, placeOf } from "../lib/format.js";
-import { CATALOG, CLOCK, SELECT, useInjected } from "../lib/keys.js";
+import { ago, fmtMag, fmtStamp, placeOf } from "../lib/format.js";
+import { CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { sequenceOf, type Sequence } from "../lib/sequence.js";
 import { majorEvents, preferredMechanism } from "../lib/stats.js";
 
@@ -18,6 +18,7 @@ const catalog = useInjected(CATALOG);
 const { events } = catalog;
 const clock = useInjected(CLOCK);
 const select = useInjected(SELECT);
+const zone = useInjected(ZONE);
 
 const minMag = computed(() => catalog.requireRegion().minMag);
 const cards = computed<Card[]>(() =>
@@ -67,7 +68,7 @@ const sevStyle = (alert: string | null): Record<string, string> | undefined =>
           c.e.eventType
         }}</span>
         <span class="m">
-          {{ fmtUtc(c.e.time) }} UTC · {{ ago(c.e.time, clock.now.value) }} ago ·
+          {{ fmtStamp(c.e.time, zone) }} · {{ ago(c.e.time, clock.now.value) }} ago ·
           {{ depthText(c.e.depthKm) }} km<template v-if="c.style !== null">
             · {{ c.style }}</template
           >

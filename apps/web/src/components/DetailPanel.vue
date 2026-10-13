@@ -4,8 +4,8 @@ import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 import MechanismBlock from "./MechanismBlock.vue";
 import { ApiRequestError, errorMessage } from "../lib/api.js";
 import { depthClass, depthColor, DEPTH_LABEL } from "../lib/depth.js";
-import { ago, fmtCoord, fmtLocal, fmtMag, fmtUtc, placeOf } from "../lib/format.js";
-import { API, CATALOG, CLOCK, SELECT, useInjected } from "../lib/keys.js";
+import { ago, fmtCoord, fmtMag, fmtStamp, placeOf, type Zone } from "../lib/format.js";
+import { API, CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { parentOf, sequenceOf } from "../lib/sequence.js";
 import { preferredMechanism } from "../lib/stats.js";
 
@@ -19,6 +19,8 @@ const api = useInjected(API);
 const catalog = useInjected(CATALOG);
 const clock = useInjected(CLOCK);
 const select = useInjected(SELECT);
+const zone = useInjected(ZONE);
+const otherZone = computed<Zone>(() => (zone.value === "utc" ? "local" : "utc"));
 
 const detail = shallowRef<ApiEventDetail | null>(null);
 const loading = ref(false);
@@ -151,9 +153,12 @@ onUnmounted(() => {
       <template v-else-if="derived !== null">
         <dl class="kv">
           <dt>Origin time</dt>
-          <dd>{{ fmtUtc(derived.d.time, true) }} UTC</dd>
+          <dd>{{ fmtStamp(derived.d.time, zone, { seconds: true }) }}</dd>
           <dt></dt>
-          <dd>{{ fmtLocal(derived.d.time) }} · {{ ago(derived.d.time, clock.now.value) }} ago</dd>
+          <dd>
+            {{ fmtStamp(derived.d.time, otherZone) }} ·
+            {{ ago(derived.d.time, clock.now.value) }} ago
+          </dd>
           <dt>Epicenter</dt>
           <dd>{{ fmtCoord(derived.d.latitude, derived.d.longitude) }}</dd>
           <dt>Depth</dt>
@@ -216,7 +221,7 @@ onUnmounted(() => {
           <h3>Sequence</h3>
           <p class="note" style="margin: 0">
             Within 150 km of, and after, the M{{ fmtMag(derived.parent.mag) }} event of
-            {{ fmtUtc(derived.parent.time) }} UTC.
+            {{ fmtStamp(derived.parent.time, zone) }}.
             <a href="#" class="parent" @click.prevent="select(derived.parent.id)"
               >Open that event</a
             >
@@ -228,11 +233,11 @@ onUnmounted(() => {
             <dt>Review status</dt>
             <dd>{{ derived.d.status ?? "—" }}</dd>
             <dt>USGS updated</dt>
-            <dd>{{ fmtUtc(derived.d.updated, true) }} UTC</dd>
+            <dd>{{ fmtStamp(derived.d.updated, zone, { seconds: true }) }}</dd>
             <dt>First seen here</dt>
-            <dd>{{ fmtUtc(derived.d.firstSeen) }} UTC</dd>
+            <dd>{{ fmtStamp(derived.d.firstSeen, zone) }}</dd>
             <dt>Last seen</dt>
-            <dd>{{ fmtUtc(derived.d.lastSeen) }} UTC</dd>
+            <dd>{{ fmtStamp(derived.d.lastSeen, zone) }}</dd>
           </dl>
         </div>
         <p>

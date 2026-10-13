@@ -1,30 +1,47 @@
 import { describe, expect, it } from "vitest";
 import {
   ago,
+  dateIn,
+  fmtClock,
   fmtCoord,
   fmtInt,
-  fmtLocal,
   fmtMag,
   fmtMoment,
-  fmtUtc,
-  fmtUtcShort,
-  fmtUtcTime,
+  fmtShort,
+  fmtStamp,
   placeOf,
+  zoneLabel,
 } from "../../src/lib/format.js";
 
 const iso = "2026-10-13T12:23:45.678Z";
+const two = (n: number) => String(n).padStart(2, "0");
+/** The same instant as the browser's zone sees it, built from Date itself so the test is zone-neutral. */
+const local = new Date(iso);
+const localDate = `${String(local.getFullYear())}-${two(local.getMonth() + 1)}-${two(local.getDate())}`;
+const localTime = `${two(local.getHours())}:${two(local.getMinutes())}`;
+const localAbbr = zoneLabel("local", local);
 
-describe("time formatting", () => {
-  it("formats UTC to the minute or second", () => {
-    expect(fmtUtc(iso)).toBe("2026-10-13 12:23");
-    expect(fmtUtc(iso, true)).toBe("2026-10-13 12:23:45");
-    expect(fmtUtcTime(iso)).toBe("12:23");
-    expect(fmtUtcShort(iso)).toBe("Oct 13, 12:23 UTC");
-    expect(fmtUtcShort("2026-01-05T03:07:00Z")).toBe("Jan 5, 03:07 UTC");
+describe("zone-aware formatting", () => {
+  it("labels zones", () => {
+    expect(zoneLabel("utc", local)).toBe("UTC");
+    expect(localAbbr).toMatch(/^[A-Z]{2,5}$|^GMT[+-]\d+$/);
   });
-  it("formats local time with a zone abbreviation", () => {
-    expect(fmtLocal(iso, "America/Los_Angeles")).toBe("Oct 13, 5:23 AM PDT");
-    expect(fmtLocal(iso)).toMatch(/Oct 13, \d{1,2}:23 [AP]M/);
+  it("formats stamps in UTC with every option", () => {
+    expect(fmtStamp(iso, "utc")).toBe("2026-10-13 12:23 UTC");
+    expect(fmtStamp(iso, "utc", { seconds: true })).toBe("2026-10-13 12:23:45 UTC");
+    expect(fmtStamp(iso, "utc", { date: "monthday", label: false })).toBe("10-13 12:23");
+  });
+  it("formats stamps in the browser zone", () => {
+    expect(fmtStamp(iso, "local")).toBe(`${localDate} ${localTime} ${localAbbr}`);
+    expect(dateIn(iso, "local")).toBe(localDate);
+    expect(fmtClock(iso, "local")).toBe(`${localTime} ${localAbbr}`);
+  });
+  it("formats short stamps, clocks and dates", () => {
+    expect(fmtShort(iso, "utc")).toBe("Oct 13, 12:23 UTC");
+    expect(fmtShort("2026-01-05T03:07:00Z", "utc")).toBe("Jan 5, 03:07 UTC");
+    expect(fmtShort(iso, "local")).toContain(`, ${localTime} ${localAbbr}`);
+    expect(fmtClock(iso, "utc")).toBe("12:23 UTC");
+    expect(dateIn(iso, "utc")).toBe("2026-10-13");
   });
   it("describes elapsed time in minutes, hours or days", () => {
     const now = new Date("2026-10-13T13:00:00Z");

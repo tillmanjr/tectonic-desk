@@ -47,6 +47,12 @@ describe("MagnitudeTimeChart", () => {
     await w.find("circle").trigger("click");
     expect(ctx.select).toHaveBeenCalledWith("small");
   });
+  it("uses a local time scale when the zone is local", async () => {
+    const { ctx, w } = await chart([after, main]);
+    ctx.zone.value = "local";
+    await nextTick();
+    expect(w.findAll("circle")).toHaveLength(2);
+  });
   it("uses the plain caption without a sequence and says so when empty", async () => {
     const { w } = await chart([after], "wc");
     expect(w.find(".cap").text()).toBe("Each stem is one event; colour is depth class.");

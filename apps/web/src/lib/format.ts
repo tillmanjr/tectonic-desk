@@ -1,32 +1,88 @@
-export function fmtUtc(iso: string, seconds = false): string {
-  return new Date(iso)
-    .toISOString()
-    .slice(0, seconds ? 19 : 16)
-    .replace("T", " ");
+/** Which zone dates and times are presented in: UTC or the browser's. */
+export type Zone = "utc" | "local";
+
+interface Parts {
+  year: string;
+  month: string;
+  day: string;
+  hour: string;
+  minute: string;
+  second: string;
 }
 
-const MONTH = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" });
+const two = (n: number): string => String(n).padStart(2, "0");
 
-/** "Oct 13, 12:23 UTC": month, day, hour and minute, for tooltips. */
-export function fmtUtcShort(iso: string): string {
+function partsOf(d: Date, zone: Zone): Parts {
+  return zone === "utc"
+    ? {
+        year: String(d.getUTCFullYear()),
+        month: two(d.getUTCMonth() + 1),
+        day: two(d.getUTCDate()),
+        hour: two(d.getUTCHours()),
+        minute: two(d.getUTCMinutes()),
+        second: two(d.getUTCSeconds()),
+      }
+    : {
+        year: String(d.getFullYear()),
+        month: two(d.getMonth() + 1),
+        day: two(d.getDate()),
+        hour: two(d.getHours()),
+        minute: two(d.getMinutes()),
+        second: two(d.getSeconds()),
+      };
+}
+
+/** "UTC", or the browser zone's abbreviation at that instant, e.g. "PDT". */
+export function zoneLabel(zone: Zone, d: Date): string {
+  if (zone === "utc") return "UTC";
+  return new Intl.DateTimeFormat("en-US", { timeZoneName: "short" })
+    .formatToParts(d)
+    .filter((p) => p.type === "timeZoneName")
+    .map((p) => p.value)
+    .join("");
+}
+
+export interface StampOptions {
+  seconds?: boolean;
+  /** "full" is YYYY-MM-DD (default); "monthday" is MM-DD. */
+  date?: "full" | "monthday";
+  /** Append the zone label (default true). */
+  label?: boolean;
+}
+
+/** "2026-10-13 12:23 UTC" by default. */
+export function fmtStamp(iso: string, zone: Zone, opts: StampOptions = {}): string {
   const d = new Date(iso);
-  return `${MONTH.format(d)} ${String(d.getUTCDate())}, ${d.toISOString().slice(11, 16)} UTC`;
+  const p = partsOf(d, zone);
+  const date = opts.date === "monthday" ? `${p.month}-${p.day}` : `${p.year}-${p.month}-${p.day}`;
+  const time =
+    opts.seconds === true ? `${p.hour}:${p.minute}:${p.second}` : `${p.hour}:${p.minute}`;
+  const label = opts.label === false ? "" : ` ${zoneLabel(zone, d)}`;
+  return `${date} ${time}${label}`;
 }
 
-export function fmtUtcTime(iso: string): string {
-  return new Date(iso).toISOString().slice(11, 16);
-}
-
-export function fmtLocal(iso: string, timeZone?: string): string {
-  const opts: Intl.DateTimeFormatOptions = {
+/** "Oct 13, 12:23 UTC" for tooltips. */
+export function fmtShort(iso: string, zone: Zone): string {
+  const d = new Date(iso);
+  const p = partsOf(d, zone);
+  const month = new Intl.DateTimeFormat("en-US", {
     month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  };
-  if (timeZone !== undefined) opts.timeZone = timeZone;
-  return new Intl.DateTimeFormat("en-US", opts).format(new Date(iso));
+    ...(zone === "utc" ? { timeZone: "UTC" } : {}),
+  }).format(d);
+  return `${month} ${String(Number(p.day))}, ${p.hour}:${p.minute} ${zoneLabel(zone, d)}`;
+}
+
+/** "12:23 UTC". */
+export function fmtClock(iso: string, zone: Zone): string {
+  const d = new Date(iso);
+  const p = partsOf(d, zone);
+  return `${p.hour}:${p.minute} ${zoneLabel(zone, d)}`;
+}
+
+/** The calendar date, YYYY-MM-DD, of an instant in a zone. */
+export function dateIn(iso: string, zone: Zone): string {
+  const p = partsOf(new Date(iso), zone);
+  return `${p.year}-${p.month}-${p.day}`;
 }
 
 export function ago(iso: string, now: Date): string {
