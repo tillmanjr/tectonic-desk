@@ -11,19 +11,16 @@ import {
   type EventFilter,
   type NumberKey,
 } from "../lib/filters.js";
-import { CATALOG, CLOCK, SET_FILTER, STATUS, useInjected, ZONE } from "../lib/keys.js";
+import { CATALOG, CLOCK, SET_FILTER, useInjected, ZONE } from "../lib/keys.js";
 
 const catalog = useInjected(CATALOG);
 const clock = useInjected(CLOCK);
-const status = useInjected(STATUS);
 const zone = useInjected(ZONE);
 const setFilter = useInjected(SET_FILTER);
 const floor = computed(() => catalog.requireRegion().minMag);
 const active = computed(() => isActive(catalog.filter.value));
 const ranged = computed(() => hasRange(catalog.filter.value));
-const bounds = computed(() =>
-  dateBoundsFor(status.status.value?.events.oldest ?? null, clock.now.value, zone.value),
-);
+const bounds = computed(() => dateBoundsFor(clock.now.value, zone.value));
 const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
 
 const text = (k: NumberKey | DateKey): string => {
@@ -98,7 +95,7 @@ function clear(): void {
     <input
       type="date"
       class="fdate"
-      :min="bounds.min ?? undefined"
+      :min="bounds.min"
       :max="bounds.max"
       :value="text('since')"
       aria-label="From date"
@@ -108,7 +105,7 @@ function clear(): void {
     <input
       type="date"
       class="fdate"
-      :min="bounds.min ?? undefined"
+      :min="bounds.min"
       :max="bounds.max"
       :value="text('until')"
       aria-label="To date"

@@ -80,8 +80,7 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   the URL (`minMag`, `maxMag`, `minDepth`, `maxDepth`); the magnitude minimum cannot go below the
   view's floor, and the b-value's Mc rises with it.
 - A date range (from, to; either optional, inclusive calendar days) loads that window from the
-  server for the map, catalog and charts; the dates are bounded by the catalog's oldest event and
-  today. The header's "Times" button switches every date and time on the page, and the way the
+  server for the map, catalog and charts; the dates are bounded to the last 90 days. The header's "Times" button switches every date and time on the page, and the way the
   date filter is read, between UTC (default) and the browser's zone; it is kept in the URL as
   `tz=local`.
 - The map is locked by default: wheel and drag scroll the page; the buttons and clicking an event

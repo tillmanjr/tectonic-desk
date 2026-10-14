@@ -49,25 +49,27 @@ export function parseDate(v: unknown): string | null {
   return Number.isNaN(ms) || new Date(ms).toISOString().slice(0, 10) !== v ? null : v;
 }
 
-/** The selectable date span: the catalog's oldest day (null while unknown) to today, in the zone. */
+/** How far back the date filter may reach. */
+export const RANGE_DAYS = 90;
+
+/** The selectable date span: today minus `RANGE_DAYS` to today, as calendar days in the zone. */
 export interface DateBounds {
-  min: string | null;
+  min: string;
   max: string;
 }
 
-export function dateBoundsFor(oldest: string | null, now: Date, zone: Zone): DateBounds {
+export function dateBoundsFor(now: Date, zone: Zone): DateBounds {
   return {
-    min: oldest === null ? null : dateIn(oldest, zone),
+    min: dateIn(new Date(now.getTime() - RANGE_DAYS * 864e5).toISOString(), zone),
     max: dateIn(now.toISOString(), zone),
   };
 }
 
 function clampDate(d: string | null, b: DateBounds): string | null {
   if (d === null) return null;
-  let out = d;
-  if (b.min !== null && out < b.min) out = b.min;
-  if (out > b.max) out = b.max;
-  return out;
+  if (d < b.min) return b.min;
+  if (d > b.max) return b.max;
+  return d;
 }
 
 /** Reads the filter from URL query values; the magnitude minimum never goes below `floor`, dates stay inside `bounds`. */
@@ -146,19 +148,15 @@ export interface Range {
 }
 
 /**
- * The server-side window for a date filter: from the start of `since` (or the
- * catalog's oldest event) to the end of `until` (or the end of today), in the
+ * The server-side window for a date filter: from the start of `since` (or of
+ * the earliest selectable day) to the end of `until` (or of today), in the
  * zone. Null when neither date is set.
  */
-export function rangeInstants(
-  f: EventFilter,
-  zone: Zone,
-  oldest: string | null,
-  now: Date,
-): Range | null {
+export function rangeInstants(f: EventFilter, zone: Zone, now: Date): Range | null {
   if (!hasRange(f)) return null;
-  const since =
-    f.since === null ? (oldest ?? now.toISOString()) : dayStart(f.since, zone).toISOString();
-  const untilDay = f.until ?? dateIn(now.toISOString(), zone);
-  return { since, until: dayEnd(untilDay, zone).toISOString() };
+  const bounds = dateBoundsFor(now, zone);
+  return {
+    since: dayStart(f.since ?? bounds.min, zone).toISOString(),
+    until: dayEnd(f.until ?? bounds.max, zone).toISOString(),
+  };
 }

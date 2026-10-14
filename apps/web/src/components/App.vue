@@ -51,7 +51,6 @@ const route = useRoute();
 const router = useRouter();
 const { region, error, truncated } = catalog;
 const zone = computed<Zone>(() => (route.query.tz === "local" ? "local" : "utc"));
-const oldest = computed(() => status.status.value?.events.oldest ?? null);
 provide(ZONE, zone);
 
 const routeRegion = computed(() => {
@@ -63,15 +62,9 @@ const routeEvent = computed(() => {
   return typeof q === "string" ? q : null;
 });
 const routeFilter = computed(() =>
-  parseFilter(
-    route.query,
-    region.value?.minMag ?? 0,
-    dateBoundsFor(oldest.value, clock.now.value, zone.value),
-  ),
+  parseFilter(route.query, region.value?.minMag ?? 0, dateBoundsFor(clock.now.value, zone.value)),
 );
-const routeRange = computed(() =>
-  rangeInstants(routeFilter.value, zone.value, oldest.value, clock.now.value),
-);
+const routeRange = computed(() => rangeInstants(routeFilter.value, zone.value, clock.now.value));
 
 async function applyRegion(id: string): Promise<void> {
   const ok = await catalog.setRegion(id);

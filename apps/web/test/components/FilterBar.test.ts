@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import FilterBar from "../../src/components/FilterBar.vue";
 import { EMPTY_FILTER } from "../../src/lib/filters.js";
-import { fakeApi, status } from "../support/api.js";
+import { fakeApi } from "../support/api.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 
@@ -48,7 +48,7 @@ describe("FilterBar", () => {
     await w.find("button").trigger("click");
     expect(ctx.setFilter).toHaveBeenLastCalledWith(EMPTY_FILTER);
   });
-  it("bounds the date inputs by the catalog's oldest day and today, in the active zone", async () => {
+  it("bounds the date inputs to the last 90 days, in the active zone", async () => {
     const ctx = await makeContext();
     const w = mountWith(FilterBar, ctx);
     const dates = w.findAll<HTMLInputElement>("input.fdate");
@@ -65,18 +65,6 @@ describe("FilterBar", () => {
     ctx.zone.value = "local";
     await nextTick();
     expect(w.text()).toContain("Dates (local)");
-  });
-  it("has no lower date bound before the catalog reports its oldest event", async () => {
-    const api = fakeApi({
-      status: vi
-        .fn()
-        .mockResolvedValue(
-          status({ events: { total: 0, newest: null, oldest: null, withMechanism: 0 } }),
-        ),
-    });
-    const ctx = await makeContext({ api });
-    const w = mountWith(FilterBar, ctx);
-    expect(w.find("input.fdate").attributes("min")).toBeUndefined();
   });
   it("ignores change events from something other than an input", async () => {
     const ctx = await makeContext();

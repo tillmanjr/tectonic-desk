@@ -23,6 +23,7 @@ const evs = [
 ];
 const ids = (list: { id: string }[]) => list.map((e) => e.id);
 const bounds = { min: "2026-07-15", max: "2026-10-13" };
+// 2026-10-13 minus 90 days is 2026-07-15.
 const now = new Date("2026-10-13T12:00:00Z");
 
 describe("parseBound / parseDate", () => {
@@ -61,10 +62,8 @@ describe("parseFilter", () => {
       since: "2026-10-10",
       until: "2026-10-10",
     });
-    expect(
-      parseFilter({ since: "2026-01-01" }, 4.5, { min: null, max: "2026-10-13" }),
-    ).toMatchObject({
-      since: "2026-01-01",
+    expect(parseFilter({ since: "2026-08-01" }, 4.5, bounds)).toMatchObject({
+      since: "2026-08-01",
       until: null,
     });
     expect(parseFilter({ until: "nope" }, 4.5, bounds).until).toBeNull();
@@ -119,9 +118,8 @@ describe("applyFilter", () => {
 });
 
 describe("dates and ranges", () => {
-  it("bounds the selectable dates by the oldest event and today", () => {
-    expect(dateBoundsFor("2026-07-15T08:55:22.400Z", now, "utc")).toEqual(bounds);
-    expect(dateBoundsFor(null, now, "utc")).toEqual({ min: null, max: "2026-10-13" });
+  it("bounds the selectable dates to the last 90 days", () => {
+    expect(dateBoundsFor(now, "utc")).toEqual(bounds);
   });
   it("finds day starts and ends in UTC and in the browser zone", () => {
     expect(dayStart("2026-10-13", "utc").toISOString()).toBe("2026-10-13T00:00:00.000Z");
@@ -135,27 +133,15 @@ describe("dates and ranges", () => {
     expect(e.getTime() - s.getTime()).toBeGreaterThan(22 * 36e5);
   });
   it("turns a date filter into server instants", () => {
-    expect(rangeInstants(EMPTY_FILTER, "utc", null, now)).toBeNull();
+    expect(rangeInstants(EMPTY_FILTER, "utc", now)).toBeNull();
     expect(
-      rangeInstants(
-        { ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" },
-        "utc",
-        null,
-        now,
-      ),
+      rangeInstants({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" }, "utc", now),
     ).toEqual({ since: "2026-10-01T00:00:00.000Z", until: "2026-10-05T23:59:59.999Z" });
-    expect(
-      rangeInstants(
-        { ...EMPTY_FILTER, until: "2026-10-05" },
-        "utc",
-        "2026-07-15T08:55:22.400Z",
-        now,
-      ),
-    ).toEqual({ since: "2026-07-15T08:55:22.400Z", until: "2026-10-05T23:59:59.999Z" });
-    expect(rangeInstants({ ...EMPTY_FILTER, until: "2026-10-05" }, "utc", null, now)?.since).toBe(
-      "2026-10-13T12:00:00.000Z",
-    );
-    expect(rangeInstants({ ...EMPTY_FILTER, since: "2026-10-01" }, "utc", null, now)).toEqual({
+    expect(rangeInstants({ ...EMPTY_FILTER, until: "2026-10-05" }, "utc", now)).toEqual({
+      since: "2026-07-15T00:00:00.000Z",
+      until: "2026-10-05T23:59:59.999Z",
+    });
+    expect(rangeInstants({ ...EMPTY_FILTER, since: "2026-10-01" }, "utc", now)).toEqual({
       since: "2026-10-01T00:00:00.000Z",
       until: "2026-10-13T23:59:59.999Z",
     });
