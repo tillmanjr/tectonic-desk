@@ -135,6 +135,59 @@ describe("QuakeMap", () => {
     expect(w.find("svg.map > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
   });
 
+  it("replays the window day by day, showing only events that have happened", async () => {
+    stubWorld();
+    stubCanvas();
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    const ctx = await makeContext();
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    const markers = () => w.findComponent({ name: "MapEvents" }).findAll("circle, g.bb").length;
+    expect(markers()).toBe(1);
+    const animate = w.findAll(".zbtn").find((b) => b.text() === "Animate");
+    await animate?.trigger("click");
+    expect(w.find(".animbar").exists()).toBe(true);
+    expect(w.find(".animclock").text()).toBe("2026-10-05 00:00 UTC");
+    expect(w.find(".animcount").text()).toBe("0 of 1 events");
+    expect(markers()).toBe(0);
+    await w.find(".animbar input").setValue("1");
+    await w.find(".animbar .play").trigger("click");
+    expect(w.find(".animbar .play").text()).toBe("Pause");
+    await vi.advanceTimersByTimeAsync(7200);
+    expect(w.find(".animclock").text()).toBe("2026-10-12 04:48 UTC");
+    expect(markers()).toBe(1);
+    await w.find(".animbar .play").trigger("click");
+    expect(w.find(".animbar .play").text()).toBe("Start");
+    await w.find("[aria-label='Back one day']").trigger("click");
+    expect(w.find(".animclock").text()).toBe("2026-10-11 04:48 UTC");
+    expect(markers()).toBe(0);
+    await w.find("[aria-label='Forward one day']").trigger("click");
+    expect(markers()).toBe(1);
+    const close = w.findAll(".animbar .zbtn").find((b) => b.text() === "Close");
+    await close?.trigger("click");
+    expect(w.find(".animbar").exists()).toBe(false);
+    expect(markers()).toBe(1);
+    await animate?.trigger("click");
+    expect(w.find(".animbar").exists()).toBe(true);
+    await animate?.trigger("click");
+    expect(w.find(".animbar").exists()).toBe(false);
+    w.unmount();
+    vi.useRealTimers();
+  });
+
+  it("opens the animation over a date range when one is set", async () => {
+    stubWorld();
+    const ctx = await makeContext();
+    ctx.catalog.setRange({ since: "2026-10-09T00:00:00.000Z", until: "2026-10-10T23:59:59.999Z" });
+    await flushPromises();
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    const animate = w.findAll(".zbtn").find((b) => b.text() === "Animate");
+    await animate?.trigger("click");
+    expect(w.find(".animclock").text()).toBe("2026-10-08 00:00 UTC");
+    w.unmount();
+  });
+
   it("uses animated transitions by default and throws without a region", async () => {
     stubWorld();
     const ctx = await makeContext();

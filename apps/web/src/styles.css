@@ -775,3 +775,39 @@ a {
   cursor: help;
   margin-right: 10px;
 }
+.animbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.animbar label {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.animbar input {
+  width: 64px;
+  font: 500 13px var(--f-data);
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 3px 6px;
+}
+.animbar .play {
+  width: auto;
+  padding: 0 10px;
+  background: var(--ink);
+  color: var(--panel);
+}
+.animbar .animclock {
+  font-size: 14px;
+  font-weight: 500;
+}
+.animbar .animcount {
+  color: var(--muted);
+}

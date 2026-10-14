@@ -83,6 +83,9 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   server for the map, catalog and charts; the dates are bounded to the last 90 days. The header's "Times" button switches every date and time on the page, and the way the
   date filter is read, between UTC (default) and the browser's zone; it is kept in the URL as
   `tz=local`.
+- "Animate" on the map toolbar replays the loaded window: a tracking clock starts at the day
+  before the window's first day with an empty map and adds the filtered events as it passes their
+  origin times; set seconds per day, start, pause, step a day either way, close.
 - The map is locked by default: wheel and drag scroll the page; the buttons and clicking an event
   still zoom. The mouse icon in the map's top-right corner toggles the lock; a red slash means
   locked.

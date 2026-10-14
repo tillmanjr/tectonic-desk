@@ -5,15 +5,16 @@ import { select as d3select } from "d3-selection";
 import "d3-transition";
 import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomTransform } from "d3-zoom";
 import type { Feature, LineString } from "geojson";
-import { computed, onMounted, ref, shallowRef, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 import MapBasemap from "./MapBasemap.vue";
 import MapEvents from "./MapEvents.vue";
 import MapLegend from "./MapLegend.vue";
 import MapPlates from "./MapPlates.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
+import { createAnimation, DAY_MS } from "../lib/animation.js";
 import { mustRef } from "../lib/dom.js";
-import { fmtMag, fmtShort, placeOf } from "../lib/format.js";
+import { fmtMag, fmtShort, fmtStamp, placeOf } from "../lib/format.js";
 import {
   frameFor,
   loadWorld,
@@ -26,7 +27,7 @@ import {
   type Topo,
   zoomTransformFor,
 } from "../lib/geo.js";
-import { API, CATALOG, SELECT, useInjected, ZONE } from "../lib/keys.js";
+import { API, CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import type { Tip } from "../lib/tip.js";
 
 const props = withDefaults(defineProps<{ animate?: boolean }>(), { animate: true });
@@ -36,6 +37,33 @@ const catalog = useInjected(CATALOG);
 const { filtered: events, selectedId, selected } = catalog;
 const select = useInjected(SELECT);
 const zone = useInjected(ZONE);
+const clock = useInjected(CLOCK);
+
+const anim = createAnimation();
+/** The loaded window: the date range when set, else the preset's trailing days. */
+const windowBounds = computed(() => {
+  const win = catalog.range.value;
+  if (win !== null) return { start: new Date(win.since), end: new Date(win.until) };
+  const now = clock.now.value;
+  return { start: new Date(now.getTime() - catalog.requireRegion().days * DAY_MS), end: now };
+});
+/** What the map draws: everything, or only what has happened by the animation cursor. */
+const shown = computed(() => {
+  const c = anim.cursor.value;
+  if (c === null) return events.value;
+  const t = c.getTime();
+  return events.value.filter((e) => Date.parse(e.time) <= t);
+});
+function openAnimation(): void {
+  anim.open(windowBounds.value.start, windowBounds.value.end, zone.value);
+}
+function togglePlay(): void {
+  if (anim.playing.value) anim.pause();
+  else anim.play();
+}
+onUnmounted(() => {
+  anim.close();
+});
 
 const view = computed(() => {
   const r = catalog.requireRegion();
@@ -198,6 +226,42 @@ onMounted(() => {
       >
         Reset
       </button>
+      <button
+        type="button"
+        class="zbtn"
+        style="width: auto; padding: 0 8px"
+        :aria-pressed="anim.active.value"
+        title="Replay the loaded window on the map, day by day"
+        @click="anim.active.value ? anim.close() : openAnimation()"
+      >
+        Animate
+      </button>
+    </div>
+    <div v-if="anim.active.value && anim.cursor.value !== null" class="animbar">
+      <label
+        >Seconds per day
+        <input v-model.number="anim.secondsPerDay.value" type="number" min="0.1" step="0.5" />
+      </label>
+      <button type="button" class="zbtn" aria-label="Back one day" @click="anim.stepDay(-1)">
+        ◀
+      </button>
+      <button
+        type="button"
+        class="zbtn play"
+        :aria-label="anim.playing.value ? 'Pause' : 'Start'"
+        @click="togglePlay"
+      >
+        {{ anim.playing.value ? "Pause" : "Start" }}
+      </button>
+      <button type="button" class="zbtn" aria-label="Forward one day" @click="anim.stepDay(1)">
+        ▶
+      </button>
+      <span class="animclock num">{{ fmtStamp(anim.cursor.value.toISOString(), zone) }}</span>
+      <span class="animcount">{{ shown.length }} of {{ events.length }} events</span>
+      <span class="sp"></span>
+      <button type="button" class="zbtn" style="width: auto; padding: 0 8px" @click="anim.close()">
+        Close
+      </button>
     </div>
     <div class="mapwrap">
       <button
@@ -255,7 +319,7 @@ onMounted(() => {
           />
           <MapEvents
             :frame="view.frame"
-            :events="events"
+            :events="shown"
             :k="transform.k"
             :selected-id="selectedId"
             :show-mech="showMech"
