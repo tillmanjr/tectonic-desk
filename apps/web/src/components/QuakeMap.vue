@@ -119,11 +119,16 @@ const visibleFaults = computed(() =>
 const faultIdx = computed(() =>
   faultIndex(visibleFaults.value, (c) => view.value.frame.projection(c)),
 );
-const faultSummary = computed(() => {
-  const n = faultAges.value.length;
-  if (n === AGE_CODES.length) return "All";
-  return n === 0 ? "None" : `${String(n)} of ${String(AGE_CODES.length)}`;
-});
+const faultsAll = computed(() => faultAges.value.length === AGE_CODES.length);
+const faultsPartial = computed(() => faultAges.value.length > 0 && !faultsAll.value);
+const faultCount = computed(
+  () => `${String(faultAges.value.length)} of ${String(AGE_CODES.length)}`,
+);
+/** The summary checkbox: checked draws every class, unchecked none. */
+function setAllFaults(ev: Event): void {
+  const t = ev.target;
+  faultAges.value = t instanceof HTMLInputElement && t.checked ? [...AGE_CODES] : [];
+}
 function closePickOnOutside(ev: MouseEvent): void {
   const t = ev.target;
   if (t instanceof Element && t.closest(".layerpick") !== null) return;
@@ -311,14 +316,27 @@ onMounted(() => {
       <label><input v-model="showPlates" type="checkbox" /> Plate boundaries</label>
       <label><input v-model="showTeeth" type="checkbox" /> Subduction teeth</label>
       <div v-if="hasFaults" class="layerpick">
+        <label
+          ><input
+            type="checkbox"
+            :checked="faultsAll"
+            :indeterminate="faultsPartial"
+            aria-label="Quaternary faults"
+            @change="setAllFaults"
+          />
+          Quaternary faults<span v-if="faultsPartial" class="pickcount">{{
+            faultCount
+          }}</span></label
+        >
         <button
           type="button"
-          class="zbtn pickbtn"
+          class="pickopen"
+          aria-label="Choose which fault ages to draw"
           aria-haspopup="true"
           :aria-expanded="pickOpen"
           @click="pickOpen = !pickOpen"
         >
-          Quaternary faults: {{ faultSummary }} ▾
+          ▾
         </button>
         <div v-if="pickOpen" class="pickmenu" role="group" aria-label="Quaternary fault ages">
           <label v-for="(a, code) in FAULT_AGES" :key="code">

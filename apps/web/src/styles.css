@@ -292,16 +292,33 @@ a:focus-visible,
 }
 .layerpick {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
-.pickbtn {
-  width: auto;
-  padding: 0 8px;
-  font-weight: 500;
-  white-space: nowrap;
+.pickcount {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin-left: 4px;
+}
+.pickopen {
+  font: inherit;
+  line-height: 1;
+  padding: 2px 5px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.pickopen:hover,
+.pickopen[aria-expanded="true"] {
+  color: var(--ink);
+  border-color: var(--line);
 }
 .pickmenu {
   position: absolute;
-  top: 32px;
+  top: 26px;
   left: 0;
   z-index: 4;
   min-width: 270px;
