@@ -64,7 +64,11 @@ describe("App", () => {
     await wrapper.findAll("[role=tab]")[1]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/wc");
-    expect(api.events).toHaveBeenCalledTimes(2);
+    expect(api.events).toHaveBeenCalledTimes(4);
+    expect(vi.mocked(api.events).mock.calls.at(-1)?.[0]).toMatchObject({
+      since: "2026-09-13T00:00:00.000Z",
+      until: "2026-10-13T23:59:59.999Z",
+    });
     await wrapper.find("tr.ev").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.event).toBe("us1");
@@ -162,7 +166,7 @@ describe("App", () => {
     const { wrapper, theme } = await mountApp("/", api);
     await vi.advanceTimersByTimeAsync(60_000);
     await flushPromises();
-    expect(api.events).toHaveBeenCalledTimes(2);
+    expect(api.events).toHaveBeenCalledTimes(4);
     theme.set("dark");
     await flushPromises();
     expect(theme.resolved.value).toBe("dark");

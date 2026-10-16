@@ -40,11 +40,14 @@ const zone = useInjected(ZONE);
 const clock = useInjected(CLOCK);
 
 const anim = createAnimation();
-/** The loaded window: the date range when set, else the preset's trailing days. */
+/** The loaded window, never reaching past now: the date range, else the preset's trailing days. */
 const windowBounds = computed(() => {
-  const win = catalog.range.value;
-  if (win !== null) return { start: new Date(win.since), end: new Date(win.until) };
   const now = clock.now.value;
+  const win = catalog.range.value;
+  if (win !== null) {
+    const end = new Date(Math.min(Date.parse(win.until), now.getTime()));
+    return { start: new Date(win.since), end };
+  }
   return { start: new Date(now.getTime() - catalog.requireRegion().days * DAY_MS), end: now };
 });
 /** What the map draws: everything, or only what has happened by the animation cursor. */

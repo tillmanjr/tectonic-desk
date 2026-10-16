@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ApiRegion } from "@tectonic/shared";
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CatalogTable from "./CatalogTable.vue";
@@ -22,6 +23,7 @@ import {
   filterQuery,
   parseFilter,
   rangeInstants,
+  resolveDates,
   type EventFilter,
 } from "../lib/filters.js";
 import type { Zone } from "../lib/format.js";
@@ -64,10 +66,15 @@ const routeEvent = computed(() => {
 const routeFilter = computed(() =>
   parseFilter(route.query, region.value?.minMag ?? 0, dateBoundsFor(clock.now.value, zone.value)),
 );
-const routeRange = computed(() => rangeInstants(routeFilter.value, zone.value, clock.now.value));
+/** The window a region shows under the route's filter: explicit dates, else its trailing days. */
+function rangeFor(r: ApiRegion) {
+  const span = resolveDates(routeFilter.value, r.days, clock.now.value, zone.value);
+  return rangeInstants(span, zone.value);
+}
+const routeRange = computed(() => (region.value === null ? null : rangeFor(region.value)));
 
 async function applyRegion(id: string): Promise<void> {
-  const ok = await catalog.setRegion(id);
+  const ok = await catalog.setRegion(id, rangeFor);
   if (!ok && catalog.regions.value.length > 0) await router.replace("/");
 }
 async function boot(): Promise<void> {
@@ -75,7 +82,6 @@ async function boot(): Promise<void> {
   await applyRegion(routeRegion.value);
   catalog.select(routeEvent.value);
   catalog.setFilter(routeFilter.value);
-  catalog.setRange(routeRange.value);
 }
 function pickRegion(id: string): void {
   const query = { ...route.query };

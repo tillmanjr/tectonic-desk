@@ -79,10 +79,13 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   the map, catalog and charts; the summary tiles and major events stay unfiltered. Filters live in
   the URL (`minMag`, `maxMag`, `minDepth`, `maxDepth`); the magnitude minimum cannot go below the
   view's floor, and the b-value's Mc rises with it.
-- A date range (from, to; either optional, inclusive calendar days) loads that window from the
-  server for the map, catalog and charts; the dates are bounded to the last 90 days. The header's "Times" button switches every date and time on the page, and the way the
-  date filter is read, between UTC (default) and the browser's zone; it is kept in the URL as
-  `tz=local`.
+- A date range (from, to; inclusive calendar days) loads that window from the server for the map,
+  catalog and charts. The inputs always show the window in force: "from" defaults to the view's
+  trailing days (7 global, 30 West Coast) and "to" to today, and the magnitude minimum shows the
+  view's floor; only explicit bounds go in the URL (`since`, `until`), and the dates are bounded to
+  the last 90 days. The header's "Times" button switches every date and time on the page, and the
+  way the date filter is read, between UTC (default) and the browser's zone; it is kept in the URL
+  as `tz=local`.
 - "Animate" on the map toolbar replays the loaded window: a tracking clock starts at the day
   before the window's first day with an empty map and adds the filtered events as it passes their
   origin times; set seconds per day, start, pause, step a day either way, close.

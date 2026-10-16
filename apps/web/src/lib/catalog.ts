@@ -36,7 +36,7 @@ export interface Catalog {
   selected: ComputedRef<ApiEvent | null>;
   /** Magnitude and depth bounds applied to the map, table and charts. */
   filter: Ref<EventFilter>;
-  /** A server-side date window replacing the preset one for the map, table and charts. */
+  /** The server-side date window of the map, table and charts; null only before a region is set. */
   range: Ref<Range | null>;
   /** The events of `range` when set, else the preset window. */
   windowEvents: ComputedRef<ApiEvent[]>;
@@ -49,8 +49,11 @@ export interface Catalog {
   requireRegion(): ApiRegion;
   /** Loads the region presets. */
   init(): Promise<void>;
-  /** Switches region and loads its events; false when the id is unknown. */
-  setRegion(id: string): Promise<boolean>;
+  /**
+   * Switches region, adopting the window `rangeFor` gives for it (the current
+   * one by default), and loads its events; false when the id is unknown.
+   */
+  setRegion(id: string, rangeFor?: (r: ApiRegion) => Range | null): Promise<boolean>;
   select(id: string | null): void;
   /** Reloads the current region's events, keeping the selection. */
   refetch(): Promise<void>;
@@ -159,7 +162,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
         error.value = errorMessage(e);
       }
     },
-    async setRegion(id) {
+    async setRegion(id, rangeFor = () => range.value) {
       const r = regions.value.find((x) => x.id === id);
       if (r === undefined) return false;
       if (regionId.value === id) return true;
@@ -168,6 +171,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
       events.value = [];
       rangeEvents.value = null;
       truncated.value = false;
+      range.value = rangeFor(r);
       await loadAll(r);
       return true;
     },

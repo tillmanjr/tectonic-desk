@@ -12,6 +12,7 @@ import {
   parseDate,
   parseFilter,
   rangeInstants,
+  resolveDates,
 } from "../../src/lib/filters.js";
 import { event } from "../support/events.js";
 
@@ -132,18 +133,35 @@ describe("dates and ranges", () => {
     ]);
     expect(e.getTime() - s.getTime()).toBeGreaterThan(22 * 36e5);
   });
-  it("turns a date filter into server instants", () => {
-    expect(rangeInstants(EMPTY_FILTER, "utc", now)).toBeNull();
-    expect(
-      rangeInstants({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" }, "utc", now),
-    ).toEqual({ since: "2026-10-01T00:00:00.000Z", until: "2026-10-05T23:59:59.999Z" });
-    expect(rangeInstants({ ...EMPTY_FILTER, until: "2026-10-05" }, "utc", now)).toEqual({
-      since: "2026-07-15T00:00:00.000Z",
-      until: "2026-10-05T23:59:59.999Z",
+  it("resolves the queried days: explicit bounds, else the trailing days up to today", () => {
+    expect(resolveDates(EMPTY_FILTER, 7, now, "utc")).toEqual({
+      since: "2026-10-06",
+      until: "2026-10-13",
     });
-    expect(rangeInstants({ ...EMPTY_FILTER, since: "2026-10-01" }, "utc", now)).toEqual({
+    expect(resolveDates(EMPTY_FILTER, 30, now, "utc")).toEqual({
+      since: "2026-09-13",
+      until: "2026-10-13",
+    });
+    expect(resolveDates({ ...EMPTY_FILTER, since: "2026-10-01" }, 7, now, "utc")).toEqual({
+      since: "2026-10-01",
+      until: "2026-10-13",
+    });
+    expect(resolveDates({ ...EMPTY_FILTER, until: "2026-10-10" }, 7, now, "utc")).toEqual({
+      since: "2026-10-06",
+      until: "2026-10-10",
+    });
+    expect(resolveDates({ ...EMPTY_FILTER, until: "2026-10-01" }, 7, now, "utc")).toEqual({
+      since: "2026-10-01",
+      until: "2026-10-01",
+    });
+    expect(
+      resolveDates({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" }, 30, now, "utc"),
+    ).toEqual({ since: "2026-10-01", until: "2026-10-05" });
+  });
+  it("turns a day span into server instants", () => {
+    expect(rangeInstants({ since: "2026-10-01", until: "2026-10-05" }, "utc")).toEqual({
       since: "2026-10-01T00:00:00.000Z",
-      until: "2026-10-13T23:59:59.999Z",
+      until: "2026-10-05T23:59:59.999Z",
     });
   });
 });

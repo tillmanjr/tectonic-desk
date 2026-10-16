@@ -26,7 +26,7 @@ const data = computed(() => {
   if (evs.length === 0) return null;
   const now = clock.now.value;
   const win = catalog.range.value;
-  const end = win === null ? now : new Date(win.until);
+  const end = win === null ? now : new Date(Math.min(Date.parse(win.until), now.getTime()));
   const minT = Math.min(...evs.map((e) => Date.parse(e.time)));
   const x = (zone.value === "utc" ? scaleUtc() : scaleTime())
     .domain([new Date(minT), end])

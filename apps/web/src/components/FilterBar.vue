@@ -7,6 +7,7 @@ import {
   isActive,
   parseBound,
   parseDate,
+  resolveDates,
   type DateKey,
   type EventFilter,
   type NumberKey,
@@ -21,9 +22,13 @@ const floor = computed(() => catalog.requireRegion().minMag);
 const active = computed(() => isActive(catalog.filter.value));
 const ranged = computed(() => hasRange(catalog.filter.value));
 const bounds = computed(() => dateBoundsFor(clock.now.value, zone.value));
+/** The days in force, so the inputs always show the window being queried. */
+const span = computed(() =>
+  resolveDates(catalog.filter.value, catalog.requireRegion().days, clock.now.value, zone.value),
+);
 const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
 
-const text = (k: NumberKey | DateKey): string => {
+const text = (k: NumberKey): string => {
   const v = catalog.filter.value[k];
   return v === null ? "" : String(v);
 };
@@ -59,7 +64,7 @@ function clear(): void {
       type="number"
       step="0.1"
       :min="floor"
-      :value="text('minMag')"
+      :value="String(catalog.floor.value)"
       placeholder="min"
       aria-label="Minimum magnitude"
       @change="changeNumber('minMag', $event)"
@@ -97,7 +102,7 @@ function clear(): void {
       class="fdate"
       :min="bounds.min"
       :max="bounds.max"
-      :value="text('since')"
+      :value="span.since"
       aria-label="From date"
       @change="changeDate('since', $event)"
     />
@@ -107,7 +112,7 @@ function clear(): void {
       class="fdate"
       :min="bounds.min"
       :max="bounds.max"
-      :value="text('until')"
+      :value="span.until"
       aria-label="To date"
       @change="changeDate('until', $event)"
     />
@@ -119,7 +124,7 @@ function clear(): void {
           in the selected dates</template
         ></template
       >
-      <template v-else>All {{ catalog.events.value.length }} events shown</template>
+      <template v-else>All {{ catalog.windowEvents.value.length }} events shown</template>
     </span>
   </section>
 </template>

@@ -58,11 +58,30 @@ export interface DateBounds {
   max: string;
 }
 
+/** The calendar day, in the zone, `n` days before `now`. */
+function daysAgo(now: Date, n: number, zone: Zone): string {
+  return dateIn(new Date(now.getTime() - n * 864e5).toISOString(), zone);
+}
+
 export function dateBoundsFor(now: Date, zone: Zone): DateBounds {
-  return {
-    min: dateIn(new Date(now.getTime() - RANGE_DAYS * 864e5).toISOString(), zone),
-    max: dateIn(now.toISOString(), zone),
-  };
+  return { min: daysAgo(now, RANGE_DAYS, zone), max: daysAgo(now, 0, zone) };
+}
+
+/** The calendar days a window covers, in the zone. */
+export interface DateSpan {
+  since: string;
+  until: string;
+}
+
+/**
+ * The days actually queried, which the filter inputs show: each explicit bound,
+ * else its default. The end defaults to today; the start to `days` before
+ * today, pulled forward when an explicit end lies earlier than that.
+ */
+export function resolveDates(f: EventFilter, days: number, now: Date, zone: Zone): DateSpan {
+  const until = f.until ?? daysAgo(now, 0, zone);
+  const trailing = daysAgo(now, days, zone);
+  return { since: f.since ?? (trailing < until ? trailing : until), until };
 }
 
 function clampDate(d: string | null, b: DateBounds): string | null {
@@ -147,16 +166,10 @@ export interface Range {
   until: string;
 }
 
-/**
- * The server-side window for a date filter: from the start of `since` (or of
- * the earliest selectable day) to the end of `until` (or of today), in the
- * zone. Null when neither date is set.
- */
-export function rangeInstants(f: EventFilter, zone: Zone, now: Date): Range | null {
-  if (!hasRange(f)) return null;
-  const bounds = dateBoundsFor(now, zone);
+/** The server-side window for a day span: from the start of its first day to the end of its last, in the zone. */
+export function rangeInstants(span: DateSpan, zone: Zone): Range {
   return {
-    since: dayStart(f.since ?? bounds.min, zone).toISOString(),
-    until: dayEnd(f.until ?? bounds.max, zone).toISOString(),
+    since: dayStart(span.since, zone).toISOString(),
+    until: dayEnd(span.until, zone).toISOString(),
   };
 }
