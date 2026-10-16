@@ -891,3 +891,42 @@ a {
 .animbar .animcount {
   color: var(--muted);
 }
+
+/* Hover states: a tint and an accent border, never a size change. */
+.zbtn,
+.theme-btn,
+.banner button,
+.detail .close,
+.filters .fclear,
+.maplock,
+.tabs button,
+.pickopen {
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+@media (hover: hover) {
+  .zbtn:hover,
+  .theme-btn:hover,
+  .banner button:hover,
+  .detail .close:hover,
+  .filters .fclear:not(:disabled):hover,
+  .maplock:hover {
+    border-color: var(--accent);
+    color: var(--ink);
+    background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+  }
+  .animbar .play:hover {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--panel);
+  }
+  .tabs button:not([aria-selected="true"]):hover {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--ink);
+  }
+  .pickrow button:hover {
+    text-decoration: underline;
+  }
+}
