@@ -123,3 +123,22 @@ regeneration command, `data/geo/README.md` entry.
 
 Faults outside the West Coast bbox, fault areas (layer 22), a per-fault detail
 panel, URL state for layer toggles.
+
+## Implementation notes (2026-10-16)
+
+- The pieces rarely share a vertex where one trace continues into the next
+  (typical end gaps are a few tens of metres), so `mergeTraces` stitches ends
+  within 50 m (`STITCH_TOLERANCE`, under a pixel at full zoom) before
+  simplifying. Even so about 85,000 separate lines remain; the file is 5 MB
+  raw and 1.2 MB gzipped at the chosen 3e-6 square-degree threshold
+  (`DEFAULT_MIN_WEIGHT`), not the 2 MB hoped for. nginx gzips it in
+  production and the layer loads once per session.
+- `url` was dropped from the properties: it is the same USGS report URL for
+  every feature, parameterised by the fault and section ids.
+- Rendering: with ~8,000 features, per-feature hit and line paths were
+  replaced by one path per age and certainty class (`MapFaults.vue`) and a
+  d3-quadtree of projected vertices (`faultIndex`) that the map's `mousemove`
+  queries within 6 px; plate and event groups carry `data-hit` so their own
+  tooltips win. The hovered trace is redrawn once in the accent colour.
+- The generator accepts a cache file argument so the threshold can be tuned
+  without refetching the 110,000 pieces.

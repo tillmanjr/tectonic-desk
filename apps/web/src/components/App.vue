@@ -189,6 +189,14 @@ onUnmounted(() => {
         G³ 4(3), 1027 (PB2002), via the fraxen/tectonicplates repository; segment class and relative
         velocity from the PB2002 step file. Basemap: Natural Earth via world-atlas and us-atlas.
       </p>
+      <p>
+        <b>Quaternary faults.</b> West Coast view: USGS
+        <a href="https://www.usgs.gov/programs/earthquake-hazards/faults"
+          >Quaternary Fault and Fold Database of the United States</a
+        >, traces with evidence of surface deformation in the past 1.6 million years, coloured by
+        age of last movement as on the USGS fault map; pieces whose ends lie within 50 m are joined
+        and bends under a pixel at full zoom are dropped.
+      </p>
     </footer>
   </div>
   <DetailPanel />

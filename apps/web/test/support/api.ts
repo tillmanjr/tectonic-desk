@@ -2,6 +2,7 @@ import type { ApiStatus } from "@tectonic/shared";
 import { vi } from "vitest";
 import type { ApiClient } from "../../src/lib/api.js";
 import { event, GLOBAL, plateSegments, squareTopology, WC } from "./events.js";
+import { faultsTopology } from "./faults.js";
 
 export function status(over: Partial<ApiStatus> = {}): ApiStatus {
   return {
@@ -45,7 +46,13 @@ export function fakeApi(over: Partial<ApiClient> = {}): ApiClient {
     geo: vi
       .fn()
       .mockImplementation((name: string) =>
-        Promise.resolve(name === "plates" ? plateSegments : squareTopology),
+        Promise.resolve(
+          name === "plates"
+            ? plateSegments
+            : name === "wc-qfaults"
+              ? faultsTopology
+              : squareTopology,
+        ),
       ),
     ...over,
   };

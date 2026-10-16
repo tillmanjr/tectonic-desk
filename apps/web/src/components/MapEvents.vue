@@ -80,7 +80,7 @@ function hover(ev: MouseEvent, e: ApiEvent): void {
 </script>
 
 <template>
-  <g>
+  <g data-hit>
     <circle
       v-for="p in circles"
       :key="p.e.id"

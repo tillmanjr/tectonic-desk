@@ -14,7 +14,7 @@ export interface EventsQuery {
   limit?: number;
 }
 
-export type GeoName = "plates" | "wc-land" | "wc-states";
+export type GeoName = "plates" | "wc-land" | "wc-states" | "wc-qfaults";
 
 /** Function-typed properties (not methods) so tests can reference the spies unbound. */
 export interface ApiClient {

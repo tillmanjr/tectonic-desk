@@ -16,5 +16,11 @@ describe("MapLegend", () => {
     const r = mount(MapLegend, { props: { frame: frameFor(WC), minMag: 2.5 } });
     expect(r.text()).toContain("M4.5");
     expect(r.text()).not.toContain("M7.5");
+    expect(r.text()).not.toContain("Historic (<150 yr)");
+    const f = mount(MapLegend, { props: { frame: frameFor(WC), minMag: 2.5, faults: true } });
+    expect(f.text()).toContain("Historic (<150 yr)");
+    expect(f.text()).toContain("Age unspecified or Class B");
+    expect(f.text()).toContain("dotted = inferred");
+    expect(f.findAll("line")).toHaveLength(r.findAll("line").length + 6);
   });
 });

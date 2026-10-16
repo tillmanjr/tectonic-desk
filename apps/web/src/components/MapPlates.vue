@@ -22,7 +22,7 @@ function leave(): void {
 </script>
 
 <template>
-  <g>
+  <g data-hit>
     <g v-for="(f, i) in features" :key="i">
       <path
         class="hit"

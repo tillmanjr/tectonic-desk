@@ -1,10 +1,12 @@
 import { flushPromises } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { nextTick } from "vue";
 import QuakeMap from "../../src/components/QuakeMap.vue";
 import { createCatalog } from "../../src/lib/catalog.js";
+import { frameFor } from "../../src/lib/geo.js";
 import { fakeApi } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
-import { event, squareTopology } from "../support/events.js";
+import { event, plateSegments, squareTopology, WC } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 import { stubWorld } from "../support/world.js";
 
@@ -186,6 +188,82 @@ describe("QuakeMap", () => {
     await animate?.trigger("click");
     expect(w.find(".animclock").text()).toBe("2026-10-08 00:00 UTC");
     expect(w.find(".mapcount").text()).toBe("Showing 1 of 1 events");
+    w.unmount();
+  });
+
+  it("draws Quaternary faults in the West Coast view and finds the trace under the pointer", async () => {
+    stubWorld();
+    const ctx = await makeContext({ regionId: "wc" });
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    const calls = () => vi.mocked(ctx.api.geo).mock.calls.filter((c) => c[0] === "wc-qfaults");
+    expect(calls()).toHaveLength(1);
+    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Quaternary faults"));
+    expect(toggle).toBeDefined();
+    const layer = () => w.findComponent({ name: "MapFaults" });
+    expect(layer().findAll("path.qf")).toHaveLength(3);
+    const svg = w.find("svg.map");
+    const [px, py] = frameFor(WC).projection([-122.1, 37.6]) ?? [0, 0];
+    await svg.trigger("mousemove", { clientX: px, clientY: py });
+    expect(w.find(".tip").text()).toBe(
+      "Hayward fault zone, Southern Hayward section · Historic (<150 yr) · Between 1.0 and 5.0 mm/yr · Right lateral · Dip vertical",
+    );
+    expect(layer().find("path.hot").exists()).toBe(true);
+    await svg.trigger("mousemove", { clientX: 2, clientY: 2 });
+    expect(w.find(".tip").exists()).toBe(false);
+    expect(layer().find("path.hot").exists()).toBe(false);
+    await svg.trigger("mousemove", { clientX: 2, clientY: 2 });
+    vi.spyOn(svg.element, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 2000, 1400));
+    await svg.trigger("mousemove", { clientX: px * 2, clientY: py * 2 });
+    expect(w.find(".tip").text()).toContain("Hayward");
+    await w
+      .findComponent({ name: "MapPlates" })
+      .find("g")
+      .trigger("mousemove", { clientX: 2, clientY: 2 });
+    expect(w.find(".tip").text()).toContain("Hayward");
+    await svg.trigger("mousemove", { clientX: 2, clientY: 2 });
+    expect(w.find(".tip").exists()).toBe(false);
+    const ev = new MouseEvent("mousemove", { clientX: px * 2, clientY: py * 2, bubbles: true });
+    Object.defineProperty(ev, "target", { value: null });
+    svg.element.dispatchEvent(ev);
+    await nextTick();
+    expect(w.find(".tip").text()).toContain("Hayward");
+    await svg.trigger("mouseleave");
+    expect(w.find(".tip").exists()).toBe(false);
+    await svg.trigger("mouseleave");
+    await toggle?.find("input").setValue(false);
+    expect(layer().exists()).toBe(false);
+    await svg.trigger("mousemove", { clientX: px, clientY: py });
+    expect(w.find(".tip").exists()).toBe(false);
+    await toggle?.find("input").setValue(true);
+    expect(layer().exists()).toBe(true);
+    expect(calls()).toHaveLength(1);
+    w.unmount();
+  });
+
+  it("has no fault layer in the global view and retries a failed fault load on the next toggle", async () => {
+    stubWorld();
+    const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const api = fakeApi();
+    vi.mocked(api.geo).mockImplementation((name: string) => {
+      if (name === "wc-qfaults") return Promise.reject(new Error("no faults"));
+      return Promise.resolve(name === "plates" ? plateSegments : squareTopology);
+    });
+    const ctx = await makeContext({ api });
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    expect(w.findAll(".maptools label").some((l) => l.text().includes("Quaternary"))).toBe(false);
+    await w.find("svg.map").trigger("mousemove", { clientX: 2, clientY: 2 });
+    await ctx.catalog.setRegion("wc");
+    await flushPromises();
+    expect(err).toHaveBeenCalledWith("quaternary faults failed to load", expect.any(Error));
+    await w.find("svg.map").trigger("mousemove", { clientX: 2, clientY: 2 });
+    expect(w.find(".tip").exists()).toBe(false);
+    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Quaternary faults"));
+    await toggle?.find("input").setValue(false);
+    await toggle?.find("input").setValue(true);
+    await flushPromises();
+    expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "wc-qfaults")).toHaveLength(2);
     w.unmount();
   });
 

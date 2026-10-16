@@ -8,12 +8,20 @@ import type { Feature, LineString } from "geojson";
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 import MapBasemap from "./MapBasemap.vue";
 import MapEvents from "./MapEvents.vue";
+import MapFaults from "./MapFaults.vue";
 import MapLegend from "./MapLegend.vue";
 import MapPlates from "./MapPlates.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
 import { createAnimation, DAY_MS } from "../lib/animation.js";
 import { mustRef } from "../lib/dom.js";
+import {
+  faultFeatures,
+  faultIndex,
+  faultTitle,
+  type FaultFeature,
+  type FaultHit,
+} from "../lib/faults.js";
 import { fmtMag, fmtShort, fmtStamp, placeOf } from "../lib/format.js";
 import {
   frameFor,
@@ -92,6 +100,14 @@ const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
 const basemap = shallowRef<Basemap | null>(null);
 const tip = ref<Tip | null>(null);
 const hoveredPlate = ref<number | null>(null);
+const showFaults = ref(true);
+const faults = shallowRef<FaultFeature[]>([]);
+let faultsRequested = false;
+const hoveredFault = ref<FaultHit | null>(null);
+/** The West Coast view is the only preset with a bbox, and the only one the fault file covers. */
+const hasFaults = computed(() => view.value.region.bbox !== null);
+const faultsOn = computed(() => hasFaults.value && showFaults.value);
+const faultIdx = computed(() => faultIndex(faults.value, (c) => view.value.frame.projection(c)));
 
 const zoomBehavior = d3zoom<SVGSVGElement, unknown>().scaleExtent([1, 40]);
 const defaultFilter = zoomBehavior.filter();
@@ -174,6 +190,24 @@ async function loadPlates(): Promise<void> {
   }
 }
 
+async function loadFaults(): Promise<void> {
+  if (faultsRequested) return;
+  faultsRequested = true;
+  try {
+    faults.value = faultFeatures((await api.geo("wc-qfaults")) as Topo);
+  } catch (e) {
+    faultsRequested = false;
+    console.error("quaternary faults failed to load", e);
+  }
+}
+watch(
+  faultsOn,
+  (on) => {
+    if (on) void loadFaults();
+  },
+  { immediate: true },
+);
+
 function showTip(text: string, x: number, y: number): void {
   const card = mustRef(cardEl, "map card").getBoundingClientRect();
   tip.value = { text, x: x - card.left, y: y - card.top };
@@ -196,6 +230,38 @@ function onPlateHover(payload: { index: number; title: string; x: number; y: num
 }
 function onPlateLeave(): void {
   hoveredPlate.value = null;
+  tip.value = null;
+}
+
+/** Pointer position in the map's unzoomed projected space, and viewBox units per screen pixel. */
+function projectedPointer(ev: MouseEvent): { x: number; y: number; unit: number } {
+  const rect = mustRef(svgEl, "map svg").getBoundingClientRect();
+  const unit = view.value.frame.width / (rect.width || view.value.frame.width);
+  const [x, y] = transform.value.invert([
+    (ev.clientX - rect.left) * unit,
+    (ev.clientY - rect.top) * unit,
+  ]);
+  return { x, y, unit };
+}
+/** How close, in screen pixels, the pointer must come to a fault vertex. */
+const FAULT_HIT_PX = 6;
+/** Fault traces have no hit paths of their own; the svg looks one up under the pointer. */
+function onMapMove(ev: MouseEvent): void {
+  if (!faultsOn.value || faults.value.length === 0) return;
+  const target = ev.target;
+  if (target instanceof Element && target.closest("[data-hit]") !== null) return;
+  const { x, y, unit } = projectedPointer(ev);
+  const hit = faultIdx.value.nearest(x, y, (FAULT_HIT_PX * unit) / transform.value.k);
+  if (hit === null) {
+    onMapLeave();
+    return;
+  }
+  hoveredFault.value = hit;
+  showTip(faultTitle(hit.feature.properties), ev.clientX, ev.clientY - PLATE_TIP_LIFT);
+}
+function onMapLeave(): void {
+  if (hoveredFault.value === null) return;
+  hoveredFault.value = null;
   tip.value = null;
 }
 
@@ -222,6 +288,9 @@ onMounted(() => {
       <label><input v-model="showMech" type="checkbox" /> Focal mechanisms</label>
       <label><input v-model="showPlates" type="checkbox" /> Plate boundaries</label>
       <label><input v-model="showTeeth" type="checkbox" /> Subduction teeth</label>
+      <label v-if="hasFaults"
+        ><input v-model="showFaults" type="checkbox" /> Quaternary faults</label
+      >
       <span class="sp"></span>
       <button type="button" class="zbtn" aria-label="Zoom in" @click="scaleBy(1.8)">+</button>
       <button type="button" class="zbtn" aria-label="Zoom out" @click="scaleBy(1 / 1.8)">−</button>
@@ -309,9 +378,17 @@ onMounted(() => {
         role="img"
         aria-label="Map of earthquake epicenters"
         :viewBox="`0 0 ${String(view.frame.width)} ${String(view.frame.height)}`"
+        @mousemove="onMapMove"
+        @mouseleave="onMapLeave"
       >
         <g :transform="transform.toString()">
           <MapBasemap :frame="view.frame" :path="view.path" :basemap="basemap" />
+          <MapFaults
+            v-if="faultsOn"
+            :path="view.path"
+            :features="faults"
+            :hovered="hoveredFault === null ? null : hoveredFault.feature"
+          />
           <MapPlates
             v-if="showPlates"
             :path="view.path"
@@ -341,6 +418,6 @@ onMounted(() => {
       </svg>
     </div>
     <MapTooltip :tip="tip" />
-    <MapLegend :frame="view.frame" :min-mag="view.minMag" />
+    <MapLegend :frame="view.frame" :min-mag="view.minMag" :faults="faultsOn" />
   </section>
 </template>
