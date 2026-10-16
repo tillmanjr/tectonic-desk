@@ -31,7 +31,6 @@ describe("FilterBar", () => {
     expect(w.find(".finfo").attributes("title")).toContain(
       "summary tiles and major events are unaffected",
     );
-    expect(w.text()).toContain("All 2 events shown");
     expect(w.find("button").attributes("disabled")).toBeDefined();
     await inputs[0]?.setValue("5.5");
     expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, minMag: 5.5 });
@@ -45,7 +44,6 @@ describe("FilterBar", () => {
     await nextTick();
     expect(inputs[0]?.element.value).toBe("5.5");
     expect(inputs[3]?.element.value).toBe("200");
-    expect(w.text()).toContain("Showing 1 of 2 events");
     expect(w.find("button").attributes("disabled")).toBeUndefined();
     await w.find("button").trigger("click");
     expect(ctx.setFilter).toHaveBeenLastCalledWith(EMPTY_FILTER);
@@ -65,7 +63,6 @@ describe("FilterBar", () => {
     ctx.catalog.setFilter({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" });
     await nextTick();
     expect(dates[0]?.element.value).toBe("2026-10-01");
-    expect(w.text()).toContain("Showing 1 of 1 events in the selected dates");
     ctx.catalog.setFilter({ ...EMPTY_FILTER, until: "2026-10-01" });
     await nextTick();
     expect(dates[0]?.element.value).toBe("2026-10-01");

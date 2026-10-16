@@ -109,7 +109,7 @@ describe("App", () => {
     const inputs = wrapper.findAll<HTMLInputElement>(".filters input");
     expect(inputs[0]?.element.value).toBe("4.5");
     expect(inputs[3]?.element.value).toBe("200");
-    expect(wrapper.find(".filters").text()).toContain("Showing 1 of 1 events");
+    expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events");
     await inputs[1]?.setValue("7");
     await flushPromises();
     expect(router.currentRoute.value.query).toMatchObject({
@@ -124,7 +124,7 @@ describe("App", () => {
     await wrapper.find(".filters .fclear").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query).toEqual({});
-    expect(wrapper.find(".filters").text()).toContain("All 1 events shown");
+    expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events");
   });
 
   it("switches every time to the browser zone and loads a date range", async () => {
@@ -135,7 +135,7 @@ describe("App", () => {
       since: "2026-10-01T00:00:00.000Z",
       until: "2026-10-05T23:59:59.999Z",
     });
-    expect(wrapper.find(".filters").text()).toContain("in the selected dates");
+    expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events");
     expect(wrapper.find("th").text()).toBe("Time (UTC)");
     await wrapper.find("button[title^='Show every date']").trigger("click");
     await flushPromises();

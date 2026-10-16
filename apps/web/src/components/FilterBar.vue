@@ -3,7 +3,6 @@ import { computed } from "vue";
 import {
   dateBoundsFor,
   EMPTY_FILTER,
-  hasRange,
   isActive,
   parseBound,
   parseDate,
@@ -20,7 +19,6 @@ const zone = useInjected(ZONE);
 const setFilter = useInjected(SET_FILTER);
 const floor = computed(() => catalog.requireRegion().minMag);
 const active = computed(() => isActive(catalog.filter.value));
-const ranged = computed(() => hasRange(catalog.filter.value));
 const bounds = computed(() => dateBoundsFor(clock.now.value, zone.value));
 /** The days in force, so the inputs always show the window being queried. */
 const span = computed(() =>
@@ -117,14 +115,5 @@ function clear(): void {
       @change="changeDate('until', $event)"
     />
     <button type="button" class="fclear" :disabled="!active" @click="clear">Clear</button>
-    <span class="fcount">
-      <template v-if="active"
-        >Showing {{ catalog.filtered.value.length }} of
-        {{ catalog.windowEvents.value.length }} events<template v-if="ranged">
-          in the selected dates</template
-        ></template
-      >
-      <template v-else>All {{ catalog.windowEvents.value.length }} events shown</template>
-    </span>
   </section>
 </template>

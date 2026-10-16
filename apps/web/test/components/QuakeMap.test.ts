@@ -185,6 +185,7 @@ describe("QuakeMap", () => {
     const animate = w.findAll(".zbtn").find((b) => b.text() === "Animate");
     await animate?.trigger("click");
     expect(w.find(".animclock").text()).toBe("2026-10-08 00:00 UTC");
+    expect(w.find(".mapcount").text()).toBe("Showing 1 of 1 events");
     w.unmount();
   });
 

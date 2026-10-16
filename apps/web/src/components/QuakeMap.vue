@@ -50,6 +50,11 @@ const windowBounds = computed(() => {
   }
   return { start: new Date(now.getTime() - catalog.requireRegion().days * DAY_MS), end: now };
 });
+/** The overlay line: how many of the window's events the refinements leave on the map. */
+const countLine = computed(
+  () =>
+    `Showing ${String(events.value.length)} of ${String(catalog.windowEvents.value.length)} events`,
+);
 /** What the map draws: everything, or only what has happened by the animation cursor. */
 const shown = computed(() => {
   const c = anim.cursor.value;
@@ -267,6 +272,7 @@ onMounted(() => {
       </button>
     </div>
     <div class="mapwrap">
+      <span class="mapcount" aria-live="polite">{{ countLine }}</span>
       <button
         type="button"
         class="maplock"
