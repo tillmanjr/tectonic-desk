@@ -198,8 +198,8 @@ describe("QuakeMap", () => {
     await flushPromises();
     const calls = () => vi.mocked(ctx.api.geo).mock.calls.filter((c) => c[0] === "wc-qfaults");
     expect(calls()).toHaveLength(1);
-    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Quaternary faults"));
-    expect(toggle).toBeDefined();
+    const pick = () => w.find(".layerpick");
+    expect(pick().find(".pickbtn").text()).toBe("Quaternary faults: All ▾");
     const layer = () => w.findComponent({ name: "MapFaults" });
     expect(layer().findAll("path.qf")).toHaveLength(3);
     const svg = w.find("svg.map");
@@ -231,13 +231,37 @@ describe("QuakeMap", () => {
     await svg.trigger("mouseleave");
     expect(w.find(".tip").exists()).toBe(false);
     await svg.trigger("mouseleave");
-    await toggle?.find("input").setValue(false);
-    expect(layer().exists()).toBe(false);
+    expect(pick().find(".pickmenu").exists()).toBe(false);
+    await pick().find(".pickbtn").trigger("click");
+    expect(pick().findAll(".pickmenu input")).toHaveLength(6);
+    await pick().findAll(".pickmenu input")[0]?.setValue(false);
+    expect(pick().find(".pickbtn").text()).toBe("Quaternary faults: 5 of 6 ▾");
+    expect(layer().findAll("path.qf")).toHaveLength(2);
+    expect(w.findComponent({ name: "MapLegend" }).text()).not.toContain("Historic (<150 yr)");
     await svg.trigger("mousemove", { clientX: px, clientY: py });
     expect(w.find(".tip").exists()).toBe(false);
-    await toggle?.find("input").setValue(true);
-    expect(layer().exists()).toBe(true);
+    const rowButton = (label: string) =>
+      pick()
+        .findAll(".pickrow button")
+        .find((b) => b.text() === label);
+    await rowButton("None")?.trigger("click");
+    expect(pick().find(".pickbtn").text()).toBe("Quaternary faults: None ▾");
+    expect(layer().exists()).toBe(false);
+    expect(w.findComponent({ name: "MapLegend" }).text()).not.toContain("dotted = inferred");
+    await svg.trigger("mousemove", { clientX: px, clientY: py });
+    expect(w.find(".tip").exists()).toBe(false);
+    await rowButton("All")?.trigger("click");
+    expect(pick().find(".pickbtn").text()).toBe("Quaternary faults: All ▾");
+    expect(layer().findAll("path.qf")).toHaveLength(3);
     expect(calls()).toHaveLength(1);
+    await pick().find(".pickmenu").trigger("mousedown");
+    expect(pick().find(".pickmenu").exists()).toBe(true);
+    document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    await nextTick();
+    expect(pick().find(".pickmenu").exists()).toBe(false);
+    await pick().find(".pickbtn").trigger("click");
+    await w.find("svg.map").trigger("mousedown");
+    expect(pick().find(".pickmenu").exists()).toBe(false);
     w.unmount();
   });
 
@@ -252,16 +276,18 @@ describe("QuakeMap", () => {
     const ctx = await makeContext({ api });
     const w = mountWith(QuakeMap, ctx, { animate: false });
     await flushPromises();
-    expect(w.findAll(".maptools label").some((l) => l.text().includes("Quaternary"))).toBe(false);
+    expect(w.find(".layerpick").exists()).toBe(false);
     await w.find("svg.map").trigger("mousemove", { clientX: 2, clientY: 2 });
     await ctx.catalog.setRegion("wc");
     await flushPromises();
     expect(err).toHaveBeenCalledWith("quaternary faults failed to load", expect.any(Error));
     await w.find("svg.map").trigger("mousemove", { clientX: 2, clientY: 2 });
     expect(w.find(".tip").exists()).toBe(false);
-    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Quaternary faults"));
-    await toggle?.find("input").setValue(false);
-    await toggle?.find("input").setValue(true);
+    await w.find(".pickbtn").trigger("click");
+    const rowButton = (label: string) =>
+      w.findAll(".pickrow button").find((b) => b.text() === label);
+    await rowButton("None")?.trigger("click");
+    await rowButton("All")?.trigger("click");
     await flushPromises();
     expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "wc-qfaults")).toHaveLength(2);
     w.unmount();

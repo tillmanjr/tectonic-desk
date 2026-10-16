@@ -142,3 +142,7 @@ panel, URL state for layer toggles.
   tooltips win. The hovered trace is redrawn once in the accent colour.
 - The generator accepts a cache file argument so the threshold can be tuned
   without refetching the 110,000 pieces.
+- 2026-10-16, later: the single checkbox became a toolbar menu, "Quaternary
+  faults: All ▾", listing the six age classes as checkboxes with All and
+  None; the layer, the hover index and the legend follow the selection, and
+  an empty selection means no layer.

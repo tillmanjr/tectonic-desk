@@ -290,6 +290,42 @@ a:focus-visible,
 .maptools .sp {
   flex: 1;
 }
+.layerpick {
+  position: relative;
+}
+.pickbtn {
+  width: auto;
+  padding: 0 8px;
+  font-weight: 500;
+}
+.pickmenu {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  z-index: 4;
+  min-width: 270px;
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.18);
+}
+.pickrow {
+  display: flex;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.pickrow button {
+  font: 500 12.5px var(--f-data);
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  cursor: pointer;
+}
 .zbtn {
   font: 600 14px var(--f-data);
   width: 30px;

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { FAULT_AGES } from "../lib/faults.js";
+import { FAULT_AGES, type AgeCode } from "../lib/faults.js";
 import { PLATE_CLASSES, type MapFrame } from "../lib/geo.js";
 import { markerRadius } from "../lib/markers.js";
 
-const props = withDefaults(defineProps<{ frame: MapFrame; minMag: number; faults?: boolean }>(), {
-  faults: false,
-});
+const props = withDefaults(
+  defineProps<{ frame: MapFrame; minMag: number; faults?: readonly AgeCode[] }>(),
+  { faults: () => [] },
+);
 const sizes = computed(() => {
   const mags = props.frame.global
     ? [4.5, 5.5, 6.5, 7.5]
@@ -53,12 +54,19 @@ const plates = Object.values(PLATE_CLASSES);
       >Point at a boundary line for the plate pair, relative velocity and, on subduction zones,
       which plate goes under.</span
     >
-    <template v-if="faults">
-      <span v-for="(a, code) in FAULT_AGES" :key="code" class="sw">
+    <template v-if="faults.length > 0">
+      <span v-for="code in faults" :key="code" class="sw">
         <svg width="26" height="10">
-          <line x1="1" y1="5" x2="25" y2="5" :style="{ stroke: a.color }" stroke-width="2" />
+          <line
+            x1="1"
+            y1="5"
+            x2="25"
+            y2="5"
+            :style="{ stroke: FAULT_AGES[code].color }"
+            stroke-width="2"
+          />
         </svg>
-        {{ a.label }}
+        {{ FAULT_AGES[code].label }}
       </span>
       <span class="sw hint-sw"
         >Quaternary faults (USGS): solid = well constrained, dashed = moderately constrained, dotted

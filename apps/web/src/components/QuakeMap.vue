@@ -16,9 +16,12 @@ import MapTooltip from "./MapTooltip.vue";
 import { createAnimation, DAY_MS } from "../lib/animation.js";
 import { mustRef } from "../lib/dom.js";
 import {
+  AGE_CODES,
+  FAULT_AGES,
   faultFeatures,
   faultIndex,
   faultTitle,
+  type AgeCode,
   type FaultFeature,
   type FaultHit,
 } from "../lib/faults.js";
@@ -78,6 +81,7 @@ function togglePlay(): void {
   else anim.play();
 }
 onUnmounted(() => {
+  document.removeEventListener("mousedown", closePickOnOutside);
   anim.close();
 });
 
@@ -100,14 +104,31 @@ const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
 const basemap = shallowRef<Basemap | null>(null);
 const tip = ref<Tip | null>(null);
 const hoveredPlate = ref<number | null>(null);
-const showFaults = ref(true);
+/** Which age classes of Quaternary faults are drawn; empty means none. */
+const faultAges = ref<AgeCode[]>([...AGE_CODES]);
+const pickOpen = ref(false);
 const faults = shallowRef<FaultFeature[]>([]);
 let faultsRequested = false;
 const hoveredFault = ref<FaultHit | null>(null);
 /** The West Coast view is the only preset with a bbox, and the only one the fault file covers. */
 const hasFaults = computed(() => view.value.region.bbox !== null);
-const faultsOn = computed(() => hasFaults.value && showFaults.value);
-const faultIdx = computed(() => faultIndex(faults.value, (c) => view.value.frame.projection(c)));
+const faultsOn = computed(() => hasFaults.value && faultAges.value.length > 0);
+const visibleFaults = computed(() =>
+  faults.value.filter((f) => faultAges.value.includes(f.properties.age)),
+);
+const faultIdx = computed(() =>
+  faultIndex(visibleFaults.value, (c) => view.value.frame.projection(c)),
+);
+const faultSummary = computed(() => {
+  const n = faultAges.value.length;
+  if (n === AGE_CODES.length) return "All";
+  return n === 0 ? "None" : `${String(n)} of ${String(AGE_CODES.length)}`;
+});
+function closePickOnOutside(ev: MouseEvent): void {
+  const t = ev.target;
+  if (t instanceof Element && t.closest(".layerpick") !== null) return;
+  pickOpen.value = false;
+}
 
 const zoomBehavior = d3zoom<SVGSVGElement, unknown>().scaleExtent([1, 40]);
 const defaultFilter = zoomBehavior.filter();
@@ -247,7 +268,7 @@ function projectedPointer(ev: MouseEvent): { x: number; y: number; unit: number 
 const FAULT_HIT_PX = 6;
 /** Fault traces have no hit paths of their own; the svg looks one up under the pointer. */
 function onMapMove(ev: MouseEvent): void {
-  if (!faultsOn.value || faults.value.length === 0) return;
+  if (!faultsOn.value || visibleFaults.value.length === 0) return;
   const target = ev.target;
   if (target instanceof Element && target.closest("[data-hit]") !== null) return;
   const { x, y, unit } = projectedPointer(ev);
@@ -276,6 +297,7 @@ watch(selected, (e) => {
   if (e !== null) zoomTo(e);
 });
 onMounted(() => {
+  document.addEventListener("mousedown", closePickOnOutside);
   svgSelection().call(zoomBehavior).on("dblclick.zoom", null);
   void loadBasemap(view.value.region);
   void loadPlates();
@@ -288,9 +310,30 @@ onMounted(() => {
       <label><input v-model="showMech" type="checkbox" /> Focal mechanisms</label>
       <label><input v-model="showPlates" type="checkbox" /> Plate boundaries</label>
       <label><input v-model="showTeeth" type="checkbox" /> Subduction teeth</label>
-      <label v-if="hasFaults"
-        ><input v-model="showFaults" type="checkbox" /> Quaternary faults</label
-      >
+      <div v-if="hasFaults" class="layerpick">
+        <button
+          type="button"
+          class="zbtn pickbtn"
+          aria-haspopup="true"
+          :aria-expanded="pickOpen"
+          @click="pickOpen = !pickOpen"
+        >
+          Quaternary faults: {{ faultSummary }} ▾
+        </button>
+        <div v-if="pickOpen" class="pickmenu" role="group" aria-label="Quaternary fault ages">
+          <label v-for="(a, code) in FAULT_AGES" :key="code">
+            <input v-model="faultAges" type="checkbox" :value="code" />
+            <svg width="22" height="10" aria-hidden="true">
+              <line x1="1" y1="5" x2="21" y2="5" :style="{ stroke: a.color }" stroke-width="2" />
+            </svg>
+            {{ a.label }}
+          </label>
+          <div class="pickrow">
+            <button type="button" @click="faultAges = [...AGE_CODES]">All</button>
+            <button type="button" @click="faultAges = []">None</button>
+          </div>
+        </div>
+      </div>
       <span class="sp"></span>
       <button type="button" class="zbtn" aria-label="Zoom in" @click="scaleBy(1.8)">+</button>
       <button type="button" class="zbtn" aria-label="Zoom out" @click="scaleBy(1 / 1.8)">−</button>
@@ -386,7 +429,7 @@ onMounted(() => {
           <MapFaults
             v-if="faultsOn"
             :path="view.path"
-            :features="faults"
+            :features="visibleFaults"
             :hovered="hoveredFault === null ? null : hoveredFault.feature"
           />
           <MapPlates
@@ -418,6 +461,6 @@ onMounted(() => {
       </svg>
     </div>
     <MapTooltip :tip="tip" />
-    <MapLegend :frame="view.frame" :min-mag="view.minMag" :faults="faultsOn" />
+    <MapLegend :frame="view.frame" :min-mag="view.minMag" :faults="hasFaults ? faultAges : []" />
   </section>
 </template>

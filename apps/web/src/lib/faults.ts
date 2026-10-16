@@ -11,6 +11,15 @@ import type { ProjectedPoint } from "./teeth.js";
 
 /** Age of last movement, after the USGS legend; `other` covers unspecified ages and Class B. */
 export type AgeCode = "historic" | "latest" | "late" | "mid" | "undiff" | "other";
+/** Every age code, in legend order. */
+export const AGE_CODES: readonly AgeCode[] = [
+  "historic",
+  "latest",
+  "late",
+  "mid",
+  "undiff",
+  "other",
+];
 /** Mapping certainty: well constrained, moderately constrained, inferred. */
 export type Cert = "well" | "mod" | "inf";
 
@@ -52,7 +61,7 @@ export const FAULT_CERTS: Record<Cert, { label: string; dash: string | null }> =
 export const FAULT_WIDTH = 1.2;
 
 const isAge = (v: unknown): v is AgeCode =>
-  typeof v === "string" && Object.keys(FAULT_AGES).includes(v);
+  typeof v === "string" && AGE_CODES.some((code) => code === v);
 const isCert = (v: unknown): v is Cert =>
   typeof v === "string" && Object.keys(FAULT_CERTS).includes(v);
 const str = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
