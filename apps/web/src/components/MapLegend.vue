@@ -54,6 +54,10 @@ const plates = Object.values(PLATE_CLASSES);
       >Point at a boundary line for the plate pair, relative velocity and, on subduction zones,
       which plate goes under.</span
     >
+    <span class="sw hint-sw touch-only"
+      >Tap a marker for its details. A locked map moves with two fingers; the lock icon in the
+      corner frees one-finger panning and pinch zoom.</span
+    >
     <template v-if="faults.length > 0">
       <span v-for="code in faults" :key="code" class="sw">
         <svg width="26" height="10">

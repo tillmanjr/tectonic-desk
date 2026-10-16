@@ -651,6 +651,17 @@ a {
   .tabs button {
     flex: 1;
   }
+  .maptools {
+    gap: 6px 10px;
+    font-size: 13px;
+  }
+  .mapcount {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+  .legend {
+    font-size: 12px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .detail {
@@ -739,8 +750,46 @@ a {
   font-style: italic;
 }
 .map.locked {
-  touch-action: auto;
+  /* One finger scrolls the page; the browser may not pinch-zoom it, so a pinch reaches d3. */
+  touch-action: pan-x pan-y;
   cursor: default;
+}
+.touchhint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 3;
+  max-width: 88%;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  color: var(--panel);
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+}
+.touch-only {
+  display: none;
+}
+@media (pointer: coarse) {
+  .touch-only {
+    display: inline;
+  }
+  .maplock {
+    width: 44px;
+    height: 44px;
+  }
+  .zbtn {
+    min-width: 36px;
+    height: 34px;
+  }
+  .pickopen {
+    padding: 6px 9px;
+  }
+  .maptools label {
+    min-height: 32px;
+  }
 }
 .mapwrap {
   position: relative;

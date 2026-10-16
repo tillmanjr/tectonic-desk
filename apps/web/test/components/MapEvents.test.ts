@@ -45,6 +45,27 @@ describe("MapEvents", () => {
     await w.find("g.bb").trigger("mouseleave");
     expect(ev.emitted("leave")).toHaveLength(2);
   });
+  it("keeps markers at least the tappable floor when one is set", async () => {
+    stubCanvas();
+    const ctx = await makeContext();
+    const frame = frameFor(GLOBAL);
+    const mount = (minRadius: number) =>
+      mountWith(MapEvents, ctx, {
+        frame,
+        events: [withMech, plain],
+        k: 4,
+        selectedId: null,
+        showMech: true,
+        minMag: 4.5,
+        minRadius,
+      });
+    const small = mount(0);
+    const big = mount(40);
+    expect(Number(small.find("circle").attributes("r"))).toBeLessThan(10);
+    expect(Number(big.find("circle").attributes("r"))).toBe(10);
+    expect(Number(big.find("image").attributes("width"))).toBe(20);
+    expect(Number(small.find("image").attributes("width"))).toBeLessThan(20);
+  });
   it("draws everything as circles with mechanisms off, scales by zoom, and skips unprojectable points", async () => {
     const ctx = await makeContext();
     const frame = frameFor(GLOBAL);

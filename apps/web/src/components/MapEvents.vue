@@ -21,14 +21,19 @@ interface Ball extends Point {
   mech: ApiMechanism;
 }
 
-const props = defineProps<{
-  frame: MapFrame;
-  events: ApiEvent[];
-  k: number;
-  selectedId: string | null;
-  showMech: boolean;
-  minMag: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    frame: MapFrame;
+    events: ApiEvent[];
+    k: number;
+    selectedId: string | null;
+    showMech: boolean;
+    minMag: number;
+    /** Floor on the drawn radius in viewBox units at zoom 1, for finger-sized targets; 0 for none. */
+    minRadius?: number;
+  }>(),
+  { minRadius: 0 },
+);
 const emit = defineEmits<{
   select: [id: string];
   hover: [payload: { e: ApiEvent; x: number; y: number }];
@@ -63,6 +68,10 @@ const points = computed<Point[]>(() =>
     }),
 );
 const scale = computed(() => props.k ** 0.75);
+/** Markers shrink with zoom (k^0.75) but never below the tappable floor, which shrinks with k outright. */
+const radiusOf = (p: Point): number => Math.max(p.r / scale.value, props.minRadius / props.k);
+const sizeOf = (p: Point): number =>
+  Math.max(p.size / scale.value, (2 * props.minRadius) / props.k);
 const circles = computed(() => points.value.filter((p) => !(props.showMech && p.mech !== null)));
 const balls = computed<Ball[]>(() =>
   props.showMech
@@ -86,7 +95,7 @@ function hover(ev: MouseEvent, e: ApiEvent): void {
       :key="p.e.id"
       :cx="p.x"
       :cy="p.y"
-      :r="(p.r / scale) * (p.e.id === selectedId ? 1.25 : 1)"
+      :r="radiusOf(p) * (p.e.id === selectedId ? 1.25 : 1)"
       :style="{ fill: depthColor(p.e.depthKm), stroke: 'var(--ink)', cursor: 'pointer' }"
       fill-opacity="0.78"
       stroke-opacity="0.55"
@@ -107,17 +116,17 @@ function hover(ev: MouseEvent, e: ApiEvent): void {
     >
       <image
         :href="href(b)"
-        :x="b.x - b.size / scale / 2"
-        :y="b.y - b.size / scale / 2"
-        :width="b.size / scale"
-        :height="b.size / scale"
+        :x="b.x - sizeOf(b) / 2"
+        :y="b.y - sizeOf(b) / 2"
+        :width="sizeOf(b)"
+        :height="sizeOf(b)"
       />
       <circle
         v-if="b.e.id === selectedId"
         class="ring"
         :cx="b.x"
         :cy="b.y"
-        :r="b.size / scale / 2 + 2 / k"
+        :r="sizeOf(b) / 2 + 2 / k"
         fill="none"
         style="stroke: var(--accent)"
         stroke-width="2.5"

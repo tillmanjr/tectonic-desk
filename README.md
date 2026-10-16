@@ -101,9 +101,11 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
 - "Animate" on the map toolbar replays the loaded window: a tracking clock starts at the day
   before the window's first day with an empty map and adds the filtered events as it passes their
   origin times; set seconds per day, start, pause, step a day either way, close.
-- The map is locked by default: wheel and drag scroll the page; the buttons and clicking an event
-  still zoom. The mouse icon in the map's top-right corner toggles the lock; a red slash means
-  locked.
+- The map is locked by default: wheel, drag and one finger scroll the page, while a two-finger
+  pinch still works the map; the buttons and clicking an event still zoom. The mouse icon in the
+  map's top-right corner toggles the lock; a slash means locked. On touch screens markers have a
+  7 px minimum radius, a hint explains the lock when a finger tries to drag, and the legend says
+  how to pan.
 - Subduction teeth point toward the overriding plate, read from Bird's `/` and `\` boundary titles;
   the plate tooltip says which plate subducts under which.
 

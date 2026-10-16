@@ -321,6 +321,43 @@ describe("QuakeMap", () => {
     w.unmount();
   });
 
+  it("sizes markers for fingers on coarse pointers and explains the lock to a touch", async () => {
+    stubWorld();
+    stubCanvas();
+    vi.stubGlobal("matchMedia", (q: string) => ({ matches: q === "(pointer: coarse)" }));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const ctx = await makeContext();
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    const events = () => w.findComponent({ name: "MapEvents" });
+    expect(events().props("minRadius")).toBe(7);
+    const svg = w.find("svg.map");
+    vi.spyOn(svg.element, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 500, 350));
+    window.dispatchEvent(new Event("resize"));
+    await nextTick();
+    expect(events().props("minRadius")).toBe(14);
+    const touch = (n: number) =>
+      svg.element.dispatchEvent(Object.assign(new Event("touchstart"), { touches: { length: n } }));
+    touch(2);
+    await nextTick();
+    expect(w.find(".touchhint").exists()).toBe(false);
+    touch(1);
+    await nextTick();
+    expect(w.find(".touchhint").text()).toContain("Use two fingers");
+    vi.advanceTimersByTime(3000);
+    await nextTick();
+    expect(w.find(".touchhint").exists()).toBe(false);
+    await w.find(".maplock").trigger("click");
+    expect(w.find(".touchhint").text()).toContain("Map unlocked");
+    touch(1);
+    await nextTick();
+    expect(w.find(".touchhint").text()).toContain("Map unlocked");
+    await w.find(".maplock").trigger("click");
+    expect(w.find(".touchhint").text()).toContain("Map locked");
+    w.unmount();
+    vi.useRealTimers();
+  });
+
   it("uses animated transitions by default and throws without a region", async () => {
     stubWorld();
     const ctx = await makeContext();

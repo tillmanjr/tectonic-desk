@@ -40,6 +40,14 @@ import {
 } from "../lib/geo.js";
 import { API, CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import type { Tip } from "../lib/tip.js";
+import {
+  coarsePointer,
+  TOUCH_HINT_MS,
+  TOUCH_HINTS,
+  TOUCH_MIN_RADIUS_PX,
+  touchCount,
+  zoomAllowed,
+} from "../lib/touch.js";
 
 const props = withDefaults(defineProps<{ animate?: boolean }>(), { animate: true });
 
@@ -82,6 +90,8 @@ function togglePlay(): void {
 }
 onUnmounted(() => {
   document.removeEventListener("mousedown", closePickOnOutside);
+  window.removeEventListener("resize", measure);
+  if (hintTimer !== null) clearTimeout(hintTimer);
   anim.close();
 });
 
@@ -99,6 +109,33 @@ const showPlates = ref(true);
 const showTeeth = ref(true);
 /** When set, wheel, drag and touch leave the map alone (the page scrolls); buttons and zoom-to-event still work. */
 const locked = ref(true);
+/** Finger-first device: markers get a tappable minimum size and the lock explains itself. */
+const coarse = coarsePointer();
+/** Screen pixels per viewBox unit, so a minimum marker size can be stated in pixels. */
+const cssScale = ref(1);
+function measure(): void {
+  const width = mustRef(svgEl, "map svg").getBoundingClientRect().width;
+  cssScale.value = width > 0 ? width / view.value.frame.width : 1;
+}
+const minRadius = computed(() => (coarse ? TOUCH_MIN_RADIUS_PX / cssScale.value : 0));
+const touchHint = ref<string | null>(null);
+let hintTimer: ReturnType<typeof setTimeout> | null = null;
+function showTouchHint(text: string): void {
+  touchHint.value = text;
+  if (hintTimer !== null) clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    touchHint.value = null;
+    hintTimer = null;
+  }, TOUCH_HINT_MS);
+}
+/** One finger on a locked map scrolls the page; say so, once per attempt. */
+function onTouchStart(ev: Event): void {
+  if (locked.value && touchCount(ev) === 1) showTouchHint(TOUCH_HINTS.oneFingerOnLocked);
+}
+function toggleLock(): void {
+  locked.value = !locked.value;
+  if (coarse) showTouchHint(locked.value ? TOUCH_HINTS.locked : TOUCH_HINTS.unlocked);
+}
 const plateSegments = shallowRef<PlateSegment[]>([]);
 const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
 const basemap = shallowRef<Basemap | null>(null);
@@ -139,7 +176,7 @@ const zoomBehavior = d3zoom<SVGSVGElement, unknown>().scaleExtent([1, 40]);
 const defaultFilter = zoomBehavior.filter();
 zoomBehavior
   .filter(function (this: SVGSVGElement, ev: Event, d: unknown) {
-    return !locked.value && defaultFilter.call(this, ev, d);
+    return zoomAllowed(locked.value, ev, () => defaultFilter.call(this, ev, d));
   })
   .on("zoom", (ev: D3ZoomEvent<SVGSVGElement, unknown>) => {
     transform.value = ev.transform;
@@ -303,6 +340,8 @@ watch(selected, (e) => {
 });
 onMounted(() => {
   document.addEventListener("mousedown", closePickOnOutside);
+  window.addEventListener("resize", measure);
+  measure();
   svgSelection().call(zoomBehavior).on("dblclick.zoom", null);
   void loadBasemap(view.value.region);
   void loadPlates();
@@ -414,7 +453,7 @@ onMounted(() => {
             ? 'Map locked: wheel and drag scroll the page. Click to pan and zoom by hand.'
             : 'Map unlocked: wheel and drag move the map. Click to lock it.'
         "
-        @click="locked = !locked"
+        @click="toggleLock"
       >
         <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
           <rect
@@ -442,6 +481,7 @@ onMounted(() => {
         :viewBox="`0 0 ${String(view.frame.width)} ${String(view.frame.height)}`"
         @mousemove="onMapMove"
         @mouseleave="onMapLeave"
+        @touchstart.passive="onTouchStart"
       >
         <g :transform="transform.toString()">
           <MapBasemap :frame="view.frame" :path="view.path" :basemap="basemap" />
@@ -472,6 +512,7 @@ onMounted(() => {
             :selected-id="selectedId"
             :show-mech="showMech"
             :min-mag="view.minMag"
+            :min-radius="minRadius"
             @select="select"
             @hover="onHover"
             @leave="tip = null"
@@ -480,6 +521,7 @@ onMounted(() => {
       </svg>
     </div>
     <MapTooltip :tip="tip" />
+    <div v-if="touchHint !== null" class="touchhint" role="status">{{ touchHint }}</div>
     <MapLegend :frame="view.frame" :min-mag="view.minMag" :faults="hasFaults ? faultAges : []" />
   </section>
 </template>
