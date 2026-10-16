@@ -297,6 +297,7 @@ a:focus-visible,
   width: auto;
   padding: 0 8px;
   font-weight: 500;
+  white-space: nowrap;
 }
 .pickmenu {
   position: absolute;
