@@ -109,9 +109,72 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
 
 ## Deployment
 
+### Locally
+
 `docker compose --profile prod up --build -d` builds and runs Postgres, the API (with ingest) and
 nginx serving the built front end on http://localhost:8080 (`/api` is proxied). The server runs
 migrations on start. `docker compose --profile prod down` stops everything; the data volume is kept.
+
+### Production: tectonicdesk.org on a DigitalOcean droplet
+
+Every push to the `release` branch runs `.github/workflows/deploy.yml`: lint, typecheck and tests,
+then both images are built and pushed to GitHub Container Registry
+(`ghcr.io/tillmanjr/tectonic-desk-server` and `-web`, tagged `release` and with the commit), then
+the droplet pulls them and restarts `deploy/docker-compose.prod.yml` behind Caddy, which holds the
+TLS certificate. `main` stays the integration branch; `git push origin main:release` (or a merge
+into `release`) deploys. One-time setup:
+
+1. **Droplet.** Ubuntu 24.04, Basic 1 GB in SFO3 (about $6), your SSH key added. As root:
+
+   ```sh
+   curl -fsSL https://get.docker.com | sh
+   fallocate -l 1G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+   echo '/swapfile none swap sw 0 0' >> /etc/fstab
+   adduser --disabled-password --gecos "" deploy && usermod -aG docker deploy
+   mkdir -p /home/deploy/.ssh && cp ~/.ssh/authorized_keys /home/deploy/.ssh/ && chown -R deploy:deploy /home/deploy/.ssh
+   mkdir -p /opt/tectonic-desk && chown deploy:deploy /opt/tectonic-desk
+   ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
+   ```
+
+   Then, as `deploy`, create `/opt/tectonic-desk/.env`:
+
+   ```sh
+   POSTGRES_PASSWORD=$(openssl rand -hex 24)
+   DOMAIN=tectonicdesk.org
+   ACME_EMAIL=you@example.org
+   TAG=release
+   ```
+
+   The images are built elsewhere, so 1 GB is enough; the swap file covers startup peaks.
+
+2. **Cloudflare.** Add the site, point `A @` (and `AAAA @` if the droplet has IPv6) at the droplet,
+   proxied, plus `CNAME www @`. Under SSL/TLS choose **Full (strict)**: Caddy fetches a real
+   certificate from Let's Encrypt through the proxy, and the `www` host redirects to the apex. To
+   keep the site private, add a Zero Trust Access application for `tectonicdesk.org` with a policy
+   allowing your two email addresses (free for up to 50 users); the dashboard has no login of its
+   own. Optionally limit the droplet's 80 and 443 to Cloudflare's ranges so nothing bypasses it.
+
+3. **GitHub.** Repository secrets `DEPLOY_HOST` (the droplet's IP), `DEPLOY_USER` (`deploy`) and
+   `DEPLOY_SSH_KEY` (a private key whose public half is in `deploy`'s `authorized_keys`; make a
+   dedicated one with `ssh-keygen -t ed25519 -f deploy_key -N ""`). The workflow logs the droplet
+   into GHCR with its own token, so the packages can stay private.
+
+4. **First release.** `git push origin main:release`, watch the Deploy run, then load the history
+   once:
+
+   ```sh
+   cd /opt/tectonic-desk
+   docker compose -f docker-compose.prod.yml exec server node dist/ingest-cli.js backfill --days 90
+   ```
+
+   Migrations run on every server start; ingest keeps polling from then on.
+
+Day to day: `docker compose -f docker-compose.prod.yml logs -f server` for the ingest log,
+`docker compose -f docker-compose.prod.yml exec postgres pg_dump -U tectonic tectonic | gzip > backup.sql.gz`
+for a backup (the history also rebuilds from USGS with a backfill), and the Deploy workflow for
+every update. The per-address rate limits key on the visitor's address all the way down: Caddy
+trusts Cloudflare's ranges, nginx takes the client from `X-Forwarded-For`, and the API runs with
+`TRUST_PROXY=true`.
 
 ## Scripts
 

@@ -1,0 +1,65 @@
+# The production stack on the droplet: /opt/tectonic-desk/docker-compose.prod.yml.
+# Images come from GitHub Container Registry (the Deploy workflow builds and pushes
+# them); settings come from /opt/tectonic-desk/.env:
+#   POSTGRES_PASSWORD=<random>      database password
+#   DOMAIN=tectonicdesk.org         served name; Caddy obtains its certificate
+#   ACME_EMAIL=you@example.org      Let's Encrypt expiry notices
+#   TAG=release                     image tag; the workflow pins it to the commit
+#   IMAGE_PREFIX=ghcr.io/tillmanjr/tectonic-desk
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tectonic
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: tectonic
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tectonic -d tectonic"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  server:
+    image: ${IMAGE_PREFIX:-ghcr.io/tillmanjr/tectonic-desk}-server:${TAG:-release}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://tectonic:${POSTGRES_PASSWORD}@postgres:5432/tectonic
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      INGEST_ENABLED: "true"
+      TRUST_PROXY: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: ${IMAGE_PREFIX:-ghcr.io/tillmanjr/tectonic-desk}-web:${TAG:-release}
+    restart: unless-stopped
+    depends_on:
+      - server
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

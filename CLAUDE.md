@@ -48,7 +48,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
   projected vertices (`faultIndex` in `src/lib/faults.ts`) instead of per-feature hit paths; the svg
   skips the lookup when the pointer is inside a `[data-hit]` group (plates, events).
 - `.vue` files are linted type-aware through `@vue/eslint-config-typescript`; `vue-tsc` typechecks. Interfaces that tests spy on (`ApiClient`) use function-typed properties, not methods, so the unbound-method rule stays on.
-- Production: `deploy/nginx.conf`, the two Dockerfiles and the compose `prod` profile. nginx serves `dist/` and proxies `/api` to the `server` container.
+- Production: `deploy/nginx.conf`, the two Dockerfiles and the compose `prod` profile. nginx serves `dist/` and proxies `/api` to the `server` container. The live site (tectonicdesk.org) runs `deploy/docker-compose.prod.yml` with Caddy for TLS on a DigitalOcean droplet; `.github/workflows/deploy.yml` builds and pushes the images to GHCR and rolls them out on every push to `release`, `ci.yml` checks `main` and PRs. Keep `main` green; releasing is `git push origin main:release`.
 
 ## Commands
 
