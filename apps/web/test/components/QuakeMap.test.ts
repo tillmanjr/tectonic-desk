@@ -201,10 +201,19 @@ describe("QuakeMap", () => {
     const pick = () => w.find(".layerpick");
     const allBox = () => pick().find<HTMLInputElement>(".layerpick > label > input");
     expect(pick().text()).toContain("Quaternary faults");
+    const layer = () => w.findComponent({ name: "MapFaults" });
+    expect(pick().find(".pickcount").text()).toBe("1 of 6");
+    expect(allBox().element.indeterminate).toBe(true);
+    expect(layer().findAll("path.qf")).toHaveLength(1);
+    await pick().find(".pickopen").trigger("click");
+    await pick()
+      .findAll(".pickrow button")
+      .find((b) => b.text() === "All")
+      ?.trigger("click");
+    await pick().find(".pickopen").trigger("click");
     expect(allBox().element.checked).toBe(true);
     expect(allBox().element.indeterminate).toBe(false);
     expect(pick().find(".pickcount").exists()).toBe(false);
-    const layer = () => w.findComponent({ name: "MapFaults" });
     expect(layer().findAll("path.qf")).toHaveLength(3);
     const svg = w.find("svg.map");
     const [px, py] = frameFor(WC).projection([-122.1, 37.6]) ?? [0, 0];

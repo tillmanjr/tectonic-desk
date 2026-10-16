@@ -104,8 +104,8 @@ const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
 const basemap = shallowRef<Basemap | null>(null);
 const tip = ref<Tip | null>(null);
 const hoveredPlate = ref<number | null>(null);
-/** Which age classes of Quaternary faults are drawn; empty means none. */
-const faultAges = ref<AgeCode[]>([...AGE_CODES]);
+/** Which age classes of Quaternary faults are shown; empty means none. Opens on the latest Quaternary class. */
+const faultAges = ref<AgeCode[]>(["latest"]);
 const pickOpen = ref(false);
 const faults = shallowRef<FaultFeature[]>([]);
 let faultsRequested = false;
