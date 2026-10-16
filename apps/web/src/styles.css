@@ -604,6 +604,19 @@ a {
 .foot p {
   margin: 4px 0;
 }
+.foot .byline {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.foot a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.foot a:hover {
+  color: var(--accent);
+}
 .tip {
   position: absolute;
   pointer-events: none;

@@ -197,6 +197,10 @@ onUnmounted(() => {
         age of last movement as on the USGS fault map; pieces whose ends lie within 50 m are joined
         and bends under a pixel at full zoom are dropped.
       </p>
+      <p class="byline">
+        Built for Barbara by
+        <a href="https://github.com/tillmanjr" rel="author">Tillman</a>
+      </p>
     </footer>
   </div>
   <DetailPanel />
