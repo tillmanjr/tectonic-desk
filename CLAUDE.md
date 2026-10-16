@@ -27,6 +27,9 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 - `raw` never leaves the server except as `usgs` on `GET /api/events/:id`.
 - Route handlers throw `HttpError` (`badRequest(issues)`, `notFound()`); the app-level handler renders `{ error, issues? }`. Query parsing goes through `parseOrThrow` in `src/api/schemas.ts`.
 - Every successful response sets `Cache-Control` via `cacheFor(reply, seconds)`.
+- `@fastify/rate-limit` runs globally (`RATE_LIMIT_MAX` per `RATE_LIMIT_WINDOW_MS`, 0 disables) and
+  answers in the `{ error }` shape; `TRUST_PROXY` makes it key on X-Forwarded-For behind nginx, which
+  also carries a `limit_req` zone in `deploy/nginx.conf`. Tests pass small limits through `buildApp`.
 - `buildApp({ db, now, geoDir })`: inject `now` in tests for deterministic default windows and stamps.
 - Geo files under `apps/server/data/geo` are copies of the prototype's; regenerate, never edit.
 - nginx will serve `apps/web` and proxy `/api`; the server has no CORS, static, or compression plugins.

@@ -28,6 +28,7 @@ services:
       INGEST_ENABLED: "true"
       HOST: 0.0.0.0
       PORT: "3000"
+      TRUST_PROXY: "true"
     depends_on:
       postgres:
         condition: service_healthy

@@ -21,6 +21,7 @@
     "geo:qfaults": "node --import tsx src/qfaults-cli.ts"
   },
   "dependencies": {
+    "@fastify/rate-limit": "10.3.0",
     "@tectonic/shared": "workspace:*",
     "drizzle-orm": "0.45.4",
     "fastify": "5.12.6",

@@ -43,6 +43,12 @@ The server polls USGS while it runs (`INGEST_ENABLED`, default true):
 
 Set `INGEST_ENABLED=false` on a second API instance so only one process polls.
 
+The API rate-limits each client address to `RATE_LIMIT_MAX` requests per `RATE_LIMIT_WINDOW_MS`
+(default 120 a minute; 0 turns it off) and answers `429 { error }` with `Retry-After` and
+`X-RateLimit-*` headers. Behind nginx set `TRUST_PROXY=true` so the limit applies to the forwarded
+address rather than the proxy's; the compose `prod` profile does, and its nginx adds its own
+`limit_req` (20 requests a second, burst 40) in front.
+
 ## API
 
 All routes return JSON. Bad input is 400 `{ error, issues: [{ path, message }] }`, an unknown

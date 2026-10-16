@@ -22,6 +22,39 @@ describe("error handling", () => {
     await app.close();
   });
 
+  it("answers 429 in the error shape once a client exceeds the limit, per forwarded address when trusted", async () => {
+    const app = buildApp({
+      db: {} as unknown as Db,
+      rateLimit: { max: 2, windowMs: 60_000 },
+      trustProxy: true,
+    });
+    const hit = (ip: string) =>
+      app.inject({ method: "GET", url: "/api/regions", headers: { "x-forwarded-for": ip } });
+    expect((await hit("10.0.0.1")).statusCode).toBe(200);
+    expect((await hit("10.0.0.1")).statusCode).toBe(200);
+    const third = await hit("10.0.0.1");
+    expect(third.statusCode).toBe(429);
+    expect(third.json()).toEqual({ error: "too many requests, retry in 60 s" });
+    expect(String(third.headers["retry-after"])).toBe("60");
+    expect(String(third.headers["x-ratelimit-limit"])).toBe("2");
+    expect((await hit("10.0.0.2")).statusCode).toBe(200);
+    await app.close();
+  });
+
+  it("turns the limiter off at max 0 and defaults to 120 a minute", async () => {
+    const open = buildApp({ db: {} as unknown as Db, rateLimit: { max: 0, windowMs: 1000 } });
+    for (let i = 0; i < 5; i++) {
+      const res = await open.inject({ method: "GET", url: "/api/regions" });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["x-ratelimit-limit"]).toBeUndefined();
+    }
+    await open.close();
+    const app = buildApp({ db: {} as unknown as Db });
+    const res = await app.inject({ method: "GET", url: "/api/regions" });
+    expect(String(res.headers["x-ratelimit-limit"])).toBe("120");
+    await app.close();
+  });
+
   it("returns 500 json and logs when a repository rejects", async () => {
     const db = {
       query: { events: { findFirst: () => Promise.reject(new Error("db down")) } },

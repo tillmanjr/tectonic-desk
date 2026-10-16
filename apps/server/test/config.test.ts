@@ -17,7 +17,23 @@ describe("loadConfig", () => {
       INGEST_WEEK_INTERVAL_MS: 3_600_000,
       USGS_BASE_URL: "https://earthquake.usgs.gov",
       USGS_USER_AGENT: "tectonic-desk/0.0 (+local)",
+      RATE_LIMIT_MAX: 120,
+      RATE_LIMIT_WINDOW_MS: 60_000,
+      TRUST_PROXY: false,
     });
+  });
+
+  it("parses rate-limit settings and the proxy flag", () => {
+    const c = loadConfig({
+      ...valid,
+      RATE_LIMIT_MAX: "0",
+      RATE_LIMIT_WINDOW_MS: "5000",
+      TRUST_PROXY: "true",
+    });
+    expect(c.RATE_LIMIT_MAX).toBe(0);
+    expect(c.RATE_LIMIT_WINDOW_MS).toBe(5000);
+    expect(c.TRUST_PROXY).toBe(true);
+    expect(() => loadConfig({ ...valid, RATE_LIMIT_WINDOW_MS: "10" })).toThrow(ConfigError);
   });
 
   it("coerces PORT and accepts overrides", () => {

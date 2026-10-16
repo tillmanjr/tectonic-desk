@@ -7,7 +7,12 @@ import { createUsgsClient } from "./usgs/client.js";
 
 const config = loadConfig();
 const { db, close } = createDb(config.DATABASE_URL);
-const app = buildApp({ db, logger: buildLoggerOptions(config) });
+const app = buildApp({
+  db,
+  logger: buildLoggerOptions(config),
+  rateLimit: { max: config.RATE_LIMIT_MAX, windowMs: config.RATE_LIMIT_WINDOW_MS },
+  trustProxy: config.TRUST_PROXY,
+});
 
 if (config.INGEST_ENABLED) {
   const usgs = createUsgsClient({
