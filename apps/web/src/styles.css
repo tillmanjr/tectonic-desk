@@ -769,12 +769,12 @@ a {
   text-align: center;
   pointer-events: none;
 }
-.touch-only {
+.legend .sw.touch-only {
   display: none;
 }
 @media (pointer: coarse) {
-  .touch-only {
-    display: inline;
+  .legend .sw.touch-only {
+    display: flex;
   }
   .maplock {
     width: 44px;
