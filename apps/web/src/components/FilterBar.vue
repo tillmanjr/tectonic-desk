@@ -21,9 +21,7 @@ const floor = computed(() => catalog.requireRegion().minMag);
 const active = computed(() => isActive(catalog.filter.value));
 const bounds = computed(() => dateBoundsFor(clock.now.value, zone.value));
 /** The days in force, so the inputs always show the window being queried. */
-const span = computed(() =>
-  resolveDates(catalog.filter.value, catalog.requireRegion().days, clock.now.value, zone.value),
-);
+const span = computed(() => resolveDates(catalog.filter.value, clock.now.value, zone.value));
 const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
 
 const text = (k: NumberKey): string => {
@@ -114,6 +112,6 @@ function clear(): void {
       aria-label="To date"
       @change="changeDate('until', $event)"
     />
-    <button type="button" class="fclear" :disabled="!active" @click="clear">Clear</button>
+    <button type="button" class="fclear" :disabled="!active" @click="clear">Reset</button>
   </section>
 </template>

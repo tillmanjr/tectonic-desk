@@ -73,14 +73,17 @@ export interface DateSpan {
   until: string;
 }
 
+/** How far back the window reaches when no start date is set. */
+export const DEFAULT_DAYS = 30;
+
 /**
  * The days actually queried, which the filter inputs show: each explicit bound,
- * else its default. The end defaults to today; the start to `days` before
- * today, pulled forward when an explicit end lies earlier than that.
+ * else its default. The end defaults to today; the start to `DEFAULT_DAYS`
+ * before today, pulled forward when an explicit end lies earlier than that.
  */
-export function resolveDates(f: EventFilter, days: number, now: Date, zone: Zone): DateSpan {
+export function resolveDates(f: EventFilter, now: Date, zone: Zone): DateSpan {
   const until = f.until ?? daysAgo(now, 0, zone);
-  const trailing = daysAgo(now, days, zone);
+  const trailing = daysAgo(now, DEFAULT_DAYS, zone);
   return { since: f.since ?? (trailing < until ? trailing : until), until };
 }
 

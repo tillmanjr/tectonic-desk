@@ -54,8 +54,9 @@ describe("FilterBar", () => {
     const dates = w.findAll<HTMLInputElement>("input.fdate");
     expect(dates[0]?.attributes("min")).toBe("2026-07-15");
     expect(dates[0]?.attributes("max")).toBe("2026-10-13");
-    expect(dates[0]?.element.value).toBe("2026-10-06");
+    expect(dates[0]?.element.value).toBe("2026-09-13");
     expect(dates[1]?.element.value).toBe("2026-10-13");
+    expect(w.find(".fclear").text()).toBe("Reset");
     await dates[0]?.setValue("2026-10-01");
     expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, since: "2026-10-01" });
     await dates[1]?.setValue("2026-10-05");
@@ -63,15 +64,15 @@ describe("FilterBar", () => {
     ctx.catalog.setFilter({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" });
     await nextTick();
     expect(dates[0]?.element.value).toBe("2026-10-01");
-    ctx.catalog.setFilter({ ...EMPTY_FILTER, until: "2026-10-01" });
+    ctx.catalog.setFilter({ ...EMPTY_FILTER, until: "2026-09-01" });
     await nextTick();
-    expect(dates[0]?.element.value).toBe("2026-10-01");
-    expect(dates[1]?.element.value).toBe("2026-10-01");
+    expect(dates[0]?.element.value).toBe("2026-09-01");
+    expect(dates[1]?.element.value).toBe("2026-09-01");
     ctx.zone.value = "local";
     await nextTick();
     expect(w.text()).toContain("Dates (local)");
   });
-  it("shows the West Coast view's thirty trailing days by default", async () => {
+  it("shows the same thirty days and the view's own floor for the West Coast", async () => {
     const w = mountWith(FilterBar, await makeContext({ regionId: "wc" }));
     const dates = w.findAll<HTMLInputElement>("input.fdate");
     expect(dates[0]?.element.value).toBe("2026-09-13");

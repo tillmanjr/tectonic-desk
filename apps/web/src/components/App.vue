@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { ApiRegion } from "@tectonic/shared";
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import CatalogTable from "./CatalogTable.vue";
@@ -66,19 +65,18 @@ const routeEvent = computed(() => {
 const routeFilter = computed(() =>
   parseFilter(route.query, region.value?.minMag ?? 0, dateBoundsFor(clock.now.value, zone.value)),
 );
-/** The window a region shows under the route's filter: explicit dates, else its trailing days. */
-function rangeFor(r: ApiRegion) {
-  const span = resolveDates(routeFilter.value, r.days, clock.now.value, zone.value);
-  return rangeInstants(span, zone.value);
-}
-const routeRange = computed(() => (region.value === null ? null : rangeFor(region.value)));
+/** The window the route asks for: explicit dates, else the default trailing days up to today. */
+const routeRange = computed(() =>
+  rangeInstants(resolveDates(routeFilter.value, clock.now.value, zone.value), zone.value),
+);
 
 async function applyRegion(id: string): Promise<void> {
-  const ok = await catalog.setRegion(id, rangeFor);
+  const ok = await catalog.setRegion(id);
   if (!ok && catalog.regions.value.length > 0) await router.replace("/");
 }
 async function boot(): Promise<void> {
   await catalog.init();
+  catalog.setRange(routeRange.value);
   await applyRegion(routeRegion.value);
   catalog.select(routeEvent.value);
   catalog.setFilter(routeFilter.value);

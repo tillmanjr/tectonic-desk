@@ -49,11 +49,8 @@ export interface Catalog {
   requireRegion(): ApiRegion;
   /** Loads the region presets. */
   init(): Promise<void>;
-  /**
-   * Switches region, adopting the window `rangeFor` gives for it (the current
-   * one by default), and loads its events; false when the id is unknown.
-   */
-  setRegion(id: string, rangeFor?: (r: ApiRegion) => Range | null): Promise<boolean>;
+  /** Switches region and loads its events; false when the id is unknown. */
+  setRegion(id: string): Promise<boolean>;
   select(id: string | null): void;
   /** Reloads the current region's events, keeping the selection. */
   refetch(): Promise<void>;
@@ -162,7 +159,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
         error.value = errorMessage(e);
       }
     },
-    async setRegion(id, rangeFor = () => range.value) {
+    async setRegion(id) {
       const r = regions.value.find((x) => x.id === id);
       if (r === undefined) return false;
       if (regionId.value === id) return true;
@@ -171,7 +168,6 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
       events.value = [];
       rangeEvents.value = null;
       truncated.value = false;
-      range.value = rangeFor(r);
       await loadAll(r);
       return true;
     },

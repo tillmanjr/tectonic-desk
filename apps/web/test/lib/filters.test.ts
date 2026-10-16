@@ -133,29 +133,25 @@ describe("dates and ranges", () => {
     ]);
     expect(e.getTime() - s.getTime()).toBeGreaterThan(22 * 36e5);
   });
-  it("resolves the queried days: explicit bounds, else the trailing days up to today", () => {
-    expect(resolveDates(EMPTY_FILTER, 7, now, "utc")).toEqual({
-      since: "2026-10-06",
-      until: "2026-10-13",
-    });
-    expect(resolveDates(EMPTY_FILTER, 30, now, "utc")).toEqual({
+  it("resolves the queried days: explicit bounds, else the last thirty days up to today", () => {
+    expect(resolveDates(EMPTY_FILTER, now, "utc")).toEqual({
       since: "2026-09-13",
       until: "2026-10-13",
     });
-    expect(resolveDates({ ...EMPTY_FILTER, since: "2026-10-01" }, 7, now, "utc")).toEqual({
+    expect(resolveDates({ ...EMPTY_FILTER, since: "2026-10-01" }, now, "utc")).toEqual({
       since: "2026-10-01",
       until: "2026-10-13",
     });
-    expect(resolveDates({ ...EMPTY_FILTER, until: "2026-10-10" }, 7, now, "utc")).toEqual({
-      since: "2026-10-06",
+    expect(resolveDates({ ...EMPTY_FILTER, until: "2026-10-10" }, now, "utc")).toEqual({
+      since: "2026-09-13",
       until: "2026-10-10",
     });
-    expect(resolveDates({ ...EMPTY_FILTER, until: "2026-10-01" }, 7, now, "utc")).toEqual({
-      since: "2026-10-01",
-      until: "2026-10-01",
+    expect(resolveDates({ ...EMPTY_FILTER, until: "2026-09-01" }, now, "utc")).toEqual({
+      since: "2026-09-01",
+      until: "2026-09-01",
     });
     expect(
-      resolveDates({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" }, 30, now, "utc"),
+      resolveDates({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" }, now, "utc"),
     ).toEqual({ since: "2026-10-01", until: "2026-10-05" });
   });
   it("turns a day span into server instants", () => {
