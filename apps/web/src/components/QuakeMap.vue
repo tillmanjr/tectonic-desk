@@ -332,6 +332,7 @@ onMounted(() => {
           type="button"
           class="pickopen"
           aria-label="Choose which fault ages to draw"
+          title="Choose which Quaternary fault ages to draw: historic through undifferentiated, or Class B"
           aria-haspopup="true"
           :aria-expanded="pickOpen"
           @click="pickOpen = !pickOpen"
