@@ -202,9 +202,9 @@ describe("QuakeMap", () => {
     const allBox = () => pick().find<HTMLInputElement>(".layerpick > label > input");
     expect(pick().text()).toContain("Quaternary faults");
     const layer = () => w.findComponent({ name: "MapFaults" });
-    expect(pick().find(".pickcount").text()).toBe("1 of 6");
+    expect(pick().find(".pickcount").text()).toBe("2 of 6");
     expect(allBox().element.indeterminate).toBe(true);
-    expect(layer().findAll("path.qf")).toHaveLength(1);
+    expect(layer().findAll("path.qf")).toHaveLength(2);
     await pick().find(".pickopen").trigger("click");
     await pick()
       .findAll(".pickrow button")

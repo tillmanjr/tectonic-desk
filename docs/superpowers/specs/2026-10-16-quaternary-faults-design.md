@@ -146,5 +146,6 @@ panel, URL state for layer toggles.
   faults: All ▾", listing the six age classes as checkboxes with All and
   None; the layer, the hover index and the legend follow the selection, and
   an empty selection means no layer.
-- Default selection: the latest Quaternary class only (<15 ka), since the
-  full set overwhelms the West Coast view; the summary checkbox turns all on.
+- Default selection: the historic and latest Quaternary classes (<15 ka),
+  since the full set overwhelms the West Coast view; the summary checkbox
+  turns all on.
