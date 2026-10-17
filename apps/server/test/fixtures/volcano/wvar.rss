@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Smithsonian / USGS Weekly Volcanic Activity Report</title>
+    <link>https://volcano.si.edu/reports_weekly.cfm</link>
+    <description>Constructed fixture in the shape of the GVP RSS; the live feed was unreachable (403) when this was written.</description>
+    <item>
+      <title>Etna (Italy) - New Activity/Unrest</title>
+      <link>https://volcano.si.edu/volcano.cfm?vn=211060</link>
+      <pubDate>Wed, 14 Oct 2026 23:00:00 GMT</pubDate>
+      <description><![CDATA[<p>INGV reported that Strombolian activity at the SE Crater resumed on 12 October &amp; lava fountaining fed a flow toward the Valle del Bove.</p>]]></description>
+    </item>
+    <item>
+      <title>Great Sitkin (United States) - Ongoing Activity</title>
+      <link>https://volcano.si.edu/volcano.cfm?vn=311120&amp;vtab=Weekly</link>
+      <pubDate>Wed, 14 Oct 2026 23:00:00 GMT</pubDate>
+      <description>AVO reported that slow lava effusion continued in the summit crater. The Volcano Alert Level remained at Watch and the Aviation Color Code at Orange.</description>
+    </item>
+    <item>
+      <title>No link here</title>
+      <pubDate>Wed, 14 Oct 2026 23:00:00 GMT</pubDate>
+      <description>skipped</description>
+    </item>
+    <item>
+      <title>Bad date</title>
+      <link>https://volcano.si.edu/volcano.cfm?vn=999999</link>
+      <pubDate>not a date</pubDate>
+    </item>
+    <item>
+      <link>https://volcano.si.edu/volcano.cfm?vn=999998</link>
+      <pubDate>Wed, 07 Oct 2026 23:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Ruapehu</title>
+      <link>https://volcano.si.edu/volcano.cfm?vn=241100</link>
+      <pubDate>Wed, 07 Oct 2026 23:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

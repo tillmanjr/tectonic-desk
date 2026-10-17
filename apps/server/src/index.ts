@@ -2,8 +2,10 @@ import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db/client.js";
 import { startScheduler } from "./ingest/scheduler.js";
+import { syncVolcanoReports, syncVolcanoStatus } from "./ingest/volcanoes.js";
 import { buildLoggerOptions } from "./logging.js";
 import { createUsgsClient } from "./usgs/client.js";
+import { createVolcanoClient } from "./volcano/client.js";
 
 const config = loadConfig();
 const { db, close } = createDb(config.DATABASE_URL);
@@ -19,9 +21,26 @@ if (config.INGEST_ENABLED) {
     baseUrl: config.USGS_BASE_URL,
     userAgent: config.USGS_USER_AGENT,
   });
+  const volcano = createVolcanoClient({ userAgent: config.USGS_USER_AGENT });
+  const volcanoCtx = { db, volcano, log: app.log, now: () => new Date() };
   const scheduler = startScheduler(
     { db, usgs, log: app.log, now: () => new Date() },
-    { dayMs: config.INGEST_DAY_INTERVAL_MS, weekMs: config.INGEST_WEEK_INTERVAL_MS },
+    {
+      dayMs: config.INGEST_DAY_INTERVAL_MS,
+      weekMs: config.INGEST_WEEK_INTERVAL_MS,
+      jobs: [
+        {
+          name: "volcano_status",
+          everyMs: config.VOLCANO_STATUS_INTERVAL_MS,
+          run: () => syncVolcanoStatus(volcanoCtx),
+        },
+        {
+          name: "volcano_reports",
+          everyMs: config.VOLCANO_REPORTS_INTERVAL_MS,
+          run: () => syncVolcanoReports(volcanoCtx),
+        },
+      ],
+    },
   );
   app.addHook("onClose", () => scheduler.stop());
 } else {

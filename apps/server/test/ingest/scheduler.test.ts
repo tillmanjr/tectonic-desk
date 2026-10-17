@@ -104,6 +104,68 @@ describe("startScheduler", () => {
     expect(calls).toBe(1);
   });
 
+  it("runs extra jobs on their own lanes and intervals, and stop waits for them", async () => {
+    const { ctx, log } = makeCtx();
+    const feeds: FeedName[] = [];
+    const run = (_c: IngestContext, name: FeedName) => {
+      feeds.push(name);
+      return Promise.resolve(emptyResult);
+    };
+    const ticks: string[] = [];
+    let releaseSlow: () => void = () => undefined;
+    const s = startScheduler(ctx, {
+      dayMs: DAY,
+      weekMs: WEEK,
+      run,
+      jobs: [
+        {
+          name: "fast",
+          everyMs: 400,
+          run: () => {
+            ticks.push("fast");
+            return Promise.resolve();
+          },
+        },
+        {
+          name: "slow",
+          everyMs: 300,
+          run: () =>
+            new Promise<void>((resolve) => {
+              ticks.push("slow");
+              releaseSlow = resolve;
+            }),
+        },
+        {
+          name: "broken",
+          everyMs: 10_000,
+          run: () => Promise.reject(new Error("job broke")),
+        },
+      ],
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(ticks).toEqual(["fast", "slow"]);
+    expect(feeds).toEqual(["day"]);
+    await vi.advanceTimersByTimeAsync(400);
+    expect(ticks).toEqual(["fast", "slow", "fast"]);
+    expect(
+      log.entries.some((e) => e.level === "warn" && JSON.stringify(e.obj).includes("slow")),
+    ).toBe(true);
+    expect(
+      log.entries.some((e) => e.level === "error" && JSON.stringify(e.obj).includes("broken")),
+    ).toBe(true);
+    let stopped = false;
+    const stopping = s.stop().then(() => {
+      stopped = true;
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(stopped).toBe(false);
+    releaseSlow();
+    await stopping;
+    expect(stopped).toBe(true);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(ticks).toHaveLength(3);
+  });
+
   it("uses syncFeed by default", async () => {
     const { ctx, log } = makeCtx();
     const s = startScheduler(ctx, { dayMs: DAY, weekMs: WEEK });

@@ -18,7 +18,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=../../.env --import tsx src/db/migrate-cli.ts",
     "ingest": "node --env-file-if-exists=../../.env --import tsx src/ingest-cli.ts",
-    "geo:qfaults": "node --import tsx src/qfaults-cli.ts"
+    "geo:qfaults": "node --import tsx src/qfaults-cli.ts",
+    "geo:volcanoes": "node --import tsx src/gvp-cli.ts"
   },
   "dependencies": {
     "@fastify/rate-limit": "10.3.0",

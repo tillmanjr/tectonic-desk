@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import CatalogTable from "./CatalogTable.vue";
-import DepthChart from "./DepthChart.vue";
 import DetailPanel from "./DetailPanel.vue";
-import FilterBar from "./FilterBar.vue";
-import FrequencyMagnitudeChart from "./FrequencyMagnitudeChart.vue";
-import MagnitudeTimeChart from "./MagnitudeTimeChart.vue";
-import MajorEvents from "./MajorEvents.vue";
-import QuakeMap from "./QuakeMap.vue";
+import EarthquakesPage from "./EarthquakesPage.vue";
+import PageSwitch from "./PageSwitch.vue";
 import RegionTabs from "./RegionTabs.vue";
-import StatsStrip from "./StatsStrip.vue";
 import StatusLine from "./StatusLine.vue";
 import ThemeToggle from "./ThemeToggle.vue";
+import VolcanoDetail from "./VolcanoDetail.vue";
+import VolcanoesPage from "./VolcanoesPage.vue";
 import { createApiClient } from "../lib/api.js";
 import { clearBeachballCache } from "../lib/beachball.js";
 import { createCatalog, EVENT_LIMIT } from "../lib/catalog.js";
@@ -26,18 +22,38 @@ import {
   type EventFilter,
 } from "../lib/filters.js";
 import type { Zone } from "../lib/format.js";
-import { API, CATALOG, CLOCK, SELECT, SET_FILTER, STATUS, THEME, ZONE } from "../lib/keys.js";
-import { majorLabel } from "../lib/stats.js";
+import {
+  API,
+  CATALOG,
+  CLOCK,
+  SELECT,
+  SELECT_VOLCANO,
+  SET_FILTER,
+  SET_VOLCANO_FILTER,
+  STATUS,
+  THEME,
+  VOLCANOES,
+  ZONE,
+} from "../lib/keys.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
+import {
+  createVolcanoStore,
+  parseVolcanoFilter,
+  volcanoFilterQuery,
+  type VolcanoFilter,
+} from "../lib/volcanoes.js";
+import { pagePath, type Page } from "../router.js";
 
 const api = inject(API, null) ?? createApiClient((input, init) => fetch(input, init));
 const clock = inject(CLOCK, null) ?? createClock();
 const theme = inject(THEME, null) ?? createTheme();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
+const volcanoes = createVolcanoStore(api, now);
 const status = createStatusPoll(api, now, () => {
   void catalog.refetch();
+  if (page.value === "volcanoes") void volcanoes.refreshLive();
 });
 
 provide(API, api);
@@ -45,8 +61,11 @@ provide(CLOCK, clock);
 provide(THEME, theme);
 provide(CATALOG, catalog);
 provide(STATUS, status);
+provide(VOLCANOES, volcanoes);
 provide(SELECT, select);
 provide(SET_FILTER, setFilter);
+provide(SELECT_VOLCANO, selectVolcano);
+provide(SET_VOLCANO_FILTER, setVolcanoFilter);
 
 const route = useRoute();
 const router = useRouter();
@@ -54,6 +73,7 @@ const { region, error, truncated } = catalog;
 const zone = computed<Zone>(() => (route.query.tz === "local" ? "local" : "utc"));
 provide(ZONE, zone);
 
+const page = computed<Page>(() => (route.meta.page === "volcanoes" ? "volcanoes" : "earthquakes"));
 const routeRegion = computed(() => {
   const p = route.params.region;
   return typeof p === "string" && p !== "" ? p : "global";
@@ -62,6 +82,11 @@ const routeEvent = computed(() => {
   const q = route.query.event;
   return typeof q === "string" ? q : null;
 });
+const routeVolcano = computed(() => {
+  const q = route.query.volcano;
+  const n = typeof q === "string" ? Number(q) : NaN;
+  return Number.isInteger(n) && n > 0 ? n : null;
+});
 const routeFilter = computed(() =>
   parseFilter(route.query, region.value?.minMag ?? 0, dateBoundsFor(clock.now.value, zone.value)),
 );
@@ -69,6 +94,7 @@ const routeFilter = computed(() =>
 const routeRange = computed(() =>
   rangeInstants(resolveDates(routeFilter.value, clock.now.value, zone.value), zone.value),
 );
+const routeVolcanoFilter = computed(() => parseVolcanoFilter(route.query));
 
 async function applyRegion(id: string): Promise<void> {
   const ok = await catalog.setRegion(id);
@@ -80,14 +106,27 @@ async function boot(): Promise<void> {
   await applyRegion(routeRegion.value);
   catalog.select(routeEvent.value);
   catalog.setFilter(routeFilter.value);
+  volcanoes.setRegion(region.value);
+  volcanoes.setFilter(routeVolcanoFilter.value);
+  volcanoes.select(routeVolcano.value);
+  if (page.value === "volcanoes") await volcanoes.load();
 }
+/** Query keys that belong to one page's selection; dropped when moving between pages or regions. */
+const SELECTION_KEYS = ["event", "volcano"];
+const withoutSelection = () =>
+  Object.fromEntries(Object.entries(route.query).filter(([k]) => !SELECTION_KEYS.includes(k)));
 function pickRegion(id: string): void {
-  const query = { ...route.query };
-  delete query.event;
-  void router.push({ path: id === "global" ? "/" : `/${id}`, query });
+  void router.push({ path: pagePath(page.value, id), query: withoutSelection() });
+}
+function pickPage(p: Page): void {
+  if (p === page.value) return;
+  void router.push({ path: pagePath(p, routeRegion.value), query: withoutSelection() });
 }
 function setFilter(f: EventFilter): void {
   void router.replace({ query: { ...route.query, ...filterQuery(f) } });
+}
+function setVolcanoFilter(f: VolcanoFilter): void {
+  void router.replace({ query: { ...route.query, ...volcanoFilterQuery(f) } });
 }
 function toggleZone(): void {
   const query = { ...route.query };
@@ -101,6 +140,12 @@ function select(id: string | null): void {
   else query.event = id;
   void router.replace({ query });
 }
+function selectVolcano(number: number | null): void {
+  const query = { ...route.query };
+  if (number === null) delete query.volcano;
+  else query.volcano = String(number);
+  void router.replace({ query });
+}
 function retry(): void {
   if (catalog.regions.value.length === 0) void boot();
   else void catalog.refetch();
@@ -109,14 +154,26 @@ function retry(): void {
 watch(routeRegion, (id) => {
   void applyRegion(id);
 });
+watch(region, (r) => {
+  volcanoes.setRegion(r);
+});
 watch(routeEvent, (id) => {
   catalog.select(id);
+});
+watch(routeVolcano, (n) => {
+  volcanoes.select(n);
 });
 watch(routeFilter, (f) => {
   catalog.setFilter(f);
 });
+watch(routeVolcanoFilter, (f) => {
+  volcanoes.setFilter(f);
+});
 watch(routeRange, (r) => {
   catalog.setRange(r);
+});
+watch(page, (p) => {
+  if (p === "volcanoes") void volcanoes.load();
 });
 watch(theme.resolved, () => {
   clearBeachballCache();
@@ -135,8 +192,9 @@ onUnmounted(() => {
 <template>
   <div class="wrap">
     <header>
-      <div>
-        <h1>Tectonic Desk<small>Earthquakes · focal mechanisms · plate boundaries</small></h1>
+      <div class="hdr-left">
+        <h1>Tectonic Desk<small>Earthquakes · volcanoes · plate boundaries</small></h1>
+        <PageSwitch :page="page" @pick="pickPage" />
       </div>
       <div class="hdr-right">
         <RegionTabs @pick="pickRegion" />
@@ -161,19 +219,8 @@ onUnmounted(() => {
       the limit.
     </div>
     <template v-if="region !== null">
-      <StatsStrip />
-      <p class="sectionlabel">{{ majorLabel(region) }}</p>
-      <MajorEvents />
-      <FilterBar />
-      <QuakeMap />
-      <section class="grid2">
-        <CatalogTable />
-        <div class="charts">
-          <MagnitudeTimeChart />
-          <FrequencyMagnitudeChart />
-          <DepthChart />
-        </div>
-      </section>
+      <EarthquakesPage v-if="page === 'earthquakes'" />
+      <VolcanoesPage v-else />
     </template>
     <footer class="foot">
       <p>
@@ -197,6 +244,15 @@ onUnmounted(() => {
         age of last movement as on the USGS fault map; pieces whose ends lie within 50 m are joined
         and bends under a pixel at full zoom are dropped.
       </p>
+      <p>
+        <b>Volcanoes.</b> Catalogue and eruption history from the Smithsonian Institution's
+        <a href="https://volcano.si.edu/">Global Volcanism Program</a>, Volcanoes of the World
+        database (non-commercial use, with thanks). Alert levels and aviation colour codes from the
+        <a href="https://volcanoes.usgs.gov/">USGS Volcano Hazards Program</a> and
+        <a href="https://www.geonet.org.nz/volcano">GeoNet</a>; each agency's scale is shown as
+        published, they are not interchangeable. Weekly activity entries from the GVP/USGS Weekly
+        Volcanic Activity Report when its feed is reachable.
+      </p>
       <p class="byline">
         Built for Barbara by
         <a href="https://github.com/tillmanjr" rel="author">Tillman</a>
@@ -204,4 +260,5 @@ onUnmounted(() => {
     </footer>
   </div>
   <DetailPanel />
+  <VolcanoDetail v-if="page === 'volcanoes'" />
 </template>

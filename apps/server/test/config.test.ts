@@ -17,6 +17,8 @@ describe("loadConfig", () => {
       INGEST_WEEK_INTERVAL_MS: 3_600_000,
       USGS_BASE_URL: "https://earthquake.usgs.gov",
       USGS_USER_AGENT: "tectonic-desk/0.0 (+local)",
+      VOLCANO_STATUS_INTERVAL_MS: 900_000,
+      VOLCANO_REPORTS_INTERVAL_MS: 21_600_000,
       RATE_LIMIT_MAX: 120,
       RATE_LIMIT_WINDOW_MS: 60_000,
       TRUST_PROXY: false,
@@ -66,6 +68,16 @@ describe("loadConfig", () => {
     expect(c.USGS_USER_AGENT).toBe("test-agent");
     expect(() => loadConfig({ ...valid, INGEST_DAY_INTERVAL_MS: "1000" })).toThrow(
       /INGEST_DAY_INTERVAL_MS/,
+    );
+    const v = loadConfig({
+      ...valid,
+      VOLCANO_STATUS_INTERVAL_MS: "60000",
+      VOLCANO_REPORTS_INTERVAL_MS: "600000",
+    });
+    expect(v.VOLCANO_STATUS_INTERVAL_MS).toBe(60000);
+    expect(v.VOLCANO_REPORTS_INTERVAL_MS).toBe(600000);
+    expect(() => loadConfig({ ...valid, VOLCANO_REPORTS_INTERVAL_MS: "1000" })).toThrow(
+      /VOLCANO_REPORTS_INTERVAL_MS/,
     );
   });
 

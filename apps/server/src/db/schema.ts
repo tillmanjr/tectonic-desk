@@ -1,8 +1,9 @@
-import type { RunKind } from "@tectonic/shared";
+import type { RunKind, VolcanoSource } from "@tectonic/shared";
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  date,
   doublePrecision,
   index,
   integer,
@@ -125,8 +126,51 @@ export const ingestRuns = pgTable(
     index("ingest_runs_kind_started_idx").on(t.kind, t.startedAt.desc()),
     check(
       "ingest_runs_kind_check",
-      sql`${t.kind} in ('feed_day', 'feed_week', 'backfill', 'details')`,
+      sql`${t.kind} in ('feed_day', 'feed_week', 'backfill', 'details', 'volcano_status', 'volcano_reports')`,
     ),
+  ],
+);
+
+export const volcanoStatus = pgTable(
+  "volcano_status",
+  {
+    id: serial("id").primaryKey(),
+    source: text("source").$type<VolcanoSource>().notNull(),
+    key: text("key").notNull(),
+    number: integer("number"),
+    name: text("name").notNull(),
+    level: text("level").notNull(),
+    color: text("color"),
+    noticeAt: timestamp("notice_at", tz),
+    synopsis: text("synopsis"),
+    url: text("url"),
+    observedAt: timestamp("observed_at", tz).notNull(),
+  },
+  (t) => [
+    index("volcano_status_source_key_observed_idx").on(t.source, t.key, t.observedAt.desc()),
+    index("volcano_status_number_idx").on(t.number),
+    index("volcano_status_observed_idx").on(t.observedAt.desc()),
+    check("volcano_status_source_check", sql`${t.source} in ('usgs', 'geonet')`),
+  ],
+);
+
+export const volcanoReports = pgTable(
+  "volcano_reports",
+  {
+    id: serial("id").primaryKey(),
+    number: integer("number").notNull(),
+    name: text("name").notNull(),
+    week: date("week", { mode: "date" }).notNull(),
+    category: text("category").$type<"new" | "ongoing">().notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    url: text("url").notNull(),
+    fetchedAt: timestamp("fetched_at", tz).notNull(),
+  },
+  (t) => [
+    uniqueIndex("volcano_reports_number_week_uq").on(t.number, t.week),
+    index("volcano_reports_week_idx").on(t.week.desc()),
+    check("volcano_reports_category_check", sql`${t.category} in ('new', 'ongoing')`),
   ],
 );
 
@@ -135,3 +179,7 @@ export type EventInsert = typeof events.$inferInsert;
 export type MechanismRow = typeof mechanisms.$inferSelect;
 export type MechanismInsert = typeof mechanisms.$inferInsert;
 export type IngestRunRow = typeof ingestRuns.$inferSelect;
+export type VolcanoStatusRow = typeof volcanoStatus.$inferSelect;
+export type VolcanoStatusInsert = typeof volcanoStatus.$inferInsert;
+export type VolcanoReportRow = typeof volcanoReports.$inferSelect;
+export type VolcanoReportInsert = typeof volcanoReports.$inferInsert;

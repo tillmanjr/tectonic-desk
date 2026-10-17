@@ -15,6 +15,13 @@
       "when": 1791881035484,
       "tag": "0001_nosy_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792211367852,
+      "tag": "0002_ambiguous_moonstone",
+      "breakpoints": true
     }
   ]
 }

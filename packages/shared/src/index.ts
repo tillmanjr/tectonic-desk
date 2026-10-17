@@ -82,6 +82,93 @@ export interface EventWithMechanisms extends StoredEvent {
   mechanisms: StoredMechanism[];
 }
 
+/** A generated reference file: a header and its rows. */
+export interface GeoFile<T> {
+  meta: { source: string; pulledAt: string; count: number };
+  items: T[];
+}
+
+/** A Holocene volcano from the Smithsonian GVP catalogue (`data/geo/volcanoes.json`). */
+export interface Volcano {
+  /** GVP volcano number, the key every agency shares. */
+  number: number;
+  name: string;
+  country: string;
+  region: string;
+  subregion: string | null;
+  lat: number;
+  lon: number;
+  elevationM: number | null;
+  /** GVP primary volcano type, e.g. "Stratovolcano(es)". */
+  type: string;
+  landform: string | null;
+  rockType: string | null;
+  tectonicSetting: string | null;
+  lastEruptionYear: number | null;
+  evidence: string | null;
+  summary: string | null;
+}
+
+/** One GVP eruption record (`data/geo/eruptions.json`); dates carry GVP's uncertainty markers. */
+export interface Eruption {
+  number: number;
+  volcano: number;
+  activity: string;
+  vei: number | null;
+  veiModifier: string | null;
+  startYear: number;
+  startMonth: number | null;
+  startDay: number | null;
+  startYearUncertainty: number | null;
+  startModifier: string | null;
+  endYear: number | null;
+  endMonth: number | null;
+  endDay: number | null;
+  /** GVP's since-1960 layer still lists the eruption as continuing. */
+  continuing: boolean;
+}
+
+export type VolcanoSource = "usgs" | "geonet";
+
+/** An observed alert state for a monitored volcano; one row per change. */
+export interface VolcanoStatus {
+  source: VolcanoSource;
+  /** USGS vnum or GeoNet volcanoID. */
+  key: string;
+  /** GVP number when known. */
+  number: number | null;
+  name: string;
+  /** USGS alert level (NORMAL..WARNING, UNASSIGNED) or GeoNet level 0..5 as text. */
+  level: string;
+  /** Aviation colour code when the agency publishes one. */
+  color: string | null;
+  noticeAt: Date | null;
+  synopsis: string | null;
+  url: string | null;
+  observedAt: Date;
+}
+
+export interface StoredVolcanoStatus extends VolcanoStatus {
+  id: number;
+}
+
+/** One entry of the GVP/USGS Weekly Volcanic Activity Report. */
+export interface VolcanoReport {
+  number: number;
+  name: string;
+  /** The report week's publication date. */
+  week: Date;
+  category: "new" | "ongoing";
+  title: string;
+  body: string;
+  url: string;
+  fetchedAt: Date;
+}
+
+export interface StoredVolcanoReport extends VolcanoReport {
+  id: number;
+}
+
 export interface BBox {
   minLat: number;
   maxLat: number;

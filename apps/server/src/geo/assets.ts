@@ -3,7 +3,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const GEO_NAMES = ["plates", "wc-land", "wc-states", "wc-qfaults"] as const;
+export const GEO_NAMES = [
+  "plates",
+  "wc-land",
+  "wc-states",
+  "wc-qfaults",
+  "volcanoes",
+  "eruptions",
+] as const;
 
 export interface GeoAsset {
   body: Buffer;

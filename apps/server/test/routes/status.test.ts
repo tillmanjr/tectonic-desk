@@ -34,7 +34,14 @@ describe.skipIf(!docker)("GET /api/status", () => {
       generatedAt: "2026-10-13T12:00:00.000Z",
       events: { total: 0, newest: null, oldest: null, withMechanism: 0 },
       mechanisms: { total: 0 },
-      runs: { feed_day: null, feed_week: null, backfill: null, details: null },
+      runs: {
+        feed_day: null,
+        feed_week: null,
+        backfill: null,
+        details: null,
+        volcano_status: null,
+        volcano_reports: null,
+      },
       lastSuccessfulFeed: null,
     });
   });

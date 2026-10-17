@@ -11,6 +11,8 @@ const schema = z.object({
   INGEST_WEEK_INTERVAL_MS: z.coerce.number().int().min(300_000).default(3_600_000),
   USGS_BASE_URL: z.url().default("https://earthquake.usgs.gov"),
   USGS_USER_AGENT: z.string().min(1).default("tectonic-desk/0.0 (+local)"),
+  VOLCANO_STATUS_INTERVAL_MS: z.coerce.number().int().min(60_000).default(900_000),
+  VOLCANO_REPORTS_INTERVAL_MS: z.coerce.number().int().min(600_000).default(21_600_000),
   RATE_LIMIT_MAX: z.coerce.number().int().min(0).default(120),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
   TRUST_PROXY: z.stringbool().default(false),
