@@ -154,6 +154,7 @@ describe("QuakeMap", () => {
     expect(w.find(".animbar").exists()).toBe(true);
     expect(w.find(".animclock").text()).toBe("2026-10-05 00:00 UTC");
     expect(w.find(".animcount").text()).toBe("0 of 1 events");
+    expect(w.find(".animbar label").text()).toContain("Seconds per day");
     expect(markers()).toBe(0);
     await w.find(".animbar input").setValue("1");
     await w.find(".animbar .play").trigger("click");

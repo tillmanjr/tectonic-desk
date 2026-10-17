@@ -104,7 +104,7 @@ watch(selected, (e) => {
         class="zbtn"
         style="width: auto; padding: 0 8px"
         :aria-pressed="anim.active.value"
-        title="Replay the loaded window on the map, day by day"
+        title="Replay the loaded window on the map, step by step"
         @click="anim.active.value ? anim.close() : openAnimation()"
       >
         Animate
@@ -113,10 +113,15 @@ watch(selected, (e) => {
     <template #bar>
       <div v-if="anim.active.value && anim.cursor.value !== null" class="animbar">
         <label
-          >Seconds per day
-          <input v-model.number="anim.secondsPerDay.value" type="number" min="0.1" step="0.5" />
+          >Seconds per {{ anim.unit.value }}
+          <input v-model.number="anim.secondsPerUnit.value" type="number" min="0.1" step="0.5" />
         </label>
-        <button type="button" class="zbtn" aria-label="Back one day" @click="anim.stepDay(-1)">
+        <button
+          type="button"
+          class="zbtn"
+          :aria-label="`Back one ${anim.unit.value}`"
+          @click="anim.step(-1)"
+        >
           ◀
         </button>
         <button
@@ -127,7 +132,12 @@ watch(selected, (e) => {
         >
           {{ anim.playing.value ? "Pause" : "Start" }}
         </button>
-        <button type="button" class="zbtn" aria-label="Forward one day" @click="anim.stepDay(1)">
+        <button
+          type="button"
+          class="zbtn"
+          :aria-label="`Forward one ${anim.unit.value}`"
+          @click="anim.step(1)"
+        >
           ▶
         </button>
         <span class="animclock num">{{ fmtStamp(anim.cursor.value.toISOString(), zone) }}</span>
