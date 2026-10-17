@@ -23,7 +23,7 @@ pnpm install
 cp .env.example .env              # Postgres is exposed on host port 5433
 pnpm db:up
 pnpm db:migrate
-pnpm ingest backfill --days 90    # optional: load history (several minutes)
+pnpm ingest backfill --days 90    # optional: load recent history (several minutes)
 pnpm dev                          # web on http://localhost:5173, API on http://127.0.0.1:3000
 ```
 
@@ -40,6 +40,14 @@ The server polls USGS while it runs (`INGEST_ENABLED`, default true):
   network publishes only axes.
 - Nothing is deleted. History accumulates past the feed windows. Every run is recorded in
   `ingest_runs`.
+- History is loaded with `pnpm ingest backfill`, newest first, in calendar-month windows
+  (calendar years before 1970). A window that ended more than 30 days before the run is
+  recorded in `catalog_windows` once loaded and is never fetched again (`--force` overrides);
+  younger windows are reloaded each run because USGS still revises them. Page requests pause
+  one second apart and back off on 429 and 5xx. `GET /api/catalog/coverage` reports the frozen
+  spans.
+- `last_seen` is bumped at most once an hour per event, so polling a quiet catalogue does not
+  rewrite it. An event whose USGS `ids` list names an id already stored replaces that row.
 
 Set `INGEST_ENABLED=false` on a second API instance so only one process polls.
 
@@ -59,15 +67,19 @@ All routes return JSON. Bad input is 400 `{ error, issues: [{ path, message }] }
 id or path is 404 `{ error }`, anything else is 500 `{ error }`. Successful responses carry a
 short `Cache-Control`.
 
-| Route                 | Returns                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| `GET /api/health`     | `{ status, db }`, 503 when the database does not answer                                    |
-| `GET /api/regions`    | the view presets: id, name, subtitle, minMag, days, bbox                                   |
-| `GET /api/events`     | `{ events, count, truncated, query }`; each event carries its preferred mechanism per kind |
-| `GET /api/events/:id` | the event with every mechanism product and the raw USGS properties as `usgs`               |
-| `GET /api/status`     | catalog totals, latest ingest run per kind, last successful feed time                      |
-| `GET /api/runs`       | ingest run history, `?kind=feed_day\|feed_week\|backfill\|details&limit=N`                 |
-| `GET /api/geo/:name`  | `plates`, `wc-land`, `wc-states` from `apps/server/data/geo`, with an ETag                 |
+| Route                       | Returns                                                                                                                      |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/health`           | `{ status, db }`, 503 when the database does not answer                                                                      |
+| `GET /api/regions`          | the view presets: id, name, subtitle, minMag, days, bbox                                                                     |
+| `GET /api/events`           | `{ events, count, truncated, query }`; each event carries its preferred mechanism per kind                                   |
+| `GET /api/events/:id`       | the event with every mechanism product and the raw USGS properties as `usgs`                                                 |
+| `GET /api/status`           | catalog totals, latest ingest run per kind, last successful feed time                                                        |
+| `GET /api/runs`             | ingest run history, `?kind=feed_day\|feed_week\|backfill\|details&limit=N`                                                   |
+| `GET /api/events/count`     | `{ count, query }` under the list filters                                                                                    |
+| `GET /api/events/summary`   | `{ by, bins, query }`: per day, month or year (`by=`, default by span) with the largest magnitude and magnitude-class counts |
+| `GET /api/events/grid`      | `{ cell, cells, query }`: counts per `cell`-degree square (0.25, 0.5, 1, 2 or 5)                                             |
+| `GET /api/catalog/coverage` | `{ spans }`: contiguous frozen backfill windows per magnitude floor and bbox                                                 |
+| `GET /api/geo/:name`        | `plates`, `wc-land`, `wc-states` from `apps/server/data/geo`, with an ETag                                                   |
 
 `GET /api/events` filters: `since` and `until` (ISO 8601 date-time or `YYYY-MM-DD`; `since`
 defaults to seven days ago), `minMag`, `bbox=minLon,minLat,maxLon,maxLat` (minLon > maxLon
@@ -214,9 +226,18 @@ into `release`) deploys. One-time setup:
 
    ```sh
    cd /opt/tectonic-desk
-   docker compose -f docker-compose.prod.yml exec server node dist/ingest-cli.js backfill --days 90
+   docker compose -f docker-compose.prod.yml run --rm -d server \
+     node dist/ingest-cli.js backfill --from 1900-01-01 --skip-details
+   docker logs -f "$(docker ps -q --filter name=server-run | head -1)"
    ```
 
+   The first command loads global M2.5+ back to 1900 in a few hours and freezes each settled
+   window as it goes, so it can be stopped and rerun. Add
+   `--from 1500-01-01 --to 1900-01-01 --all-magnitudes` for the pre-instrumental US record.
+   Detail fetches (mechanisms) then drain through the feeds' detail pass, or faster with
+   `node dist/ingest-cli.js details --by-magnitude --limit 5000`. Afterwards run
+   `VACUUM (ANALYZE) events;` once through
+   `docker compose -f docker-compose.prod.yml exec postgres psql -U tectonic tectonic`.
    Migrations run on every server start; ingest keeps polling from then on.
 
 Day to day: `docker compose -f docker-compose.prod.yml logs -f server` for the ingest log,
@@ -228,18 +249,18 @@ trusts Cloudflare's ranges, nginx takes the client from `X-Forwarded-For`, and t
 
 ## Scripts
 
-| Script                          | What it does                                                   |
-| ------------------------------- | -------------------------------------------------------------- |
-| `pnpm dev`                      | server and web together (Vite on 5173, API on 3000)            |
-| `pnpm dev:server` / `dev:web`   | one of them                                                    |
-| `pnpm test`                     | all tests; integration tests need Docker (Testcontainers)      |
-| `pnpm test:coverage`            | tests with 100% thresholds on server and shared                |
-| `pnpm lint` / `pnpm format`     | ESLint (type-aware) / Prettier                                 |
-| `pnpm typecheck`                | tsc across the workspace                                       |
-| `pnpm build`                    | compile shared, server and web to their `dist/`                |
-| `pnpm db:generate`              | generate a migration from `apps/server/src/db/schema.ts`       |
-| `pnpm db:migrate`               | apply migrations to `DATABASE_URL`                             |
-| `pnpm db:up` / `pnpm db:down`   | start / stop the compose Postgres                              |
-| `pnpm ingest feed day\|week`    | one feed sync, including detail fetches                        |
-| `pnpm ingest details`           | one detail pass over pending candidates (`--limit N`)          |
-| `pnpm ingest backfill --days N` | load N days of global M2.5+ history, then drain detail fetches |
+| Script                                         | What it does                                                                                                                                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                     | server and web together (Vite on 5173, API on 3000)                                                                                                                                |
+| `pnpm dev:server` / `dev:web`                  | one of them                                                                                                                                                                        |
+| `pnpm test`                                    | all tests; integration tests need Docker (Testcontainers)                                                                                                                          |
+| `pnpm test:coverage`                           | tests with 100% thresholds on server and shared                                                                                                                                    |
+| `pnpm lint` / `pnpm format`                    | ESLint (type-aware) / Prettier                                                                                                                                                     |
+| `pnpm typecheck`                               | tsc across the workspace                                                                                                                                                           |
+| `pnpm build`                                   | compile shared, server and web to their `dist/`                                                                                                                                    |
+| `pnpm db:generate`                             | generate a migration from `apps/server/src/db/schema.ts`                                                                                                                           |
+| `pnpm db:migrate`                              | apply migrations to `DATABASE_URL`                                                                                                                                                 |
+| `pnpm db:up` / `pnpm db:down`                  | start / stop the compose Postgres                                                                                                                                                  |
+| `pnpm ingest feed day\|week`                   | one feed sync, including detail fetches                                                                                                                                            |
+| `pnpm ingest details`                          | one detail pass over pending candidates (`--limit N`, `--by-magnitude`)                                                                                                            |
+| `pnpm ingest backfill --from DATE [--to DATE]` | load history newest first, freezing settled windows; `--days N` for a recent range, `--min-magnitude M` or `--all-magnitudes`, `--bbox`, `--force`, `--skip-details`, `--pause-ms` |

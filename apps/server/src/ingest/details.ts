@@ -1,4 +1,9 @@
-import { listDetailCandidates, markDetailChecked, upsertEvents } from "../repositories/events.js";
+import {
+  listDetailCandidates,
+  markDetailChecked,
+  upsertEvents,
+  type CandidateOrder,
+} from "../repositories/events.js";
 import { deleteMechanism, upsertMechanism } from "../repositories/mechanisms.js";
 import { featureToEvent, parseProducts } from "../usgs/parse.js";
 import type { IngestContext } from "./context.js";
@@ -6,6 +11,8 @@ import type { IngestContext } from "./context.js";
 export interface DetailsOptions {
   limit?: number;
   concurrency?: number;
+  /** `mag` fetches the largest events first; a backfill wants the moment tensors that matter early. */
+  order?: CandidateOrder;
 }
 
 export interface DetailsResult {
@@ -45,7 +52,7 @@ export async function syncDetails(
 ): Promise<DetailsResult> {
   const limit = opts.limit ?? 50;
   const concurrency = opts.concurrency ?? 2;
-  const candidates = await listDetailCandidates(ctx.db, limit);
+  const candidates = await listDetailCandidates(ctx.db, limit, opts.order ?? "time");
   const result: DetailsResult = {
     candidates: candidates.length,
     fetched: 0,

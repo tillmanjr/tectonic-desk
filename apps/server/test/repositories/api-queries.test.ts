@@ -1,8 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   catalogStats,
+  countEvents,
   getEvent,
+  gridEvents,
   listEventsWithPreferred,
+  summarizeEvents,
   upsertEvents,
 } from "../../src/repositories/events.js";
 import {
@@ -118,6 +121,80 @@ describe.skipIf(!docker)("API repository reads", () => {
     expect(latest.details).toBeNull();
 
     expect(await lastSuccessfulFeedAt(t.db)).toEqual(t1);
+  });
+
+  it("counts, summarises by period with magnitude bands, and grids events under the list filters", async () => {
+    const at = (s: string) => new Date(s);
+    const ev = (
+      id: string,
+      time: string,
+      mag: number | null,
+      latitude: number,
+      longitude: number,
+    ) => makeEvent({ id, time: at(time), mag, latitude, longitude });
+    await upsertEvents(t.db, [
+      ev("p1", "2024-03-01T00:00:00Z", 3.9, 10.2, 20.7),
+      ev("p2", "2024-03-02T00:00:00Z", 4.5, 10.9, 20.1),
+      ev("p3", "2024-04-10T00:00:00Z", 5.5, -10.5, 179.5),
+      ev("p4", "2025-01-01T00:00:00Z", 6.5, -10.5, -179.5),
+      ev("p5", "2025-01-02T00:00:00Z", 7.1, 0.5, 0.5),
+      ev("p6", "2025-01-03T00:00:00Z", null, 0.5, 0.5),
+    ]);
+    const since = at("2024-01-01T00:00:00Z");
+    expect(await countEvents(t.db, { since })).toBe(6);
+    expect(await countEvents(t.db, { since, minMag: 5 })).toBe(3);
+    expect(await countEvents(t.db, { since, until: at("2024-12-31T00:00:00Z") })).toBe(3);
+
+    const years = await summarizeEvents(t.db, { since }, "year");
+    expect(years).toEqual([
+      {
+        start: at("2024-01-01T00:00:00Z"),
+        count: 3,
+        maxMag: 5.5,
+        mags: { lt4: 1, m4: 1, m5: 1, m6: 0, m7: 0 },
+      },
+      {
+        start: at("2025-01-01T00:00:00Z"),
+        count: 3,
+        maxMag: 7.1,
+        mags: { lt4: 0, m4: 0, m5: 0, m6: 1, m7: 1 },
+      },
+    ]);
+    const months = await summarizeEvents(
+      t.db,
+      { since, until: at("2024-12-31T00:00:00Z") },
+      "month",
+    );
+    expect(months.map((b) => [b.start.toISOString(), b.count])).toEqual([
+      ["2024-03-01T00:00:00.000Z", 2],
+      ["2024-04-01T00:00:00.000Z", 1],
+    ]);
+    const days = await summarizeEvents(t.db, { since: at("2025-01-01T00:00:00Z") }, "day");
+    expect(days).toHaveLength(3);
+    expect(days[2]).toEqual({
+      start: at("2025-01-03T00:00:00Z"),
+      count: 1,
+      maxMag: null,
+      mags: { lt4: 0, m4: 0, m5: 0, m6: 0, m7: 0 },
+    });
+
+    expect(await gridEvents(t.db, { since }, 1)).toEqual([
+      { lat: -11, lon: -180, count: 1, maxMag: 6.5 },
+      { lat: -11, lon: 179, count: 1, maxMag: 5.5 },
+      { lat: 0, lon: 0, count: 2, maxMag: 7.1 },
+      { lat: 10, lon: 20, count: 2, maxMag: 4.5 },
+    ]);
+    expect(
+      await gridEvents(
+        t.db,
+        { since, bbox: { minLon: 170, minLat: -20, maxLon: -170, maxLat: 0 } },
+        5,
+      ),
+    ).toEqual([
+      { lat: -15, lon: -180, count: 1, maxMag: 6.5 },
+      { lat: -15, lon: 175, count: 1, maxMag: 5.5 },
+    ]);
+    expect(await gridEvents(t.db, { since, minMag: 9 }, 1)).toEqual([]);
   });
 
   it("lastSuccessfulFeedAt is null without a successful feed run", async () => {
