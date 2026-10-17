@@ -5,12 +5,14 @@ withDefaults(
   defineProps<{
     xTicks: Tick[];
     yTicks: Tick[];
+    /** Ticks of a second scale along the right edge; none by default. */
+    yRightTicks?: Tick[];
     width: number;
     height: number;
     margin: { l: number; r: number; t: number; b: number };
     grid?: boolean;
   }>(),
-  { grid: true },
+  { yRightTicks: () => [], grid: true },
 );
 </script>
 
@@ -38,6 +40,15 @@ withDefaults(
       <g v-for="t in yTicks" :key="t.pos">
         <line :x1="margin.l - 5" :x2="margin.l" :y1="t.pos" :y2="t.pos" />
         <text :x="margin.l - 8" :y="t.pos" dy="0.32em" text-anchor="end">{{ t.label }}</text>
+      </g>
+    </g>
+    <g v-if="yRightTicks.length > 0" class="axis">
+      <line :x1="width - margin.r" :x2="width - margin.r" :y1="margin.t" :y2="height - margin.b" />
+      <g v-for="t in yRightTicks" :key="t.pos">
+        <line :x1="width - margin.r" :x2="width - margin.r + 5" :y1="t.pos" :y2="t.pos" />
+        <text :x="width - margin.r + 8" :y="t.pos" dy="0.32em" text-anchor="start">
+          {{ t.label }}
+        </text>
       </g>
     </g>
   </g>

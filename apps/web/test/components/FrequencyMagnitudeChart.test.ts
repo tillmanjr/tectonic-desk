@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import FrequencyMagnitudeChart from "../../src/components/FrequencyMagnitudeChart.vue";
-import { fakeApi } from "../support/api.js";
+import { fakeApi, raisedApi } from "../support/api.js";
 import { EMPTY_FILTER } from "../../src/lib/filters.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
@@ -32,6 +32,14 @@ describe("FrequencyMagnitudeChart", () => {
     await w.vm.$nextTick();
     expect(w.find(".cap").text()).toContain("Mc taken as the 5 filter minimum");
     expect(w.findAll("rect").length).toBeGreaterThan(0);
+  });
+  it("names the window floor as Mc when the floor was raised", async () => {
+    const ctx = await makeContext({
+      api: raisedApi([event({ id: "x", mag: 6.4 }), event({ id: "y", mag: 7.1 })]),
+      range: { since: "1900-01-01T00:00:00.000Z", until: "2026-10-13T23:59:59.999Z" },
+    });
+    const w = mountWith(FrequencyMagnitudeChart, ctx);
+    expect(w.find(".cap").text()).toContain("Mc taken as the 6 window floor");
   });
   it("skips the fit with a single event and says so when empty", async () => {
     const one = await chart([4.9]);

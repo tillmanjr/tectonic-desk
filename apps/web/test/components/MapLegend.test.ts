@@ -31,4 +31,11 @@ describe("MapLegend", () => {
     expect(v.text()).not.toContain("shaded = compressional");
     expect(v.text()).toContain("Subduction");
   });
+  it("adds a density row when given one", () => {
+    const w = mount(MapLegend, {
+      props: { frame: frameFor(GLOBAL), minMag: 4.5, density: { cell: 2, floor: 4.5, max: 5000 } },
+    });
+    expect(w.text()).toContain("events per 2° cell at M4.5+: 1 → 5,000 (log scale)");
+    expect(w.findAll("rect")).toHaveLength(5);
+  });
 });

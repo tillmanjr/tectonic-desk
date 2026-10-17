@@ -5,7 +5,7 @@ import QuakeMap from "../../src/components/QuakeMap.vue";
 import { createCatalog } from "../../src/lib/catalog.js";
 import { resetMapCaches } from "../../src/lib/mapview.js";
 import { frameFor } from "../../src/lib/geo.js";
-import { fakeApi } from "../support/api.js";
+import { fakeApi, raisedApi } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
 import { event, plateSegments, squareTopology, WC } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
@@ -154,6 +154,7 @@ describe("QuakeMap", () => {
     expect(w.find(".animbar").exists()).toBe(true);
     expect(w.find(".animclock").text()).toBe("2026-10-05 00:00 UTC");
     expect(w.find(".animcount").text()).toBe("0 of 1 events");
+    expect(w.find(".animbar label").text()).toContain("Seconds per day");
     expect(markers()).toBe(0);
     await w.find(".animbar input").setValue("1");
     await w.find(".animbar .play").trigger("click");
@@ -191,6 +192,32 @@ describe("QuakeMap", () => {
     await animate?.trigger("click");
     expect(w.find(".animclock").text()).toBe("2026-10-08 00:00 UTC");
     expect(w.find(".mapcount").text()).toBe("Showing 1 of 1 events");
+    w.unmount();
+  });
+
+  it("shades density under the markers when the floor was raised, with a toggle and legend row", async () => {
+    stubWorld();
+    const ctx = await makeContext({
+      api: raisedApi(),
+      range: { since: "1900-01-01T00:00:00.000Z", until: "2026-10-13T23:59:59.999Z" },
+    });
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    expect(w.find(".mapcount").text()).toBe("Showing 1 of 7,312 events · markers at M6+");
+    expect(w.findComponent({ name: "MapDensity" }).findAll("path")).toHaveLength(2);
+    expect(w.text()).toContain("events per 2° cell at M4.5+: 1 → 5,000 (log scale)");
+    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Density"));
+    await toggle?.find("input").setValue(false);
+    expect(w.findComponent({ name: "MapDensity" }).exists()).toBe(false);
+    expect(w.text()).not.toContain("events per 2° cell");
+    w.unmount();
+  });
+
+  it("offers no density toggle when the whole window is loaded", async () => {
+    stubWorld();
+    const w = mountWith(QuakeMap, await makeContext(), { animate: false });
+    await flushPromises();
+    expect(w.findAll(".maptools label").some((l) => l.text().includes("Density"))).toBe(false);
     w.unmount();
   });
 

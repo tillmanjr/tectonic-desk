@@ -16,6 +16,8 @@ describe("createApiClient", () => {
     await api.regions();
     await api.events({ since: "2026-10-06T00:00:00.000Z", minMag: 4.5, limit: 2000 });
     await api.events({ since: "2026-10-01", until: "2026-10-02", bbox: "-136,27,-104,53" });
+    await api.summary({ since: "2026-10-01", until: "2026-10-02", minMag: 4.5 });
+    await api.grid({ since: "2026-10-01", bbox: "-136,27,-104,53", cell: 0.5 });
     await api.event("us 1");
     await api.status();
     await api.geo("plates");
@@ -27,6 +29,8 @@ describe("createApiClient", () => {
       "/api/regions",
       "/api/events?since=2026-10-06T00%3A00%3A00.000Z&minMag=4.5&limit=2000",
       "/api/events?since=2026-10-01&until=2026-10-02&bbox=-136%2C27%2C-104%2C53",
+      "/api/events/summary?since=2026-10-01&until=2026-10-02&minMag=4.5",
+      "/api/events/grid?since=2026-10-01&bbox=-136%2C27%2C-104%2C53&cell=0.5",
       "/api/events/us%201",
       "/api/status",
       "/api/geo/plates",

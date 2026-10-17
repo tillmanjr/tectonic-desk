@@ -49,10 +49,10 @@ export function parseDate(v: unknown): string | null {
   return Number.isNaN(ms) || new Date(ms).toISOString().slice(0, 10) !== v ? null : v;
 }
 
-/** How far back the date filter may reach. */
-export const RANGE_DAYS = 90;
+/** The earliest day the catalogue can be asked for. */
+export const CATALOG_START = "1900-01-01";
 
-/** The selectable date span: today minus `RANGE_DAYS` to today, as calendar days in the zone. */
+/** The selectable date span: the catalogue start to today, as calendar days in the zone. */
 export interface DateBounds {
   min: string;
   max: string;
@@ -64,7 +64,30 @@ function daysAgo(now: Date, n: number, zone: Zone): string {
 }
 
 export function dateBoundsFor(now: Date, zone: Zone): DateBounds {
-  return { min: daysAgo(now, RANGE_DAYS, zone), max: daysAgo(now, 0, zone) };
+  return { min: CATALOG_START, max: daysAgo(now, 0, zone) };
+}
+
+/** A quick window length offered by the Refine bar; `days` null means since the catalogue start. */
+export interface Span {
+  label: string;
+  days: number | null;
+}
+
+export const SPANS: readonly Span[] = [
+  { label: "30 days", days: 30 },
+  { label: "90 days", days: 90 },
+  { label: "1 year", days: 365 },
+  { label: "10 years", days: 3652 },
+  { label: "50 years", days: 18262 },
+  { label: "Since 1900", days: null },
+];
+
+/** The calendar day `days` before `until` (the catalogue start when null), never earlier than that start. */
+export function spanStart(until: string, days: number | null): string {
+  if (days === null) return CATALOG_START;
+  const [y, m, d] = ymd(until);
+  const day = new Date(Date.UTC(y, m, d) - days * 864e5).toISOString().slice(0, 10);
+  return day < CATALOG_START ? CATALOG_START : day;
 }
 
 /** The calendar days a window covers, in the zone. */
