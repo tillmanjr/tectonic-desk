@@ -94,6 +94,8 @@ jobs:
           sed -i '/^TAG=/d' .env && echo "TAG=$TAG" >> .env
           docker compose -f docker-compose.prod.yml pull --quiet
           docker compose -f docker-compose.prod.yml up -d --remove-orphans
+          # The Caddyfile is a bind mount, so a changed file needs a reload, not a recreate.
+          docker compose -f docker-compose.prod.yml exec -T caddy caddy reload --config /etc/caddy/Caddyfile
           docker image prune -f >/dev/null
           docker compose -f docker-compose.prod.yml ps
           EOF

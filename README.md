@@ -138,6 +138,11 @@ into `release`) deploys. One-time setup:
    ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
    ```
 
+   Once Cloudflare is in front (step 2), run `deploy/cloudflare-firewall.sh` as root to narrow 80
+   and 443 to Cloudflare's edge ranges, so the origin cannot be reached around the proxy; rerun it
+   if Cloudflare's published list changes. Caddy sends HSTS, a Content Security Policy and the
+   other hardening headers from `deploy/Caddyfile`.
+
    Then, as `deploy`, create `/opt/tectonic-desk/.env`:
 
    ```sh

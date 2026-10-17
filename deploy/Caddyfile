@@ -12,6 +12,20 @@
 
 {$DOMAIN} {
 	encode zstd gzip
+	header {
+		# A year of HTTPS-only for the apex and www (both already redirect to HTTPS).
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# Scripts, data and fetches come from this origin only; styles allow the inline
+		# style attributes Vue renders and the Google Fonts stylesheet; images allow the
+		# data: URLs the beachball raster uses.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		-Via
+		-Server
+	}
 	reverse_proxy web:80
 }
 
