@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { ApiEvent } from "@tectonic/shared";
 import { computed, onUnmounted, ref, watch } from "vue";
+import MapDensity from "./MapDensity.vue";
 import MapEvents from "./MapEvents.vue";
 import MapShell from "./MapShell.vue";
 import { createAnimation, DAY_MS } from "../lib/animation.js";
-import { fmtMag, fmtShort, fmtStamp, placeOf } from "../lib/format.js";
+import { densityLegendFor } from "../lib/density.js";
+import { fmtFloor, fmtInt, fmtMag, fmtShort, fmtStamp, placeOf } from "../lib/format.js";
 import { API, CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { useMapView } from "../lib/mapview.js";
 
@@ -23,6 +25,17 @@ const mv = useMapView({
   animate: () => props.animate,
 });
 const showMech = ref(true);
+const showDensity = ref(true);
+/** The window's density grid, present only when the floor was raised. */
+const density = computed(() => {
+  const s = catalog.stats.value;
+  return catalog.raised.value && s !== null ? s.grid : null;
+});
+const densityLegend = computed(() =>
+  density.value === null || !showDensity.value
+    ? null
+    : densityLegendFor(density.value, catalog.requested.value),
+);
 
 const anim = createAnimation();
 /** The loaded window, never reaching past now: the date range, else the preset's trailing days. */
@@ -35,11 +48,11 @@ const windowBounds = computed(() => {
   }
   return { start: new Date(now.getTime() - catalog.requireRegion().days * DAY_MS), end: now };
 });
-/** The overlay line: how many of the window's events the refinements leave on the map. */
-const countLine = computed(
-  () =>
-    `Showing ${String(events.value.length)} of ${String(catalog.windowEvents.value.length)} events`,
-);
+/** The overlay line: how many of the window's events the refinements leave on the map, and at what floor. */
+const countLine = computed(() => {
+  const base = `Showing ${String(events.value.length)} of ${fmtInt(catalog.windowTotal.value)} events`;
+  return catalog.raised.value ? `${base} · markers at ${fmtFloor(catalog.floor.value)}` : base;
+});
 /** What the map draws: everything, or only what has happened by the animation cursor. */
 const shown = computed(() => {
   const c = anim.cursor.value;
@@ -75,8 +88,14 @@ watch(selected, (e) => {
 </script>
 
 <template>
-  <MapShell :mv="mv" label="Map of earthquake epicenters" :count-line="countLine">
+  <MapShell
+    :mv="mv"
+    label="Map of earthquake epicenters"
+    :count-line="countLine"
+    :density="densityLegend"
+  >
     <template #tools>
+      <label v-if="density !== null"><input v-model="showDensity" type="checkbox" /> Density</label>
       <label><input v-model="showMech" type="checkbox" /> Focal mechanisms</label>
     </template>
     <template #actions>
@@ -125,6 +144,11 @@ watch(selected, (e) => {
       </div>
     </template>
     <template #layers="{ frame, k, minRadius }">
+      <MapDensity
+        v-if="density !== null && showDensity"
+        :path="mv.view.value.path"
+        :grid="density"
+      />
       <MapEvents
         :frame="frame"
         :events="shown"
