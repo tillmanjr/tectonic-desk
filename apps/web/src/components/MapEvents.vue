@@ -89,7 +89,7 @@ function hover(ev: MouseEvent, e: ApiEvent): void {
 </script>
 
 <template>
-  <g data-hit>
+  <g data-hit data-layer="events">
     <circle
       v-for="p in circles"
       :key="p.e.id"

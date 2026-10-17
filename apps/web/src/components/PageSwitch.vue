@@ -6,6 +6,7 @@ const emit = defineEmits<{ pick: [page: Page] }>();
 const PAGES: { id: Page; label: string }[] = [
   { id: "earthquakes", label: "Earthquakes" },
   { id: "volcanoes", label: "Volcanoes" },
+  { id: "active", label: "Active Earth" },
 ];
 </script>
 

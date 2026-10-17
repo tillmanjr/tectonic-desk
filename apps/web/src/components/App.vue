@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import ActiveEarthPage from "./ActiveEarthPage.vue";
 import DetailPanel from "./DetailPanel.vue";
 import EarthquakesPage from "./EarthquakesPage.vue";
 import PageSwitch from "./PageSwitch.vue";
@@ -45,7 +46,7 @@ import {
   volcanoFilterQuery,
   type VolcanoFilter,
 } from "../lib/volcanoes.js";
-import { pagePath, type Page } from "../router.js";
+import { hasVolcanoes, pageOf, pagePath, type Page } from "../router.js";
 
 const api = inject(API, null) ?? createApiClient((input, init) => fetch(input, init));
 const clock = inject(CLOCK, null) ?? createClock();
@@ -56,7 +57,7 @@ const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
 const status = createStatusPoll(api, now, () => {
   void catalog.refetch();
-  if (page.value === "volcanoes") void volcanoes.refreshLive();
+  if (hasVolcanoes(page.value)) void volcanoes.refreshLive();
 });
 
 provide(API, api);
@@ -77,7 +78,7 @@ const { region, error, truncated } = catalog;
 const zone = computed<Zone>(() => (route.query.tz === "local" ? "local" : "utc"));
 provide(ZONE, zone);
 
-const page = computed<Page>(() => (route.meta.page === "volcanoes" ? "volcanoes" : "earthquakes"));
+const page = computed(() => pageOf(route.meta.page));
 const routeRegion = computed(() => {
   const p = route.params.region;
   return typeof p === "string" && p !== "" ? p : "global";
@@ -113,7 +114,7 @@ async function boot(): Promise<void> {
   volcanoes.setRegion(region.value);
   volcanoes.setFilter(routeVolcanoFilter.value);
   volcanoes.select(routeVolcano.value);
-  if (page.value === "volcanoes") await volcanoes.load();
+  if (hasVolcanoes(page.value)) await volcanoes.load();
 }
 /** Query keys that belong to one page's selection; dropped when moving between pages or regions. */
 const SELECTION_KEYS = ["event", "volcano"];
@@ -141,13 +142,19 @@ function toggleZone(): void {
 function select(id: string | null): void {
   const query = { ...route.query };
   if (id === null) delete query.event;
-  else query.event = id;
+  else {
+    query.event = id;
+    delete query.volcano;
+  }
   void router.replace({ query });
 }
 function selectVolcano(number: number | null): void {
   const query = { ...route.query };
   if (number === null) delete query.volcano;
-  else query.volcano = String(number);
+  else {
+    query.volcano = String(number);
+    delete query.event;
+  }
   void router.replace({ query });
 }
 function retry(): void {
@@ -177,7 +184,7 @@ watch(routeRange, (r) => {
   catalog.setRange(r);
 });
 watch(page, (p) => {
-  if (p === "volcanoes") void volcanoes.load();
+  if (hasVolcanoes(p)) void volcanoes.load();
 });
 watch(theme.resolved, () => {
   clearBeachballCache();
@@ -224,7 +231,8 @@ onUnmounted(() => {
     </div>
     <template v-if="region !== null">
       <EarthquakesPage v-if="page === 'earthquakes'" />
-      <VolcanoesPage v-else />
+      <VolcanoesPage v-else-if="page === 'volcanoes'" />
+      <ActiveEarthPage v-else />
     </template>
     <footer class="foot">
       <p>
@@ -266,5 +274,5 @@ onUnmounted(() => {
     </footer>
   </div>
   <DetailPanel />
-  <VolcanoDetail v-if="page === 'volcanoes'" />
+  <VolcanoDetail v-if="hasVolcanoes(page)" />
 </template>
