@@ -17,6 +17,8 @@ const M = { l: 34, r: 10, t: 8, b: 24 };
 const MR = 36;
 /** Windows longer than this get d3's multi-scale tick labels instead of "Oct 7". */
 const SHORT_DAYS = 120;
+/** Windows longer than this get fewer ticks, so month and year labels do not collide. */
+const SPARSE_DAYS = 60;
 
 type Dated = ApiEvent & { mag: number };
 interface EraMark {
@@ -46,7 +48,12 @@ function xScale(right: number): ScaleTime<number, number> {
     .range([M.l, W - right]);
 }
 function xTicks(x: ScaleTime<number, number>, count: number) {
-  return ticksOf(x, count, spanDays.value <= SHORT_DAYS ? "%b %-d" : undefined);
+  const days = spanDays.value;
+  return ticksOf(
+    x,
+    days > SPARSE_DAYS ? Math.min(count, 5) : count,
+    days <= SHORT_DAYS ? "%b %-d" : undefined,
+  );
 }
 function eraMarks(x: (d: Date) => number): EraMark[] {
   return erasWithin(domain.value[0], domain.value[1]).map((era) => ({ era, x: x(eraStart(era)) }));
