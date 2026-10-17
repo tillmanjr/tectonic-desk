@@ -1,6 +1,6 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { events, mechanisms } from "../../src/db/schema.js";
+import { catalogWindows, events, ingestRuns, mechanisms } from "../../src/db/schema.js";
 
 describe("schema", () => {
   it("mechanisms.event_id references events.id with cascade delete", () => {
@@ -18,7 +18,21 @@ describe("schema", () => {
       getTableConfig(t).indexes.map((i) => i.config.name);
     expect(names(mechanisms)).toContain("mechanisms_event_kind_source_code_uq");
     expect(names(events)).toEqual(
-      expect.arrayContaining(["events_time_idx", "events_lat_lon_idx", "events_mag_idx"]),
+      expect.arrayContaining([
+        "events_time_idx",
+        "events_lat_lon_idx",
+        "events_mag_idx",
+        "events_mag_time_idx",
+      ]),
     );
+  });
+
+  it("catalog_windows keys on bounds and scope with nulls not distinct, and points at its run", () => {
+    const cfg = getTableConfig(catalogWindows);
+    const uq = cfg.uniqueConstraints.find((u) => u.name === "catalog_windows_key_uq");
+    expect(uq?.columns.map((c) => c.name)).toEqual(["from_time", "to_time", "min_mag", "bbox"]);
+    expect(uq?.nullsNotDistinct).toBe(true);
+    expect(cfg.foreignKeys[0]?.reference().foreignTable).toBe(ingestRuns);
+    expect(cfg.indexes.map((i) => i.config.name)).toContain("catalog_windows_from_idx");
   });
 });

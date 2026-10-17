@@ -12,6 +12,7 @@ import {
   serial,
   text,
   timestamp,
+  unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
@@ -51,6 +52,7 @@ export const events = pgTable(
     index("events_time_idx").on(t.time),
     index("events_lat_lon_idx").on(t.latitude, t.longitude),
     index("events_mag_idx").on(t.mag),
+    index("events_mag_time_idx").on(t.mag, t.time),
   ],
 );
 
@@ -131,6 +133,32 @@ export const ingestRuns = pgTable(
   ],
 );
 
+/** One row per completed, settled backfill window and scope: the catalogue's statement of what is loaded and frozen. */
+export const catalogWindows = pgTable(
+  "catalog_windows",
+  {
+    id: serial("id").primaryKey(),
+    fromTime: timestamp("from_time", tz).notNull(),
+    toTime: timestamp("to_time", tz).notNull(),
+    /** Magnitude floor the window was loaded with; null = all magnitudes. */
+    minMag: doublePrecision("min_mag"),
+    /** `minLon,minLat,maxLon,maxLat` as the API spells it; null = global. */
+    bbox: text("bbox"),
+    events: integer("events").notNull(),
+    pages: integer("pages").notNull(),
+    runId: integer("run_id")
+      .notNull()
+      .references(() => ingestRuns.id),
+    completedAt: timestamp("completed_at", tz).notNull(),
+  },
+  (t) => [
+    unique("catalog_windows_key_uq")
+      .on(t.fromTime, t.toTime, t.minMag, t.bbox)
+      .nullsNotDistinct(),
+    index("catalog_windows_from_idx").on(t.fromTime),
+  ],
+);
+
 export const volcanoStatus = pgTable(
   "volcano_status",
   {
@@ -179,6 +207,8 @@ export type EventInsert = typeof events.$inferInsert;
 export type MechanismRow = typeof mechanisms.$inferSelect;
 export type MechanismInsert = typeof mechanisms.$inferInsert;
 export type IngestRunRow = typeof ingestRuns.$inferSelect;
+export type CatalogWindowRow = typeof catalogWindows.$inferSelect;
+export type CatalogWindowInsert = typeof catalogWindows.$inferInsert;
 export type VolcanoStatusRow = typeof volcanoStatus.$inferSelect;
 export type VolcanoStatusInsert = typeof volcanoStatus.$inferInsert;
 export type VolcanoReportRow = typeof volcanoReports.$inferSelect;
