@@ -134,7 +134,6 @@ The header's Earthquakes | Volcanoes switch opens the second page on the same re
   distribution for the volcanoes shown, and a detail panel with GVP's fields and summary, the
   agency status history, weekly-report entries, a VEI-versus-time strip since 1800 with the
   eruption list, and the earthquakes of the loaded window within 50 km.
-- The earthquake page's filtered events as a faint layer (on by default in the West Coast view).
 
 Reference data comes from `pnpm --filter @tectonic/server geo:volcanoes`, which pulls GVP's
 volcanoes, eruptions and since-1960 layers over WFS into `apps/server/data/geo` (see its README).

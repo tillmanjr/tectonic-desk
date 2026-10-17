@@ -6,8 +6,7 @@ import VolcanoMap from "../../src/components/VolcanoMap.vue";
 import { frameFor } from "../../src/lib/geo.js";
 import { resetMapCaches } from "../../src/lib/mapview.js";
 import { stubCanvas } from "../support/canvas.js";
-import { event, GLOBAL } from "../support/events.js";
-import { fakeApi } from "../support/api.js";
+import { GLOBAL } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 import { status, VOLCANOES } from "../support/volcanoes.js";
 import { stubWorld } from "../support/world.js";
@@ -59,23 +58,10 @@ describe("VolcanoMap", () => {
     resetMapCaches();
   });
 
-  it("shows the volcanoes with tooltips, toggles the muted earthquakes, and zooms to a selection", async () => {
+  it("shows the volcanoes with tooltips, no earthquake layer, and zooms to a selection", async () => {
     stubWorld();
     stubCanvas();
-    const bare = event({
-      id: "bare",
-      mag: null,
-      depthKm: null,
-      place: null,
-      latitude: 10,
-      longitude: 10,
-    });
-    const api = fakeApi({
-      events: vi
-        .fn()
-        .mockResolvedValue({ events: [event(), bare], count: 2, truncated: false, query: {} }),
-    });
-    const ctx = await makeContext({ api, volcanoes: true });
+    const ctx = await makeContext({ volcanoes: true });
     // A second, lower status for Kilauea: the ring and tooltip follow the higher one.
     ctx.volcanoes.statuses.value = [
       ...ctx.volcanoes.statuses.value,
@@ -86,11 +72,10 @@ describe("VolcanoMap", () => {
     expect(w.find(".mapcount").text()).toBe("Showing 5 of 5 volcanoes");
     expect(w.findComponent({ name: "MapVolcanoes" }).findAll("g.volc")).toHaveLength(5);
     expect(w.findComponent({ name: "MapEvents" }).exists()).toBe(false);
-    const quakes = w
-      .findAll(".maptools label")
-      .find((l) => l.text().includes("Recent earthquakes"));
-    await quakes?.find("input").setValue(true);
-    expect(w.findComponent({ name: "MapEvents" }).exists()).toBe(true);
+    expect(w.findAll(".maptools label").some((l) => l.text().includes("earthquakes"))).toBe(false);
+    expect(w.find(".legend").text()).not.toContain("0–70 km");
+    expect(w.find(".legend").text()).not.toContain("Beachball");
+    expect(w.find(".legend").text()).toContain("Erupted since 1950");
     const volc = w.findComponent({ name: "MapVolcanoes" }).findAll("g.volc");
     const etna = volc.find(
       (g) => g.attributes("class")?.includes("volc") && g.html().includes("plume"),
@@ -109,25 +94,15 @@ describe("VolcanoMap", () => {
     await helens?.trigger("mouseenter", { clientX: 40, clientY: 50 });
     expect(w.find(".tip").text()).toBe("St. Helens · Stratovolcano · last erupted 2008");
     expect(helens?.find("circle.ring").exists()).toBe(false);
-    const circles = w.findComponent({ name: "MapEvents" }).findAll("circle");
-    await circles[1]?.trigger("mouseenter", { clientX: 1, clientY: 1 });
-    expect(w.find(".tip").text()).toContain("Neiafu");
-    await circles[1]?.trigger("mouseleave");
-    expect(w.find(".tip").exists()).toBe(false);
-    await circles[0]?.trigger("mouseenter", { clientX: 1, clientY: 1 });
-    expect(w.find(".tip").text()).toContain("M— · — km · unknown location");
-    await circles[1]?.trigger("click");
-    expect(ctx.select).toHaveBeenCalledWith("us1");
     await kilauea?.trigger("click");
     expect(ctx.selectVolcano).toHaveBeenCalledWith(332010);
     ctx.volcanoes.select(332010);
     await flushPromises();
     expect(w.find("svg.map > g").attributes("transform")).toContain("scale(");
-    expect(w.text()).toContain("Erupted since 1950");
     await ctx.catalog.setRegion("wc");
     ctx.volcanoes.setRegion(ctx.catalog.region.value);
     await flushPromises();
-    expect(w.findComponent({ name: "MapEvents" }).exists()).toBe(true);
+    expect(w.findComponent({ name: "MapEvents" }).exists()).toBe(false);
     expect(w.find(".mapcount").text()).toBe("Showing 2 of 2 volcanoes");
     w.unmount();
   });

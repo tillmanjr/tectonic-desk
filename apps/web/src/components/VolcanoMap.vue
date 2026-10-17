@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import type { ApiEvent, Volcano } from "@tectonic/shared";
-import { computed, ref, watch } from "vue";
-import MapEvents from "./MapEvents.vue";
+import type { Volcano } from "@tectonic/shared";
+import { computed, watch } from "vue";
 import MapShell from "./MapShell.vue";
 import MapVolcanoes from "./MapVolcanoes.vue";
-import { fmtMag, fmtShort, placeOf } from "../lib/format.js";
-import { API, CATALOG, SELECT, SELECT_VOLCANO, useInjected, VOLCANOES, ZONE } from "../lib/keys.js";
+import { API, CATALOG, SELECT_VOLCANO, useInjected, VOLCANOES } from "../lib/keys.js";
 import { TIP_LIFT, useMapView } from "../lib/mapview.js";
 import {
   aviationColor,
@@ -22,24 +20,13 @@ const props = withDefaults(defineProps<{ animate?: boolean }>(), { animate: true
 const api = useInjected(API);
 const catalog = useInjected(CATALOG);
 const store = useInjected(VOLCANOES);
-const select = useInjected(SELECT);
 const selectVolcano = useInjected(SELECT_VOLCANO);
-const zone = useInjected(ZONE);
 
 const mv = useMapView({
   api,
   region: () => catalog.requireRegion(),
   animate: () => props.animate,
 });
-
-/** Recent earthquakes under the volcanoes: on by default in the regional view, off in the global one. */
-const showQuakes = ref(mv.view.value.region.bbox !== null);
-watch(
-  () => mv.view.value.region.id,
-  () => {
-    showQuakes.value = mv.view.value.region.bbox !== null;
-  },
-);
 
 const countLine = computed(
   () =>
@@ -65,15 +52,6 @@ function onVolcanoHover(payload: { v: Volcano; x: number; y: number }): void {
   if (store.continuing.value.has(v.number)) parts.push("eruption continuing (GVP)");
   mv.showTip(parts.join(" · "), payload.x, payload.y - TIP_LIFT);
 }
-function onQuakeHover(payload: { e: ApiEvent; x: number; y: number }): void {
-  const { e } = payload;
-  const depth = e.depthKm === null ? "—" : String(Math.round(e.depthKm));
-  mv.showTip(
-    `M${fmtMag(e.mag)} · ${depth} km · ${placeOf(e)} · ${fmtShort(e.time, zone.value)}`,
-    payload.x,
-    payload.y,
-  );
-}
 
 watch(store.selected, (v) => {
   if (v !== null) mv.zoomTo(v.lon, v.lat);
@@ -81,25 +59,8 @@ watch(store.selected, (v) => {
 </script>
 
 <template>
-  <MapShell :mv="mv" label="Map of Holocene volcanoes" :count-line="countLine">
-    <template #tools>
-      <label><input v-model="showQuakes" type="checkbox" /> Recent earthquakes</label>
-    </template>
+  <MapShell :mv="mv" label="Map of Holocene volcanoes" :count-line="countLine" :quakes="false">
     <template #layers="{ frame, k, minRadius }">
-      <g v-if="showQuakes" class="quakes-muted" opacity="0.45">
-        <MapEvents
-          :frame="frame"
-          :events="catalog.filtered.value"
-          :k="k"
-          :selected-id="catalog.selectedId.value"
-          :show-mech="false"
-          :min-mag="mv.view.value.minMag"
-          :min-radius="minRadius"
-          @select="select"
-          @hover="onQuakeHover"
-          @leave="mv.clearTip()"
-        />
-      </g>
       <MapVolcanoes
         :frame="frame"
         :volcanoes="store.filtered.value"
@@ -141,8 +102,7 @@ watch(store.selected, (v) => {
         dot above: eruption continuing per GVP
       </span>
       <span class="sw hint-sw"
-        >Point at a volcano for its type, last eruption and status; click for its history. Recent
-        earthquakes are the earthquake page's filtered events, drawn faint.</span
+        >Point at a volcano for its type, last eruption and status; click for its history.</span
       >
     </template>
   </MapShell>

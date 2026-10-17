@@ -15,11 +15,16 @@ import type { MapView } from "../lib/mapview.js";
  * their markers in `layers`, extra buttons in `actions`, a strip in `bar`
  * and legend rows in `legend`.
  */
-const props = defineProps<{
-  mv: MapView;
-  label: string;
-  countLine: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    mv: MapView;
+    label: string;
+    countLine: string;
+    /** Whether the legend carries the earthquake rows; a page without events turns them off. */
+    quakes?: boolean;
+  }>(),
+  { quakes: true },
+);
 const { mv } = props;
 </script>
 
@@ -174,6 +179,7 @@ const { mv } = props;
       :frame="mv.view.value.frame"
       :min-mag="mv.view.value.minMag"
       :faults="mv.hasFaults.value ? mv.faultAges.value : []"
+      :quakes="quakes"
     >
       <slot name="legend"></slot>
     </MapLegend>

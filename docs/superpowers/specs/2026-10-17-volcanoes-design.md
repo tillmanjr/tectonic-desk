@@ -124,11 +124,11 @@ a slide-in detail panel.
   touch), fill by eruption class (`--vc-recent`, `--vc-historic`, `--vc-holocene`,
   `--vc-unknown`), a 2 px ring in the aviation colour for monitored volcanoes with a status
   above normal, and a small plume glyph for continuing eruptions. Hover: "Name · Type ·
-  Last eruption 1980 · USGS Watch/Orange". Click selects (`?volcano=number`). The "Recent
-  earthquakes" checkbox draws the catalog's filtered events through `MapEvents` at 45%
-  opacity and without beachballs, off in Global and on in West Coast; clicking one opens the
-  earthquake detail panel. Legend rows for the four classes, the ring, the plume and the muted
-  events.
+  Last eruption 1980 · USGS Watch/Orange". Click selects (`?volcano=number`). Legend rows
+  for the four classes, the ring and the plume; the legend's earthquake rows (depth colours,
+  magnitude sizes, beachball note) are off on this page. (Revised 2026-10-16: the original
+  design drew the earthquake page's filtered events as a faint toggleable layer; it was
+  removed after review as clutter. Nearby earthquakes remain in the detail panel.)
 - **Table**: name, country, type, last eruption, status, elevation; sorted by status rank
   then name; clicking a row selects.
 - **Charts**: eruption starts per decade since 1800 for the filtered set (bar chart, caption
