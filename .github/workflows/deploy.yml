@@ -9,7 +9,7 @@ on:
   push:
     branches: [release]
   schedule:
-    - cron: "0 9 * * 0" # Sundays 09:00 UTC, 02:00 Pacific
+    - cron: "0 8 * * 1" # Mondays 08:00 UTC, midnight or 01:00 Pacific
   workflow_dispatch:
 
 concurrency:
