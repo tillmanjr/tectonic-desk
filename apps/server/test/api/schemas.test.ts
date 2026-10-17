@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import { HttpError } from "../../src/api/errors.js";
 import {
   eventIdSchema,
+  parseEventsFilter,
   parseEventsQuery,
+  parseGridQuery,
   parseOrThrow,
+  parseSummaryQuery,
   runsQuerySchema,
   toListFilter,
 } from "../../src/api/schemas.js";
@@ -95,6 +98,35 @@ describe("toListFilter", () => {
       bbox,
       limit: 5,
     });
+  });
+});
+
+describe("aggregate queries", () => {
+  it("parseEventsFilter shares the list defaults without a limit", () => {
+    expect(parseEventsFilter({}, NOW)).toEqual({
+      since: WEEK_AGO,
+      until: null,
+      minMag: null,
+      bbox: null,
+    });
+    expect(issuesOf(() => parseEventsFilter({ limit: 5 }, NOW))).toEqual([
+      { path: "", message: expect.stringContaining("Unrecognized") },
+    ]);
+  });
+
+  it("parseSummaryQuery picks the bin size from the span unless given", () => {
+    expect(parseSummaryQuery({}, NOW).by).toBe("day");
+    expect(parseSummaryQuery({ since: "2026-06-01" }, NOW).by).toBe("month");
+    expect(parseSummaryQuery({ since: "2000-01-01" }, NOW).by).toBe("year");
+    expect(parseSummaryQuery({ since: "2000-01-01", until: "2000-02-01" }, NOW).by).toBe("day");
+    expect(parseSummaryQuery({ since: "2000-01-01", by: "year" }, NOW).by).toBe("year");
+    expect(issuesOf(() => parseSummaryQuery({ by: "week" }, NOW))[0]?.path).toBe("by");
+  });
+
+  it("parseGridQuery defaults to one-degree cells and allows only the fixed sizes", () => {
+    expect(parseGridQuery({}, NOW).cell).toBe(1);
+    expect(parseGridQuery({ cell: "0.25" }, NOW).cell).toBe(0.25);
+    expect(issuesOf(() => parseGridQuery({ cell: "3" }, NOW))[0]?.path).toBe("cell");
   });
 });
 

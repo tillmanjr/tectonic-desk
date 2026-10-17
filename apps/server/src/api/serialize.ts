@@ -1,6 +1,7 @@
 import type {
   ApiEvent,
   ApiEventDetail,
+  ApiEventFilter,
   ApiMechanism,
   ApiRun,
   ApiVolcanoReport,
@@ -10,9 +11,14 @@ import type {
   StoredMechanism,
 } from "@tectonic/shared";
 import type { IngestRunRow, VolcanoReportRow, VolcanoStatusRow } from "../db/schema.js";
+import type { EventsFilter } from "./schemas.js";
 
 export const iso = (d: Date): string => d.toISOString();
 export const isoOrNull = (d: Date | null): string | null => (d === null ? null : d.toISOString());
+
+export function toApiFilter(q: EventsFilter): ApiEventFilter {
+  return { since: iso(q.since), until: isoOrNull(q.until), minMag: q.minMag, bbox: q.bbox };
+}
 
 export function toApiMechanism(m: StoredMechanism): ApiMechanism {
   return {

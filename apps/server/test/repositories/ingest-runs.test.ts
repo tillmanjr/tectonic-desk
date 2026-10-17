@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { finishRun, getRun, startRun } from "../../src/repositories/ingest-runs.js";
+import {
+  finishRun,
+  getRun,
+  startRun,
+  updateRunDetail,
+} from "../../src/repositories/ingest-runs.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
 const docker = await dockerAvailable();
@@ -14,6 +19,12 @@ describe.skipIf(!docker)("ingest runs repository", () => {
   });
   beforeEach(async () => {
     await t.truncate();
+  });
+
+  it("updateRunDetail replaces the detail document", async () => {
+    const id = await startRun(t.db, "backfill", { a: 1 });
+    await updateRunDetail(t.db, id, { b: 2 });
+    expect((await getRun(t.db, id))?.detail).toEqual({ b: 2 });
   });
 
   it("records a successful run with counts", async () => {

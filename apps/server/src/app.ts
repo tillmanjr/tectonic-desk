@@ -3,6 +3,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import { HttpError, registerErrorHandlers } from "./api/errors.js";
 import type { Db } from "./db/client.js";
 import { loadGeoAssets, type GeoAssets } from "./geo/assets.js";
+import { catalogRoutes } from "./routes/catalog.js";
 import { eventRoutes } from "./routes/events.js";
 import { geoRoutes } from "./routes/geo.js";
 import { healthRoutes } from "./routes/health.js";
@@ -70,5 +71,6 @@ export function buildApp({
   void app.register(runRoutes);
   void app.register(geoRoutes);
   void app.register(volcanoRoutes);
+  void app.register(catalogRoutes);
   return app;
 }

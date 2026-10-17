@@ -27,13 +27,74 @@ export interface ApiEventDetail extends Omit<Json<StoredEvent>, "raw"> {
   usgs: Record<string, unknown>;
 }
 
-/** The filters applied to a list request, after defaults. */
-export interface ApiEventQuery {
+/** The filters applied to a request, after defaults. */
+export interface ApiEventFilter {
   since: string;
   until: string | null;
   minMag: number | null;
   bbox: BBox | null;
+}
+
+export interface ApiEventQuery extends ApiEventFilter {
   limit: number;
+}
+
+export interface ApiEventCount {
+  count: number;
+  query: ApiEventFilter;
+}
+
+export type SummaryBy = "day" | "month" | "year";
+
+/** Counts by magnitude class; events without a magnitude are in the bin's `count` only. */
+export interface ApiMagBands {
+  lt4: number;
+  m4: number;
+  m5: number;
+  m6: number;
+  m7: number;
+}
+
+export interface ApiSummaryBin {
+  /** Start of the bin (UTC day, month or year). Empty bins are omitted. */
+  start: string;
+  count: number;
+  maxMag: number | null;
+  mags: ApiMagBands;
+}
+
+export interface ApiEventSummary {
+  by: SummaryBy;
+  bins: ApiSummaryBin[];
+  query: ApiEventFilter;
+}
+
+/** One grid cell, keyed by its south-west corner in degrees. */
+export interface ApiGridCell {
+  lat: number;
+  lon: number;
+  count: number;
+  maxMag: number | null;
+}
+
+export interface ApiEventGrid {
+  cell: number;
+  cells: ApiGridCell[];
+  query: ApiEventFilter;
+}
+
+/** A contiguous span of backfill windows that are complete and frozen. */
+export interface ApiCoverageSpan {
+  from: string;
+  to: string;
+  minMag: number | null;
+  bbox: string | null;
+  events: number;
+  windows: number;
+}
+
+export interface ApiCoverage {
+  spans: ApiCoverageSpan[];
 }
 
 export interface ApiEventList {

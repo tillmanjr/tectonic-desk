@@ -59,6 +59,15 @@ export async function finishRun(
     .where(eq(ingestRuns.id, id));
 }
 
+/** Replaces a run's detail document, used for progress while a long run is in flight. */
+export async function updateRunDetail(
+  db: Db,
+  id: number,
+  detail: Record<string, unknown>,
+): Promise<void> {
+  await db.update(ingestRuns).set({ detail }).where(eq(ingestRuns.id, id));
+}
+
 export async function getRun(db: Db, id: number): Promise<IngestRunRow | null> {
   const rows = await db.select().from(ingestRuns).where(eq(ingestRuns.id, id)).limit(1);
   return rows[0] ?? null;
