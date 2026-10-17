@@ -6,7 +6,7 @@ import type {
   ApiStatus,
 } from "@tectonic/shared";
 import { vi } from "vitest";
-import type { ApiClient, EventsQuery } from "../../src/lib/api.js";
+import type { ApiClient } from "../../src/lib/api.js";
 import { event, GLOBAL, plateSegments, squareTopology, WC } from "./events.js";
 import { faultsTopology } from "./faults.js";
 import {
@@ -87,13 +87,11 @@ export function gridOf(events: ApiEvent[]): ApiEventGrid {
 }
 
 export function fakeApi(over: Partial<ApiClient> = {}): ApiClient {
-  const events: ApiClient["events"] = over.events ?? vi.fn().mockResolvedValue(listOf([event()]));
-  const derive = async (q: EventsQuery): Promise<ApiEvent[]> => (await events(q)).events;
   return {
     regions: vi.fn().mockResolvedValue([GLOBAL, WC]),
-    events,
-    summary: vi.fn().mockImplementation(async (q: EventsQuery) => summaryOf(await derive(q))),
-    grid: vi.fn().mockImplementation(async (q: EventsQuery) => gridOf(await derive(q))),
+    events: vi.fn().mockResolvedValue(listOf([event()])),
+    summary: vi.fn().mockResolvedValue(summaryOf([event()])),
+    grid: vi.fn().mockResolvedValue(gridOf([event()])),
     event: vi.fn().mockResolvedValue({
       ...event(),
       firstSeen: "2026-10-12T05:00:00.000Z",
