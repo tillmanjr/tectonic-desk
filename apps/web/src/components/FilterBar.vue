@@ -7,6 +7,8 @@ import {
   parseBound,
   parseDate,
   resolveDates,
+  SPANS,
+  spanStart,
   type DateKey,
   type EventFilter,
   type NumberKey,
@@ -39,6 +41,14 @@ function changeNumber(k: NumberKey, ev: Event): void {
 function changeDate(k: DateKey, ev: Event): void {
   const next: EventFilter = { ...catalog.filter.value, [k]: parseDate(inputValue(ev)) };
   setFilter(next);
+}
+function pickSpan(ev: Event): void {
+  const target = ev.target;
+  if (!(target instanceof HTMLSelectElement)) return;
+  const pick = SPANS[Number(target.value)];
+  target.value = "";
+  if (pick === undefined) return;
+  setFilter({ ...catalog.filter.value, since: spanStart(span.value.until, pick.days) });
 }
 function clear(): void {
   setFilter(EMPTY_FILTER);
@@ -112,6 +122,10 @@ function clear(): void {
       aria-label="To date"
       @change="changeDate('until', $event)"
     />
+    <select class="fspan" value="" aria-label="Set the window span" @change="pickSpan">
+      <option value="" disabled selected>Span…</option>
+      <option v-for="(s, i) in SPANS" :key="s.label" :value="String(i)">{{ s.label }}</option>
+    </select>
     <button type="button" class="fclear" :disabled="!active" @click="clear">Reset</button>
   </section>
 </template>
