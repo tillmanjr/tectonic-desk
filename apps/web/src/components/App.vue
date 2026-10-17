@@ -229,7 +229,9 @@ onUnmounted(() => {
         tensor where available, otherwise first-motion focal mechanism), drawn as lower-hemisphere
         equal-area projections with compressional quadrants shaded. Where a solution reports only P
         and T axes, the double couple is reconstructed from those axes and labelled as such. Tensors
-        can lag an origin by hours.
+        can lag an origin by hours. The catalogue reaches back to 1900; before 1973 ComCat carries
+        the ISC-GEM and Centennial compilations, so completeness varies by era, and the time chart
+        marks the breaks at 1964, 1973 and 1976.
       </p>
       <p>
         <b>Plate boundaries.</b> Bird (2003), <i>An updated digital model of plate boundaries</i>,

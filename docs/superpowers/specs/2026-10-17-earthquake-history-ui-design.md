@@ -127,20 +127,20 @@ above `requested` and strictly ascending (so a requested 5 is tried once, a requ
 
 The sequence token guards every await as today; a stale answer is dropped at each step. Any
 rejection sets `error`, keeps the previous list and stats, and clears `loading`. `setRange` and
-`setRegion` clear `stats` with `rangeEvents`. `eventsQueryFor` is removed; the preset load uses
-`filterQueryFor(region, presetRange, region.minMag)` with `limit`, where `presetRange` is the
-trailing `region.days` up to now (a small `presetRangeFor(region, now)` helper).
+`setRegion` clear `stats` with `rangeEvents`. `eventsQueryFor` becomes
+`filterQueryFor(region, now, range, minMag)`; the preset load passes `null` and `region.minMag`.
 
 Changing `filter.minMag` now triggers a window reload, because the requested floor is part of the
 query: `setFilter` compares the requested floor before and after the change and, when it differs and
 a range is set, calls `loadRange` again. `maxMag` and the depth bounds stay browser-side through
 `applyFilter`.
 
-## 4. Density layer (`MapDensity.vue`, `QuakeMap.vue`, `MapLegend.vue`)
+## 4. Density layer (`src/lib/density.ts`, `MapDensity.vue`, `QuakeMap.vue`, `MapLegend.vue`)
 
 `MapDensity.vue` props: `path: GeoPath`, `grid: ApiEventGrid`. It computes, once per grid or path
 change, one `{ d, opacity }` per cell: `d = path(polygon)` for the cell's four corners (closed ring,
-counter-clockwise), skipping cells whose path is null; `opacity = scaleLog().domain([1, max]).range([0.08, 0.75]).clamp(true)(count)`
+clockwise, as d3-geo requires for a ring smaller than a hemisphere), skipping cells whose path is
+null; `opacity = scaleLog().domain([1, max]).range([0.08, 0.75]).clamp(true)(count)`
 where `max` is the largest count in the grid. The template is
 `<g class="density" style="pointer-events: none"><path v-for … :d :fill-opacity style="fill: var(--accent)" /></g>`.
 
@@ -188,7 +188,8 @@ labels anchored start, 4 px to the right. No other change.
 MagnitudeTimeChart keeps its per-event mode and adds an overview mode selected by
 `catalog.raised`:
 
-- x: `[since, min(until, now)]` as today (the window, not the first event).
+- x: the window `[since, min(until, now)]` in both modes (the per-event mode used to start at the
+  first event).
 - Per-bin bars: left-axis count, linear, `[0, max count]` niced, drawn as `rect`s one bin wide
   (`binEnd(start, by)` minus one pixel) in `var(--border)` at 0.7 opacity.
 - Per-bin maxima: right-axis magnitude `[floor, ceil(max maxMag)]`, drawn as accent circles
