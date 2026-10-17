@@ -6,7 +6,7 @@ import { cssVar } from "../lib/colors.js";
 import { depthColor, depthVar } from "../lib/depth.js";
 import type { MapFrame } from "../lib/geo.js";
 import { THEME, useInjected } from "../lib/keys.js";
-import { beachballSize, markerRadius } from "../lib/markers.js";
+import { beachballSize, markerRadius, ZOOM_SHRINK } from "../lib/markers.js";
 import { preferredMechanism } from "../lib/stats.js";
 
 interface Point {
@@ -67,8 +67,8 @@ const points = computed<Point[]>(() =>
       ];
     }),
 );
-const scale = computed(() => props.k ** 0.75);
-/** Markers shrink with zoom (k^0.75) but never below the tappable floor, which shrinks with k outright. */
+const scale = computed(() => props.k ** ZOOM_SHRINK);
+/** Markers shrink with zoom (`ZOOM_SHRINK`) but never below the tappable floor, which shrinks with k outright. */
 const radiusOf = (p: Point): number => Math.max(p.r / scale.value, props.minRadius / props.k);
 const sizeOf = (p: Point): number =>
   Math.max(p.size / scale.value, (2 * props.minRadius) / props.k);
@@ -96,10 +96,14 @@ function hover(ev: MouseEvent, e: ApiEvent): void {
       :cx="p.x"
       :cy="p.y"
       :r="radiusOf(p) * (p.e.id === selectedId ? 1.25 : 1)"
-      :style="{ fill: depthColor(p.e.depthKm), stroke: 'var(--ink)', cursor: 'pointer' }"
-      fill-opacity="0.78"
-      stroke-opacity="0.55"
-      :stroke-width="p.e.id === selectedId ? 2.2 : 0.6"
+      :style="{
+        fill: depthColor(p.e.depthKm),
+        stroke: p.e.id === selectedId ? 'var(--ink)' : depthColor(p.e.depthKm),
+        cursor: 'pointer',
+      }"
+      fill-opacity="0.45"
+      stroke-opacity="0.95"
+      :stroke-width="p.e.id === selectedId ? 2.2 : 1.1"
       vector-effect="non-scaling-stroke"
       @click.stop="emit('select', p.e.id)"
       @mouseenter="hover($event, p.e)"

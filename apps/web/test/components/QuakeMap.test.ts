@@ -115,7 +115,7 @@ describe("QuakeMap", () => {
     expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "wc-land")).toHaveLength(1);
   });
 
-  it("starts free for a mouse, zooms with the wheel, and ignores it once locked", async () => {
+  it("starts locked, ignores the wheel, and zooms with it once unlocked", async () => {
     stubWorld();
     const ctx = await makeContext();
     const w = mountWith(QuakeMap, ctx, { animate: false });
@@ -123,21 +123,21 @@ describe("QuakeMap", () => {
     const svg = w.find("svg.map");
     // happy-dom's SVGPoint lacks matrixTransform; d3 then falls back to getBoundingClientRect.
     Object.defineProperty(svg.element, "createSVGPoint", { value: undefined });
-    expect(svg.classes()).not.toContain("locked");
-    expect(w.find(".maplock").attributes("aria-pressed")).toBe("false");
-    expect(w.find(".maplock .slash").exists()).toBe(false);
-    await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
-    expect(w.find("svg.map > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
-    await w.findAll(".zbtn")[2]?.trigger("click");
-    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
-    await w.find(".maplock").trigger("click");
+    expect(svg.classes()).toContain("locked");
     expect(w.find(".maplock").attributes("aria-pressed")).toBe("true");
     expect(w.find(".maplock .slash").exists()).toBe(true);
-    expect(svg.classes()).toContain("locked");
     await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
     expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
     await w.findAll(".zbtn")[0]?.trigger("click");
     expect(w.find("svg.map > g").attributes("transform")).toContain("scale(1.8");
+    await w.findAll(".zbtn")[2]?.trigger("click");
+    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
+    await w.find(".maplock").trigger("click");
+    expect(w.find(".maplock").attributes("aria-pressed")).toBe("false");
+    expect(w.find(".maplock .slash").exists()).toBe(false);
+    expect(svg.classes()).not.toContain("locked");
+    await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
+    expect(w.find("svg.map > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
   });
 
   it("replays the window day by day, showing only events that have happened", async () => {
@@ -320,8 +320,7 @@ describe("QuakeMap", () => {
     await nextTick();
     expect(pick().find(".pickmenu").exists()).toBe(false);
     await pick().find(".pickopen").trigger("click");
-    // Lock the map first: a free one hands the mousedown to d3-drag, which happy-dom cannot run.
-    await w.find(".maplock").trigger("click");
+    // The map starts locked; a free one would hand the mousedown to d3-drag, which happy-dom cannot run.
     await w.find("svg.map").trigger("mousedown");
     expect(pick().find(".pickmenu").exists()).toBe(false);
     w.unmount();

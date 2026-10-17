@@ -38,4 +38,10 @@ describe("MapLegend", () => {
     expect(w.text()).toContain("events per 2° cell at M4.5+: 1 → 5,000 (log scale)");
     expect(w.findAll("rect")).toHaveLength(5);
   });
+  it("steps the size key from a raised floor", () => {
+    const w = mount(MapLegend, { props: { frame: frameFor(GLOBAL), minMag: 6 } });
+    expect(w.text()).toContain("M6");
+    expect(w.text()).toContain("M8");
+    expect(w.text()).not.toContain("M4.5");
+  });
 });

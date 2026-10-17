@@ -19,9 +19,8 @@ const props = withDefaults(
   { faults: () => [], quakes: true, density: null },
 );
 const sizes = computed(() => {
-  const mags = props.frame.global
-    ? [4.5, 5.5, 6.5, 7.5]
-    : [props.minMag, props.minMag + 1, props.minMag + 2];
+  const min = props.minMag;
+  const mags = props.frame.global && min <= 4.5 ? [4.5, 5.5, 6.5, 7.5] : [min, min + 1, min + 2];
   return mags.map((m) => ({ m, r: markerRadius(m, props.minMag, props.frame.global) }));
 });
 const plates = Object.values(PLATE_CLASSES);
