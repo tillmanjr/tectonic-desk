@@ -141,10 +141,11 @@ export function useMapView(opts: MapViewOptions): MapView {
   const coarse = coarsePointer();
   /**
    * When set, wheel, drag and one finger leave the map alone (the page
-   * scrolls); buttons, two fingers and zoom-to still work. Fingers start
-   * locked so the page stays scrollable; a mouse starts free.
+   * scrolls); buttons, two fingers and zoom-to still work. The map starts
+   * locked for every pointer so the page scrolls past it; the lock button
+   * frees it.
    */
-  const locked = ref(coarse);
+  const locked = ref(true);
   const cssScale = ref(1);
   function measure(): void {
     const width = mustRef(svgEl, "map svg").getBoundingClientRect().width;

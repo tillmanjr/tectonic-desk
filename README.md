@@ -130,11 +130,15 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   before the window's first day with an empty map and adds the filtered events as it passes their
   origin times; set seconds per step (a day, a 30-day month or a 365-day year, chosen from the
   window length), start, pause, step either way, close.
-- With a mouse the map pans and zooms freely. On touch screens it starts locked: one finger
-  scrolls the page while a two-finger pinch still works the map, and the buttons and tapping a
-  marker still zoom. The mouse icon in the map's top-right corner toggles the lock either way; a
-  slash means locked. On touch screens markers have a 7 px minimum radius, a hint explains the
-  lock when a finger tries to drag, and the legend says how to pan.
+- The map starts locked, so the wheel, a drag and one finger scroll the page past it; the
+  buttons, clicking a marker and a two-finger pinch still zoom. The mouse icon in the map's
+  top-right corner toggles the lock (a slash means locked) for free pan and zoom. On touch screens
+  markers have a 7 px minimum radius, a hint explains the lock when a finger tries to drag, and the
+  legend says how to pan.
+- Markers are scaled from the floor in force (the view's, the filter's or the raised one), so the
+  smallest shown is always the smallest dot and the legend's size key follows; they grow about
+  fivefold on screen from zoom 1 to 40. Events without a mechanism are drawn as outlined discs in
+  their depth colour.
 - Subduction teeth point toward the overriding plate, read from Bird's `/` and `\` boundary titles;
   the plate tooltip says which plate subducts under which.
 
