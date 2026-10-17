@@ -36,6 +36,19 @@ export const runsQuerySchema = z.object({
 
 export const eventIdSchema = z.object({ id: z.string().min(1).max(64) });
 
+export const volcanoChangesQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(90).default(7),
+});
+
+export const volcanoReportsQuerySchema = z.object({
+  weeks: z.coerce.number().int().min(1).max(26).default(4),
+});
+
+/** A GVP volcano number: a positive integer in the path. */
+export const volcanoNumberSchema = z.object({
+  number: z.coerce.number().int().positive(),
+});
+
 export function parseOrThrow<S extends z.ZodType>(schema: S, input: unknown): z.output<S> {
   const result = schema.safeParse(input);
   if (!result.success) {
