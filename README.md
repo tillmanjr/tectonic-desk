@@ -113,6 +113,35 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
 - Subduction teeth point toward the overriding plate, read from Bird's `/` and `\` boundary titles;
   the plate tooltip says which plate subducts under which.
 
+## Volcanoes
+
+The header's Earthquakes | Volcanoes switch opens the second page on the same region views
+(`/volcanoes`, `/volcanoes/wc`). It shows:
+
+- The Smithsonian Global Volcanism Program's Holocene catalogue (1,214 volcanoes) as triangles
+  coloured by age of last eruption (since 1950, 1500 to 1949, earlier Holocene, unknown), with a
+  ring in the aviation colour for volcanoes whose agency alert is above normal and a dot above those
+  GVP lists as continuing to erupt. Pointing names the volcano, type group, last eruption and
+  status; clicking opens its panel (`?volcano=<GVP number>`).
+- Live alert levels from the USGS Volcano Hazards Program (HANS, 69 monitored US volcanoes) and
+  GeoNet (12 New Zealand volcanoes), polled every 15 minutes and stored as one row per change.
+  Each agency's scale is shown as published; nothing converts one into the other.
+- Tiles for elevated US volcanoes, GeoNet unrest, continuing eruptions in view, and either the
+  latest weekly report's new-activity entries or the count of status changes in 7 days; cards for
+  every volcano elevated or changed in 7 days.
+- A Refine bar (tectonic setting, type group, last eruption class, status; in the URL as
+  `setting`, `type`, `age`, `status`), a table, eruption starts per decade and a VEI
+  distribution for the volcanoes shown, and a detail panel with GVP's fields and summary, the
+  agency status history, weekly-report entries, a VEI-versus-time strip since 1800 with the
+  eruption list, and the earthquakes of the loaded window within 50 km.
+- The earthquake page's filtered events as a faint layer (on by default in the West Coast view).
+
+Reference data comes from `pnpm --filter @tectonic/server geo:volcanoes`, which pulls GVP's
+volcanoes, eruptions and since-1960 layers over WFS into `apps/server/data/geo` (see its README).
+The GVP/USGS Weekly Volcanic Activity Report is fetched every 6 hours from its RSS feed; the feed
+sat behind a bot filter that answered 403 to servers when this was built, so a blocked fetch is
+recorded as a failed run and the page falls back to the status-change count.
+
 ## Deployment
 
 ### Locally

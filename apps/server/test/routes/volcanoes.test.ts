@@ -67,7 +67,7 @@ describe.skipIf(!docker)("volcano routes", () => {
     expect(recent).toMatchObject({ days: 7 });
     expect(recent.changes.map((c) => c.key)).toEqual(["311120"]);
     const wide = (await inject("/api/volcanoes/changes?days=30")).json<ApiVolcanoChanges>();
-    expect(wide.changes).toHaveLength(21);
+    expect(wide.changes).toHaveLength(1);
     expect((await inject("/api/volcanoes/changes?days=0")).statusCode).toBe(400);
     expect((await inject("/api/volcanoes/changes?days=91")).statusCode).toBe(400);
   });

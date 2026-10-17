@@ -210,6 +210,67 @@ describe("App", () => {
     expect(router.currentRoute.value.query.event).toBeUndefined();
   });
 
+  it("serves the volcano page from its route with region, selection and filter, and switches pages", async () => {
+    stubCanvas();
+    const { wrapper, router, api } = await mountApp(
+      "/volcanoes/wc?volcano=321050&age=recent&tz=local",
+    );
+    await flushPromises();
+    const current = wrapper.find(".pages button[aria-current='page']");
+    expect(current.text()).toBe("Volcanoes");
+    expect(wrapper.find(".stats").text()).toContain("USGS elevated");
+    expect(api.geo).toHaveBeenCalledWith("volcanoes");
+    expect(wrapper.find(".vdetail").classes()).toContain("open");
+    expect(wrapper.find(".vdetail .mag").text()).toBe("St. Helens");
+    expect(wrapper.findAll("tr.ev")).toHaveLength(1);
+    expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 2 volcanoes");
+    await wrapper.find(".vdetail .close").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.volcano).toBeUndefined();
+    await wrapper.findAll(".filters select")[2]?.setValue("");
+    await flushPromises();
+    expect(router.currentRoute.value.query.age).toBeUndefined();
+    expect(wrapper.findAll("tr.ev")).toHaveLength(2);
+    await wrapper.findAll("tr.ev")[0]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.volcano).toBe("323010");
+    await wrapper.findAll("[role=tab]")[0]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/volcanoes");
+    expect(router.currentRoute.value.query).toEqual({ tz: "local" });
+    expect(wrapper.find(".mapcount").text()).toBe("Showing 5 of 5 volcanoes");
+    const before = vi.mocked(api.volcanoStatus).mock.calls.length;
+    await wrapper.findAll(".pages button")[0]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/");
+    expect(wrapper.find(".pages button[aria-current='page']").text()).toBe("Earthquakes");
+    expect(wrapper.find(".filters .fclear").text()).toBe("Reset");
+    await wrapper.findAll(".pages button")[0]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/");
+    await wrapper.findAll(".pages button")[1]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/volcanoes");
+    expect(vi.mocked(api.volcanoStatus).mock.calls.length).toBe(before + 1);
+    expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "volcanoes")).toHaveLength(1);
+  });
+
+  it("refreshes the volcano live state on a feed change while on the volcano page", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    stubCanvas();
+    const api = fakeApi();
+    vi.mocked(api.status)
+      .mockResolvedValueOnce(status())
+      .mockResolvedValueOnce(status({ lastSuccessfulFeed: "2026-10-13T12:05:00.000Z" }));
+    const { wrapper } = await mountApp("/volcanoes", api);
+    await flushPromises();
+    const before = vi.mocked(api.volcanoStatus).mock.calls.length;
+    await vi.advanceTimersByTimeAsync(60_000);
+    await flushPromises();
+    expect(vi.mocked(api.volcanoStatus).mock.calls.length).toBe(before + 1);
+    wrapper.unmount();
+  });
+
   it("falls back to a real api client, clock and theme when none are provided", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     vi.spyOn(console, "error").mockImplementation(() => undefined);

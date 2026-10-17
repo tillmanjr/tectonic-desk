@@ -4,6 +4,10 @@ import type {
   ApiEventList,
   ApiRegion,
   ApiStatus,
+  ApiVolcanoChanges,
+  ApiVolcanoDetail,
+  ApiVolcanoReportList,
+  ApiVolcanoStatusList,
 } from "@tectonic/shared";
 
 export interface EventsQuery {
@@ -14,7 +18,7 @@ export interface EventsQuery {
   limit?: number;
 }
 
-export type GeoName = "plates" | "wc-land" | "wc-states" | "wc-qfaults";
+export type GeoName = "plates" | "wc-land" | "wc-states" | "wc-qfaults" | "volcanoes" | "eruptions";
 
 /** Function-typed properties (not methods) so tests can reference the spies unbound. */
 export interface ApiClient {
@@ -23,6 +27,10 @@ export interface ApiClient {
   event: (id: string) => Promise<ApiEventDetail>;
   status: () => Promise<ApiStatus>;
   geo: (name: GeoName) => Promise<unknown>;
+  volcanoStatus: () => Promise<ApiVolcanoStatusList>;
+  volcanoChanges: (days: number) => Promise<ApiVolcanoChanges>;
+  volcanoReports: (weeks: number) => Promise<ApiVolcanoReportList>;
+  volcano: (number: number) => Promise<ApiVolcanoDetail>;
 }
 
 export class ApiRequestError extends Error {
@@ -72,5 +80,9 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     event: (id) => get(`/events/${encodeURIComponent(id)}`),
     status: () => get("/status"),
     geo: (name) => get(`/geo/${name}`),
+    volcanoStatus: () => get("/volcanoes/status"),
+    volcanoChanges: (days) => get(`/volcanoes/changes?days=${String(days)}`),
+    volcanoReports: (weeks) => get(`/volcanoes/reports?weeks=${String(weeks)}`),
+    volcano: (number) => get(`/volcanoes/${String(number)}`),
   };
 }

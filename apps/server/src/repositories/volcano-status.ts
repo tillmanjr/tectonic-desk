@@ -1,5 +1,5 @@
 import type { VolcanoStatus } from "@tectonic/shared";
-import { desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import { volcanoStatus, type VolcanoStatusRow } from "../db/schema.js";
 
@@ -38,12 +38,21 @@ export async function recordStatuses(
   return { inserted: changed.length };
 }
 
-/** Rows observed at or after `since`, newest first. */
+/**
+ * Rows observed at or after `since` that follow an earlier row for the same
+ * volcano, newest first: the first observation of a volcano is a baseline,
+ * not a change.
+ */
 export async function statusChanges(db: Db, since: Date): Promise<VolcanoStatusRow[]> {
   return db
     .select()
     .from(volcanoStatus)
-    .where(gte(volcanoStatus.observedAt, since))
+    .where(
+      and(
+        gte(volcanoStatus.observedAt, since),
+        sql`exists (select 1 from ${volcanoStatus} p where p.source = ${volcanoStatus.source} and p.key = ${volcanoStatus.key} and p.observed_at < ${volcanoStatus.observedAt})`,
+      ),
+    )
     .orderBy(desc(volcanoStatus.observedAt), desc(volcanoStatus.id));
 }
 

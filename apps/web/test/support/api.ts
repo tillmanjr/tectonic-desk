@@ -3,6 +3,14 @@ import { vi } from "vitest";
 import type { ApiClient } from "../../src/lib/api.js";
 import { event, GLOBAL, plateSegments, squareTopology, WC } from "./events.js";
 import { faultsTopology } from "./faults.js";
+import {
+  changeList,
+  eruptionFile,
+  kilaueaDetail,
+  reportList,
+  statusList,
+  volcanoFile,
+} from "./volcanoes.js";
 
 export function status(over: Partial<ApiStatus> = {}): ApiStatus {
   return {
@@ -58,9 +66,17 @@ export function fakeApi(over: Partial<ApiClient> = {}): ApiClient {
             ? plateSegments
             : name === "wc-qfaults"
               ? faultsTopology
-              : squareTopology,
+              : name === "volcanoes"
+                ? volcanoFile
+                : name === "eruptions"
+                  ? eruptionFile
+                  : squareTopology,
         ),
       ),
+    volcanoStatus: vi.fn().mockResolvedValue(statusList),
+    volcanoChanges: vi.fn().mockResolvedValue(changeList),
+    volcanoReports: vi.fn().mockResolvedValue(reportList),
+    volcano: vi.fn().mockResolvedValue(kilaueaDetail),
     ...over,
   };
 }

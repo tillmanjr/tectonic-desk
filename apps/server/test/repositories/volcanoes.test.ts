@@ -57,6 +57,7 @@ describe.skipIf(!docker)("volcano repositories and jobs", () => {
       color: "RED",
     });
     expect(await statusChanges(t.db, t2)).toHaveLength(2);
+    expect(await statusChanges(t.db, t0)).toHaveLength(2);
     expect(await statusChanges(t.db, new Date("2026-10-18T00:00:00Z"))).toHaveLength(0);
     const history = await statusHistory(t.db, 311120);
     expect(history.map((r) => r.level)).toEqual(["WARNING", "WATCH"]);
