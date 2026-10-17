@@ -93,6 +93,7 @@ watch(selected, (e) => {
     label="Map of earthquake epicenters"
     :count-line="countLine"
     :density="densityLegend"
+    :floor="catalog.floor.value"
   >
     <template #tools>
       <label v-if="density !== null"><input v-model="showDensity" type="checkbox" /> Density</label>
@@ -165,7 +166,7 @@ watch(selected, (e) => {
         :k="k"
         :selected-id="selectedId"
         :show-mech="showMech"
-        :min-mag="mv.view.value.minMag"
+        :min-mag="catalog.floor.value"
         :min-radius="minRadius"
         @select="select"
         @hover="onHover"

@@ -25,8 +25,10 @@ const props = withDefaults(
     quakes?: boolean;
     /** The density shading in force, passed to the legend; null when none is drawn. */
     density?: DensityLegend | null;
+    /** The magnitude floor the legend's size key is scaled from; null uses the view's own. */
+    floor?: number | null;
   }>(),
-  { quakes: true, density: null },
+  { quakes: true, density: null, floor: null },
 );
 const { mv } = props;
 </script>
@@ -180,7 +182,7 @@ const { mv } = props;
     </div>
     <MapLegend
       :frame="mv.view.value.frame"
-      :min-mag="mv.view.value.minMag"
+      :min-mag="floor ?? mv.view.value.minMag"
       :faults="mv.hasFaults.value ? mv.faultAges.value : []"
       :quakes="quakes"
       :density="density"
