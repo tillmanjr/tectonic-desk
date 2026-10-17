@@ -13,6 +13,7 @@ import {
   type EventFilter,
   type NumberKey,
 } from "../lib/filters.js";
+import { fmtFloor, fmtInt } from "../lib/format.js";
 import { CATALOG, CLOCK, SET_FILTER, useInjected, ZONE } from "../lib/keys.js";
 
 const catalog = useInjected(CATALOG);
@@ -25,6 +26,12 @@ const bounds = computed(() => dateBoundsFor(clock.now.value, zone.value));
 /** The days in force, so the inputs always show the window being queried. */
 const span = computed(() => resolveDates(catalog.filter.value, clock.now.value, zone.value));
 const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
+/** Why the page shows fewer events than the window holds. */
+const note = computed(() => {
+  const s = catalog.stats.value;
+  if (s === null || !catalog.raised.value) return null;
+  return `This window holds ${fmtInt(s.total)} events at ${fmtFloor(catalog.requested.value)}. Markers, table and the magnitude charts show the ${fmtInt(catalog.windowEvents.value.length)} at ${fmtFloor(catalog.floor.value)} so the page stays responsive; the density shading and the time chart cover all of them.`;
+});
 
 const text = (k: NumberKey): string => {
   const v = catalog.filter.value[k];
@@ -70,7 +77,7 @@ function clear(): void {
       type="number"
       step="0.1"
       :min="floor"
-      :value="String(catalog.floor.value)"
+      :value="String(catalog.requested.value)"
       placeholder="min"
       aria-label="Minimum magnitude"
       @change="changeNumber('minMag', $event)"
@@ -127,5 +134,6 @@ function clear(): void {
       <option v-for="(s, i) in SPANS" :key="s.label" :value="String(i)">{{ s.label }}</option>
     </select>
     <button type="button" class="fclear" :disabled="!active" @click="clear">Reset</button>
+    <p v-if="note !== null" class="fnote">{{ note }}</p>
   </section>
 </template>

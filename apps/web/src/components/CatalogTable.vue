@@ -2,7 +2,7 @@
 import type { ApiEvent } from "@tectonic/shared";
 import { computed, ref } from "vue";
 import { depthColor } from "../lib/depth.js";
-import { fmtMag, fmtStamp, placeOf } from "../lib/format.js";
+import { fmtInt, fmtMag, fmtStamp, placeOf } from "../lib/format.js";
 import { CATALOG, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { preferredMechanism } from "../lib/stats.js";
 
@@ -14,7 +14,7 @@ const COLS: { key: SortKey; label: string }[] = [
   { key: "place", label: "Location" },
 ];
 
-const { events: all, filtered: events, selectedId } = useInjected(CATALOG);
+const { filtered: events, selectedId, windowTotal } = useInjected(CATALOG);
 const select = useInjected(SELECT);
 const zone = useInjected(ZONE);
 const sortKey = ref<SortKey>("time");
@@ -49,8 +49,8 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
   <div class="panel">
     <h2>
       Catalog
-      <span v-if="events.length !== all.length"
-        >{{ events.length }} of {{ all.length }} events · tap a row for detail</span
+      <span v-if="events.length !== windowTotal"
+        >{{ events.length }} of {{ fmtInt(windowTotal) }} events · tap a row for detail</span
       >
       <span v-else>{{ events.length }} events · tap a row for detail</span>
     </h2>

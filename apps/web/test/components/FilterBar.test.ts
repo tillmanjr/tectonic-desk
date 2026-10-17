@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import FilterBar from "../../src/components/FilterBar.vue";
 import { EMPTY_FILTER } from "../../src/lib/filters.js";
-import { fakeApi } from "../support/api.js";
+import { fakeApi, raisedApi } from "../support/api.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 
@@ -106,6 +106,21 @@ describe("FilterBar", () => {
     Object.defineProperty(div, "target", { value: document.createElement("div") });
     select.element.dispatchEvent(div);
     expect(ctx.setFilter).toHaveBeenCalledTimes(2);
+  });
+  it("explains a raised floor under the inputs", async () => {
+    const plain = mountWith(FilterBar, await makeContext());
+    expect(plain.find(".fnote").exists()).toBe(false);
+    const w = mountWith(
+      FilterBar,
+      await makeContext({
+        api: raisedApi(),
+        range: { since: "1900-01-01T00:00:00.000Z", until: "2026-10-13T23:59:59.999Z" },
+      }),
+    );
+    expect(w.find(".fnote").text()).toBe(
+      "This window holds 7,312 events at M4.5+. Markers, table and the magnitude charts show the 1 at M6+ so the page stays responsive; the density shading and the time chart cover all of them.",
+    );
+    expect(w.findAll("input")[0]?.element.value).toBe("4.5");
   });
   it("ignores change events from something other than an input", async () => {
     const ctx = await makeContext();

@@ -751,6 +751,12 @@ a {
 .filters .fspan {
   width: auto;
 }
+.filters .fnote {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
 .vcard .dot {
   width: 14px;
   height: 14px;
