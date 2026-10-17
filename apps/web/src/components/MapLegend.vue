@@ -77,5 +77,6 @@ const plates = Object.values(PLATE_CLASSES);
         = inferred. Point at a trace for the fault, age, slip rate, sense and dip.</span
       >
     </template>
+    <slot></slot>
   </div>
 </template>

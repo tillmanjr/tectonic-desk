@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import QuakeMap from "../../src/components/QuakeMap.vue";
 import { createCatalog } from "../../src/lib/catalog.js";
+import { resetMapCaches } from "../../src/lib/mapview.js";
 import { frameFor } from "../../src/lib/geo.js";
 import { fakeApi } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
@@ -14,6 +15,7 @@ describe("QuakeMap", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    resetMapCaches();
   });
 
   it("loads the world basemap and plates for the global view and zooms with the toolbar", async () => {
