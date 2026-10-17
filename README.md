@@ -43,6 +43,10 @@ The server polls USGS while it runs (`INGEST_ENABLED`, default true):
 
 Set `INGEST_ENABLED=false` on a second API instance so only one process polls.
 
+Volcano status (USGS HANS and GeoNet) is polled every `VOLCANO_STATUS_INTERVAL_MS` (default
+15 min) and the GVP weekly report every `VOLCANO_REPORTS_INTERVAL_MS` (default 6 h), under the
+same `INGEST_ENABLED` flag.
+
 The API rate-limits each client address to `RATE_LIMIT_MAX` requests per `RATE_LIMIT_WINDOW_MS`
 (default 120 a minute; 0 turns it off) and answers `429 { error }` with `Retry-After` and
 `X-RateLimit-*` headers. Behind nginx set `TRUST_PROXY=true` so the limit applies to the forwarded
