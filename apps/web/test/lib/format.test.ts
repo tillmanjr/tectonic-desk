@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ago,
   dateIn,
+  offsetParts,
+  offsetText,
   fmtClock,
   fmtCoord,
   fmtFloor,
@@ -75,5 +77,32 @@ describe("numbers and places", () => {
   it("placeOf falls back for a missing place", () => {
     expect(placeOf({ place: "Tonga" })).toBe("Tonga");
     expect(placeOf({ place: null })).toBe("unknown location");
+  });
+});
+
+describe("offsets", () => {
+  const d = (s: string) => new Date(s);
+  it("splits a calendar difference into whole units, borrowing a month when needed", () => {
+    expect(offsetParts(d("2021-09-19T00:00Z"), d("2024-01-25T13:40Z"))).toEqual({
+      years: 2,
+      months: 4,
+      days: 6,
+      hours: 13,
+      minutes: 40,
+    });
+    expect(offsetParts(d("2026-03-31T00:00Z"), d("2026-04-29T00:00Z")).months).toBe(0);
+    expect(offsetParts(d("2026-04-29T00:00Z"), d("2026-03-31T00:00Z")).days).toBe(29);
+  });
+  it("renders the two largest units at the given precision", () => {
+    expect(offsetText(d("2021-09-19T00:00Z"), d("2024-01-25T13:40Z"))).toBe("2 y 4 mo");
+    expect(offsetText(d("2026-09-01T00:00Z"), d("2026-10-10T06:00Z"))).toBe("1 mo 9 d");
+    expect(offsetText(d("2026-10-07T00:00Z"), d("2026-10-10T05:12Z"))).toBe("3 d 5 h");
+    expect(offsetText(d("2026-10-10T00:00Z"), d("2026-10-10T05:12Z"))).toBe("5 h 12 min");
+    expect(offsetText(d("2026-10-10T00:00Z"), d("2026-10-10T00:40Z"))).toBe("40 min");
+    expect(offsetText(d("2026-10-10T00:00:00Z"), d("2026-10-10T00:00:30Z"))).toBe("< 1 min");
+    expect(offsetText(d("2021-09-01T00:00Z"), d("2024-01-25T00:00Z"), "month")).toBe("2 y 4 mo");
+    expect(offsetText(d("2026-10-01T00:00Z"), d("2026-10-20T00:00Z"), "month")).toBe("< 1 mo");
+    expect(offsetText(d("1857-01-01T00:00Z"), d("2026-10-10T00:00Z"), "year")).toBe("169 y");
+    expect(offsetText(d("2026-01-01T00:00Z"), d("2026-10-10T00:00Z"), "year")).toBe("< 1 y");
   });
 });

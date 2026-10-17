@@ -92,6 +92,62 @@ export function ago(iso: string, now: Date): string {
   return `${(h / 24).toFixed(1)} d`;
 }
 
+export type DatePrecision = "day" | "month" | "year";
+export interface OffsetParts {
+  years: number;
+  months: number;
+  days: number;
+  hours: number;
+  minutes: number;
+}
+const addMonths = (d: Date, n: number): Date =>
+  new Date(
+    Date.UTC(
+      d.getUTCFullYear(),
+      d.getUTCMonth() + n,
+      d.getUTCDate(),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+      d.getUTCMilliseconds(),
+    ),
+  );
+
+/** The calendar difference between two instants in UTC as whole units; the order of the arguments does not matter. */
+export function offsetParts(from: Date, to: Date): OffsetParts {
+  const [a, b] = from.getTime() <= to.getTime() ? [from, to] : [to, from];
+  let total = (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + b.getUTCMonth() - a.getUTCMonth();
+  if (addMonths(a, total).getTime() > b.getTime()) total -= 1;
+  const rest = b.getTime() - addMonths(a, total).getTime();
+  return {
+    years: Math.floor(total / 12),
+    months: total % 12,
+    days: Math.floor(rest / 864e5),
+    hours: Math.floor((rest % 864e5) / 36e5),
+    minutes: Math.floor((rest % 36e5) / 6e4),
+  };
+}
+
+/** The two largest non-zero units of the difference, down to the precision: "2 y 4 mo", "1 mo 9 d", "3 d 5 h", "< 1 mo". */
+export function offsetText(from: Date, to: Date, precision: DatePrecision = "day"): string {
+  const p = offsetParts(from, to);
+  const all: [number, string][] = [
+    [p.years, "y"],
+    [p.months, "mo"],
+    [p.days, "d"],
+    [p.hours, "h"],
+    [p.minutes, "min"],
+  ];
+  const units = all.slice(0, precision === "year" ? 1 : precision === "month" ? 2 : 5);
+  const first = units.findIndex(([n]) => n > 0);
+  if (first < 0) return `< 1 ${precision === "year" ? "y" : precision === "month" ? "mo" : "min"}`;
+  return units
+    .slice(first, first + 2)
+    .filter(([n]) => n > 0)
+    .map(([n, u]) => `${String(n)} ${u}`)
+    .join(" ");
+}
+
 export function fmtMag(mag: number | null, precise = false): string {
   if (mag === null) return "—";
   if (!precise) return mag.toFixed(1);

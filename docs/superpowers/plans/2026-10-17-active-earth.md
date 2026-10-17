@@ -234,24 +234,22 @@ describe("NearbyQuakes", () => {
     const clearLake = VOLCANOES[4];
     if (helens === undefined || clearLake === undefined) throw new Error("fixture");
     const api = fakeApi({
-      events: vi
-        .fn()
-        .mockResolvedValue(
-          listOf([
-            event({
-              id: "h",
-              latitude: helens.lat,
-              longitude: helens.lon,
-              time: "2026-10-10T00:00:00Z",
-            }),
-            event({
-              id: "c",
-              latitude: clearLake.lat,
-              longitude: clearLake.lon,
-              time: "2026-10-10T00:00:00Z",
-            }),
-          ]),
-        ),
+      events: vi.fn().mockResolvedValue(
+        listOf([
+          event({
+            id: "h",
+            latitude: helens.lat,
+            longitude: helens.lon,
+            time: "2026-10-10T00:00:00Z",
+          }),
+          event({
+            id: "c",
+            latitude: clearLake.lat,
+            longitude: clearLake.lon,
+            time: "2026-10-10T00:00:00Z",
+          }),
+        ]),
+      ),
     });
     const ctx = await makeContext({ api, volcanoes: true });
     const h = mountWith(NearbyQuakes, ctx, { volcano: helens });

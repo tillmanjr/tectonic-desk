@@ -9,6 +9,7 @@ import type {
 } from "@tectonic/shared";
 import { computed, ref, shallowRef, type ComputedRef, type Ref, type ShallowRef } from "vue";
 import { errorMessage, type ApiClient } from "./api.js";
+import type { DatePrecision } from "./format.js";
 
 /**
  * The volcano page's state and vocabulary: GVP's catalogue classified for
@@ -221,6 +222,30 @@ export function eruptionStart(e: Eruption): string {
   if (e.startModifier !== null) s = `${e.startModifier}${s}`;
   if (e.startYearUncertainty !== null) s += ` ± ${String(e.startYearUncertainty)}`;
   return s;
+}
+
+export interface EruptionAnchor {
+  date: Date;
+  precision: DatePrecision;
+  continuing: boolean;
+  label: string;
+}
+const startMs = (e: Eruption): number =>
+  Date.UTC(e.startYear, (e.startMonth ?? 1) - 1, e.startDay ?? 1);
+const latestOf = (list: Eruption[]): Eruption | null =>
+  list.reduce<Eruption | null>((a, e) => (a === null || startMs(e) > startMs(a) ? e : a), null);
+
+/** The eruption a volcano's seismicity is dated against: the continuing one with the latest start, else the latest start; CE dates only. */
+export function eruptionAnchor(eruptions: Eruption[]): EruptionAnchor | null {
+  const dated = eruptions.filter((e) => e.startYear > 0);
+  const pick = latestOf(dated.filter((e) => e.continuing)) ?? latestOf(dated);
+  if (pick === null) return null;
+  return {
+    date: new Date(startMs(pick)),
+    precision: pick.startMonth === null ? "year" : pick.startDay === null ? "month" : "day",
+    continuing: pick.continuing,
+    label: eruptionStart(pick),
+  };
 }
 
 /** The year a volcano last erupted as text, or "unknown". */

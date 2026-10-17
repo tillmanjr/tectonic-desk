@@ -79,13 +79,13 @@ panel's nearby-earthquake offsets rides along.
 - `RefineBar.vue`: props `dataset: "earthquakes" | "volcanoes"`, `parts: SummaryPart[]`
   (`{ text: string; set: boolean }`), `hidden: boolean`; emits `update:hidden`; slots `default`
   (the inputs) and `note` (rendered under the line in both states). State `expanded = ref(false)`.
-- Collapsed: `<section class="filters refine" :class="dataset">` with a title button
-  `Refine <span class="rwho">earthquakes</span>` (`aria-expanded`, `aria-controls`), the summary
-  parts separated by `·` with set parts in the ink colour (`class="set"`) and unset parts muted,
-  the trailing word `edit` in small caps inside the title button, and at the right end a
-  `<label class="rhide"><input type="checkbox"> Hide markers</label>`. Expanded: the same title
-  with `done`, the hide label, and the default slot in place of the summary. Enter and Space
-  toggle because the title is a real button.
+- Collapsed: `<section class="filters refine" :class="dataset">` with the title
+  `Refine <span class="rwho">earthquakes</span>`, the summary parts separated by `·` with set
+  parts in the ink colour (`class="set"`) and unset parts muted, then a small-caps `edit` button
+  (`class="rtoggle"`, `aria-expanded`, `aria-controls`) and at the right end a
+  `<label class="rhide"><input type="checkbox"> Hide markers</label>`. Expanded: the button reads
+  `done` and the default slot replaces the summary on the lines below. Enter and Space toggle
+  because it is a real button; the checkbox stays outside it.
 - The bar's left border takes the dataset accent: `var(--accent)` for earthquakes and
   `var(--vc-recent)` for volcanoes. The dataset word is muted so `Refine` stays the title.
 - `FilterBar` parts: magnitude (`M4.5+`, or `M4.5 to M6`; set when either bound is in the
