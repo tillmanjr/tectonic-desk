@@ -4,6 +4,7 @@ import type {
   EventWithMechanisms,
   StoredEvent,
   StoredMechanism,
+  SummaryBy,
 } from "@tectonic/shared";
 import {
   and,
@@ -18,6 +19,7 @@ import {
   isNull,
   lt,
   lte,
+  max,
   or,
   sql,
   type SQL,
@@ -36,11 +38,15 @@ export interface UpsertResult {
   merged: number;
 }
 
-export interface ListEventsFilter {
+/** The where-clause part of a list request, shared by the list and the aggregates. */
+export interface EventsWhere {
   since?: Date;
   until?: Date;
   minMag?: number;
   bbox?: BBox;
+}
+
+export interface ListEventsFilter extends EventsWhere {
   limit?: number;
 }
 
@@ -154,6 +160,15 @@ function bboxCondition(b: BBox): SQL {
   return sql`(${lat} and ${lon})`;
 }
 
+function whereOf(filter: EventsWhere): SQL | undefined {
+  const conditions: SQL[] = [];
+  if (filter.since) conditions.push(gte(events.time, filter.since));
+  if (filter.until) conditions.push(lte(events.time, filter.until));
+  if (filter.minMag !== undefined) conditions.push(gte(events.mag, filter.minMag));
+  if (filter.bbox) conditions.push(bboxCondition(filter.bbox));
+  return conditions.length ? and(...conditions) : undefined;
+}
+
 export async function listEvents(db: Db, filter: ListEventsFilter = {}): Promise<StoredEvent[]> {
   const requested = filter.limit ?? DEFAULT_LIMIT;
   if (!Number.isInteger(requested) || requested < 1) {
@@ -161,16 +176,10 @@ export async function listEvents(db: Db, filter: ListEventsFilter = {}): Promise
   }
   const limit = Math.min(requested, MAX_LIMIT);
 
-  const conditions: SQL[] = [];
-  if (filter.since) conditions.push(gte(events.time, filter.since));
-  if (filter.until) conditions.push(lte(events.time, filter.until));
-  if (filter.minMag !== undefined) conditions.push(gte(events.mag, filter.minMag));
-  if (filter.bbox) conditions.push(bboxCondition(filter.bbox));
-
   const rows = await db
     .select()
     .from(events)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .where(whereOf(filter))
     .orderBy(desc(events.time), desc(events.id))
     .limit(limit);
   return rows.map(rowToEvent);
@@ -245,6 +254,80 @@ export async function catalogStats(db: Db): Promise<CatalogStats> {
     },
     mechanisms: { total: mechCount.total },
   };
+}
+
+export async function countEvents(db: Db, filter: EventsWhere): Promise<number> {
+  return single(await db.select({ total: count() }).from(events).where(whereOf(filter))).total;
+}
+
+export interface MagBands {
+  lt4: number;
+  m4: number;
+  m5: number;
+  m6: number;
+  m7: number;
+}
+
+export interface SummaryBin {
+  start: Date;
+  count: number;
+  maxMag: number | null;
+  mags: MagBands;
+}
+
+const bandCount = (where: SQL): SQL<number> =>
+  sql<number>`count(*) filter (where ${where})`.mapWith(Number);
+
+const bands = {
+  lt4: bandCount(sql`${events.mag} < 4`),
+  m4: bandCount(sql`${events.mag} >= 4 and ${events.mag} < 5`),
+  m5: bandCount(sql`${events.mag} >= 5 and ${events.mag} < 6`),
+  m6: bandCount(sql`${events.mag} >= 6 and ${events.mag} < 7`),
+  m7: bandCount(sql`${events.mag} >= 7`),
+};
+
+const toDate = (v: string | Date): Date => new Date(v);
+
+/** Non-empty UTC bins of `by` with counts, the largest magnitude and magnitude-class counts. */
+export async function summarizeEvents(
+  db: Db,
+  filter: EventsWhere,
+  by: SummaryBy,
+): Promise<SummaryBin[]> {
+  // `by` is one of three literals; inlining it keeps the expression free of parameters.
+  const start = sql<Date>`date_trunc(${sql.raw(`'${by}'`)}, ${events.time}, 'UTC')`.mapWith(toDate);
+  const rows = await db
+    .select({ start, count: count(), maxMag: max(events.mag), ...bands })
+    .from(events)
+    .where(whereOf(filter))
+    .groupBy(sql`1`)
+    .orderBy(sql`1`);
+  return rows.map((r) => ({
+    start: r.start,
+    count: r.count,
+    maxMag: r.maxMag,
+    mags: { lt4: r.lt4, m4: r.m4, m5: r.m5, m6: r.m6, m7: r.m7 },
+  }));
+}
+
+export interface GridCell {
+  lat: number;
+  lon: number;
+  count: number;
+  maxMag: number | null;
+}
+
+/** Event counts per `cell`-degree square, keyed by the square's south-west corner. */
+export async function gridEvents(db: Db, filter: EventsWhere, cell: number): Promise<GridCell[]> {
+  // Grouping by ordinal keeps the parameterised cell expressions identical in SELECT and GROUP BY.
+  const lat = sql<number>`floor(${events.latitude} / ${cell}) * ${cell}`.mapWith(Number);
+  const lon = sql<number>`floor(${events.longitude} / ${cell}) * ${cell}`.mapWith(Number);
+  return db
+    .select({ lat, lon, count: count(), maxMag: max(events.mag) })
+    .from(events)
+    .where(whereOf(filter))
+    .groupBy(sql`1, 2`)
+    .orderBy(sql`1, 2`);
 }
 
 const MECHANISM_TYPES = ["moment-tensor", "focal-mechanism"];

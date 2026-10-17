@@ -1,4 +1,10 @@
-import type { ApiEventDetail, ApiEventList } from "@tectonic/shared";
+import type {
+  ApiEventCount,
+  ApiEventDetail,
+  ApiEventGrid,
+  ApiEventList,
+  ApiEventSummary,
+} from "@tectonic/shared";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../../src/app.js";
@@ -87,6 +93,38 @@ describe.skipIf(!docker)("events routes", () => {
     expect(ids(limited)).toEqual(["a", "c"]);
     expect(limited).toMatchObject({ count: 2, truncated: true, query: { limit: 2 } });
     expect((await list("?since=2030-01-01")).body).toMatchObject({ events: [], count: 0 });
+  });
+
+  it("counts, summarises and grids with the list filters and their own caching", async () => {
+    const get = (url: string) => app.inject({ method: "GET", url });
+    const count = await get("/api/events/count?minMag=3");
+    expect(count.statusCode).toBe(200);
+    expect(count.headers["cache-control"]).toBe("public, max-age=60");
+    expect(count.json<ApiEventCount>()).toEqual({
+      count: 2,
+      query: { since: daysAgo(7).toISOString(), until: null, minMag: 3, bbox: null },
+    });
+    expect((await get("/api/events/count?limit=5")).statusCode).toBe(400);
+
+    const summary = await get("/api/events/summary?since=2026-09-01");
+    expect(summary.headers["cache-control"]).toBe("public, max-age=300");
+    const s = summary.json<ApiEventSummary>();
+    expect(s.by).toBe("day");
+    expect(s.bins.map((b) => b.count)).toEqual([1, 1, 1, 1]);
+    expect(s.bins[3]).toMatchObject({ maxMag: 5.5, mags: { m5: 1 } });
+    expect((await get("/api/events/summary?by=week")).statusCode).toBe(400);
+
+    const grid = await get("/api/events/grid?since=2026-09-01&cell=5");
+    expect(grid.headers["cache-control"]).toBe("public, max-age=300");
+    const g = grid.json<ApiEventGrid>();
+    expect(g.cell).toBe(5);
+    expect(g.cells).toEqual([
+      { lat: -20, lon: -180, count: 1, maxMag: 5.5 },
+      { lat: -20, lon: 175, count: 1, maxMag: 4.0 },
+      { lat: 35, lon: -125, count: 1, maxMag: 3.0 },
+      { lat: 40, lon: -125, count: 1, maxMag: 2.6 },
+    ]);
+    expect((await get("/api/events/grid?cell=3")).statusCode).toBe(400);
   });
 
   it("rejects bad input with 400", async () => {
