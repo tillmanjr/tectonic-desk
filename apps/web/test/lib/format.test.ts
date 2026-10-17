@@ -4,6 +4,7 @@ import {
   dateIn,
   fmtClock,
   fmtCoord,
+  fmtFloor,
   fmtInt,
   fmtMag,
   fmtMoment,
@@ -56,6 +57,8 @@ describe("zone-aware formatting", () => {
 describe("numbers and places", () => {
   it("formats magnitudes", () => {
     expect(fmtMag(null)).toBe("—");
+    expect(fmtFloor(4.5)).toBe("M4.5+");
+    expect(fmtFloor(6)).toBe("M6+");
     expect(fmtMag(6.94)).toBe("6.9");
     expect(fmtMag(6.9, true)).toBe("6.9");
     expect(fmtMag(5.55, true)).toBe("5.55");

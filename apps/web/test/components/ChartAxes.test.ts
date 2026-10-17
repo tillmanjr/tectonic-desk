@@ -19,6 +19,12 @@ describe("ChartAxes", () => {
     expect(w.findAll(".gridl line")).toHaveLength(1);
     expect(w.findAll(".axis text").map((t) => t.text())).toEqual(["a", "b", "1"]);
   });
+  it("draws a right axis only when given ticks", () => {
+    expect(mount(ChartAxes, { props }).findAll(".axis")).toHaveLength(2);
+    const w = mount(ChartAxes, { props: { ...props, yRightTicks: [{ pos: 30, label: "M7" }] } });
+    expect(w.findAll(".axis")).toHaveLength(3);
+    expect(w.findAll(".axis text").map((t) => t.text())).toEqual(["a", "b", "1", "M7"]);
+  });
   it("omits the grid when asked", () => {
     expect(
       mount(ChartAxes, { props: { ...props, grid: false } })
