@@ -1,9 +1,12 @@
+# Checks every pull request into main or release once, on the merge commit GitHub builds for
+# the PR, so the check gates the merge. There is no push trigger: main and release only move
+# through pull requests, and a push trigger would run the same tree a second time after the
+# merge. The Deploy workflow runs its own check on the release push before building images.
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main, release]
 
 jobs:
   check:

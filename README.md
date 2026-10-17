@@ -186,8 +186,8 @@ then both images are built on freshly pulled base images and pushed to GitHub Co
 the droplet pulls them (and current caddy and postgres images) and restarts
 `deploy/docker-compose.prod.yml` behind Caddy, which holds the TLS certificate. The same workflow
 runs every Monday at 08:00 UTC (midnight or 1 am Pacific), and on demand from the Actions tab, so base images stay current
-between pushes. `main` stays the integration branch; `git push origin main:release` (or a merge
-into `release`) deploys. One-time setup:
+between pushes. `main` stays the integration branch; a pull request from `main` into `release`,
+merged once its CI check passes, deploys. One-time setup:
 
 1. **Droplet.** Ubuntu 24.04, Basic 1 GB in SFO3 (about $6), your SSH key added. As root:
 
@@ -238,7 +238,8 @@ into `release`) deploys. One-time setup:
    dedicated one with `ssh-keygen -t ed25519 -f deploy_key -N ""`). The workflow logs the droplet
    into GHCR with its own token, so the packages can stay private.
 
-4. **First release.** `git push origin main:release`, watch the Deploy run, then load the history
+4. **First release.** Open and merge a pull request from `main` into `release` (the first time,
+   `git push origin main:release` also works), watch the Deploy run, then load the history
    once:
 
    ```sh
