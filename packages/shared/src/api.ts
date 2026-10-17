@@ -1,4 +1,10 @@
-import type { BBox, StoredEvent, StoredMechanism } from "./index.js";
+import type {
+  BBox,
+  StoredEvent,
+  StoredMechanism,
+  StoredVolcanoReport,
+  StoredVolcanoStatus,
+} from "./index.js";
 
 /** The wire form of a domain object: Date becomes an ISO 8601 UTC string. */
 export type Json<T> = {
@@ -49,7 +55,8 @@ export interface ApiRegion {
   bbox: BBox | null;
 }
 
-export type RunKind = "feed_day" | "feed_week" | "backfill" | "details";
+export type RunKind =
+  "feed_day" | "feed_week" | "backfill" | "details" | "volcano_status" | "volcano_reports";
 
 export interface ApiRun {
   id: number;
@@ -79,6 +86,32 @@ export interface ApiStatus {
   runs: Record<RunKind, ApiRun | null>;
   /** Latest finished_at of a successful feed_day or feed_week run. */
   lastSuccessfulFeed: string | null;
+}
+
+export type ApiVolcanoStatus = Json<StoredVolcanoStatus>;
+export type ApiVolcanoReport = Json<StoredVolcanoReport>;
+
+/** The latest state per monitored volcano and source. */
+export interface ApiVolcanoStatusList {
+  generatedAt: string;
+  statuses: ApiVolcanoStatus[];
+}
+
+export interface ApiVolcanoChanges {
+  days: number;
+  changes: ApiVolcanoStatus[];
+}
+
+export interface ApiVolcanoReportList {
+  weeks: number;
+  reports: ApiVolcanoReport[];
+}
+
+/** Everything the server holds about one GVP volcano number. */
+export interface ApiVolcanoDetail {
+  number: number;
+  statuses: ApiVolcanoStatus[];
+  reports: ApiVolcanoReport[];
 }
 
 export interface ApiIssue {

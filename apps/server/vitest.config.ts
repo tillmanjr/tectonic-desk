@@ -8,7 +8,13 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/index.ts", "src/db/migrate-cli.ts", "src/ingest-cli.ts", "src/qfaults-cli.ts"],
+      exclude: [
+        "src/index.ts",
+        "src/db/migrate-cli.ts",
+        "src/ingest-cli.ts",
+        "src/qfaults-cli.ts",
+        "src/gvp-cli.ts",
+      ],
       thresholds: { lines: 100, branches: 100, functions: 100, statements: 100 },
     },
   },

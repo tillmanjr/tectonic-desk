@@ -25,5 +25,10 @@ describe("MapLegend", () => {
     expect(f.text()).not.toContain("Latest Quaternary");
     expect(f.text()).toContain("dotted = inferred");
     expect(f.findAll("line")).toHaveLength(r.findAll("line").length + 2);
+    const v = mount(MapLegend, { props: { frame: frameFor(WC), minMag: 2.5, quakes: false } });
+    expect(v.text()).not.toContain("0–70 km");
+    expect(v.text()).not.toContain("M4.5");
+    expect(v.text()).not.toContain("shaded = compressional");
+    expect(v.text()).toContain("Subduction");
   });
 });

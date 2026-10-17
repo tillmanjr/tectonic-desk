@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import QuakeMap from "../../src/components/QuakeMap.vue";
 import { createCatalog } from "../../src/lib/catalog.js";
+import { resetMapCaches } from "../../src/lib/mapview.js";
 import { frameFor } from "../../src/lib/geo.js";
 import { fakeApi } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
@@ -14,6 +15,7 @@ describe("QuakeMap", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    resetMapCaches();
   });
 
   it("loads the world basemap and plates for the global view and zooms with the toolbar", async () => {
@@ -113,7 +115,7 @@ describe("QuakeMap", () => {
     expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "wc-land")).toHaveLength(1);
   });
 
-  it("ignores wheel and drag while locked, and zooms with the wheel once unlocked", async () => {
+  it("starts free for a mouse, zooms with the wheel, and ignores it once locked", async () => {
     stubWorld();
     const ctx = await makeContext();
     const w = mountWith(QuakeMap, ctx, { animate: false });
@@ -121,20 +123,21 @@ describe("QuakeMap", () => {
     const svg = w.find("svg.map");
     // happy-dom's SVGPoint lacks matrixTransform; d3 then falls back to getBoundingClientRect.
     Object.defineProperty(svg.element, "createSVGPoint", { value: undefined });
+    expect(svg.classes()).not.toContain("locked");
+    expect(w.find(".maplock").attributes("aria-pressed")).toBe("false");
+    expect(w.find(".maplock .slash").exists()).toBe(false);
+    await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
+    expect(w.find("svg.map > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
+    await w.findAll(".zbtn")[2]?.trigger("click");
+    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
+    await w.find(".maplock").trigger("click");
+    expect(w.find(".maplock").attributes("aria-pressed")).toBe("true");
+    expect(w.find(".maplock .slash").exists()).toBe(true);
     expect(svg.classes()).toContain("locked");
     await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
     expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
     await w.findAll(".zbtn")[0]?.trigger("click");
     expect(w.find("svg.map > g").attributes("transform")).toContain("scale(1.8");
-    await w.findAll(".zbtn")[2]?.trigger("click");
-    expect(w.find(".maplock").attributes("aria-pressed")).toBe("true");
-    expect(w.find(".maplock .slash").exists()).toBe(true);
-    await w.find(".maplock").trigger("click");
-    expect(w.find(".maplock").attributes("aria-pressed")).toBe("false");
-    expect(w.find(".maplock .slash").exists()).toBe(false);
-    expect(svg.classes()).not.toContain("locked");
-    await svg.trigger("wheel", { deltaY: -100, clientX: 10, clientY: 10 });
-    expect(w.find("svg.map > g").attributes("transform")).not.toBe("translate(0,0) scale(1)");
   });
 
   it("replays the window day by day, showing only events that have happened", async () => {
@@ -288,6 +291,8 @@ describe("QuakeMap", () => {
     await nextTick();
     expect(pick().find(".pickmenu").exists()).toBe(false);
     await pick().find(".pickopen").trigger("click");
+    // Lock the map first: a free one hands the mousedown to d3-drag, which happy-dom cannot run.
+    await w.find(".maplock").trigger("click");
     await w.find("svg.map").trigger("mousedown");
     expect(pick().find(".pickmenu").exists()).toBe(false);
     w.unmount();
@@ -332,6 +337,7 @@ describe("QuakeMap", () => {
     const events = () => w.findComponent({ name: "MapEvents" });
     expect(events().props("minRadius")).toBe(7);
     const svg = w.find("svg.map");
+    expect(svg.classes()).toContain("locked");
     vi.spyOn(svg.element, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 500, 350));
     window.dispatchEvent(new Event("resize"));
     await nextTick();

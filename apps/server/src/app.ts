@@ -9,6 +9,7 @@ import { healthRoutes } from "./routes/health.js";
 import { regionRoutes } from "./routes/regions.js";
 import { runRoutes } from "./routes/runs.js";
 import { statusRoutes } from "./routes/status.js";
+import { volcanoRoutes } from "./routes/volcanoes.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -68,5 +69,6 @@ export function buildApp({
   void app.register(statusRoutes);
   void app.register(runRoutes);
   void app.register(geoRoutes);
+  void app.register(volcanoRoutes);
   return app;
 }

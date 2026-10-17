@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_GEO_DIR, GEO_NAMES, loadGeoAssets } from "../../src/geo/assets.js";
 
 describe("loadGeoAssets", () => {
-  it("loads the three files with quoted sha1 ETags", () => {
+  it("loads every geo file with quoted sha1 ETags", () => {
     const assets = loadGeoAssets();
     expect([...assets.keys()]).toEqual([...GEO_NAMES]);
     for (const name of GEO_NAMES) {

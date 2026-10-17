@@ -11,13 +11,21 @@ import {
   CATALOG,
   CLOCK,
   SELECT,
+  SELECT_VOLCANO,
   SET_FILTER,
+  SET_VOLCANO_FILTER,
   STATUS,
   THEME,
+  VOLCANOES,
   ZONE,
 } from "../../src/lib/keys.js";
 import { createStatusPoll, type StatusPoll } from "../../src/lib/status.js";
 import { createTheme, type Theme } from "../../src/lib/theme.js";
+import {
+  createVolcanoStore,
+  type VolcanoFilter,
+  type VolcanoStore,
+} from "../../src/lib/volcanoes.js";
 import { fakeApi } from "./api.js";
 
 export interface Context {
@@ -28,6 +36,9 @@ export interface Context {
   theme: Theme;
   select: Mock<(id: string | null) => void>;
   setFilter: Mock<(f: EventFilter) => void>;
+  volcanoes: VolcanoStore;
+  selectVolcano: Mock<(number: number | null) => void>;
+  setVolcanoFilter: Mock<(f: VolcanoFilter) => void>;
   zone: Ref<Zone>;
   now: Date;
 }
@@ -48,9 +59,9 @@ export function fakeTheme(): Theme {
   });
 }
 
-/** A loaded catalog and polled status over a fake API, never ticking. */
+/** A loaded catalog and polled status over a fake API, never ticking; `volcanoes: true` also loads the volcano store. */
 export async function makeContext(
-  over: { api?: ApiClient; now?: Date; regionId?: string } = {},
+  over: { api?: ApiClient; now?: Date; regionId?: string; volcanoes?: boolean } = {},
 ): Promise<Context> {
   const api = over.api ?? fakeApi();
   const now = over.now ?? NOW;
@@ -65,6 +76,9 @@ export async function makeContext(
     { intervalMs: 1e9, doc: noDoc },
   );
   await status.poll();
+  const volcanoes = createVolcanoStore(api, () => now);
+  volcanoes.setRegion(catalog.region.value);
+  if (over.volcanoes === true) await volcanoes.load();
   return {
     api,
     catalog,
@@ -73,6 +87,9 @@ export async function makeContext(
     theme: fakeTheme(),
     select: vi.fn(),
     setFilter: vi.fn(),
+    volcanoes,
+    selectVolcano: vi.fn(),
+    setVolcanoFilter: vi.fn(),
     zone: ref<Zone>("utc"),
     now,
   };
@@ -93,6 +110,9 @@ export function mountWith(
       provide(THEME, ctx.theme);
       provide(SELECT, ctx.select);
       provide(SET_FILTER, ctx.setFilter);
+      provide(VOLCANOES, ctx.volcanoes);
+      provide(SELECT_VOLCANO, ctx.selectVolcano);
+      provide(SET_VOLCANO_FILTER, ctx.setVolcanoFilter);
       provide(ZONE, ctx.zone);
       return () => h(component, props);
     },

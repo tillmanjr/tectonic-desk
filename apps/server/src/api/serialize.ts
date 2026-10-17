@@ -3,11 +3,13 @@ import type {
   ApiEventDetail,
   ApiMechanism,
   ApiRun,
+  ApiVolcanoReport,
+  ApiVolcanoStatus,
   EventWithMechanisms,
   StoredEvent,
   StoredMechanism,
 } from "@tectonic/shared";
-import type { IngestRunRow } from "../db/schema.js";
+import type { IngestRunRow, VolcanoReportRow, VolcanoStatusRow } from "../db/schema.js";
 
 export const iso = (d: Date): string => d.toISOString();
 export const isoOrNull = (d: Date | null): string | null => (d === null ? null : d.toISOString());
@@ -79,6 +81,36 @@ export function toApiEventDetail(e: EventWithMechanisms): ApiEventDetail {
     lastSeen: iso(e.lastSeen),
     detailCheckedUpdated: isoOrNull(e.detailCheckedUpdated),
     usgs: e.raw,
+  };
+}
+
+export function toApiVolcanoStatus(r: VolcanoStatusRow): ApiVolcanoStatus {
+  return {
+    id: r.id,
+    source: r.source,
+    key: r.key,
+    number: r.number,
+    name: r.name,
+    level: r.level,
+    color: r.color,
+    noticeAt: isoOrNull(r.noticeAt),
+    synopsis: r.synopsis,
+    url: r.url,
+    observedAt: iso(r.observedAt),
+  };
+}
+
+export function toApiVolcanoReport(r: VolcanoReportRow): ApiVolcanoReport {
+  return {
+    id: r.id,
+    number: r.number,
+    name: r.name,
+    week: iso(r.week),
+    category: r.category,
+    title: r.title,
+    body: r.body,
+    url: r.url,
+    fetchedAt: iso(r.fetchedAt),
   };
 }
 

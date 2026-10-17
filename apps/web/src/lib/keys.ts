@@ -6,6 +6,7 @@ import type { EventFilter } from "./filters.js";
 import type { Zone } from "./format.js";
 import type { StatusPoll } from "./status.js";
 import type { Theme } from "./theme.js";
+import type { VolcanoFilter, VolcanoStore } from "./volcanoes.js";
 
 export const API: InjectionKey<ApiClient> = Symbol("api");
 export const CATALOG: InjectionKey<Catalog> = Symbol("catalog");
@@ -16,6 +17,13 @@ export const THEME: InjectionKey<Theme> = Symbol("theme");
 export const SELECT: InjectionKey<(id: string | null) => void> = Symbol("select");
 /** Replace the event filter (written to the URL by App). */
 export const SET_FILTER: InjectionKey<(f: EventFilter) => void> = Symbol("setFilter");
+export const VOLCANOES: InjectionKey<VolcanoStore> = Symbol("volcanoes");
+/** Select a GVP volcano number (opens the volcano panel) or null (closes it). */
+export const SELECT_VOLCANO: InjectionKey<(number: number | null) => void> =
+  Symbol("selectVolcano");
+/** Replace the volcano refine filter (written to the URL by App). */
+export const SET_VOLCANO_FILTER: InjectionKey<(f: VolcanoFilter) => void> =
+  Symbol("setVolcanoFilter");
 /** The zone every date and time is shown in. */
 export const ZONE: InjectionKey<Readonly<Ref<Zone>>> = Symbol("zone");
 

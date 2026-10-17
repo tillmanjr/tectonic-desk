@@ -10,6 +10,13 @@
   --border: #b9c2c9;
   --accent: #0a6a85;
   --plate: #7b4f9a;
+  --vc-recent: #d9442a;
+  --vc-historic: #e0a020;
+  --vc-holocene: #6b7f8f;
+  --vc-unknown: #b8c0c8;
+  --av-yellow: #d9a800;
+  --av-orange: #e8711c;
+  --av-red: #d81e1e;
   --qf-hist: #d81e1e;
   --qf-latest: #e07b00;
   --qf-late: #2e9e3c;
@@ -39,6 +46,13 @@
     --border: #3a4852;
     --accent: #55b6d1;
     --plate: #b48ad6;
+    --vc-recent: #ff7a5c;
+    --vc-historic: #ffc14d;
+    --vc-holocene: #93a7b8;
+    --vc-unknown: #5c6670;
+    --av-yellow: #ffd43b;
+    --av-orange: #ff9f45;
+    --av-red: #ff5b5b;
     --qf-hist: #ff6b6b;
     --qf-latest: #ffb455;
     --qf-late: #74dc80;
@@ -67,6 +81,13 @@
   --border: #3a4852;
   --accent: #55b6d1;
   --plate: #b48ad6;
+  --vc-recent: #ff7a5c;
+  --vc-historic: #ffc14d;
+  --vc-holocene: #93a7b8;
+  --vc-unknown: #5c6670;
+  --av-yellow: #ffd43b;
+  --av-orange: #ff9f45;
+  --av-red: #ff5b5b;
   --qf-hist: #ff6b6b;
   --qf-latest: #ffb455;
   --qf-late: #74dc80;
@@ -682,6 +703,125 @@ a {
   }
 }
 
+.hdr-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.pages {
+  display: flex;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+}
+.pages button {
+  font: 600 13px var(--f-ui);
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
+}
+.pages button[aria-current="page"] {
+  background: var(--ink);
+  color: var(--panel);
+}
+.filters .fsel {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-weight: 600;
+  margin-left: 6px;
+}
+.filters select {
+  font: 500 13px var(--f-data);
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 3px 6px;
+}
+.vcard .dot {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  border-radius: 50%;
+  font-size: 0;
+  margin-top: 5px;
+}
+.vcard:disabled {
+  cursor: default;
+}
+.vdetail h3 {
+  margin: 16px 0 6px;
+  font: 600 12px var(--f-ui);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.vdetail .summary {
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.vdetail .mag {
+  font-size: 22px;
+}
+.statuslist,
+.erlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+.statuslist li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 4px 0;
+}
+.statuslist .dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+}
+.erlist li {
+  margin: 3px 0;
+}
+.linkbtn {
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.strip {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 4px;
+}
+.report {
+  font-size: 13px;
+  margin: 6px 0;
+}
+.reportbody {
+  color: var(--muted);
+}
+.muted {
+  color: var(--muted);
+}
 .hdr-right {
   display: flex;
   gap: 10px;
@@ -984,7 +1124,8 @@ a {
     background: var(--accent);
     color: var(--panel);
   }
-  .tabs button:not([aria-selected="true"]):hover {
+  .tabs button:not([aria-selected="true"]):hover,
+  .pages button:not([aria-current="page"]):hover {
     background: color-mix(in srgb, var(--ink) 8%, transparent);
     color: var(--ink);
   }

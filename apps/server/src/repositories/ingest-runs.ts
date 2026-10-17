@@ -4,7 +4,14 @@ import type { Db } from "../db/client.js";
 import { ingestRuns, type IngestRunRow } from "../db/schema.js";
 
 export type { RunKind } from "@tectonic/shared";
-export const RUN_KINDS = ["feed_day", "feed_week", "backfill", "details"] as const;
+export const RUN_KINDS = [
+  "feed_day",
+  "feed_week",
+  "backfill",
+  "details",
+  "volcano_status",
+  "volcano_reports",
+] as const;
 
 export interface RunResult {
   ok: boolean;
@@ -82,6 +89,8 @@ export async function latestRuns(db: Db): Promise<Record<RunKind, IngestRunRow |
     feed_week: null,
     backfill: null,
     details: null,
+    volcano_status: null,
+    volcano_reports: null,
   };
   for (const row of rows) out[row.kind] = row;
   return out;
