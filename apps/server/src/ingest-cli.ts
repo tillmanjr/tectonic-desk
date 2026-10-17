@@ -3,22 +3,34 @@ import pino from "pino";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db/client.js";
 import { backfill } from "./ingest/backfill.js";
+import { parseBackfillArgs, positiveInt } from "./ingest/cli-args.js";
 import type { IngestContext } from "./ingest/context.js";
-import { syncDetails } from "./ingest/details.js";
+import { syncDetails, type DetailsOptions } from "./ingest/details.js";
 import { syncFeed } from "./ingest/feed.js";
 import { createUsgsClient } from "./usgs/client.js";
 
 const usage = `usage:
   ingest feed day|week
-  ingest details [--limit N]
-  ingest backfill --days N [--window-days N]`;
+  ingest details [--limit N] [--by-magnitude]
+  ingest backfill (--days N | --from DATE [--to DATE])
+                  [--min-magnitude M | --all-magnitudes]
+                  [--bbox minLon,minLat,maxLon,maxLat]
+                  [--force] [--skip-details] [--pause-ms N]`;
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,
   options: {
     days: { type: "string" },
-    "window-days": { type: "string" },
+    from: { type: "string" },
+    to: { type: "string" },
+    "min-magnitude": { type: "string" },
+    "all-magnitudes": { type: "boolean" },
+    bbox: { type: "string" },
+    force: { type: "boolean" },
+    "skip-details": { type: "boolean" },
+    "pause-ms": { type: "string" },
     limit: { type: "string" },
+    "by-magnitude": { type: "boolean" },
   },
 });
 
@@ -32,27 +44,20 @@ const ctx: IngestContext = {
   now: () => new Date(),
 };
 
-const int = (v: string | undefined, name: string): number | undefined => {
-  if (v === undefined) return undefined;
-  const n = Number(v);
-  if (!Number.isInteger(n) || n < 1) throw new Error(`${name} must be a positive integer`);
-  return n;
-};
-
 try {
   const [command, arg] = positionals;
   if (command === "feed" && (arg === "day" || arg === "week")) {
     const r = await syncFeed(ctx, arg);
     log.info(r, "feed done");
   } else if (command === "details") {
-    const limit = int(values.limit, "--limit");
-    const r = await syncDetails(ctx, limit === undefined ? {} : { limit });
+    const opts: DetailsOptions = {};
+    const limit = positiveInt(values.limit, "--limit");
+    if (limit !== undefined) opts.limit = limit;
+    if (values["by-magnitude"] === true) opts.order = "mag";
+    const r = await syncDetails(ctx, opts);
     log.info(r, "details done");
   } else if (command === "backfill") {
-    const days = int(values.days, "--days");
-    if (days === undefined) throw new Error("--days is required");
-    const windowDays = int(values["window-days"], "--window-days");
-    const r = await backfill(ctx, windowDays === undefined ? { days } : { days, windowDays });
+    const r = await backfill(ctx, parseBackfillArgs(values, new Date()));
     log.info(r, "backfill done");
   } else {
     console.error(usage);

@@ -14,7 +14,7 @@ const lon = z.number().min(-180).max(180);
 const lat = z.number().min(-90).max(90);
 
 /** `minLon,minLat,maxLon,maxLat`; minLon > maxLon crosses the antimeridian. */
-const bboxString = z
+export const bboxString = z
   .string()
   .transform((s) => s.split(",").map(Number))
   .pipe(z.tuple([lon, lat, lon, lat]))
