@@ -120,10 +120,12 @@ migrations on start. `docker compose --profile prod down` stops everything; the 
 ### Production: tectonicdesk.org on a DigitalOcean droplet
 
 Every push to the `release` branch runs `.github/workflows/deploy.yml`: lint, typecheck and tests,
-then both images are built and pushed to GitHub Container Registry
+then both images are built on freshly pulled base images and pushed to GitHub Container Registry
 (`ghcr.io/tillmanjr/tectonic-desk-server` and `-web`, tagged `release` and with the commit), then
-the droplet pulls them and restarts `deploy/docker-compose.prod.yml` behind Caddy, which holds the
-TLS certificate. `main` stays the integration branch; `git push origin main:release` (or a merge
+the droplet pulls them (and current caddy and postgres images) and restarts
+`deploy/docker-compose.prod.yml` behind Caddy, which holds the TLS certificate. The same workflow
+runs every Monday at 08:00 UTC (midnight or 1 am Pacific), and on demand from the Actions tab, so base images stay current
+between pushes. `main` stays the integration branch; `git push origin main:release` (or a merge
 into `release`) deploys. One-time setup:
 
 1. **Droplet.** Ubuntu 24.04, Basic 1 GB in SFO3 (about $6), your SSH key added. As root:
@@ -137,6 +139,20 @@ into `release`) deploys. One-time setup:
    mkdir -p /opt/tectonic-desk && chown deploy:deploy /opt/tectonic-desk
    ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
    ```
+
+   Once Cloudflare is in front (step 2), make the web ports answer Cloudflare only, so the origin
+   cannot be reached around the proxy. ufw alone cannot do this (Docker routes published ports past
+   it), so `deploy/cloudflare-firewall.sh` fills Docker's `DOCKER-USER` chain instead; the unit and
+   timer beside it re-apply the rules on boot and refresh the ranges weekly:
+
+   ```sh
+   cp deploy/cloudflare-firewall.sh /opt/tectonic-desk/ && chmod +x /opt/tectonic-desk/cloudflare-firewall.sh
+   cp deploy/cloudflare-firewall.service deploy/cloudflare-firewall.timer /etc/systemd/system/
+   systemctl daemon-reload && systemctl enable --now cloudflare-firewall.service cloudflare-firewall.timer
+   ```
+
+   Caddy sends HSTS, a Content Security Policy and the other hardening headers from
+   `deploy/Caddyfile`.
 
    Then, as `deploy`, create `/opt/tectonic-desk/.env`:
 

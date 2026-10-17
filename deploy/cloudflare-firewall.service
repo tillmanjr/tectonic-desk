@@ -1,0 +1,13 @@
+[Unit]
+Description=Web ports answer Cloudflare only (fills Docker's DOCKER-USER chain)
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/tectonic-desk/cloudflare-firewall.sh
+
+[Install]
+WantedBy=multi-user.target
