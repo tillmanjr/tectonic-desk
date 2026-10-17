@@ -119,9 +119,8 @@ const overview = computed(() => {
   };
 });
 
-/** Per-event mode: a stem per event, when the whole window is loaded. */
+/** Per-event mode: a stem per event; read only while `overview` is null. */
 const data = computed(() => {
-  if (overview.value !== null) return null;
   const region = catalog.requireRegion();
   const all = catalog.filtered.value;
   const evs = all.filter((e): e is Dated => e.mag !== null);

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import MagnitudeTimeChart from "../../src/components/MagnitudeTimeChart.vue";
-import { fakeApi, raisedApi } from "../support/api.js";
+import { fakeApi, RAISED_SUMMARY, raisedApi } from "../support/api.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 
@@ -78,6 +78,19 @@ describe("MagnitudeTimeChart", () => {
     ctx.zone.value = "local";
     await nextTick();
     expect(w.find(".cap").text()).toContain(" Bins are UTC.");
+  });
+  it("labels month and day bins by their start", async () => {
+    for (const [by, label] of [
+      ["month", "1964-01"],
+      ["day", "1964-01-01"],
+    ] as const) {
+      const api = raisedApi();
+      vi.mocked(api.summary).mockResolvedValue({ ...RAISED_SUMMARY, by });
+      const w = mountWith(MagnitudeTimeChart, await makeContext({ api, range: century }));
+      expect(w.find("circle.binmax title").text()).toBe(`${label}: 3,910 events, largest M8.4`);
+      expect(w.find(".cap").text()).toContain(`events per ${by} at M4.5+`);
+      expect(Number(w.find("rect.bin").attributes("width"))).toBeGreaterThanOrEqual(1);
+    }
   });
   it("marks the eras in per-event mode too, and only when they fall in the window", async () => {
     const ctx = await makeContext({

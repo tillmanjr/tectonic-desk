@@ -2,11 +2,11 @@ import type { ApiEventGrid } from "@tectonic/shared";
 import { scaleLog } from "d3-scale";
 import type { Polygon } from "geojson";
 
-/** Fill opacities of the legend ramp, lightest to darkest; the layer interpolates between the ends. */
-export const DENSITY_RAMP: readonly number[] = [0.08, 0.25, 0.42, 0.58, 0.75];
+const LOW = 0.08;
+const HIGH = 0.75;
 
-const LOW = DENSITY_RAMP[0] ?? 0.08;
-const HIGH = DENSITY_RAMP[DENSITY_RAMP.length - 1] ?? 0.75;
+/** Fill opacities of the legend ramp, lightest to darkest; the layer interpolates between the ends. */
+export const DENSITY_RAMP: readonly number[] = [LOW, 0.25, 0.42, 0.58, HIGH];
 
 /** Opacity for a cell count, log-scaled from 1 to the grid's largest count. */
 export function densityOpacity(max: number): (count: number) => number {
