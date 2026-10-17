@@ -4,7 +4,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 
 ## Repo rules
 
-- Branch workflow: `main` is the base and is never committed to directly. Each change goes on its own branch, is pushed, and reaches `main` through a pull request (CI runs on PRs). Deploying is merging `main` into `release` (`git push origin main:release`), which triggers the Deploy workflow.
+- Branch workflow: `main` is the base and is never committed to directly. Each change goes on its own branch, is pushed, and reaches `main` through a pull request (CI runs once per PR, on the merge commit, and gates the merge). Deploying is a pull request from `main` into `release`; merging it triggers the Deploy workflow, which runs its own check before building images.
 - `quake/` is the frozen prototype. Never modify it. Its `CLAUDE.md` holds the verified focal-mechanism conventions and USGS endpoint notes; consult it, do not edit it.
 - pnpm workspace: `apps/server` (Fastify, Drizzle, Postgres, USGS ingest, API), `apps/web` (Vue 3 + Vite), `packages/shared` (domain and API types, mechanism math, no third-party runtime deps).
 - Specs live in `docs/superpowers/specs`, plans in `docs/superpowers/plans`. Each sub-project (Foundation, Ingest, API, Front end) gets its own.
@@ -56,7 +56,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
   projected vertices (`faultIndex` in `src/lib/faults.ts`) instead of per-feature hit paths; the svg
   skips the lookup when the pointer is inside a `[data-hit]` group (plates, events).
 - `.vue` files are linted type-aware through `@vue/eslint-config-typescript`; `vue-tsc` typechecks. Interfaces that tests spy on (`ApiClient`) use function-typed properties, not methods, so the unbound-method rule stays on.
-- Production: `deploy/nginx.conf`, the two Dockerfiles and the compose `prod` profile. nginx serves `dist/` and proxies `/api` to the `server` container. The live site (tectonicdesk.org) runs `deploy/docker-compose.prod.yml` with Caddy for TLS on a DigitalOcean droplet; `.github/workflows/deploy.yml` builds and pushes the images to GHCR and rolls them out on every push to `release`, `ci.yml` checks `main` and PRs. Keep `main` green; releasing is `git push origin main:release`.
+- Production: `deploy/nginx.conf`, the two Dockerfiles and the compose `prod` profile. nginx serves `dist/` and proxies `/api` to the `server` container. The live site (tectonicdesk.org) runs `deploy/docker-compose.prod.yml` with Caddy for TLS on a DigitalOcean droplet; `.github/workflows/deploy.yml` builds and pushes the images to GHCR and rolls them out on every push to `release`, `ci.yml` checks pull requests into `main` and `release` (no push trigger, so a merge is checked once). Keep `main` green; releasing is a pull request from `main` into `release`.
 
 ## Commands
 
