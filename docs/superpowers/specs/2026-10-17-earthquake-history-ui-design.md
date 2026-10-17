@@ -14,23 +14,23 @@ breaks in the record marked where they fall.
 
 ## Decisions
 
-| Topic            | Decision                                                                                                                                                                                                    |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Date bounds      | The date inputs accept 1900-01-01 (`CATALOG_START`) to today. `RANGE_DAYS` (90) goes away.                                                                                                                  |
-| Span presets     | A `Span…` select in the Refine bar sets the start date relative to the end: 30 days, 90 days, 1 year, 10 years, 50 years, since 1900. It is an action, not state: it snaps back to its placeholder.         |
-| Budget           | `EVENT_LIMIT` stays 2,000 rows per list request.                                                                                                                                                            |
-| Requested floor  | `max(region.minMag, filter.minMag)` is sent to the server for the window query. Today the filter minimum is applied only in the browser; sending it lets the floor do its work on long windows.             |
-| Effective floor  | Chosen from the summary's magnitude bands: the requested floor if the window total fits the budget, else the lowest of M5, M6, M7 above the requested floor whose count fits; M7 if none does.              |
-| Overview         | The window is "raised" when the effective floor is above the requested one. Then the map draws a density grid at the requested floor under the markers, and the time chart draws per-bin counts and maxima. |
-| Grid cell        | 2° for the global view, 0.5° for the West Coast view (`gridCellFor(region)`). Both are among the server's `GRID_CELLS`.                                                                                     |
-| Grid interaction | None. Cells have `pointer-events: none`; markers, plates and faults behave as before. The legend explains the shading.                                                                                      |
-| Era marks        | Dashed verticals at 1964, 1973 and 1976 in the time chart whenever they fall inside the x-domain, in both chart modes, with labels and a caption explaining what changed in the record.                     |
-| Magnitude input  | Shows the requested floor (what the reader controls). The effective floor appears in the Refine note and the map count line (what the page did).                                                            |
-| Table            | Unchanged beyond its heading: "N of TOTAL events" where TOTAL is the window total at the requested floor.                                                                                                   |
-| Status line      | Unchanged. It describes the catalogue (events since the oldest), not the window; window totals live next to the window controls.                                                                            |
-| Animation        | Steps by day up to 120 days, by month (30 days) up to 15 years, by year (365 days) beyond. The speed input and step buttons name the unit.                                                                  |
-| Coverage route   | Not used in this phase. The status line's "events since" already says how far back the catalogue reaches while the backfill runs.                                                                           |
-| Count route      | Not used by the web; the summary's bin counts sum to the same total in one request.                                                                                                                         |
+| Topic            | Decision                                                                                                                                                                                                                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date bounds      | The date inputs accept 1900-01-01 (`CATALOG_START`) to today. `RANGE_DAYS` (90) goes away.                                                                                                                                                                                                                                             |
+| Span presets     | A length select in the Refine bar, before the dates, shows the preset the dates match (30 days, 90 days, 1 year, 10 years, 50 years, since 1900) or `Custom`. Picking one sets the start relative to the end; changing the end while a preset matches moves the start with it. (Revised from a stateless `Span…` action after review.) |
+| Budget           | `EVENT_LIMIT` stays 2,000 rows per list request.                                                                                                                                                                                                                                                                                       |
+| Requested floor  | `max(region.minMag, filter.minMag)` is sent to the server for the window query. Today the filter minimum is applied only in the browser; sending it lets the floor do its work on long windows.                                                                                                                                        |
+| Effective floor  | Chosen from the summary's magnitude bands: the requested floor if the window total fits the budget, else the lowest of M5, M6, M7 above the requested floor whose count fits; M7 if none does.                                                                                                                                         |
+| Overview         | The window is "raised" when the effective floor is above the requested one. Then the map draws a density grid at the requested floor under the markers, and the time chart draws per-bin counts and maxima.                                                                                                                            |
+| Grid cell        | 2° for the global view, 0.5° for the West Coast view (`gridCellFor(region)`). Both are among the server's `GRID_CELLS`.                                                                                                                                                                                                                |
+| Grid interaction | None. Cells have `pointer-events: none`; markers, plates and faults behave as before. The legend explains the shading.                                                                                                                                                                                                                 |
+| Era marks        | Dashed verticals at 1964, 1973 and 1976 in the time chart whenever they fall inside the x-domain, in both chart modes, with labels and a caption explaining what changed in the record.                                                                                                                                                |
+| Magnitude input  | Shows the requested floor (what the reader controls). The effective floor appears in the Refine note and the map count line (what the page did).                                                                                                                                                                                       |
+| Table            | Unchanged beyond its heading: "N of TOTAL events" where TOTAL is the window total at the requested floor.                                                                                                                                                                                                                              |
+| Status line      | Unchanged. It describes the catalogue (events since the oldest), not the window; window totals live next to the window controls.                                                                                                                                                                                                       |
+| Animation        | Steps by day up to 120 days, by month (30 days) up to 15 years, by year (365 days) beyond. The speed input and step buttons name the unit.                                                                                                                                                                                             |
+| Coverage route   | Not used in this phase. The status line's "events since" already says how far back the catalogue reaches while the backfill runs.                                                                                                                                                                                                      |
+| Count route      | Not used by the web; the summary's bin counts sum to the same total in one request.                                                                                                                                                                                                                                                    |
 
 ## 1. Filters and dates (`src/lib/filters.ts`, `FilterBar.vue`)
 
@@ -42,16 +42,18 @@ breaks in the record marked where they fall.
 - `spanStart(until: string, days: number | null): string` returns the calendar day `days`
   before `until` (`CATALOG_START` when `days` is null), never earlier than `CATALOG_START`.
   Day arithmetic is done on the YYYY-MM-DD string through `Date.UTC`, so it is zone-free.
-- FilterBar adds the select after the date inputs:
-  `<select aria-label="Set the window span" @change="pickSpan">` with a disabled placeholder
-  option `Span…` selected, then one option per `SPANS` entry. `pickSpan` calls
-  `setFilter({ ...filter, since: spanStart(span.until, days) })`, keeping `until`, then resets
-  the select's value to the placeholder.
+- FilterBar puts the select between the `Window (zone)` label and the date inputs:
+  `<select aria-label="Window length" :value="presetIndex" @change="pickSpan">` with a disabled
+  `Custom` option (value `""`) and one option per `SPANS` entry. `presetIndex` is the first
+  `SPANS` entry whose `spanStart(span.until, days)` equals `span.since`, else -1. `pickSpan`
+  calls `setFilter({ ...filter, since: spanStart(span.until, days) })`, keeping `until`.
+  `changeDate("until")` keeps a matching preset by setting `since` from the new end; a new
+  `since` is simply stored.
 - FilterBar adds a note line (`<p class="fnote">`) rendered only when the catalog reports a
   raised floor:
   `This window holds 61,204 events at M4.5+. Markers, table and the magnitude charts show the
-1,842 at M6+ so the page stays responsive; the density shading and the time chart cover all of
-them.` Numbers through `fmtInt`, magnitudes through `fmtMag` without trailing zeros for whole
+1,842 at M6+ so the page stays responsive; the time chart covers all of them, and the map's
+Density toggle shades where they fall.` Numbers through `fmtInt`, magnitudes through `fmtMag` without trailing zeros for whole
   numbers (`M6+`, `M4.5+`): a small `fmtFloor(m)` helper in `format.ts` returns `M${m}+` using
   `String(m)`.
 
@@ -144,7 +146,7 @@ null; `opacity = scaleLog().domain([1, max]).range([0.08, 0.75]).clamp(true)(cou
 where `max` is the largest count in the grid. The template is
 `<g class="density" style="pointer-events: none"><path v-for … :d :fill-opacity style="fill: var(--accent)" /></g>`.
 
-QuakeMap adds a `showDensity` ref (true) and, in `tools`, a `Density` checkbox rendered only when
+QuakeMap adds a `showDensity` ref (false, so the shading is opt-in) and, in `tools`, a `Density` checkbox rendered only when
 `catalog.raised` is true. In `layers`, `<MapDensity v-if="catalog.raised.value && showDensity && stats.grid !== null" :path="mv.view.value.path" :grid="stats.grid" />`
 goes before `MapEvents` so markers stay on top.
 

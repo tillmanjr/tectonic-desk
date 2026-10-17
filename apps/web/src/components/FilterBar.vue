@@ -25,12 +25,17 @@ const active = computed(() => isActive(catalog.filter.value));
 const bounds = computed(() => dateBoundsFor(clock.now.value, zone.value));
 /** The days in force, so the inputs always show the window being queried. */
 const span = computed(() => resolveDates(catalog.filter.value, clock.now.value, zone.value));
+/** The span preset the days in force match, or -1 for a custom range. */
+const presetIndex = computed(() =>
+  SPANS.findIndex((s) => spanStart(span.value.until, s.days) === span.value.since),
+);
+const preset = computed(() => SPANS[presetIndex.value]);
 const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
 /** Why the page shows fewer events than the window holds. */
 const note = computed(() => {
   const s = catalog.stats.value;
   if (s === null || !catalog.raised.value) return null;
-  return `This window holds ${fmtInt(s.total)} events at ${fmtFloor(catalog.requested.value)}. Markers, table and the magnitude charts show the ${fmtInt(catalog.windowEvents.value.length)} at ${fmtFloor(catalog.floor.value)} so the page stays responsive; the density shading and the time chart cover all of them.`;
+  return `This window holds ${fmtInt(s.total)} events at ${fmtFloor(catalog.requested.value)}. Markers, table and the magnitude charts show the ${fmtInt(catalog.windowEvents.value.length)} at ${fmtFloor(catalog.floor.value)} so the page stays responsive; the time chart covers all of them, and the map's Density toggle shades where they fall.`;
 });
 
 const text = (k: NumberKey): string => {
@@ -45,15 +50,19 @@ function changeNumber(k: NumberKey, ev: Event): void {
   const next: EventFilter = { ...catalog.filter.value, [k]: parseBound(inputValue(ev)) };
   setFilter(next);
 }
+/** A new end date keeps the span in force by moving the start with it; a new start makes the range custom. */
 function changeDate(k: DateKey, ev: Event): void {
   const next: EventFilter = { ...catalog.filter.value, [k]: parseDate(inputValue(ev)) };
+  const keep = k === "until" ? preset.value : undefined;
+  if (keep !== undefined) {
+    next.since = spanStart(resolveDates(next, clock.now.value, zone.value).until, keep.days);
+  }
   setFilter(next);
 }
 function pickSpan(ev: Event): void {
   const target = ev.target;
   if (!(target instanceof HTMLSelectElement)) return;
   const pick = SPANS[Number(target.value)];
-  target.value = "";
   if (pick === undefined) return;
   setFilter({ ...catalog.filter.value, since: spanStart(span.value.until, pick.days) });
 }
@@ -109,7 +118,18 @@ function clear(): void {
       aria-label="Maximum depth"
       @change="changeNumber('maxDepth', $event)"
     />
-    <span class="flabel fdates">Dates ({{ zoneName }})</span>
+    <span class="flabel fdates">Window ({{ zoneName }})</span>
+    <select
+      class="fspan"
+      :value="presetIndex < 0 ? '' : String(presetIndex)"
+      aria-label="Window length"
+      title="How long the window is. Pick a length to set the from date; changing the to date keeps the length."
+      @change="pickSpan"
+    >
+      <option value="" disabled>Custom</option>
+      <option v-for="(s, i) in SPANS" :key="s.label" :value="String(i)">{{ s.label }}</option>
+    </select>
+    <span class="fto">from</span>
     <input
       type="date"
       class="fdate"
@@ -129,10 +149,6 @@ function clear(): void {
       aria-label="To date"
       @change="changeDate('until', $event)"
     />
-    <select class="fspan" value="" aria-label="Set the window span" @change="pickSpan">
-      <option value="" disabled selected>Span…</option>
-      <option v-for="(s, i) in SPANS" :key="s.label" :value="String(i)">{{ s.label }}</option>
-    </select>
     <button type="button" class="fclear" :disabled="!active" @click="clear">Reset</button>
     <p v-if="note !== null" class="fnote">{{ note }}</p>
   </section>

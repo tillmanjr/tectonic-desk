@@ -25,7 +25,7 @@ const mv = useMapView({
   animate: () => props.animate,
 });
 const showMech = ref(true);
-const showDensity = ref(true);
+const showDensity = ref(false);
 /** The window's density grid, present only when the floor was raised. */
 const density = computed(() => {
   const s = catalog.stats.value;
