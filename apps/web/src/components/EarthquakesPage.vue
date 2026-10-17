@@ -7,16 +7,14 @@ import MagnitudeTimeChart from "./MagnitudeTimeChart.vue";
 import MajorEvents from "./MajorEvents.vue";
 import QuakeMap from "./QuakeMap.vue";
 import StatsStrip from "./StatsStrip.vue";
-import { CATALOG, useInjected } from "../lib/keys.js";
-import { majorLabel } from "../lib/stats.js";
+import { SETTINGS, useInjected } from "../lib/keys.js";
 
-const catalog = useInjected(CATALOG);
+const settings = useInjected(SETTINGS);
 </script>
 
 <template>
   <StatsStrip />
-  <p class="sectionlabel">{{ majorLabel(catalog.requireRegion()) }}</p>
-  <MajorEvents />
+  <MajorEvents :rows="settings.current.value.cardRows.alone" />
   <FilterBar />
   <QuakeMap />
   <section class="grid2">

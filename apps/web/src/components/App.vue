@@ -30,11 +30,13 @@ import {
   SELECT_VOLCANO,
   SET_FILTER,
   SET_VOLCANO_FILTER,
+  SETTINGS,
   STATUS,
   THEME,
   VOLCANOES,
   ZONE,
 } from "../lib/keys.js";
+import { createSettings } from "../lib/settings.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
 import {
@@ -48,6 +50,7 @@ import { pagePath, type Page } from "../router.js";
 const api = inject(API, null) ?? createApiClient((input, init) => fetch(input, init));
 const clock = inject(CLOCK, null) ?? createClock();
 const theme = inject(THEME, null) ?? createTheme();
+const settings = inject(SETTINGS, null) ?? createSettings();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
@@ -59,6 +62,7 @@ const status = createStatusPoll(api, now, () => {
 provide(API, api);
 provide(CLOCK, clock);
 provide(THEME, theme);
+provide(SETTINGS, settings);
 provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);

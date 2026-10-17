@@ -286,6 +286,18 @@ a:focus-visible,
   font-weight: 600;
   margin: 0 0 -4px;
 }
+.sectionlabel .more {
+  margin-left: 8px;
+  font: 600 11px var(--f-ui);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--muted);
+  padding: 0;
+  cursor: pointer;
+}
 .mapcard {
   background: var(--panel);
   border: 1px solid var(--line);

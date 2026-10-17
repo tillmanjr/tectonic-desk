@@ -4,7 +4,8 @@ import { defineComponent, h, onMounted, provide } from "vue";
 import { createMemoryHistory, RouterView } from "vue-router";
 import type { ApiClient } from "../../src/lib/api.js";
 import { createClock } from "../../src/lib/clock.js";
-import { API, CLOCK, SELECT, THEME, useInjected } from "../../src/lib/keys.js";
+import { API, CLOCK, SELECT, SETTINGS, THEME, useInjected } from "../../src/lib/keys.js";
+import { createSettings } from "../../src/lib/settings.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, status } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
@@ -25,6 +26,7 @@ async function mountApp(path = "/", api: ApiClient = fakeApi()) {
         createClock(1e9, () => NOW),
       );
       provide(THEME, theme);
+      provide(SETTINGS, createSettings(null));
       return () => h(RouterView);
     },
   });
