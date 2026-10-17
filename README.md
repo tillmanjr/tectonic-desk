@@ -120,10 +120,12 @@ migrations on start. `docker compose --profile prod down` stops everything; the 
 ### Production: tectonicdesk.org on a DigitalOcean droplet
 
 Every push to the `release` branch runs `.github/workflows/deploy.yml`: lint, typecheck and tests,
-then both images are built and pushed to GitHub Container Registry
+then both images are built on freshly pulled base images and pushed to GitHub Container Registry
 (`ghcr.io/tillmanjr/tectonic-desk-server` and `-web`, tagged `release` and with the commit), then
-the droplet pulls them and restarts `deploy/docker-compose.prod.yml` behind Caddy, which holds the
-TLS certificate. `main` stays the integration branch; `git push origin main:release` (or a merge
+the droplet pulls them (and current caddy and postgres images) and restarts
+`deploy/docker-compose.prod.yml` behind Caddy, which holds the TLS certificate. The same workflow
+runs every Sunday at 09:00 UTC, and on demand from the Actions tab, so base images stay current
+between pushes. `main` stays the integration branch; `git push origin main:release` (or a merge
 into `release`) deploys. One-time setup:
 
 1. **Droplet.** Ubuntu 24.04, Basic 1 GB in SFO3 (about $6), your SSH key added. As root:
