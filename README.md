@@ -101,21 +101,22 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   the map, catalog and charts; the summary tiles and major events stay unfiltered. Filters live in
   the URL (`minMag`, `maxMag`, `minDepth`, `maxDepth`); the magnitude minimum cannot go below the
   view's floor, and the b-value's Mc rises with it.
-- A date range (from, to; inclusive calendar days) loads that window from the server for the map,
-  catalog and charts. The inputs always show the window in force: "from" defaults to thirty days
-  before today and "to" to today, and the magnitude minimum shows the view's floor; Reset returns
-  to those defaults; only explicit bounds go in the URL (`since`, `until`). Dates reach back to
-  1900-01-01, and a "Span…" select sets the start 30 or 90 days, 1, 10 or 50 years before the end,
-  or at 1900. The header's "Times" button switches every date and time on the page, and the way
-  the date filter is read, between UTC (default) and the browser's zone; it is kept in the URL as
-  `tz=local`.
+- A window (a length, from, to; inclusive calendar days) loads that span from the server for the
+  map, catalog and charts. The inputs always show the window in force: "from" defaults to thirty
+  days before today and "to" to today, and the magnitude minimum shows the view's floor; Reset
+  returns to those defaults; only explicit bounds go in the URL (`since`, `until`). Dates reach
+  back to 1900-01-01. The length select reads the dates (30 or 90 days, 1, 10 or 50 years, since
+  1900, else Custom); picking a length sets "from" that far before "to", and changing "to" while a
+  length is in force moves "from" with it. The header's "Times" button switches every date and
+  time on the page, and the way the date filter is read, between UTC (default) and the browser's
+  zone; it is kept in the URL as `tz=local`.
 - Long windows stay within a 2,000-event budget. The page first asks `GET /api/events/summary` for
   the window at the floor in force; if the total fits, every event is loaded, otherwise the marker
   floor is raised to M5, M6 or M7 (the lowest band that fits) and the page says so under the Refine
-  bar and in the map's count line. In that overview mode the map shades `GET /api/events/grid`
-  cells (2° globally, 0.5° on the West Coast) under the markers, the time chart shows events per
-  day, month or year with the largest magnitude in each, and the table and magnitude charts use the
-  raised floor (the b-value's Mc follows it).
+  bar and in the map's count line. In that overview mode the map offers a Density toggle (off by
+  default) that shades `GET /api/events/grid` cells (2° globally, 0.5° on the West Coast) under
+  the markers, the time chart shows events per day, month or year with the largest magnitude in
+  each, and the table and magnitude charts use the raised floor (the b-value's Mc follows it).
 - The time chart marks the breaks in the record whenever they fall inside the window: 1964 (WWSSN,
   ISC), 1973 (NEIC PDE enters ComCat) and 1976 (Global CMT). A step in the counts at those lines is
   detection, not seismicity.
