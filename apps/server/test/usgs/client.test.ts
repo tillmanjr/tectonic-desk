@@ -55,7 +55,29 @@ describe("createUsgsClient", () => {
       limit: 20000,
     });
     expect(reqs[0]?.url).toBe(
-      "https://usgs.test/fdsnws/event/1/query?format=geojson&starttime=2026-09-01T00%3A00%3A00.000Z&endtime=2026-10-01T00%3A00%3A00.000Z&minmagnitude=2.5&orderby=time-asc&limit=20000",
+      "https://usgs.test/fdsnws/event/1/query?format=geojson&starttime=2026-09-01T00%3A00%3A00.000Z&endtime=2026-10-01T00%3A00%3A00.000Z&orderby=time-asc&limit=20000&minmagnitude=2.5",
+    );
+  });
+
+  it("sends the floor and bbox only when given", async () => {
+    const reqs: Request[] = [];
+    const fetch = fetchReturning(200, { features: [] }, reqs);
+    const client = createUsgsClient({ ...base, fetch });
+    const starttime = new Date("2020-01-01T00:00:00Z");
+    const endtime = new Date("2020-02-01T00:00:00Z");
+    await client.fetchQuery({ starttime, endtime, limit: 5 });
+    expect(reqs[0]?.url).not.toContain("minmagnitude");
+    expect(reqs[0]?.url).not.toContain("minlatitude");
+    await client.fetchQuery({
+      starttime,
+      endtime,
+      limit: 5,
+      minmagnitude: 4.5,
+      bbox: { minLon: -136, minLat: 27, maxLon: -104, maxLat: 53 },
+    });
+    expect(reqs[1]?.url).toContain("minmagnitude=4.5");
+    expect(reqs[1]?.url).toContain(
+      "minlatitude=27&maxlatitude=53&minlongitude=-136&maxlongitude=-104",
     );
   });
 

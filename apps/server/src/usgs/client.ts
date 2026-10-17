@@ -1,3 +1,4 @@
+import type { BBox } from "@tectonic/shared";
 import type { z } from "zod";
 import {
   detailDocumentSchema,
@@ -11,7 +12,10 @@ export type FeedKind = "2.5_day" | "2.5_week";
 export interface QueryParams {
   starttime: Date;
   endtime: Date;
-  minmagnitude: number;
+  /** Omitted = all magnitudes. */
+  minmagnitude?: number;
+  /** Must not cross the antimeridian; fdsnws has no wrap-around box. */
+  bbox?: BBox;
   limit: number;
 }
 
@@ -69,17 +73,22 @@ export function createUsgsClient(opts: UsgsClientOptions): UsgsClient {
         `${base}/fdsnws/event/1/query?${new URLSearchParams({ eventid: eventId, format: "geojson" }).toString()}`,
         detailDocumentSchema,
       ),
-    fetchQuery: (p) =>
-      getJson(
-        `${base}/fdsnws/event/1/query?${new URLSearchParams({
-          format: "geojson",
-          starttime: p.starttime.toISOString(),
-          endtime: p.endtime.toISOString(),
-          minmagnitude: String(p.minmagnitude),
-          orderby: "time-asc",
-          limit: String(p.limit),
-        }).toString()}`,
-        feedDocumentSchema,
-      ),
+    fetchQuery: (p) => {
+      const q = new URLSearchParams({
+        format: "geojson",
+        starttime: p.starttime.toISOString(),
+        endtime: p.endtime.toISOString(),
+        orderby: "time-asc",
+        limit: String(p.limit),
+      });
+      if (p.minmagnitude !== undefined) q.set("minmagnitude", String(p.minmagnitude));
+      if (p.bbox) {
+        q.set("minlatitude", String(p.bbox.minLat));
+        q.set("maxlatitude", String(p.bbox.maxLat));
+        q.set("minlongitude", String(p.bbox.minLon));
+        q.set("maxlongitude", String(p.bbox.maxLon));
+      }
+      return getJson(`${base}/fdsnws/event/1/query?${q.toString()}`, feedDocumentSchema);
+    },
   };
 }
