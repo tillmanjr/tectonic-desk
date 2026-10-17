@@ -20,11 +20,11 @@ existing `GET /api/geo/:name`:
 
 - `volcanoes.json`: `Volcano[]` from `Smithsonian_VOTW_Holocene_Volcanoes`:
   `{ number, name, country, region, subregion, lat, lon, elevationM, type, landform, rockType,
-  tectonicSetting, lastEruptionYear (number | null), evidence, summary }`.
+tectonicSetting, lastEruptionYear (number | null), evidence, summary }`.
 - `eruptions.json`: `Eruption[]` from `Smithsonian_VOTW_Holocene_Eruptions`, with `continuing`
   joined from `E3WebApp_Eruptions1960` by eruption number:
   `{ number, volcano, activity, vei (number | null), veiModifier, startYear, startMonth,
-  startDay, startUncertainty, endYear, endMonth, endDay, continuing }`.
+startDay, startUncertainty, endYear, endMonth, endDay, continuing }`.
 
 Both carry a header `{ source, release, pulledAt }` via a sibling `volcanoes-meta.json`? No:
 each file is `{ meta: { source, pulledAt }, items: [...] }`. `data/geo/README.md` records
@@ -39,7 +39,7 @@ Tables (new migration):
   volcanoID), `number int null` (GVP number; GeoNet mapped by a 12-row table in code),
   `name text, level text` (USGS alert level or GeoNet level 0..5 as text), `color text null`
   (aviation colour), `noticeAt timestamptz null, synopsis text null, url text null,
-  observedAt timestamptz not null`. One row per observed change: the poll compares the
+observedAt timestamptz not null`. One row per observed change: the poll compares the
   fetched state with the latest row per `(source, key)` and inserts only when `level`,
   `color` or `noticeAt` differ. Index on `(source, key, observedAt desc)`.
 - `volcano_reports`: `id serial, number int, name text, week date` (the report's Wednesday),
@@ -61,7 +61,7 @@ Sources (`src/volcano/client.ts`, zod schemas in `src/volcano/schema.ts`, parser
   browser-like User-Agent. It was 403 from both the dev machine and the droplet on
   2026-10-17; a non-2xx is a failed run (`ok: false`, error text), never a crash, and the UI
   treats "no reports" as a state. Items parse to `(number from the link's vn=, name, week
-  from pubDate, category from the item's section, title, body)`.
+from pubDate, category from the item's section, title, body)`.
 
 ### API (`src/routes/volcanoes.ts`, DTOs in `packages/shared/src/api.ts`)
 
@@ -72,7 +72,7 @@ Sources (`src/volcano/client.ts`, zod schemas in `src/volcano/schema.ts`, parser
 - `GET /api/volcanoes/reports?weeks=4` (1..26): entries for the latest N report weeks.
   Cache 300 s.
 - `GET /api/volcanoes/:number`: `{ statuses (history for that number, newest first),
-  reports (all weeks) }`. 404 when the number is not a positive integer. Cache 60 s.
+reports (all weeks) }`. 404 when the number is not a positive integer. Cache 60 s.
 - `/api/status` gains `runs.volcano_status` and `runs.volcano_reports`.
 
 ## Front end
