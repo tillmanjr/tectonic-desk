@@ -42,8 +42,6 @@ describe("windows", () => {
 
   it("formats a bbox key the way the API spells it", () => {
     expect(bboxKey(undefined)).toBeNull();
-    expect(bboxKey({ minLon: -136, minLat: 27, maxLon: -104, maxLat: 53 })).toBe(
-      "-136,27,-104,53",
-    );
+    expect(bboxKey({ minLon: -136, minLat: 27, maxLon: -104, maxLat: 53 })).toBe("-136,27,-104,53");
   });
 });

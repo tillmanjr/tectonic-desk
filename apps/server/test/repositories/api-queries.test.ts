@@ -125,8 +125,13 @@ describe.skipIf(!docker)("API repository reads", () => {
 
   it("counts, summarises by period with magnitude bands, and grids events under the list filters", async () => {
     const at = (s: string) => new Date(s);
-    const ev = (id: string, time: string, mag: number | null, latitude: number, longitude: number) =>
-      makeEvent({ id, time: at(time), mag, latitude, longitude });
+    const ev = (
+      id: string,
+      time: string,
+      mag: number | null,
+      latitude: number,
+      longitude: number,
+    ) => makeEvent({ id, time: at(time), mag, latitude, longitude });
     await upsertEvents(t.db, [
       ev("p1", "2024-03-01T00:00:00Z", 3.9, 10.2, 20.7),
       ev("p2", "2024-03-02T00:00:00Z", 4.5, 10.9, 20.1),

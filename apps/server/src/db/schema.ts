@@ -152,9 +152,7 @@ export const catalogWindows = pgTable(
     completedAt: timestamp("completed_at", tz).notNull(),
   },
   (t) => [
-    unique("catalog_windows_key_uq")
-      .on(t.fromTime, t.toTime, t.minMag, t.bbox)
-      .nullsNotDistinct(),
+    unique("catalog_windows_key_uq").on(t.fromTime, t.toTime, t.minMag, t.bbox).nullsNotDistinct(),
     index("catalog_windows_from_idx").on(t.fromTime),
   ],
 );

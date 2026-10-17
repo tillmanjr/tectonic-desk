@@ -1,9 +1,4 @@
-import type {
-  ApiEventCount,
-  ApiEventGrid,
-  ApiEventList,
-  ApiEventSummary,
-} from "@tectonic/shared";
+import type { ApiEventCount, ApiEventGrid, ApiEventList, ApiEventSummary } from "@tectonic/shared";
 import type { FastifyPluginCallback } from "fastify";
 import { cacheFor } from "../api/cache.js";
 import { notFound } from "../api/errors.js";

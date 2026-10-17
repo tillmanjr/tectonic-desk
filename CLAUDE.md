@@ -21,6 +21,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 - Ingest code takes an `IngestContext { db, usgs, log, now }`; tests inject a stub USGS client (`test/support/usgs-stub.ts`) and a fixed clock.
 - USGS feed properties are numbers; product properties are strings. Parsers live in `apps/server/src/usgs/parse.ts`. Fixtures under `apps/server/test/fixtures/usgs` are trimmed real responses from 2026-10-13.
 - Mechanism conventions from `quake/CLAUDE.md` still apply: percent-double-couple stored as a fraction, planes reconstructed from T and P axes when absent and flagged `planes_reconstructed`.
+- Backfill: `ingest/backfill.ts` walks `windowsBetween(from, to)` (`ingest/windows.ts`: UTC calendar months from 1970, years before; never clipped) newest first, skips windows `windowCovered` in `catalog_windows`, and records a window only when it ended `SETTLE_DAYS` (30) before the run. Page requests go through `withRetry` (`ingest/retry.ts`, 429/5xx/network, 5 attempts doubling from 5 s) and an injectable `sleep`. `upsertEvents` deletes rows named in an incoming event's `ids` aliases (`merged`) and bumps `last_seen` at most hourly. CLI flags are parsed by the pure `ingest/cli-args.ts`.
 
 ## API
 
@@ -29,6 +30,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 - Volcanoes: `src/geo/gvp.ts` builds the reference files from GVP's WFS (`geo:volcanoes`); `src/volcano/{schema,client,parse}.ts` read USGS HANS, GeoNet and the weekly-report RSS without merging agency scales; `repositories/volcano-status.ts` stores one row per status change and treats a volcano's first row as a baseline, not a change; `ingest/volcanoes.ts` runs as extra scheduler jobs (`jobs` option, own lanes). Routes in `routes/volcanoes.ts`.
 - Route handlers throw `HttpError` (`badRequest(issues)`, `notFound()`); the app-level handler renders `{ error, issues? }`. Query parsing goes through `parseOrThrow` in `src/api/schemas.ts`.
 - Every successful response sets `Cache-Control` via `cacheFor(reply, seconds)`.
+- Aggregates (`/api/events/count|summary|grid`) and `/api/catalog/coverage` take the list filters through `parseEventsFilter` (a strict object, so `limit` is a 400 there); `summarizeEvents` and `gridEvents` group by ordinal (`group by 1`) so parameterised expressions match.
 - `@fastify/rate-limit` runs globally (`RATE_LIMIT_MAX` per `RATE_LIMIT_WINDOW_MS`, 0 disables) and
   answers in the `{ error }` shape; `TRUST_PROXY` makes it key on X-Forwarded-For behind nginx, which
   also carries a `limit_req` zone in `deploy/nginx.conf`. Tests pass small limits through `buildApp`.

@@ -4,7 +4,7 @@ import type { IngestContext } from "../../src/ingest/context.js";
 import { syncDetails } from "../../src/ingest/details.js";
 import { syncFeed } from "../../src/ingest/feed.js";
 import { coverageSpans } from "../../src/repositories/catalog-windows.js";
-import { getEvent, listEvents, upsertEvents } from "../../src/repositories/events.js";
+import { getEvent, upsertEvents } from "../../src/repositories/events.js";
 import { getRun } from "../../src/repositories/ingest-runs.js";
 import { upsertMechanism } from "../../src/repositories/mechanisms.js";
 import { UsgsHttpError, type QueryParams } from "../../src/usgs/client.js";
@@ -164,8 +164,7 @@ describe.skipIf(!docker)("ingest sync", () => {
       features: all
         .filter(
           (f) =>
-            f.properties.time >= p.starttime.getTime() &&
-            f.properties.time < p.endtime.getTime(),
+            f.properties.time >= p.starttime.getTime() && f.properties.time < p.endtime.getTime(),
         )
         .slice(0, p.limit),
     });
@@ -348,7 +347,8 @@ describe.skipIf(!docker)("ingest sync", () => {
         from: new Date("2026-10-12T00:00:00Z"),
         to: NOW,
         minMagnitude: 2.5,
-        sleep: noSleep,
+        // No injected sleep: the default pause runs with a zero wait.
+        pauseMs: 0,
       });
       expect(r.details).toEqual({ candidates: 1, fetched: 0, failed: 1, mechanismsUpserted: 0 });
     });

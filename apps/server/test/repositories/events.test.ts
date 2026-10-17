@@ -26,12 +26,22 @@ describe.skipIf(!docker)("events repository", () => {
   });
 
   it("returns zero counts for an empty batch", async () => {
-    expect(await upsertEvents(t.db, [])).toEqual({ inserted: 0, updated: 0, skipped: 0, merged: 0 });
+    expect(await upsertEvents(t.db, [])).toEqual({
+      inserted: 0,
+      updated: 0,
+      skipped: 0,
+      merged: 0,
+    });
   });
 
   it("inserts new events and reads them back with bookkeeping", async () => {
     const e = makeEvent();
-    expect(await upsertEvents(t.db, [e])).toEqual({ inserted: 1, updated: 0, skipped: 0, merged: 0 });
+    expect(await upsertEvents(t.db, [e])).toEqual({
+      inserted: 1,
+      updated: 0,
+      skipped: 0,
+      merged: 0,
+    });
     const got = await getEvent(t.db, e.id);
     expect(got).toMatchObject({ ...e, mechanisms: [] });
     expect(got?.firstSeen).toBeInstanceOf(Date);
@@ -47,15 +57,30 @@ describe.skipIf(!docker)("events repository", () => {
     await upsertEvents(t.db, [e]);
 
     const newer = { ...e, updated: new Date("2026-10-12T07:00:00Z"), mag: 5.6 };
-    expect(await upsertEvents(t.db, [newer])).toEqual({ inserted: 0, updated: 1, skipped: 0, merged: 0 });
+    expect(await upsertEvents(t.db, [newer])).toEqual({
+      inserted: 0,
+      updated: 1,
+      skipped: 0,
+      merged: 0,
+    });
     expect((await getEvent(t.db, e.id))?.mag).toBe(5.6);
 
     const same = { ...newer, mag: 5.7 };
-    expect(await upsertEvents(t.db, [same])).toEqual({ inserted: 0, updated: 1, skipped: 0, merged: 0 });
+    expect(await upsertEvents(t.db, [same])).toEqual({
+      inserted: 0,
+      updated: 1,
+      skipped: 0,
+      merged: 0,
+    });
     expect((await getEvent(t.db, e.id))?.mag).toBe(5.7);
 
     const older = { ...e, mag: 9.9 };
-    expect(await upsertEvents(t.db, [older])).toEqual({ inserted: 0, updated: 0, skipped: 1, merged: 0 });
+    expect(await upsertEvents(t.db, [older])).toEqual({
+      inserted: 0,
+      updated: 0,
+      skipped: 1,
+      merged: 0,
+    });
     expect((await getEvent(t.db, e.id))?.mag).toBe(5.7);
   });
 
@@ -99,9 +124,24 @@ describe.skipIf(!docker)("events repository", () => {
   it("orders detail candidates by time or by magnitude, nulls last", async () => {
     const at = (s: string) => new Date(s);
     await upsertEvents(t.db, [
-      makeEvent({ id: "small", mag: 3, types: ["moment-tensor"], time: at("2026-10-12T03:00:00Z") }),
-      makeEvent({ id: "none", mag: null, types: ["moment-tensor"], time: at("2026-10-12T02:00:00Z") }),
-      makeEvent({ id: "big", mag: 6, types: ["focal-mechanism"], time: at("2026-10-12T01:00:00Z") }),
+      makeEvent({
+        id: "small",
+        mag: 3,
+        types: ["moment-tensor"],
+        time: at("2026-10-12T03:00:00Z"),
+      }),
+      makeEvent({
+        id: "none",
+        mag: null,
+        types: ["moment-tensor"],
+        time: at("2026-10-12T02:00:00Z"),
+      }),
+      makeEvent({
+        id: "big",
+        mag: 6,
+        types: ["focal-mechanism"],
+        time: at("2026-10-12T01:00:00Z"),
+      }),
     ]);
     expect((await listDetailCandidates(t.db, 10)).map((c) => c.id)).toEqual([
       "small",
@@ -118,13 +158,23 @@ describe.skipIf(!docker)("events repository", () => {
   it("deduplicates a batch by id, keeping the latest revision", async () => {
     const a = makeEvent({ updated: new Date("2026-10-12T06:00:00Z"), mag: 5.0 });
     const b = { ...a, updated: new Date("2026-10-12T06:30:00Z"), mag: 5.2 };
-    expect(await upsertEvents(t.db, [b, a])).toEqual({ inserted: 1, updated: 0, skipped: 0, merged: 0 });
+    expect(await upsertEvents(t.db, [b, a])).toEqual({
+      inserted: 1,
+      updated: 0,
+      skipped: 0,
+      merged: 0,
+    });
     expect((await getEvent(t.db, a.id))?.mag).toBe(5.2);
   });
 
   it("handles batches larger than one chunk", async () => {
     const many = Array.from({ length: 1203 }, (_, i) => makeEvent({ id: `ev${String(i)}` }));
-    expect(await upsertEvents(t.db, many)).toEqual({ inserted: 1203, updated: 0, skipped: 0, merged: 0 });
+    expect(await upsertEvents(t.db, many)).toEqual({
+      inserted: 1203,
+      updated: 0,
+      skipped: 0,
+      merged: 0,
+    });
     expect((await listEvents(t.db, { limit: 5000 })).length).toBe(1203);
   });
 

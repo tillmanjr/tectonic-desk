@@ -18,34 +18,34 @@ ComCat holds before 1900, about 1.08 million events, 1.4-2.9 GB, run once on the
 
 ## Decisions
 
-| Topic | Choice |
-| --- | --- |
-| Direction | Windows are walked from the newest to the oldest, so the catalogue is always contiguous from today back to a moving edge. |
-| Window grid | Calendar months (UTC) from 1970-01-01 on, calendar years before. Windows are never clipped to the requested range: the window containing `--from` or `--to` is loaded whole, so every window has one canonical identity. |
-| Frozen tracking | A ledger table `catalog_windows` holds one row per completed window and scope. A window is written to the ledger only when it ended at least 30 days before the run started (`SETTLE_DAYS`); younger windows are loaded on every run because USGS still revises them. The backfill skips a window the ledger covers unless `--force`. Nothing else in the system touches rows older than the week feed, so a ledgered window is fixed. |
-| Partitioning | No. At about one million rows the time, lat/lon and magnitude indexes already prune the queries; the ledger, not table layout, expresses immutability; drizzle-kit cannot express partitions and the primary key would have to carry the partition key. Revisit at 2.5 million rows (scope E). |
-| `last_seen` churn | `upsertEvents` bumps `last_seen` only on rows whose stored value is older than one hour. |
-| Id aliases | An incoming event whose `ids` list names other stored ids replaces them: those rows (and their mechanisms, by cascade) are deleted and counted as `merged`. |
-| Politeness | A pause between page requests (default 1,000 ms) and exponential back-off with up to 5 attempts on 429, 5xx, timeouts and network errors. Node's fetch already negotiates gzip. |
-| Detail phase | Candidates for the backfill are fetched largest magnitude first; `--skip-details` leaves the backlog to the feeds' detail pass, which keeps draining 50 per feed run. |
-| Aggregates | Computed live from `events` with the filters of `GET /api/events`, cached 300 s. A materialised summary is the fallback if a century query exceeds about a second on the droplet; not built now. |
-| Process | One `ingest_runs` row of kind `backfill` per CLI run, with window progress in `detail`; per-window checkpoints are the ledger rows. |
+| Topic             | Choice                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Direction         | Windows are walked from the newest to the oldest, so the catalogue is always contiguous from today back to a moving edge.                                                                                                                                                                                                                                                                                                              |
+| Window grid       | Calendar months (UTC) from 1970-01-01 on, calendar years before. Windows are never clipped to the requested range: the window containing `--from` or `--to` is loaded whole, so every window has one canonical identity.                                                                                                                                                                                                               |
+| Frozen tracking   | A ledger table `catalog_windows` holds one row per completed window and scope. A window is written to the ledger only when it ended at least 30 days before the run started (`SETTLE_DAYS`); younger windows are loaded on every run because USGS still revises them. The backfill skips a window the ledger covers unless `--force`. Nothing else in the system touches rows older than the week feed, so a ledgered window is fixed. |
+| Partitioning      | No. At about one million rows the time, lat/lon and magnitude indexes already prune the queries; the ledger, not table layout, expresses immutability; drizzle-kit cannot express partitions and the primary key would have to carry the partition key. Revisit at 2.5 million rows (scope E).                                                                                                                                         |
+| `last_seen` churn | `upsertEvents` bumps `last_seen` only on rows whose stored value is older than one hour.                                                                                                                                                                                                                                                                                                                                               |
+| Id aliases        | An incoming event whose `ids` list names other stored ids replaces them: those rows (and their mechanisms, by cascade) are deleted and counted as `merged`.                                                                                                                                                                                                                                                                            |
+| Politeness        | A pause between page requests (default 1,000 ms) and exponential back-off with up to 5 attempts on 429, 5xx, timeouts and network errors. Node's fetch already negotiates gzip.                                                                                                                                                                                                                                                        |
+| Detail phase      | Candidates for the backfill are fetched largest magnitude first; `--skip-details` leaves the backlog to the feeds' detail pass, which keeps draining 50 per feed run.                                                                                                                                                                                                                                                                  |
+| Aggregates        | Computed live from `events` with the filters of `GET /api/events`, cached 300 s. A materialised summary is the fallback if a century query exceeds about a second on the droplet; not built now.                                                                                                                                                                                                                                       |
+| Process           | One `ingest_runs` row of kind `backfill` per CLI run, with window progress in `detail`; per-window checkpoints are the ledger rows.                                                                                                                                                                                                                                                                                                    |
 
 ## 1. Schema (migration 0003)
 
 New table `catalog_windows`:
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | serial PK | |
-| `from_time` | timestamptz not null | window start, inclusive |
-| `to_time` | timestamptz not null | window end, exclusive |
-| `min_mag` | double precision | the floor the window was loaded with; null = all magnitudes |
-| `bbox` | text | `minLon,minLat,maxLon,maxLat` as the API spells it; null = global |
-| `events` | integer not null | events returned by USGS for the window (after dedupe) |
-| `pages` | integer not null | page requests made |
-| `run_id` | integer not null references `ingest_runs(id)` | the run that completed it |
-| `completed_at` | timestamptz not null | |
+| Column         | Type                                          | Notes                                                             |
+| -------------- | --------------------------------------------- | ----------------------------------------------------------------- |
+| `id`           | serial PK                                     |                                                                   |
+| `from_time`    | timestamptz not null                          | window start, inclusive                                           |
+| `to_time`      | timestamptz not null                          | window end, exclusive                                             |
+| `min_mag`      | double precision                              | the floor the window was loaded with; null = all magnitudes       |
+| `bbox`         | text                                          | `minLon,minLat,maxLon,maxLat` as the API spells it; null = global |
+| `events`       | integer not null                              | events returned by USGS for the window (after dedupe)             |
+| `pages`        | integer not null                              | page requests made                                                |
+| `run_id`       | integer not null references `ingest_runs(id)` | the run that completed it                                         |
+| `completed_at` | timestamptz not null                          |                                                                   |
 
 Unique constraint `catalog_windows_key_uq` on `(from_time, to_time, min_mag, bbox)` with
 `NULLS NOT DISTINCT` (Postgres 15+; production runs 16). Index on `from_time`.
@@ -58,15 +58,25 @@ which the time index alone answers by scanning the whole span.
 ## 2. Repository: `repositories/catalog-windows.ts`
 
 ```ts
-export interface WindowKey { from: Date; to: Date; minMag: number | null; bbox: string | null }
-export interface WindowRecord extends WindowKey { events: number; pages: number; runId: number; completedAt: Date }
+export interface WindowKey {
+  from: Date;
+  to: Date;
+  minMag: number | null;
+  bbox: string | null;
+}
+export interface WindowRecord extends WindowKey {
+  events: number;
+  pages: number;
+  runId: number;
+  completedAt: Date;
+}
 
 /** True when a completed row has the same bounds, a floor at or below `minMag` (null covers all) and a bbox that is null or equal. */
-export function windowCovered(db: Db, key: WindowKey): Promise<boolean>
+export function windowCovered(db: Db, key: WindowKey): Promise<boolean>;
 /** Upserts on the unique key, replacing counts, run and completion time. */
-export function recordWindow(db: Db, rec: WindowRecord): Promise<void>
+export function recordWindow(db: Db, rec: WindowRecord): Promise<void>;
 /** Contiguous spans of completed windows per (minMag, bbox), oldest first: windows merge when one's `to` equals the next's `from`. */
-export function coverageSpans(db: Db): Promise<CoverageSpan[]>
+export function coverageSpans(db: Db): Promise<CoverageSpan[]>;
 ```
 
 `CoverageSpan` is `{ from, to, minMag, bbox, events, windows }` where `events` and `windows`
@@ -102,13 +112,13 @@ their fail-fast behaviour.
 export interface BackfillOptions {
   from: Date;
   to: Date;
-  minMagnitude: number | null;   // null = all magnitudes
+  minMagnitude: number | null; // null = all magnitudes
   bbox?: BBox;
-  force?: boolean;               // ignore the ledger
+  force?: boolean; // ignore the ledger
   skipDetails?: boolean;
-  pageLimit?: number;            // default 20_000
-  pauseMs?: number;              // default 1_000 between page requests
-  settleDays?: number;           // default 30
+  pageLimit?: number; // default 20_000
+  pauseMs?: number; // default 1_000 between page requests
+  settleDays?: number; // default 30
   sleep?: (ms: number) => Promise<void>; // injectable; default setTimeout
 }
 export interface BackfillResult {
@@ -152,9 +162,14 @@ Run:
 ## 6. Retry helper (`ingest/retry.ts`)
 
 ```ts
-export interface RetryOptions { attempts?: number; baseMs?: number; sleep: (ms: number) => Promise<void>; log: IngestLogger }
-export function retryable(err: unknown): boolean   // UsgsHttpError with status 429 or >= 500, or any non-UsgsHttpError (timeout, network)
-export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions): Promise<T>
+export interface RetryOptions {
+  attempts?: number;
+  baseMs?: number;
+  sleep: (ms: number) => Promise<void>;
+  log: IngestLogger;
+}
+export function retryable(err: unknown): boolean; // UsgsHttpError with status 429 or >= 500, or any non-UsgsHttpError (timeout, network)
+export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions): Promise<T>;
 ```
 
 Defaults: 5 attempts, delays `baseMs * 2^(attempt-1)` with `baseMs = 5_000` (5, 10, 20, 40 s
@@ -196,12 +211,12 @@ All four new routes take the filter part of the list query (`since`, `until`, `m
 `eventsQuerySchema` into a filter schema and the list schema that extends it;
 `parseEventsFilter(input, now): EventsFilter` and `toListFilter` take the filter type.
 
-| Route | Response | Cache |
-| --- | --- | --- |
-| `GET /api/events/count` | `ApiEventCount { count: number; query: ApiEventFilter }` | 60 s |
+| Route                                         | Response                                                                                                                                                                                                                                                                                                                                                                                     | Cache |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `GET /api/events/count`                       | `ApiEventCount { count: number; query: ApiEventFilter }`                                                                                                                                                                                                                                                                                                                                     | 60 s  |
 | `GET /api/events/summary?by=day\|month\|year` | `ApiEventSummary { by; bins: ApiSummaryBin[]; query }` with `ApiSummaryBin { start: string; count: number; maxMag: number \| null; mags: { lt4; m4; m5; m6; m7 } }` (counts of M<4, 4-4.9, 5-5.9, 6-6.9, 7+; events with null magnitude count in `count` only). `by` defaults by span: day up to 120 days, month up to 15 years, year beyond. Empty bins are omitted; the client fills them. | 300 s |
-| `GET /api/events/grid?cell=N` | `ApiEventGrid { cell: number; cells: ApiGridCell[]; query }`, `ApiGridCell { lat: number; lon: number; count: number; maxMag: number \| null }` with `lat`/`lon` the cell's south-west corner; `cell` in degrees, one of 0.25, 0.5, 1, 2, 5, default 1. | 300 s |
-| `GET /api/catalog/coverage` | `ApiCoverage { spans: ApiCoverageSpan[] }`, `ApiCoverageSpan { from: string; to: string; minMag: number \| null; bbox: string \| null; events: number; windows: number }` | 300 s |
+| `GET /api/events/grid?cell=N`                 | `ApiEventGrid { cell: number; cells: ApiGridCell[]; query }`, `ApiGridCell { lat: number; lon: number; count: number; maxMag: number \| null }` with `lat`/`lon` the cell's south-west corner; `cell` in degrees, one of 0.25, 0.5, 1, 2, 5, default 1.                                                                                                                                      | 300 s |
+| `GET /api/catalog/coverage`                   | `ApiCoverage { spans: ApiCoverageSpan[] }`, `ApiCoverageSpan { from: string; to: string; minMag: number \| null; bbox: string \| null; events: number; windows: number }`                                                                                                                                                                                                                    | 300 s |
 
 `ApiEventFilter` is `ApiEventQuery` without `limit`; `ApiEventQuery` extends it.
 Repository functions `countEvents`, `summarizeEvents`, `gridEvents` live in

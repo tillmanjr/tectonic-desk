@@ -16,7 +16,7 @@ describe("retry", () => {
   });
 
   it("retries with doubling delays and returns the first success", async () => {
-    const sleep = vi.fn((_ms: number) => Promise.resolve());
+    const sleep = vi.fn<(ms: number) => Promise<void>>(() => Promise.resolve());
     const log = recordingLogger();
     const fn = vi
       .fn<() => Promise<string>>()
@@ -32,12 +32,10 @@ describe("retry", () => {
   });
 
   it("gives up after the attempts and never retries a 4xx", async () => {
-    const sleep = vi.fn((_ms: number) => Promise.resolve());
+    const sleep = vi.fn<(ms: number) => Promise<void>>(() => Promise.resolve());
     const log = recordingLogger();
     const always = vi.fn(() => Promise.reject(http(503)));
-    await expect(withRetry(always, { sleep, log, attempts: 3, baseMs: 1 })).rejects.toThrow(
-      /503/,
-    );
+    await expect(withRetry(always, { sleep, log, attempts: 3, baseMs: 1 })).rejects.toThrow(/503/);
     expect(always).toHaveBeenCalledTimes(3);
     expect(sleep).toHaveBeenCalledTimes(2);
     const bad = vi.fn(() => Promise.reject(http(400)));

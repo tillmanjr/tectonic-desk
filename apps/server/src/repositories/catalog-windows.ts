@@ -79,8 +79,7 @@ export async function coverageSpans(db: Db): Promise<CoverageSpan[]> {
   const spans: CoverageSpan[] = [];
   for (const r of rows) {
     const open = spans.find(
-      (s) =>
-        s.minMag === r.minMag && s.bbox === r.bbox && s.to.getTime() === r.fromTime.getTime(),
+      (s) => s.minMag === r.minMag && s.bbox === r.bbox && s.to.getTime() === r.fromTime.getTime(),
     );
     if (open) {
       open.to = r.toTime;

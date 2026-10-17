@@ -24,12 +24,14 @@
 ### Task 1: Schema, migration and test harness
 
 **Files:**
+
 - Modify: `apps/server/src/db/schema.ts`
 - Create: `apps/server/drizzle/migrations/0003_*.sql` (generated) and its snapshot
 - Modify: `apps/server/test/setup/postgres.ts:33-35`
 - Test: `apps/server/test/db/schema.test.ts`
 
 **Interfaces:**
+
 - Produces: `catalogWindows` table (`fromTime, toTime, minMag, bbox, events, pages, runId, completedAt`), `CatalogWindowRow`, `CatalogWindowInsert`; index `events_mag_time_idx`.
 
 - [ ] **Step 1: Extend the schema test**
@@ -37,28 +39,28 @@
 Replace the second `it` in `apps/server/test/db/schema.test.ts` with:
 
 ```ts
-  it("mechanisms has a unique product key and events has its query indexes", () => {
-    const names = (t: typeof events | typeof mechanisms) =>
-      getTableConfig(t).indexes.map((i) => i.config.name);
-    expect(names(mechanisms)).toContain("mechanisms_event_kind_source_code_uq");
-    expect(names(events)).toEqual(
-      expect.arrayContaining([
-        "events_time_idx",
-        "events_lat_lon_idx",
-        "events_mag_idx",
-        "events_mag_time_idx",
-      ]),
-    );
-  });
+it("mechanisms has a unique product key and events has its query indexes", () => {
+  const names = (t: typeof events | typeof mechanisms) =>
+    getTableConfig(t).indexes.map((i) => i.config.name);
+  expect(names(mechanisms)).toContain("mechanisms_event_kind_source_code_uq");
+  expect(names(events)).toEqual(
+    expect.arrayContaining([
+      "events_time_idx",
+      "events_lat_lon_idx",
+      "events_mag_idx",
+      "events_mag_time_idx",
+    ]),
+  );
+});
 
-  it("catalog_windows keys on bounds and scope with nulls not distinct, and points at its run", () => {
-    const cfg = getTableConfig(catalogWindows);
-    const uq = cfg.uniqueConstraints.find((u) => u.name === "catalog_windows_key_uq");
-    expect(uq?.columns.map((c) => c.name)).toEqual(["from_time", "to_time", "min_mag", "bbox"]);
-    expect(uq?.nullsNotDistinct).toBe(true);
-    expect(cfg.foreignKeys[0]?.reference().foreignTable).toBe(ingestRuns);
-    expect(cfg.indexes.map((i) => i.config.name)).toContain("catalog_windows_from_idx");
-  });
+it("catalog_windows keys on bounds and scope with nulls not distinct, and points at its run", () => {
+  const cfg = getTableConfig(catalogWindows);
+  const uq = cfg.uniqueConstraints.find((u) => u.name === "catalog_windows_key_uq");
+  expect(uq?.columns.map((c) => c.name)).toEqual(["from_time", "to_time", "min_mag", "bbox"]);
+  expect(uq?.nullsNotDistinct).toBe(true);
+  expect(cfg.foreignKeys[0]?.reference().foreignTable).toBe(ingestRuns);
+  expect(cfg.indexes.map((i) => i.config.name)).toContain("catalog_windows_from_idx");
+});
 ```
 
 and import `catalogWindows, ingestRuns` from the schema.
@@ -133,10 +135,12 @@ git commit -m "feat(db): catalog_windows ledger and (mag, time) index"
 ### Task 2: Window ledger repository
 
 **Files:**
+
 - Create: `apps/server/src/repositories/catalog-windows.ts`
 - Test: `apps/server/test/repositories/catalog-windows.test.ts`
 
 **Interfaces:**
+
 - Produces: `WindowKey { from: Date; to: Date; minMag: number | null; bbox: string | null }`, `WindowRecord extends WindowKey { events: number; pages: number; runId: number; completedAt: Date }`, `CoverageSpan { from; to; minMag; bbox; events; windows }`, `windowCovered(db, key): Promise<boolean>`, `recordWindow(db, rec): Promise<void>`, `coverageSpans(db): Promise<CoverageSpan[]>`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -300,7 +304,12 @@ export async function recordWindow(db: Db, rec: WindowRecord): Promise<void> {
     .insert(catalogWindows)
     .values({ fromTime: rec.from, toTime: rec.to, minMag: rec.minMag, bbox: rec.bbox, ...counts })
     .onConflictDoUpdate({
-      target: [catalogWindows.fromTime, catalogWindows.toTime, catalogWindows.minMag, catalogWindows.bbox],
+      target: [
+        catalogWindows.fromTime,
+        catalogWindows.toTime,
+        catalogWindows.minMag,
+        catalogWindows.bbox,
+      ],
       set: counts,
     });
 }
@@ -314,8 +323,7 @@ export async function coverageSpans(db: Db): Promise<CoverageSpan[]> {
   const spans: CoverageSpan[] = [];
   for (const r of rows) {
     const open = spans.find(
-      (s) =>
-        s.minMag === r.minMag && s.bbox === r.bbox && s.to.getTime() === r.fromTime.getTime(),
+      (s) => s.minMag === r.minMag && s.bbox === r.bbox && s.to.getTime() === r.fromTime.getTime(),
     );
     if (open) {
       open.to = r.toTime;
@@ -353,12 +361,14 @@ git commit -m "feat(server): window ledger repository"
 ### Task 3: `upsertEvents` churn fix, alias merge, candidate order
 
 **Files:**
+
 - Modify: `apps/server/src/repositories/events.ts:30-34, 80-121, 222-241`
 - Modify: `apps/server/src/ingest/details.ts` (pass `order`)
 - Modify: `apps/server/src/ingest/feed.ts`, `apps/server/src/ingest/backfill.ts` (`merged` in `add`; backfill is rewritten in Task 6, just keep it compiling here)
 - Test: `apps/server/test/repositories/events.test.ts`, `apps/server/test/ingest/scheduler.test.ts:14`, `apps/server/test/ingest/sync.test.ts`
 
 **Interfaces:**
+
 - Produces: `UpsertResult { inserted; updated; skipped; merged }`, `CandidateOrder = "time" | "mag"`, `listDetailCandidates(db, limit, order = "time")`, `DetailsOptions.order`.
 
 - [ ] **Step 1: Update and add repository tests**
@@ -366,52 +376,71 @@ git commit -m "feat(server): window ledger repository"
 In `apps/server/test/repositories/events.test.ts`, add `merged: 0` to every `toEqual({ inserted, updated, skipped })` (lines 28, 33, 49, 53, 57, 77, 83). Replace the `bumps last_seen even when the revision is skipped` test with:
 
 ```ts
-  it("bumps last_seen once it is an hour old, never within the hour, and keeps first_seen", async () => {
-    const e = makeEvent();
-    await upsertEvents(t.db, [e]);
-    const fresh = await getEvent(t.db, e.id);
-    await upsertEvents(t.db, [e]);
-    expect((await getEvent(t.db, e.id))?.lastSeen.getTime()).toBe(fresh?.lastSeen.getTime());
-    await t.db.execute(
-      sql`update events set last_seen = last_seen - interval '2 hours', first_seen = first_seen - interval '2 hours'`,
-    );
-    const aged = await getEvent(t.db, e.id);
-    await upsertEvents(t.db, [{ ...e, updated: new Date(e.updated.getTime() - 1000) }]);
-    const after = await getEvent(t.db, e.id);
-    expect(after?.lastSeen.getTime()).toBeGreaterThan(aged?.lastSeen.getTime() ?? 0);
-    expect(after?.firstSeen.getTime()).toBe(aged?.firstSeen.getTime());
-  });
+it("bumps last_seen once it is an hour old, never within the hour, and keeps first_seen", async () => {
+  const e = makeEvent();
+  await upsertEvents(t.db, [e]);
+  const fresh = await getEvent(t.db, e.id);
+  await upsertEvents(t.db, [e]);
+  expect((await getEvent(t.db, e.id))?.lastSeen.getTime()).toBe(fresh?.lastSeen.getTime());
+  await t.db.execute(
+    sql`update events set last_seen = last_seen - interval '2 hours', first_seen = first_seen - interval '2 hours'`,
+  );
+  const aged = await getEvent(t.db, e.id);
+  await upsertEvents(t.db, [{ ...e, updated: new Date(e.updated.getTime() - 1000) }]);
+  const after = await getEvent(t.db, e.id);
+  expect(after?.lastSeen.getTime()).toBeGreaterThan(aged?.lastSeen.getTime() ?? 0);
+  expect(after?.firstSeen.getTime()).toBe(aged?.firstSeen.getTime());
+});
 
-  it("replaces rows whose id an incoming event lists as an alias, mechanisms included", async () => {
-    await upsertEvents(t.db, [makeEvent({ id: "ci100" }), makeEvent({ id: "nn200" })]);
-    await upsertMechanism(t.db, makeMechanism({ eventId: "ci100", code: "old" }));
-    const merged = makeEvent({ id: "us900", raw: { ids: ",ci100,us900,zz1," } });
-    expect(await upsertEvents(t.db, [merged])).toEqual({
-      inserted: 1,
-      updated: 0,
-      skipped: 0,
-      merged: 1,
-    });
-    expect((await listEvents(t.db)).map((e) => e.id).sort()).toEqual(["nn200", "us900"]);
-    expect(await t.db.query.mechanisms.findMany()).toEqual([]);
-    // An alias that is itself in the batch is kept; a non-string ids value is ignored.
-    expect(
-      await upsertEvents(t.db, [
-        makeEvent({ id: "a1", raw: { ids: ",a1,a2," } }),
-        makeEvent({ id: "a2", raw: { ids: 7 } }),
-      ]),
-    ).toEqual({ inserted: 2, updated: 0, skipped: 0, merged: 0 });
+it("replaces rows whose id an incoming event lists as an alias, mechanisms included", async () => {
+  await upsertEvents(t.db, [makeEvent({ id: "ci100" }), makeEvent({ id: "nn200" })]);
+  await upsertMechanism(t.db, makeMechanism({ eventId: "ci100", code: "old" }));
+  const merged = makeEvent({ id: "us900", raw: { ids: ",ci100,us900,zz1," } });
+  expect(await upsertEvents(t.db, [merged])).toEqual({
+    inserted: 1,
+    updated: 0,
+    skipped: 0,
+    merged: 1,
   });
-
-  it("orders detail candidates by time or by magnitude, nulls last", async () => {
+  expect((await listEvents(t.db)).map((e) => e.id).sort()).toEqual(["nn200", "us900"]);
+  expect(await t.db.query.mechanisms.findMany()).toEqual([]);
+  // An alias that is itself in the batch is kept; a non-string ids value is ignored.
+  expect(
     await upsertEvents(t.db, [
-      makeEvent({ id: "small", mag: 3, types: ["moment-tensor"], time: new Date("2026-10-12T03:00:00Z") }),
-      makeEvent({ id: "none", mag: null, types: ["moment-tensor"], time: new Date("2026-10-12T02:00:00Z") }),
-      makeEvent({ id: "big", mag: 6, types: ["focal-mechanism"], time: new Date("2026-10-12T01:00:00Z") }),
-    ]);
-    expect((await listDetailCandidates(t.db, 10)).map((c) => c.id)).toEqual(["small", "none", "big"]);
-    expect((await listDetailCandidates(t.db, 10, "mag")).map((c) => c.id)).toEqual(["big", "small", "none"]);
-  });
+      makeEvent({ id: "a1", raw: { ids: ",a1,a2," } }),
+      makeEvent({ id: "a2", raw: { ids: 7 } }),
+    ]),
+  ).toEqual({ inserted: 2, updated: 0, skipped: 0, merged: 0 });
+});
+
+it("orders detail candidates by time or by magnitude, nulls last", async () => {
+  await upsertEvents(t.db, [
+    makeEvent({
+      id: "small",
+      mag: 3,
+      types: ["moment-tensor"],
+      time: new Date("2026-10-12T03:00:00Z"),
+    }),
+    makeEvent({
+      id: "none",
+      mag: null,
+      types: ["moment-tensor"],
+      time: new Date("2026-10-12T02:00:00Z"),
+    }),
+    makeEvent({
+      id: "big",
+      mag: 6,
+      types: ["focal-mechanism"],
+      time: new Date("2026-10-12T01:00:00Z"),
+    }),
+  ]);
+  expect((await listDetailCandidates(t.db, 10)).map((c) => c.id)).toEqual(["small", "none", "big"]);
+  expect((await listDetailCandidates(t.db, 10, "mag")).map((c) => c.id)).toEqual([
+    "big",
+    "small",
+    "none",
+  ]);
+});
 ```
 
 Import `upsertMechanism` from `../../src/repositories/mechanisms.js` and `makeMechanism` from `../fixtures.js`. In `apps/server/test/ingest/scheduler.test.ts:14` add `merged: 0`. In `apps/server/test/ingest/sync.test.ts` the `syncFeed` expectations on `r.events` gain `merged: 0` wherever they use `toEqual` on the whole object (check with `grep -n "skipped" apps/server/test/ingest/sync.test.ts`).
@@ -555,10 +584,12 @@ git commit -m "feat(server): hourly last_seen, alias merge, magnitude-ordered de
 ### Task 4: USGS client query parameters
 
 **Files:**
+
 - Modify: `apps/server/src/usgs/client.ts:11-16, 71-84`
 - Test: `apps/server/test/usgs/client.test.ts`
 
 **Interfaces:**
+
 - Produces: `QueryParams { starttime: Date; endtime: Date; minmagnitude?: number; bbox?: BBox; limit: number }`.
 
 - [ ] **Step 1: Add a test**
@@ -566,31 +597,31 @@ git commit -m "feat(server): hourly last_seen, alias merge, magnitude-ordered de
 Find the existing `fetchQuery` test in `apps/server/test/usgs/client.test.ts` and add beside it (adapting to the file's fetch stub helper):
 
 ```ts
-  it("sends the floor and bbox only when given", async () => {
-    const calls: string[] = [];
-    const client = createUsgsClient({
-      baseUrl: "https://x.test/",
-      userAgent: "t",
-      fetch: (url) => {
-        calls.push(String(url));
-        return Promise.resolve(new Response(JSON.stringify({ features: [] })));
-      },
-    });
-    const starttime = new Date("2020-01-01T00:00:00Z");
-    const endtime = new Date("2020-02-01T00:00:00Z");
-    await client.fetchQuery({ starttime, endtime, limit: 5 });
-    expect(calls[0]).not.toContain("minmagnitude");
-    expect(calls[0]).not.toContain("minlatitude");
-    await client.fetchQuery({
-      starttime,
-      endtime,
-      limit: 5,
-      minmagnitude: 4.5,
-      bbox: { minLon: -136, minLat: 27, maxLon: -104, maxLat: 53 },
-    });
-    expect(calls[1]).toContain("minmagnitude=4.5");
-    expect(calls[1]).toContain("minlatitude=27&maxlatitude=53&minlongitude=-136&maxlongitude=-104");
+it("sends the floor and bbox only when given", async () => {
+  const calls: string[] = [];
+  const client = createUsgsClient({
+    baseUrl: "https://x.test/",
+    userAgent: "t",
+    fetch: (url) => {
+      calls.push(String(url));
+      return Promise.resolve(new Response(JSON.stringify({ features: [] })));
+    },
   });
+  const starttime = new Date("2020-01-01T00:00:00Z");
+  const endtime = new Date("2020-02-01T00:00:00Z");
+  await client.fetchQuery({ starttime, endtime, limit: 5 });
+  expect(calls[0]).not.toContain("minmagnitude");
+  expect(calls[0]).not.toContain("minlatitude");
+  await client.fetchQuery({
+    starttime,
+    endtime,
+    limit: 5,
+    minmagnitude: 4.5,
+    bbox: { minLon: -136, minLat: 27, maxLon: -104, maxLat: 53 },
+  });
+  expect(calls[1]).toContain("minmagnitude=4.5");
+  expect(calls[1]).toContain("minlatitude=27&maxlatitude=53&minlongitude=-136&maxlongitude=-104");
+});
 ```
 
 - [ ] **Step 2: Run to see it fail**
@@ -651,10 +682,12 @@ git commit -m "feat(usgs): optional floor and bbox on catalogue queries"
 ### Task 5: Window grid and retry helpers
 
 **Files:**
+
 - Create: `apps/server/src/ingest/windows.ts`, `apps/server/src/ingest/retry.ts`
 - Test: `apps/server/test/ingest/windows.test.ts`, `apps/server/test/ingest/retry.test.ts`
 
 **Interfaces:**
+
 - Produces: `Window { from: Date; to: Date }`, `MONTHLY_FROM`, `windowAt(t): Window`, `windowsBetween(from, to): Window[]` (newest first), `bboxKey(bbox?: BBox): string | null`; `RetryOptions { attempts?; baseMs?; sleep; log }`, `retryable(err): boolean`, `withRetry(fn, opts)`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -867,11 +900,13 @@ git commit -m "feat(ingest): canonical backfill windows and request retry"
 ### Task 6: Backfill rewrite
 
 **Files:**
+
 - Rewrite: `apps/server/src/ingest/backfill.ts`
 - Modify: `apps/server/src/repositories/ingest-runs.ts` (add `updateRunDetail`)
 - Test: `apps/server/test/ingest/sync.test.ts` (replace the `backfill` describe), `apps/server/test/repositories/ingest-runs.test.ts` (one case)
 
 **Interfaces:**
+
 - Consumes: Tasks 2-5.
 - Produces: `BackfillOptions`, `BackfillResult`, `SETTLE_DAYS`, `backfill(ctx, opts)`, `updateRunDetail(db, id, detail)`.
 
@@ -880,209 +915,207 @@ git commit -m "feat(ingest): canonical backfill windows and request retry"
 Add to `apps/server/test/repositories/ingest-runs.test.ts`:
 
 ```ts
-  it("updateRunDetail replaces the detail document", async () => {
-    const id = await startRun(t.db, "backfill", { a: 1 });
-    await updateRunDetail(t.db, id, { b: 2 });
-    expect((await getRun(t.db, id))?.detail).toEqual({ b: 2 });
-  });
+it("updateRunDetail replaces the detail document", async () => {
+  const id = await startRun(t.db, "backfill", { a: 1 });
+  await updateRunDetail(t.db, id, { b: 2 });
+  expect((await getRun(t.db, id))?.detail).toEqual({ b: 2 });
+});
 ```
 
 Replace the `describe("backfill", ...)` block in `apps/server/test/ingest/sync.test.ts` with:
 
 ```ts
-  describe("backfill", () => {
-    const featureAt = (id: string, time: string, mag = 3, types = "") => ({
-      id,
-      properties: { time: Date.parse(time), updated: Date.parse(time), mag, types },
-      geometry: { coordinates: [0, 0, 10] },
-    });
-    const inWindow = (all: ReturnType<typeof featureAt>[]) => (p: QueryParams) =>
-      ({
-        features: all
-          .filter(
-            (f) =>
-              f.properties.time >= p.starttime.getTime() &&
-              f.properties.time < p.endtime.getTime(),
-          )
-          .slice(0, p.limit),
-      });
-    const sleeps = () => {
-      const calls: number[] = [];
-      const sleep = (ms: number): Promise<void> => {
-        calls.push(ms);
-        return Promise.resolve();
-      };
-      return { calls, sleep };
+describe("backfill", () => {
+  const featureAt = (id: string, time: string, mag = 3, types = "") => ({
+    id,
+    properties: { time: Date.parse(time), updated: Date.parse(time), mag, types },
+    geometry: { coordinates: [0, 0, 10] },
+  });
+  const inWindow = (all: ReturnType<typeof featureAt>[]) => (p: QueryParams) => ({
+    features: all
+      .filter(
+        (f) =>
+          f.properties.time >= p.starttime.getTime() && f.properties.time < p.endtime.getTime(),
+      )
+      .slice(0, p.limit),
+  });
+  const sleeps = () => {
+    const calls: number[] = [];
+    const sleep = (ms: number): Promise<void> => {
+      calls.push(ms);
+      return Promise.resolve();
     };
-    const FROM = new Date("2026-08-15T00:00:00Z");
+    return { calls, sleep };
+  };
+  const FROM = new Date("2026-08-15T00:00:00Z");
 
-    it("walks whole windows newest first, pages by cursor, freezes settled windows, and resumes", async () => {
-      const all = [
-        featureAt("aug1", "2026-08-02T00:00:00Z"),
-        featureAt("aug2", "2026-08-03T00:00:00Z"),
-        featureAt("aug3", "2026-08-04T00:00:00Z"),
-        featureAt("sep1", "2026-09-10T00:00:00Z", 6, "moment-tensor"),
-        featureAt("oct1", "2026-10-05T00:00:00Z", 4, "moment-tensor"),
-      ];
-      const s = sleeps();
-      const c = ctx({
-        query: inWindow(all),
-        details: { sep1: { ...detailUs, id: "sep1" }, oct1: { ...detailUs, id: "oct1" } },
-      });
-      const r = await backfill(c, {
-        from: FROM,
-        to: NOW,
-        minMagnitude: 2.5,
-        pageLimit: 2,
-        pauseMs: 7,
-        sleep: s.sleep,
-      });
-      expect(r.windows).toEqual({ loaded: 3, skipped: 0, frozen: 1 });
-      expect(r.events).toMatchObject({ inserted: 5 });
-      expect(r.pages).toBe(4);
-      expect(r.details.fetched).toBe(2);
-      expect(c.usgs.calls.detail).toEqual(["sep1", "oct1"]);
-      expect(c.usgs.calls.query.map((q) => q.starttime.toISOString())).toEqual([
-        "2026-10-01T00:00:00.000Z",
-        "2026-09-01T00:00:00.000Z",
-        "2026-08-01T00:00:00.000Z",
-        "2026-08-03T00:00:00.000Z",
-      ]);
-      expect(c.usgs.calls.query[0]).toMatchObject({ minmagnitude: 2.5, limit: 2 });
-      expect(c.usgs.calls.query[0]?.bbox).toBeUndefined();
-      expect(s.calls).toEqual([7, 7, 7, 7]);
-      expect(await coverageSpans(t.db)).toEqual([
-        {
-          from: new Date("2026-08-01T00:00:00Z"),
-          to: new Date("2026-09-01T00:00:00Z"),
-          minMag: 2.5,
-          bbox: null,
-          events: 4,
-          windows: 1,
-        },
-      ]);
-      const run = await getRun(t.db, r.runId);
-      expect(run).toMatchObject({ kind: "backfill", ok: true, eventsInserted: 5, detailsFetched: 2 });
-      expect(run?.detail).toMatchObject({
-        from: FROM.toISOString(),
-        minMagnitude: 2.5,
+  it("walks whole windows newest first, pages by cursor, freezes settled windows, and resumes", async () => {
+    const all = [
+      featureAt("aug1", "2026-08-02T00:00:00Z"),
+      featureAt("aug2", "2026-08-03T00:00:00Z"),
+      featureAt("aug3", "2026-08-04T00:00:00Z"),
+      featureAt("sep1", "2026-09-10T00:00:00Z", 6, "moment-tensor"),
+      featureAt("oct1", "2026-10-05T00:00:00Z", 4, "moment-tensor"),
+    ];
+    const s = sleeps();
+    const c = ctx({
+      query: inWindow(all),
+      details: { sep1: { ...detailUs, id: "sep1" }, oct1: { ...detailUs, id: "oct1" } },
+    });
+    const r = await backfill(c, {
+      from: FROM,
+      to: NOW,
+      minMagnitude: 2.5,
+      pageLimit: 2,
+      pauseMs: 7,
+      sleep: s.sleep,
+    });
+    expect(r.windows).toEqual({ loaded: 3, skipped: 0, frozen: 1 });
+    expect(r.events).toMatchObject({ inserted: 5 });
+    expect(r.pages).toBe(4);
+    expect(r.details.fetched).toBe(2);
+    expect(c.usgs.calls.detail).toEqual(["sep1", "oct1"]);
+    expect(c.usgs.calls.query.map((q) => q.starttime.toISOString())).toEqual([
+      "2026-10-01T00:00:00.000Z",
+      "2026-09-01T00:00:00.000Z",
+      "2026-08-01T00:00:00.000Z",
+      "2026-08-03T00:00:00.000Z",
+    ]);
+    expect(c.usgs.calls.query[0]).toMatchObject({ minmagnitude: 2.5, limit: 2 });
+    expect(c.usgs.calls.query[0]?.bbox).toBeUndefined();
+    expect(s.calls).toEqual([7, 7, 7, 7]);
+    expect(await coverageSpans(t.db)).toEqual([
+      {
+        from: new Date("2026-08-01T00:00:00Z"),
+        to: new Date("2026-09-01T00:00:00Z"),
+        minMag: 2.5,
         bbox: null,
-        windows: 3,
-        windowsDone: 3,
-        lastWindow: { from: "2026-08-01T00:00:00.000Z", to: "2026-09-01T00:00:00.000Z" },
-      });
-
-      const again = await backfill(c, { from: FROM, to: NOW, minMagnitude: 2.5, sleep: s.sleep });
-      expect(again.windows).toEqual({ loaded: 2, skipped: 1, frozen: 0 });
-      expect(c.log.entries.some((e) => e.msg === "window already complete; skipped")).toBe(true);
-      const forced = await backfill(c, {
-        from: FROM,
-        to: NOW,
-        minMagnitude: 2.5,
-        force: true,
-        sleep: s.sleep,
-      });
-      expect(forced.windows).toEqual({ loaded: 3, skipped: 0, frozen: 1 });
-      expect((await t.db.query.catalogWindows.findMany())[0]?.runId).toBe(forced.runId);
+        events: 4,
+        windows: 1,
+      },
+    ]);
+    const run = await getRun(t.db, r.runId);
+    expect(run).toMatchObject({ kind: "backfill", ok: true, eventsInserted: 5, detailsFetched: 2 });
+    expect(run?.detail).toMatchObject({
+      from: FROM.toISOString(),
+      minMagnitude: 2.5,
+      bbox: null,
+      windows: 3,
+      windowsDone: 3,
+      lastWindow: { from: "2026-08-01T00:00:00.000Z", to: "2026-09-01T00:00:00.000Z" },
     });
 
-    it("passes an all-magnitude bbox scope through, skips details on request, and retries a 503", async () => {
-      let failed = false;
-      const s = sleeps();
-      const all = [featureAt("w1", "2026-10-02T00:00:00Z", 1, "focal-mechanism")];
-      const c = ctx({
-        query: (p) => {
-          if (!failed) {
-            failed = true;
-            throw new UsgsHttpError(503, "q");
-          }
-          return inWindow(all)(p);
-        },
-      });
-      const bbox = { minLon: -136, minLat: 27, maxLon: -104, maxLat: 53 };
-      const r = await backfill(c, {
-        from: new Date("2026-10-01T00:00:00Z"),
-        to: NOW,
-        minMagnitude: null,
-        bbox,
-        skipDetails: true,
-        pauseMs: 0,
-        sleep: s.sleep,
-      });
-      expect(r.windows).toEqual({ loaded: 1, skipped: 0, frozen: 0 });
-      expect(r.details).toEqual({ candidates: 0, fetched: 0, failed: 0, mechanismsUpserted: 0 });
-      expect(c.usgs.calls.detail).toEqual([]);
-      expect(c.usgs.calls.query).toHaveLength(2);
-      expect(c.usgs.calls.query[1]?.minmagnitude).toBeUndefined();
-      expect(c.usgs.calls.query[1]?.bbox).toEqual(bbox);
-      expect(s.calls).toEqual([5000, 0]);
-      expect((await getRun(t.db, r.runId))?.detail).toMatchObject({
-        bbox: "-136,27,-104,53",
-        minMagnitude: null,
-        skipDetails: true,
-      });
+    const again = await backfill(c, { from: FROM, to: NOW, minMagnitude: 2.5, sleep: s.sleep });
+    expect(again.windows).toEqual({ loaded: 2, skipped: 1, frozen: 0 });
+    expect(c.log.entries.some((e) => e.msg === "window already complete; skipped")).toBe(true);
+    const forced = await backfill(c, {
+      from: FROM,
+      to: NOW,
+      minMagnitude: 2.5,
+      force: true,
+      sleep: s.sleep,
     });
+    expect(forced.windows).toEqual({ loaded: 3, skipped: 0, frozen: 1 });
+    expect((await t.db.query.catalogWindows.findMany())[0]?.runId).toBe(forced.runId);
+  });
 
-    it("fails the run on a persistent error but keeps the windows already frozen", async () => {
-      const c = ctx({
-        query: (p) => {
-          if (p.endtime.getTime() <= Date.parse("2026-08-01T00:00:00Z")) {
-            throw new UsgsHttpError(400, "q");
-          }
-          return { features: [] };
-        },
-      });
-      await expect(
-        backfill(c, {
-          from: new Date("2026-07-15T00:00:00Z"),
-          to: NOW,
-          minMagnitude: 2.5,
-          sleep: () => Promise.resolve(),
-        }),
-      ).rejects.toThrow(/400/);
-      const runs = await t.db.query.ingestRuns.findMany();
-      expect(runs[0]).toMatchObject({ kind: "backfill", ok: false });
-      expect(runs[0]?.detail).toMatchObject({
-        windowsDone: 3,
-        lastWindow: { from: "2026-08-01T00:00:00.000Z" },
-      });
-      expect((await coverageSpans(t.db)).map((s) => s.from.toISOString())).toEqual([
-        "2026-08-01T00:00:00.000Z",
-      ]);
+  it("passes an all-magnitude bbox scope through, skips details on request, and retries a 503", async () => {
+    let failed = false;
+    const s = sleeps();
+    const all = [featureAt("w1", "2026-10-02T00:00:00Z", 1, "focal-mechanism")];
+    const c = ctx({
+      query: (p) => {
+        if (!failed) {
+          failed = true;
+          throw new UsgsHttpError(503, "q");
+        }
+        return inWindow(all)(p);
+      },
     });
-
-    it("stops a window when the cursor cannot advance", async () => {
-      const same = "2026-10-13T00:00:00Z";
-      const c = ctx({
-        query: () => ({ features: [featureAt("s1", same), featureAt("s2", same)] }),
-      });
-      await expect(
-        backfill(c, {
-          from: new Date("2026-10-12T00:00:00Z"),
-          to: NOW,
-          minMagnitude: 2.5,
-          pageLimit: 2,
-          sleep: () => Promise.resolve(),
-        }),
-      ).rejects.toThrow(/cursor/);
+    const bbox = { minLon: -136, minLat: 27, maxLon: -104, maxLat: 53 };
+    const r = await backfill(c, {
+      from: new Date("2026-10-01T00:00:00Z"),
+      to: NOW,
+      minMagnitude: null,
+      bbox,
+      skipDetails: true,
+      pauseMs: 0,
+      sleep: s.sleep,
     });
+    expect(r.windows).toEqual({ loaded: 1, skipped: 0, frozen: 0 });
+    expect(r.details).toEqual({ candidates: 0, fetched: 0, failed: 0, mechanismsUpserted: 0 });
+    expect(c.usgs.calls.detail).toEqual([]);
+    expect(c.usgs.calls.query).toHaveLength(2);
+    expect(c.usgs.calls.query[1]?.minmagnitude).toBeUndefined();
+    expect(c.usgs.calls.query[1]?.bbox).toEqual(bbox);
+    expect(s.calls).toEqual([5000, 0]);
+    expect((await getRun(t.db, r.runId))?.detail).toMatchObject({
+      bbox: "-136,27,-104,53",
+      minMagnitude: null,
+      skipDetails: true,
+    });
+  });
 
-    it("stops the detail loop when every candidate fails", async () => {
-      const c = ctx({
-        query: () => ({
-          features: [featureAt("f1", "2026-10-12T00:00:00Z", 5, "moment-tensor")],
-        }),
-        details: { f1: new Error("down") },
-      });
-      const r = await backfill(c, {
-        from: new Date("2026-10-12T00:00:00Z"),
+  it("fails the run on a persistent error but keeps the windows already frozen", async () => {
+    const c = ctx({
+      query: (p) => {
+        if (p.endtime.getTime() <= Date.parse("2026-08-01T00:00:00Z")) {
+          throw new UsgsHttpError(400, "q");
+        }
+        return { features: [] };
+      },
+    });
+    await expect(
+      backfill(c, {
+        from: new Date("2026-07-15T00:00:00Z"),
         to: NOW,
         minMagnitude: 2.5,
         sleep: () => Promise.resolve(),
-      });
-      expect(r.details).toEqual({ candidates: 1, fetched: 0, failed: 1, mechanismsUpserted: 0 });
+      }),
+    ).rejects.toThrow(/400/);
+    const runs = await t.db.query.ingestRuns.findMany();
+    expect(runs[0]).toMatchObject({ kind: "backfill", ok: false });
+    expect(runs[0]?.detail).toMatchObject({
+      windowsDone: 3,
+      lastWindow: { from: "2026-08-01T00:00:00.000Z" },
     });
+    expect((await coverageSpans(t.db)).map((s) => s.from.toISOString())).toEqual([
+      "2026-08-01T00:00:00.000Z",
+    ]);
   });
+
+  it("stops a window when the cursor cannot advance", async () => {
+    const same = "2026-10-13T00:00:00Z";
+    const c = ctx({
+      query: () => ({ features: [featureAt("s1", same), featureAt("s2", same)] }),
+    });
+    await expect(
+      backfill(c, {
+        from: new Date("2026-10-12T00:00:00Z"),
+        to: NOW,
+        minMagnitude: 2.5,
+        pageLimit: 2,
+        sleep: () => Promise.resolve(),
+      }),
+    ).rejects.toThrow(/cursor/);
+  });
+
+  it("stops the detail loop when every candidate fails", async () => {
+    const c = ctx({
+      query: () => ({
+        features: [featureAt("f1", "2026-10-12T00:00:00Z", 5, "moment-tensor")],
+      }),
+      details: { f1: new Error("down") },
+    });
+    const r = await backfill(c, {
+      from: new Date("2026-10-12T00:00:00Z"),
+      to: NOW,
+      minMagnitude: 2.5,
+      sleep: () => Promise.resolve(),
+    });
+    expect(r.details).toEqual({ candidates: 1, fetched: 0, failed: 1, mechanismsUpserted: 0 });
+  });
+});
 ```
 
 Add imports: `coverageSpans` from `../../src/repositories/catalog-windows.js`, `UsgsHttpError` and `type QueryParams` from `../../src/usgs/client.js`.
@@ -1186,7 +1219,10 @@ async function loadWindow(ctx: IngestContext, w: Window, s: Settings): Promise<W
     const params: QueryParams = { starttime: cursor, endtime: w.to, limit: s.pageLimit };
     if (s.minMagnitude !== null) params.minmagnitude = s.minMagnitude;
     if (s.bbox) params.bbox = s.bbox;
-    const doc = await withRetry(() => ctx.usgs.fetchQuery(params), { sleep: s.sleep, log: ctx.log });
+    const doc = await withRetry(() => ctx.usgs.fetchQuery(params), {
+      sleep: s.sleep,
+      log: ctx.log,
+    });
     await s.sleep(s.pauseMs);
     const parsed = parseFeedFeatures(doc, ctx.log);
     load.pages += 1;
@@ -1317,12 +1353,14 @@ git commit -m "feat(ingest): newest-first windowed backfill with ledger, settle 
 ### Task 7: CLI arguments
 
 **Files:**
+
 - Create: `apps/server/src/ingest/cli-args.ts`
 - Modify: `apps/server/src/ingest-cli.ts`
 - Modify: `apps/server/src/api/schemas.ts` (export `bboxString`)
 - Test: `apps/server/test/ingest/cli-args.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BackfillOptions` (Task 6), `bboxString` zod schema.
 - Produces: `BackfillArgs`, `parseBackfillArgs(values, now): BackfillOptions`, `positiveInt(v, name)`.
 
@@ -1442,7 +1480,8 @@ function date(v: string, name: string): Date {
 }
 
 function startOf(v: BackfillArgs, now: Date): Date {
-  if (v.days !== undefined && v.from !== undefined) throw new Error("use --days or --from, not both");
+  if (v.days !== undefined && v.from !== undefined)
+    throw new Error("use --days or --from, not both");
   const days = positiveInt(v.days, "--days");
   if (days !== undefined) return new Date(now.getTime() - days * DAY_MS);
   if (v.from !== undefined) return date(v.from, "--from");
@@ -1480,7 +1519,8 @@ export function parseBackfillArgs(v: BackfillArgs, now: Date): BackfillOptions {
   const pause = v["pause-ms"];
   if (pause !== undefined) {
     const n = Number(pause);
-    if (!Number.isInteger(n) || n < 0) throw new Error("--pause-ms must be a whole number of milliseconds");
+    if (!Number.isInteger(n) || n < 0)
+      throw new Error("--pause-ms must be a whole number of milliseconds");
     opts.pauseMs = n;
   }
   return opts;
@@ -1578,6 +1618,7 @@ git commit -m "feat(cli): backfill ranges, floors, bbox, force and skip-details 
 ### Task 8: Aggregate queries, shared types and routes
 
 **Files:**
+
 - Modify: `packages/shared/src/api.ts`
 - Modify: `apps/server/src/api/schemas.ts`, `apps/server/src/api/serialize.ts`
 - Modify: `apps/server/src/repositories/events.ts` (condition builder, `countEvents`, `summarizeEvents`, `gridEvents`)
@@ -1585,6 +1626,7 @@ git commit -m "feat(cli): backfill ranges, floors, bbox, force and skip-details 
 - Test: `apps/server/test/api/schemas.test.ts`, `apps/server/test/repositories/api-queries.test.ts`, `apps/server/test/routes/events.test.ts`, Create: `apps/server/test/routes/catalog.test.ts`
 
 **Interfaces:**
+
 - Produces (shared): `ApiEventFilter`, `ApiEventQuery extends ApiEventFilter`, `ApiEventCount`, `SummaryBy`, `ApiMagBands`, `ApiSummaryBin`, `ApiEventSummary`, `ApiGridCell`, `ApiEventGrid`, `ApiCoverageSpan`, `ApiCoverage`.
 - Produces (server): `EventsFilter`, `EventsQuery extends EventsFilter`, `parseEventsFilter`, `parseSummaryQuery`, `parseGridQuery`, `GRID_CELLS`, `toListFilter(q: EventsFilter & { limit?: number })`, `toApiFilter`, `EventsWhere`, `countEvents`, `summarizeEvents`, `gridEvents`, `catalogRoutes`.
 
@@ -1820,68 +1862,104 @@ importing `ApiEventFilter` from shared and `type EventsFilter` from `./schemas.j
 Add to `apps/server/test/repositories/api-queries.test.ts`:
 
 ```ts
-  it("counts, summarises by period with magnitude bands, and grids events under the list filters", async () => {
-    const at = (s: string) => new Date(s);
-    await upsertEvents(t.db, [
-      makeEvent({ id: "p1", time: at("2024-03-01T00:00:00Z"), mag: 3.9, latitude: 10.2, longitude: 20.7 }),
-      makeEvent({ id: "p2", time: at("2024-03-02T00:00:00Z"), mag: 4.5, latitude: 10.9, longitude: 20.1 }),
-      makeEvent({ id: "p3", time: at("2024-04-10T00:00:00Z"), mag: 5.5, latitude: -10.5, longitude: 179.5 }),
-      makeEvent({ id: "p4", time: at("2025-01-01T00:00:00Z"), mag: 6.5, latitude: -10.5, longitude: -179.5 }),
-      makeEvent({ id: "p5", time: at("2025-01-02T00:00:00Z"), mag: 7.1, latitude: 0.5, longitude: 0.5 }),
-      makeEvent({ id: "p6", time: at("2025-01-03T00:00:00Z"), mag: null, latitude: 0.5, longitude: 0.5 }),
-    ]);
-    const since = at("2024-01-01T00:00:00Z");
-    expect(await countEvents(t.db, { since })).toBe(6);
-    expect(await countEvents(t.db, { since, minMag: 5 })).toBe(3);
-    expect(await countEvents(t.db, { since, until: at("2024-12-31T00:00:00Z") })).toBe(3);
+it("counts, summarises by period with magnitude bands, and grids events under the list filters", async () => {
+  const at = (s: string) => new Date(s);
+  await upsertEvents(t.db, [
+    makeEvent({
+      id: "p1",
+      time: at("2024-03-01T00:00:00Z"),
+      mag: 3.9,
+      latitude: 10.2,
+      longitude: 20.7,
+    }),
+    makeEvent({
+      id: "p2",
+      time: at("2024-03-02T00:00:00Z"),
+      mag: 4.5,
+      latitude: 10.9,
+      longitude: 20.1,
+    }),
+    makeEvent({
+      id: "p3",
+      time: at("2024-04-10T00:00:00Z"),
+      mag: 5.5,
+      latitude: -10.5,
+      longitude: 179.5,
+    }),
+    makeEvent({
+      id: "p4",
+      time: at("2025-01-01T00:00:00Z"),
+      mag: 6.5,
+      latitude: -10.5,
+      longitude: -179.5,
+    }),
+    makeEvent({
+      id: "p5",
+      time: at("2025-01-02T00:00:00Z"),
+      mag: 7.1,
+      latitude: 0.5,
+      longitude: 0.5,
+    }),
+    makeEvent({
+      id: "p6",
+      time: at("2025-01-03T00:00:00Z"),
+      mag: null,
+      latitude: 0.5,
+      longitude: 0.5,
+    }),
+  ]);
+  const since = at("2024-01-01T00:00:00Z");
+  expect(await countEvents(t.db, { since })).toBe(6);
+  expect(await countEvents(t.db, { since, minMag: 5 })).toBe(3);
+  expect(await countEvents(t.db, { since, until: at("2024-12-31T00:00:00Z") })).toBe(3);
 
-    const years = await summarizeEvents(t.db, { since }, "year");
-    expect(years).toEqual([
-      {
-        start: at("2024-01-01T00:00:00Z"),
-        count: 3,
-        maxMag: 5.5,
-        mags: { lt4: 1, m4: 1, m5: 1, m6: 0, m7: 0 },
-      },
-      {
-        start: at("2025-01-01T00:00:00Z"),
-        count: 3,
-        maxMag: 7.1,
-        mags: { lt4: 0, m4: 0, m5: 0, m6: 1, m7: 1 },
-      },
-    ]);
-    const months = await summarizeEvents(t.db, { since, until: at("2024-12-31T00:00:00Z") }, "month");
-    expect(months.map((b) => [b.start.toISOString(), b.count])).toEqual([
-      ["2024-03-01T00:00:00.000Z", 2],
-      ["2024-04-01T00:00:00.000Z", 1],
-    ]);
-    const days = await summarizeEvents(t.db, { since: at("2025-01-01T00:00:00Z") }, "day");
-    expect(days).toHaveLength(3);
-    expect(days[2]).toEqual({
-      start: at("2025-01-03T00:00:00Z"),
-      count: 1,
-      maxMag: null,
-      mags: { lt4: 0, m4: 0, m5: 0, m6: 0, m7: 0 },
-    });
-
-    expect(await gridEvents(t.db, { since }, 1)).toEqual([
-      { lat: -11, lon: -180, count: 1, maxMag: 6.5 },
-      { lat: -11, lon: 179, count: 1, maxMag: 5.5 },
-      { lat: 0, lon: 0, count: 2, maxMag: 7.1 },
-      { lat: 10, lon: 20, count: 2, maxMag: 4.5 },
-    ]);
-    expect(
-      await gridEvents(
-        t.db,
-        { since, bbox: { minLon: 170, minLat: -20, maxLon: -170, maxLat: 0 } },
-        5,
-      ),
-    ).toEqual([
-      { lat: -15, lon: -180, count: 1, maxMag: 6.5 },
-      { lat: -15, lon: 175, count: 1, maxMag: 5.5 },
-    ]);
-    expect(await gridEvents(t.db, { since, minMag: 9 }, 1)).toEqual([]);
+  const years = await summarizeEvents(t.db, { since }, "year");
+  expect(years).toEqual([
+    {
+      start: at("2024-01-01T00:00:00Z"),
+      count: 3,
+      maxMag: 5.5,
+      mags: { lt4: 1, m4: 1, m5: 1, m6: 0, m7: 0 },
+    },
+    {
+      start: at("2025-01-01T00:00:00Z"),
+      count: 3,
+      maxMag: 7.1,
+      mags: { lt4: 0, m4: 0, m5: 0, m6: 1, m7: 1 },
+    },
+  ]);
+  const months = await summarizeEvents(t.db, { since, until: at("2024-12-31T00:00:00Z") }, "month");
+  expect(months.map((b) => [b.start.toISOString(), b.count])).toEqual([
+    ["2024-03-01T00:00:00.000Z", 2],
+    ["2024-04-01T00:00:00.000Z", 1],
+  ]);
+  const days = await summarizeEvents(t.db, { since: at("2025-01-01T00:00:00Z") }, "day");
+  expect(days).toHaveLength(3);
+  expect(days[2]).toEqual({
+    start: at("2025-01-03T00:00:00Z"),
+    count: 1,
+    maxMag: null,
+    mags: { lt4: 0, m4: 0, m5: 0, m6: 0, m7: 0 },
   });
+
+  expect(await gridEvents(t.db, { since }, 1)).toEqual([
+    { lat: -11, lon: -180, count: 1, maxMag: 6.5 },
+    { lat: -11, lon: 179, count: 1, maxMag: 5.5 },
+    { lat: 0, lon: 0, count: 2, maxMag: 7.1 },
+    { lat: 10, lon: 20, count: 2, maxMag: 4.5 },
+  ]);
+  expect(
+    await gridEvents(
+      t.db,
+      { since, bbox: { minLon: 170, minLat: -20, maxLon: -170, maxLat: 0 } },
+      5,
+    ),
+  ).toEqual([
+    { lat: -15, lon: -180, count: 1, maxMag: 6.5 },
+    { lat: -15, lon: 175, count: 1, maxMag: 5.5 },
+  ]);
+  expect(await gridEvents(t.db, { since, minMag: 9 }, 1)).toEqual([]);
+});
 ```
 
 Import `countEvents, gridEvents, summarizeEvents` from the events repository.
@@ -1999,36 +2077,42 @@ If `max(events.mag)` types as `string | null`, wrap it: `sql<number | null>\`max
 Add to `apps/server/test/routes/events.test.ts`:
 
 ```ts
-  it("counts, summarises and grids with the list filters and their own caching", async () => {
-    const count = await app.inject({ method: "GET", url: "/api/events/count?minMag=3" });
-    expect(count.statusCode).toBe(200);
-    expect(count.headers["cache-control"]).toBe("public, max-age=60");
-    expect(count.json<ApiEventCount>()).toEqual({
-      count: 3,
-      query: { since: daysAgo(7).toISOString(), until: null, minMag: 3, bbox: null },
-    });
-    expect((await app.inject({ method: "GET", url: "/api/events/count?limit=5" })).statusCode).toBe(400);
-
-    const summary = await app.inject({ method: "GET", url: "/api/events/summary?since=2026-09-01" });
-    expect(summary.headers["cache-control"]).toBe("public, max-age=300");
-    const s = summary.json<ApiEventSummary>();
-    expect(s.by).toBe("day");
-    expect(s.bins.map((b) => b.count)).toEqual([1, 1, 1, 1]);
-    expect(s.bins[3]).toMatchObject({ maxMag: 5.5, mags: { m5: 1 } });
-    expect((await app.inject({ method: "GET", url: "/api/events/summary?by=week" })).statusCode).toBe(400);
-
-    const grid = await app.inject({ method: "GET", url: "/api/events/grid?since=2026-09-01&cell=5" });
-    expect(grid.headers["cache-control"]).toBe("public, max-age=300");
-    const g = grid.json<ApiEventGrid>();
-    expect(g.cell).toBe(5);
-    expect(g.cells).toEqual([
-      { lat: -20, lon: -180, count: 1, maxMag: 5.5 },
-      { lat: -20, lon: 175, count: 1, maxMag: 4.0 },
-      { lat: 35, lon: -125, count: 1, maxMag: 3.0 },
-      { lat: 40, lon: -125, count: 1, maxMag: 2.6 },
-    ]);
-    expect((await app.inject({ method: "GET", url: "/api/events/grid?cell=3" })).statusCode).toBe(400);
+it("counts, summarises and grids with the list filters and their own caching", async () => {
+  const count = await app.inject({ method: "GET", url: "/api/events/count?minMag=3" });
+  expect(count.statusCode).toBe(200);
+  expect(count.headers["cache-control"]).toBe("public, max-age=60");
+  expect(count.json<ApiEventCount>()).toEqual({
+    count: 3,
+    query: { since: daysAgo(7).toISOString(), until: null, minMag: 3, bbox: null },
   });
+  expect((await app.inject({ method: "GET", url: "/api/events/count?limit=5" })).statusCode).toBe(
+    400,
+  );
+
+  const summary = await app.inject({ method: "GET", url: "/api/events/summary?since=2026-09-01" });
+  expect(summary.headers["cache-control"]).toBe("public, max-age=300");
+  const s = summary.json<ApiEventSummary>();
+  expect(s.by).toBe("day");
+  expect(s.bins.map((b) => b.count)).toEqual([1, 1, 1, 1]);
+  expect(s.bins[3]).toMatchObject({ maxMag: 5.5, mags: { m5: 1 } });
+  expect((await app.inject({ method: "GET", url: "/api/events/summary?by=week" })).statusCode).toBe(
+    400,
+  );
+
+  const grid = await app.inject({ method: "GET", url: "/api/events/grid?since=2026-09-01&cell=5" });
+  expect(grid.headers["cache-control"]).toBe("public, max-age=300");
+  const g = grid.json<ApiEventGrid>();
+  expect(g.cell).toBe(5);
+  expect(g.cells).toEqual([
+    { lat: -20, lon: -180, count: 1, maxMag: 5.5 },
+    { lat: -20, lon: 175, count: 1, maxMag: 4.0 },
+    { lat: 35, lon: -125, count: 1, maxMag: 3.0 },
+    { lat: 40, lon: -125, count: 1, maxMag: 2.6 },
+  ]);
+  expect((await app.inject({ method: "GET", url: "/api/events/grid?cell=3" })).statusCode).toBe(
+    400,
+  );
+});
 ```
 
 (The seed has `a` at -18.7/-175.1 M5.5 one day ago, `b` 37/-122 M3.0 ten days ago, `c` 40/-124 M2.6 two days ago, `d` -17/179.5 M4.0 three days ago; with `since=2026-09-01` all four are in range, and the default `since` of seven days excludes `b`, so `/count?minMag=3` gives `a` and `d`... check: `a` 5.5, `d` 4.0, `c` 2.6 excluded by minMag, `b` excluded by time, so the count is **2**, not 3. Use `count: 2`.) Import the three types from shared.
@@ -2226,6 +2310,7 @@ git commit -m "feat(api): event count, summary, grid and catalogue coverage rout
 ### Task 9: Docs, full verification
 
 **Files:**
+
 - Modify: `README.md` (quick start line 26, Ingest section, API table, deploy step 4, scripts table), `CLAUDE.md` (Ingest and API sections)
 
 - [ ] **Step 1: README**
@@ -2248,10 +2333,10 @@ Ingest section, append two bullets:
 API table, add rows:
 
 ```md
-| `GET /api/events/count`    | `{ count, query }` under the list filters                                               |
-| `GET /api/events/summary`  | `{ by, bins, query }`: per day, month or year (`by=`, default by span) with max magnitude and magnitude-class counts |
-| `GET /api/events/grid`     | `{ cell, cells, query }`: counts per `cell`-degree square (0.25, 0.5, 1, 2 or 5)         |
-| `GET /api/catalog/coverage`| `{ spans }`: contiguous frozen backfill windows per magnitude floor and bbox             |
+| `GET /api/events/count` | `{ count, query }` under the list filters |
+| `GET /api/events/summary` | `{ by, bins, query }`: per day, month or year (`by=`, default by span) with max magnitude and magnitude-class counts |
+| `GET /api/events/grid` | `{ cell, cells, query }`: counts per `cell`-degree square (0.25, 0.5, 1, 2 or 5) |
+| `GET /api/catalog/coverage`| `{ spans }`: contiguous frozen backfill windows per magnitude floor and bbox |
 ```
 
 Deploy step 4, replace the single command with:
