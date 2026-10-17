@@ -11,7 +11,7 @@ const WEEK = 3500;
 
 const emptyResult: FeedRunResult = {
   runId: 1,
-  events: { inserted: 0, updated: 0, skipped: 0 },
+  events: { inserted: 0, updated: 0, skipped: 0, merged: 0 },
   details: { candidates: 0, fetched: 0, failed: 0, mechanismsUpserted: 0 },
 };
 

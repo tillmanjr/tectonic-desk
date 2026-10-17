@@ -25,6 +25,7 @@ const add = (a: UpsertResult, b: UpsertResult): UpsertResult => ({
   inserted: a.inserted + b.inserted,
   updated: a.updated + b.updated,
   skipped: a.skipped + b.skipped,
+  merged: a.merged + b.merged,
 });
 
 /** Loads one time window page by page, restarting each page from the last event's time. */
@@ -72,7 +73,7 @@ export async function backfill(ctx: IngestContext, opts: BackfillOptions): Promi
     end,
   );
   try {
-    const totals = { pages: 0, events: { inserted: 0, updated: 0, skipped: 0 } };
+    const totals = { pages: 0, events: { inserted: 0, updated: 0, skipped: 0, merged: 0 } };
     for (let ws = start; ws < end; ws = new Date(ws.getTime() + windowDays * DAY_MS)) {
       const we = new Date(Math.min(ws.getTime() + windowDays * DAY_MS, end.getTime()));
       await loadWindow(ctx, ws, we, minMagnitude, pageLimit, totals);

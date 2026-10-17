@@ -32,6 +32,8 @@ export interface UpsertResult {
   inserted: number;
   updated: number;
   skipped: number;
+  /** Stored rows deleted because an incoming event listed their id among its aliases. */
+  merged: number;
 }
 
 export interface ListEventsFilter {
@@ -80,19 +82,37 @@ function dedupe(batch: Event[]): Event[] {
   return [...byId.values()];
 }
 
+/** Other ComCat ids an event has carried, from the comma-wrapped `ids` feed property. */
+function aliasesOf(e: Event): string[] {
+  const ids = e.raw.ids;
+  if (typeof ids !== "string") return [];
+  return ids.split(",").filter((s) => s.length > 0 && s !== e.id);
+}
+
 /**
  * Inserts new events and revises existing ones when the incoming `updated`
- * stamp is at least as new as the stored one. `last_seen` is bumped for every
- * event in the batch, revised or not.
+ * stamp is at least as new as the stored one. Rows whose id an incoming event
+ * lists as an alias are deleted first (ComCat re-keys events between networks).
+ * `last_seen` is bumped at most once an hour per row, so a quiet catalogue is
+ * not rewritten by every feed poll.
  */
 export async function upsertEvents(db: Db, batch: Event[]): Promise<UpsertResult> {
   const unique = dedupe(batch);
-  const result: UpsertResult = { inserted: 0, updated: 0, skipped: 0 };
+  const result: UpsertResult = { inserted: 0, updated: 0, skipped: 0, merged: 0 };
   if (unique.length === 0) return result;
+  const batchIds = new Set(unique.map((e) => e.id));
 
   await db.transaction(async (tx) => {
     for (let i = 0; i < unique.length; i += CHUNK) {
       const chunk = unique.slice(i, i + CHUNK);
+      const aliases = [...new Set(chunk.flatMap(aliasesOf))].filter((id) => !batchIds.has(id));
+      if (aliases.length > 0) {
+        const gone = await tx
+          .delete(events)
+          .where(inArray(events.id, aliases))
+          .returning({ id: events.id });
+        result.merged += gone.length;
+      }
       const touched = await tx
         .insert(events)
         .values(chunk.map(eventToRow))
@@ -111,9 +131,12 @@ export async function upsertEvents(db: Db, batch: Event[]): Promise<UpsertResult
         .update(events)
         .set({ lastSeen: sql`now()` })
         .where(
-          inArray(
-            events.id,
-            chunk.map((e) => e.id),
+          and(
+            inArray(
+              events.id,
+              chunk.map((e) => e.id),
+            ),
+            sql`${events.lastSeen} < now() - interval '1 hour'`,
           ),
         );
     }
@@ -226,11 +249,18 @@ export async function catalogStats(db: Db): Promise<CatalogStats> {
 
 const MECHANISM_TYPES = ["moment-tensor", "focal-mechanism"];
 
-/** Events advertising a mechanism product whose detail has not been fetched since their last revision. */
+export type CandidateOrder = "time" | "mag";
+
+/**
+ * Events advertising a mechanism product whose detail has not been fetched
+ * since their last revision; newest first, or largest first for a backfill.
+ */
 export async function listDetailCandidates(
   db: Db,
   limit: number,
+  order: CandidateOrder = "time",
 ): Promise<{ id: string; updated: Date }[]> {
+  const byTime = [desc(events.time), desc(events.id)];
   return db
     .select({ id: events.id, updated: events.updated })
     .from(events)
@@ -240,7 +270,7 @@ export async function listDetailCandidates(
         or(isNull(events.detailCheckedUpdated), lt(events.detailCheckedUpdated, events.updated)),
       ),
     )
-    .orderBy(desc(events.time), desc(events.id))
+    .orderBy(...(order === "mag" ? [sql`${events.mag} desc nulls last`, ...byTime] : byTime))
     .limit(limit);
 }
 
