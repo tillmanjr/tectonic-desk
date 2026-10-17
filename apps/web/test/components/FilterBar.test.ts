@@ -26,7 +26,7 @@ describe("FilterBar", () => {
     expect(inputs[0]?.attributes("min")).toBe("4.5");
     expect(inputs[0]?.element.value).toBe("4.5");
     expect(inputs[1]?.element.value).toBe("");
-    expect(w.text()).toContain("Dates (UTC)");
+    expect(w.text()).toContain("Window (UTC)");
     expect(w.find(".ftitle").text()).toBe("Refine");
     expect(w.find(".finfo").attributes("title")).toContain(
       "summary tiles and major events are unaffected",
@@ -60,17 +60,27 @@ describe("FilterBar", () => {
     await dates[0]?.setValue("2026-10-01");
     expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, since: "2026-10-01" });
     await dates[1]?.setValue("2026-10-05");
-    expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, until: "2026-10-05" });
+    expect(ctx.setFilter).toHaveBeenLastCalledWith({
+      ...EMPTY_FILTER,
+      since: "2026-09-05",
+      until: "2026-10-05",
+    });
     ctx.catalog.setFilter({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" });
     await nextTick();
     expect(dates[0]?.element.value).toBe("2026-10-01");
+    await dates[1]?.setValue("2026-10-20");
+    expect(ctx.setFilter).toHaveBeenLastCalledWith({
+      ...EMPTY_FILTER,
+      since: "2026-10-01",
+      until: "2026-10-20",
+    });
     ctx.catalog.setFilter({ ...EMPTY_FILTER, until: "2026-09-01" });
     await nextTick();
     expect(dates[0]?.element.value).toBe("2026-09-01");
     expect(dates[1]?.element.value).toBe("2026-09-01");
     ctx.zone.value = "local";
     await nextTick();
-    expect(w.text()).toContain("Dates (local)");
+    expect(w.text()).toContain("Window (local)");
   });
   it("shows the same thirty days and the view's own floor for the West Coast", async () => {
     const w = mountWith(FilterBar, await makeContext({ regionId: "wc" }));
@@ -78,14 +88,21 @@ describe("FilterBar", () => {
     expect(dates[0]?.element.value).toBe("2026-09-13");
     expect(w.findAll("input")[0]?.element.value).toBe("2.5");
   });
-  it("sets the start from a span preset and snaps the select back", async () => {
+  it("shows the span the dates match, sets the start from a preset, and reads Custom otherwise", async () => {
     const ctx = await makeContext();
     const w = mountWith(FilterBar, ctx);
     const select = w.find<HTMLSelectElement>("select.fspan");
-    expect(select.element.value).toBe("");
+    expect(select.element.value).toBe("0");
+    expect(select.element.selectedOptions[0]?.text).toBe("30 days");
     await select.setValue("2");
     expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, since: "2025-10-13" });
+    ctx.catalog.setFilter({ ...EMPTY_FILTER, since: "2025-10-13" });
+    await nextTick();
+    expect(select.element.selectedOptions[0]?.text).toBe("1 year");
+    ctx.catalog.setFilter({ ...EMPTY_FILTER, since: "2026-10-01", until: "2026-10-05" });
+    await nextTick();
     expect(select.element.value).toBe("");
+    expect(select.element.selectedOptions[0]?.text).toBe("Custom");
     ctx.catalog.setFilter({ ...EMPTY_FILTER, until: "2026-09-01" });
     await nextTick();
     await select.setValue("5");
@@ -118,7 +135,7 @@ describe("FilterBar", () => {
       }),
     );
     expect(w.find(".fnote").text()).toBe(
-      "This window holds 7,312 events at M4.5+. Markers, table and the magnitude charts show the 1 at M6+ so the page stays responsive; the density shading and the time chart cover all of them.",
+      "This window holds 7,312 events at M4.5+. Markers, table and the magnitude charts show the 1 at M6+ so the page stays responsive; the time chart covers all of them, and the map's Density toggle shades where they fall.",
     );
     expect(w.findAll("input")[0]?.element.value).toBe("4.5");
   });

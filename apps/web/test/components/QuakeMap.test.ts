@@ -195,7 +195,7 @@ describe("QuakeMap", () => {
     w.unmount();
   });
 
-  it("shades density under the markers when the floor was raised, with a toggle and legend row", async () => {
+  it("offers density shading when the floor was raised, off until its toggle is ticked", async () => {
     stubWorld();
     const ctx = await makeContext({
       api: raisedApi(),
@@ -204,12 +204,14 @@ describe("QuakeMap", () => {
     const w = mountWith(QuakeMap, ctx, { animate: false });
     await flushPromises();
     expect(w.find(".mapcount").text()).toBe("Showing 1 of 7,312 events · markers at M6+");
-    expect(w.findComponent({ name: "MapDensity" }).findAll("path")).toHaveLength(2);
-    expect(w.text()).toContain("events per 2° cell at M4.5+: 1 → 5,000 (log scale)");
-    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Density"));
-    await toggle?.find("input").setValue(false);
     expect(w.findComponent({ name: "MapDensity" }).exists()).toBe(false);
     expect(w.text()).not.toContain("events per 2° cell");
+    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Density"));
+    await toggle?.find("input").setValue(true);
+    expect(w.findComponent({ name: "MapDensity" }).findAll("path")).toHaveLength(2);
+    expect(w.text()).toContain("events per 2° cell at M4.5+: 1 → 5,000 (log scale)");
+    await toggle?.find("input").setValue(false);
+    expect(w.findComponent({ name: "MapDensity" }).exists()).toBe(false);
     w.unmount();
   });
 
