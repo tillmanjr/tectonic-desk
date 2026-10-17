@@ -138,9 +138,13 @@ export function useMapView(opts: MapViewOptions): MapView {
   const transform = shallowRef<ZoomTransform>(zoomIdentity);
   const showPlates = ref(true);
   const showTeeth = ref(true);
-  /** When set, wheel, drag and one finger leave the map alone (the page scrolls); buttons, two fingers and zoom-to still work. */
-  const locked = ref(true);
   const coarse = coarsePointer();
+  /**
+   * When set, wheel, drag and one finger leave the map alone (the page
+   * scrolls); buttons, two fingers and zoom-to still work. Fingers start
+   * locked so the page stays scrollable; a mouse starts free.
+   */
+  const locked = ref(coarse);
   const cssScale = ref(1);
   function measure(): void {
     const width = mustRef(svgEl, "map svg").getBoundingClientRect().width;
