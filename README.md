@@ -124,7 +124,7 @@ then both images are built on freshly pulled base images and pushed to GitHub Co
 (`ghcr.io/tillmanjr/tectonic-desk-server` and `-web`, tagged `release` and with the commit), then
 the droplet pulls them (and current caddy and postgres images) and restarts
 `deploy/docker-compose.prod.yml` behind Caddy, which holds the TLS certificate. The same workflow
-runs every Sunday at 09:00 UTC, and on demand from the Actions tab, so base images stay current
+runs every Monday at 08:00 UTC (midnight or 1 am Pacific), and on demand from the Actions tab, so base images stay current
 between pushes. `main` stays the integration branch; `git push origin main:release` (or a merge
 into `release`) deploys. One-time setup:
 

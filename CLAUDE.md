@@ -4,6 +4,7 @@ Earth-sciences dashboard for a reader with formal geology training. Earthquakes 
 
 ## Repo rules
 
+- Branch workflow: `main` is the base and is never committed to directly. Each change goes on its own branch, is pushed, and reaches `main` through a pull request (CI runs on PRs). Deploying is merging `main` into `release` (`git push origin main:release`), which triggers the Deploy workflow.
 - `quake/` is the frozen prototype. Never modify it. Its `CLAUDE.md` holds the verified focal-mechanism conventions and USGS endpoint notes; consult it, do not edit it.
 - pnpm workspace: `apps/server` (Fastify, Drizzle, Postgres, USGS ingest, API), `apps/web` (Vue 3 + Vite), `packages/shared` (domain and API types, mechanism math, no third-party runtime deps).
 - Specs live in `docs/superpowers/specs`, plans in `docs/superpowers/plans`. Each sub-project (Foundation, Ingest, API, Front end) gets its own.
