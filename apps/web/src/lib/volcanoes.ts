@@ -263,6 +263,8 @@ export interface VolcanoStore {
   selected: ComputedRef<Volcano | null>;
   byNumber: ComputedRef<Map<number, Volcano>>;
   eruptionsOf: ComputedRef<Map<number, Eruption[]>>;
+  /** One volcano's eruptions, newest first; empty for an unknown or null number. */
+  eruptionsFor(number: number | null): Eruption[];
   continuing: ComputedRef<Set<number>>;
   statusesOf: ComputedRef<Map<number, ApiVolcanoStatus[]>>;
   /** Volcanoes inside the region's bbox (all of them for the global view). */
@@ -311,6 +313,8 @@ export function createVolcanoStore(api: ApiClient, now: () => Date): VolcanoStor
       list.sort((a, b) => b.startYear - a.startYear || b.number - a.number);
     return m;
   });
+  const eruptionsFor = (number: number | null): Eruption[] =>
+    number === null ? [] : (eruptionsOf.value.get(number) ?? []);
   const continuing = computed(
     () => new Set(eruptions.value.filter((e) => e.continuing).map((e) => e.volcano)),
   );
@@ -449,6 +453,7 @@ export function createVolcanoStore(api: ApiClient, now: () => Date): VolcanoStor
     selected,
     byNumber,
     eruptionsOf,
+    eruptionsFor,
     continuing,
     statusesOf,
     inRegion,

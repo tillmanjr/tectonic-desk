@@ -157,6 +157,15 @@ describe("VolcanoTable", () => {
     expect(names()[0]).toBe("Etna");
     await headers[4]?.trigger("click");
     expect(names()[0]).toBe("Kilauea");
+    await headers[4]?.trigger("click");
+    expect(names()[0]).toBe("Ancient");
+    await headers[4]?.trigger("click");
+    ctx.volcanoes.statuses.value = [
+      ...ctx.volcanoes.statuses.value,
+      status({ id: 10, level: "ADVISORY", color: "YELLOW" }),
+    ];
+    await nextTick();
+    expect(w.findAll("tr.ev")[0]?.text()).toContain("USGS Watch · Orange");
     await w.findAll("tr.ev")[0]?.trigger("click");
     expect(ctx.selectVolcano).toHaveBeenCalledWith(332010);
     await w.findAll("tr.ev")[1]?.trigger("keydown", { key: "Enter" });
@@ -173,12 +182,12 @@ describe("eruption charts", () => {
     const decades = mountWith(EruptionDecadeChart, ctx);
     expect(decades.findAll("rect").length).toBeGreaterThan(20);
     expect(decades.find(".cap").text()).toContain(
-      "6 eruption starts since 1800 across 5 volcanoes; 2 earlier",
+      "8 eruption starts since 1800 across 5 volcanoes; 2 earlier",
     );
     const vei = mountWith(VeiChart, ctx);
     expect(vei.findAll("rect")).toHaveLength(9);
     expect(vei.find(".cap").text()).toContain(
-      "8 eruptions by Volcanic Explosivity Index; 1 without a VEI and 1 with a queried value",
+      "10 eruptions by Volcanic Explosivity Index; 2 without a VEI and 2 with a queried value",
     );
     ctx.volcanoes.setFilter({ ...EMPTY_VOLCANO_FILTER, age: "unknown" });
     await flushPromises();

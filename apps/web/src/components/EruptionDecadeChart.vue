@@ -36,7 +36,7 @@ const data = computed<Data>(() => {
   let earlier = 0;
   let total = 0;
   for (const v of store.filtered.value) {
-    for (const e of store.eruptionsOf.value.get(v.number) ?? []) {
+    for (const e of store.eruptionsFor(v.number)) {
       if (e.startYear < FROM) {
         earlier += 1;
         continue;

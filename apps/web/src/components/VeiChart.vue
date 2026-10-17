@@ -31,11 +31,13 @@ const store = useInjected(VOLCANOES);
 const data = computed<Data>(() => {
   const counts = new Map<string, number>();
   let uncertain = 0;
+  let noVei = 0;
   let total = 0;
   for (const v of store.filtered.value) {
-    for (const e of store.eruptionsOf.value.get(v.number) ?? []) {
+    for (const e of store.eruptionsFor(v.number)) {
       const bin = e.vei === null ? "?" : String(Math.min(7, Math.max(0, Math.round(e.vei))));
       counts.set(bin, (counts.get(bin) ?? 0) + 1);
+      if (bin === "?") noVei += 1;
       if (e.veiModifier !== null) uncertain += 1;
       total += 1;
     }
@@ -60,7 +62,7 @@ const data = computed<Data>(() => {
     bars,
     xTicks: BINS.map((b, i) => ({ pos: M.l + (i + 0.5) * STEP, label: b === "?" ? "n/a" : b })),
     yTicks: ticksOf(y, 4),
-    caption: `${String(total)} eruptions by Volcanic Explosivity Index; ${String(counts.get("?") ?? 0)} without a VEI and ${String(uncertain)} with a queried value. Prehistoric records favour large eruptions.`,
+    caption: `${String(total)} eruptions by Volcanic Explosivity Index; ${String(noVei)} without a VEI and ${String(uncertain)} with a queried value. Prehistoric records favour large eruptions.`,
   };
 });
 </script>

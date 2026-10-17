@@ -9,7 +9,7 @@ import { stubCanvas } from "../support/canvas.js";
 import { event, GLOBAL } from "../support/events.js";
 import { fakeApi } from "../support/api.js";
 import { makeContext, mountWith } from "../support/mount.js";
-import { VOLCANOES } from "../support/volcanoes.js";
+import { status, VOLCANOES } from "../support/volcanoes.js";
 import { stubWorld } from "../support/world.js";
 
 describe("MapVolcanoes", () => {
@@ -76,6 +76,11 @@ describe("VolcanoMap", () => {
         .mockResolvedValue({ events: [event(), bare], count: 2, truncated: false, query: {} }),
     });
     const ctx = await makeContext({ api, volcanoes: true });
+    // A second, lower status for Kilauea: the ring and tooltip follow the higher one.
+    ctx.volcanoes.statuses.value = [
+      ...ctx.volcanoes.statuses.value,
+      status({ id: 10, level: "ADVISORY", color: "YELLOW" }),
+    ];
     const w = mountWith(VolcanoMap, ctx, { animate: false });
     await flushPromises();
     expect(w.find(".mapcount").text()).toBe("Showing 5 of 5 volcanoes");

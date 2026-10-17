@@ -1,21 +1,12 @@
 <script setup lang="ts">
-import type { ApiEvent, ApiVolcanoDetail, Eruption } from "@tectonic/shared";
+import type { ApiVolcanoDetail, Eruption } from "@tectonic/shared";
 import { computed, ref, shallowRef, watch } from "vue";
+import NearbyQuakes from "./NearbyQuakes.vue";
 import { errorMessage } from "../lib/api.js";
-import { ago, fmtCoord, fmtMag, fmtStamp, placeOf } from "../lib/format.js";
-import {
-  API,
-  CATALOG,
-  CLOCK,
-  SELECT,
-  SELECT_VOLCANO,
-  useInjected,
-  VOLCANOES,
-  ZONE,
-} from "../lib/keys.js";
+import { fmtCoord, fmtStamp } from "../lib/format.js";
+import { API, CLOCK, SELECT_VOLCANO, useInjected, VOLCANOES, ZONE } from "../lib/keys.js";
 import {
   aviationColor,
-  distanceKm,
   eruptionStart,
   SETTING_GROUPS,
   settingGroup,
@@ -24,7 +15,6 @@ import {
   typeGroup,
 } from "../lib/volcanoes.js";
 
-const NEARBY_KM = 50;
 const STRIP_FROM = 1800;
 
 interface StripBar {
@@ -37,11 +27,9 @@ interface StripBar {
 }
 
 const api = useInjected(API);
-const catalog = useInjected(CATALOG);
 const store = useInjected(VOLCANOES);
 const clock = useInjected(CLOCK);
 const zone = useInjected(ZONE);
-const select = useInjected(SELECT);
 const selectVolcano = useInjected(SELECT_VOLCANO);
 
 const detail = shallowRef<ApiVolcanoDetail | null>(null);
@@ -82,9 +70,7 @@ watch(
 
 const open = computed(() => store.selectedNumber.value !== null);
 const v = store.selected;
-const eruptions = computed(() =>
-  v.value === null ? [] : (store.eruptionsOf.value.get(v.value.number) ?? []),
-);
+const eruptions = computed(() => store.eruptionsFor(store.selectedNumber.value));
 const W = 300;
 const strip = computed(() => {
   const to = clock.now.value.getUTCFullYear() + 1;
@@ -105,18 +91,8 @@ const strip = computed(() => {
   });
   return { bars, earlier: eruptions.value.length - recent.length };
 });
-const nearby = computed(() => {
-  const here = v.value;
-  if (here === null) return { count: 0, top: [] as ApiEvent[] };
-  const close = catalog.filtered.value.filter(
-    (e) => distanceKm(here.lat, here.lon, e.latitude, e.longitude) <= NEARBY_KM,
-  );
-  const top = [...close].sort((a, b) => (b.mag ?? -1) - (a.mag ?? -1)).slice(0, 3);
-  return { count: close.length, top };
-});
-const gvpUrl = computed(() =>
-  v.value === null ? "" : `https://volcano.si.edu/volcano.cfm?vn=${String(v.value.number)}`,
-);
+const gvpUrl = (number: number): string =>
+  `https://volcano.si.edu/volcano.cfm?vn=${String(number)}`;
 function close(): void {
   selectVolcano(null);
 }
@@ -158,7 +134,7 @@ function close(): void {
           </dd>
           <dt>GVP number</dt>
           <dd>
-            <a :href="gvpUrl">{{ v.number }}</a>
+            <a :href="gvpUrl(v.number)">{{ v.number }}</a>
           </dd>
         </dl>
         <p v-if="v.summary !== null" class="summary">{{ v.summary }}</p>
@@ -239,18 +215,7 @@ function close(): void {
           </ul>
         </template>
 
-        <h3>Earthquakes within {{ NEARBY_KM }} km</h3>
-        <p v-if="nearby.count === 0" class="note">None in the loaded window and filter.</p>
-        <template v-else>
-          <p class="cap">{{ nearby.count }} in the loaded window; the largest:</p>
-          <ul class="erlist">
-            <li v-for="e in nearby.top" :key="e.id">
-              <button type="button" class="linkbtn" @click="select(e.id)">
-                M{{ fmtMag(e.mag) }} · {{ placeOf(e) }} · {{ ago(e.time, clock.now.value) }} ago
-              </button>
-            </li>
-          </ul>
-        </template>
+        <NearbyQuakes :volcano="v" />
       </template>
       <p v-else-if="open" class="note">
         Volcano {{ store.selectedNumber.value }} is not in the Holocene catalogue held here.

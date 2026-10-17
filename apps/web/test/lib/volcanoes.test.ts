@@ -124,6 +124,9 @@ describe("createVolcanoStore", () => {
     expect(store.eruptionsOf.value.get(211060)?.map((e) => e.startYear)).toEqual([
       2022, 2013, 1669, -6190,
     ]);
+    expect(store.eruptionsFor(211060)).toHaveLength(4);
+    expect(store.eruptionsFor(999999)).toEqual([]);
+    expect(store.eruptionsFor(null)).toEqual([]);
     expect(store.rankOf(332010)).toBe(3);
     expect(store.rankOf(241040)).toBe(2);
     expect(store.rankOf(321050)).toBe(0);
