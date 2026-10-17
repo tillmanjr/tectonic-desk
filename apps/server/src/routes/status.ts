@@ -30,6 +30,8 @@ export const statusRoutes: FastifyPluginCallback = (app, _opts, done) => {
         feed_week: runOrNull(runs.feed_week),
         backfill: runOrNull(runs.backfill),
         details: runOrNull(runs.details),
+        volcano_status: runOrNull(runs.volcano_status),
+        volcano_reports: runOrNull(runs.volcano_reports),
       },
       lastSuccessfulFeed: isoOrNull(lastFeed),
     };

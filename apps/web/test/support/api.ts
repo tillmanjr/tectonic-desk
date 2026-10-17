@@ -14,7 +14,14 @@ export function status(over: Partial<ApiStatus> = {}): ApiStatus {
       withMechanism: 509,
     },
     mechanisms: { total: 692 },
-    runs: { feed_day: null, feed_week: null, backfill: null, details: null },
+    runs: {
+      feed_day: null,
+      feed_week: null,
+      backfill: null,
+      details: null,
+      volcano_status: null,
+      volcano_reports: null,
+    },
     lastSuccessfulFeed: "2026-10-13T11:55:00.000Z",
     ...over,
   };
