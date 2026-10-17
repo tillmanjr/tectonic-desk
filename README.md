@@ -138,10 +138,19 @@ into `release`) deploys. One-time setup:
    ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
    ```
 
-   Once Cloudflare is in front (step 2), run `deploy/cloudflare-firewall.sh` as root to narrow 80
-   and 443 to Cloudflare's edge ranges, so the origin cannot be reached around the proxy; rerun it
-   if Cloudflare's published list changes. Caddy sends HSTS, a Content Security Policy and the
-   other hardening headers from `deploy/Caddyfile`.
+   Once Cloudflare is in front (step 2), make the web ports answer Cloudflare only, so the origin
+   cannot be reached around the proxy. ufw alone cannot do this (Docker routes published ports past
+   it), so `deploy/cloudflare-firewall.sh` fills Docker's `DOCKER-USER` chain instead; the unit and
+   timer beside it re-apply the rules on boot and refresh the ranges weekly:
+
+   ```sh
+   cp deploy/cloudflare-firewall.sh /opt/tectonic-desk/ && chmod +x /opt/tectonic-desk/cloudflare-firewall.sh
+   cp deploy/cloudflare-firewall.service deploy/cloudflare-firewall.timer /etc/systemd/system/
+   systemctl daemon-reload && systemctl enable --now cloudflare-firewall.service cloudflare-firewall.timer
+   ```
+
+   Caddy sends HSTS, a Content Security Policy and the other hardening headers from
+   `deploy/Caddyfile`.
 
    Then, as `deploy`, create `/opt/tectonic-desk/.env`:
 
