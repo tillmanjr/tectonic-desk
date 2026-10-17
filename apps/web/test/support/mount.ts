@@ -4,7 +4,7 @@ import { defineComponent, h, provide, ref, type Component, type Ref } from "vue"
 import type { ApiClient } from "../../src/lib/api.js";
 import { createCatalog, type Catalog } from "../../src/lib/catalog.js";
 import { createClock, type Clock } from "../../src/lib/clock.js";
-import type { EventFilter } from "../../src/lib/filters.js";
+import type { EventFilter, Range } from "../../src/lib/filters.js";
 import type { Zone } from "../../src/lib/format.js";
 import {
   API,
@@ -59,9 +59,18 @@ export function fakeTheme(): Theme {
   });
 }
 
-/** A loaded catalog and polled status over a fake API, never ticking; `volcanoes: true` also loads the volcano store. */
+/**
+ * A loaded catalog and polled status over a fake API, never ticking;
+ * `volcanoes: true` also loads the volcano store, `range` loads that window.
+ */
 export async function makeContext(
-  over: { api?: ApiClient; now?: Date; regionId?: string; volcanoes?: boolean } = {},
+  over: {
+    api?: ApiClient;
+    now?: Date;
+    regionId?: string;
+    volcanoes?: boolean;
+    range?: Range;
+  } = {},
 ): Promise<Context> {
   const api = over.api ?? fakeApi();
   const now = over.now ?? NOW;
@@ -69,6 +78,10 @@ export async function makeContext(
   const catalog = createCatalog(api, () => now);
   await catalog.init();
   await catalog.setRegion(over.regionId ?? "global");
+  if (over.range !== undefined) {
+    catalog.setRange(over.range);
+    await new Promise((r) => setTimeout(r, 0));
+  }
   const status = createStatusPoll(
     api,
     () => now,

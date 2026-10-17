@@ -4,6 +4,19 @@ import { dateIn, type Zone } from "./format.js";
 
 export const DAY_MS = 864e5;
 
+export type StepUnit = "day" | "month" | "year";
+export const UNIT_MS: Record<StepUnit, number> = {
+  day: DAY_MS,
+  month: 30 * DAY_MS,
+  year: 365 * DAY_MS,
+};
+
+/** Day steps up to 120 days, month steps up to 15 years, year steps beyond. */
+export function unitFor(start: Date, end: Date): StepUnit {
+  const days = (end.getTime() - start.getTime()) / DAY_MS;
+  return days <= 120 ? "day" : days <= 15 * 365.25 ? "month" : "year";
+}
+
 /**
  * A tracking clock over the loaded window. The map shows only events whose
  * origin time is at or before `cursor` while the animation is open.
@@ -11,8 +24,10 @@ export const DAY_MS = 864e5;
 export interface Animation {
   active: Ref<boolean>;
   playing: Ref<boolean>;
-  /** Playback speed: real seconds per animated day. */
-  secondsPerDay: Ref<number>;
+  /** What one step is: a day, a 30-day month or a 365-day year, from the window length. */
+  unit: Ref<StepUnit>;
+  /** Playback speed: real seconds per animated unit. */
+  secondsPerUnit: Ref<number>;
   cursor: Ref<Date | null>;
   start: Ref<Date | null>;
   end: Ref<Date | null>;
@@ -22,15 +37,16 @@ export interface Animation {
   pause(): void;
   /** Moves the cursor as `ms` of real time would at the current speed; no-op while closed. */
   advance(ms: number): void;
-  /** Moves the cursor a whole day, clamped to the window, and pauses. */
-  stepDay(delta: 1 | -1): void;
+  /** Moves the cursor a whole unit, clamped to the window, and pauses. */
+  step(delta: 1 | -1): void;
   close(): void;
 }
 
 export function createAnimation(tickMs = 100): Animation {
   const active = ref(false);
   const playing = ref(false);
-  const secondsPerDay = ref(2);
+  const unit = ref<StepUnit>("day");
+  const secondsPerUnit = ref(2);
   const cursor = ref<Date | null>(null);
   const start = ref<Date | null>(null);
   const end = ref<Date | null>(null);
@@ -54,8 +70,8 @@ export function createAnimation(tickMs = 100): Animation {
   function advance(ms: number): void {
     const b = bounds();
     if (b === null) return;
-    const speed = Math.max(0.1, secondsPerDay.value);
-    const next = b.c.getTime() + (ms / 1000 / speed) * DAY_MS;
+    const speed = Math.max(0.1, secondsPerUnit.value);
+    const next = b.c.getTime() + (ms / 1000 / speed) * UNIT_MS[unit.value];
     if (next >= b.e.getTime()) {
       cursor.value = b.e;
       pause();
@@ -67,12 +83,14 @@ export function createAnimation(tickMs = 100): Animation {
   return {
     active,
     playing,
-    secondsPerDay,
+    unit,
+    secondsPerUnit,
     cursor,
     start,
     end,
     open(windowStart, windowEnd, zone) {
       pause();
+      unit.value = unitFor(windowStart, windowEnd);
       const firstDay = dayStart(dateIn(windowStart.toISOString(), zone), zone);
       start.value = new Date(firstDay.getTime() - DAY_MS);
       end.value = windowEnd;
@@ -90,11 +108,12 @@ export function createAnimation(tickMs = 100): Animation {
     },
     pause,
     advance,
-    stepDay(delta) {
+    step(delta) {
       const b = bounds();
       if (b === null) return;
       pause();
-      const t = Math.min(b.e.getTime(), Math.max(b.s.getTime(), b.c.getTime() + delta * DAY_MS));
+      const span = delta * UNIT_MS[unit.value];
+      const t = Math.min(b.e.getTime(), Math.max(b.s.getTime(), b.c.getTime() + span));
       cursor.value = new Date(t);
     },
     close() {

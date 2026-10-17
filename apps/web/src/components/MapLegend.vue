@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { DENSITY_RAMP, type DensityLegend } from "../lib/density.js";
 import { FAULT_AGES, type AgeCode } from "../lib/faults.js";
+import { fmtFloor, fmtInt } from "../lib/format.js";
 import { PLATE_CLASSES, type MapFrame } from "../lib/geo.js";
 import { markerRadius } from "../lib/markers.js";
 
@@ -11,8 +13,10 @@ const props = withDefaults(
     faults?: readonly AgeCode[];
     /** Whether the earthquake rows (depth colours, magnitude sizes, beachball note) are shown. */
     quakes?: boolean;
+    /** The density shading in force, for its ramp row; null when the map draws none. */
+    density?: DensityLegend | null;
   }>(),
-  { faults: () => [], quakes: true },
+  { faults: () => [], quakes: true, density: null },
 );
 const sizes = computed(() => {
   const mags = props.frame.global
@@ -37,6 +41,22 @@ const plates = Object.values(PLATE_CLASSES);
         M{{ s.m }}
       </span>
       <span class="sw">Beachball: shaded = compressional (P-wave first motion up)</span>
+      <span v-if="density !== null" class="sw">
+        <svg width="52" height="10" aria-hidden="true">
+          <rect
+            v-for="(o, i) in DENSITY_RAMP"
+            :key="i"
+            :x="i * 10"
+            y="0"
+            width="10"
+            height="10"
+            :fill-opacity="o"
+            style="fill: var(--accent)"
+          />
+        </svg>
+        events per {{ density.cell }}° cell at {{ fmtFloor(density.floor) }}: 1 →
+        {{ fmtInt(density.max) }} (log scale)
+      </span>
     </template>
     <span v-for="p in plates" :key="p.name" class="sw">
       <svg width="26" height="10">

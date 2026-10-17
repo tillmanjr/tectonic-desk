@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import MagnitudeTimeChart from "../../src/components/MagnitudeTimeChart.vue";
-import { fakeApi } from "../support/api.js";
+import { fakeApi, RAISED_SUMMARY, raisedApi } from "../support/api.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 
@@ -22,6 +22,7 @@ const after = event({
 });
 const other = event({ id: "other", mag: null, time: "2026-10-11T00:00:00Z" });
 const small = event({ id: "small", mag: 4.6, time: "2026-10-12T00:00:00Z" });
+const century = { since: "1900-01-01T00:00:00.000Z", until: "2026-10-13T23:59:59.999Z" };
 
 async function chart(events: unknown[], regionId = "global") {
   const api = fakeApi({
@@ -61,6 +62,47 @@ describe("MagnitudeTimeChart", () => {
     ctx.zone.value = "local";
     await nextTick();
     expect(w.findAll("circle")).toHaveLength(2);
+  });
+  it("draws per-bin bars and maxima with era marks when the floor was raised", async () => {
+    const ctx = await makeContext({ api: raisedApi(), range: century });
+    const w = mountWith(MagnitudeTimeChart, ctx);
+    expect(w.findAll("rect.bin")).toHaveLength(2);
+    expect(w.findAll("circle.binmax")).toHaveLength(1);
+    expect(w.find("circle.binmax title").text()).toBe("1964: 3,910 events, largest M8.4");
+    expect(w.findAll("g.era")).toHaveLength(3);
+    expect(w.findAll("g.era text").map((t) => t.text())).toEqual(["WWSSN", "PDE", "GCMT"]);
+    expect(w.findAll(".axis")).toHaveLength(3);
+    expect(w.find(".cap").text()).toBe(
+      "Bars count events per year at M4.5+; dots are the largest in each. Dashed lines mark changes in the record, not in the Earth: 1964 (WWSSN network and ISC founded; global record complete to about M5.5–6); 1973 (NEIC PDE enters ComCat; complete to about M4.5); 1976 (Global CMT begins; Mw measured rather than proxied above about M5).",
+    );
+    ctx.zone.value = "local";
+    await nextTick();
+    expect(w.find(".cap").text()).toContain(" Bins are UTC.");
+  });
+  it("labels month and day bins by their start", async () => {
+    for (const [by, label] of [
+      ["month", "1964-01"],
+      ["day", "1964-01-01"],
+    ] as const) {
+      const api = raisedApi();
+      vi.mocked(api.summary).mockResolvedValue({ ...RAISED_SUMMARY, by });
+      const w = mountWith(MagnitudeTimeChart, await makeContext({ api, range: century }));
+      expect(w.find("circle.binmax title").text()).toBe(`${label}: 3,910 events, largest M8.4`);
+      expect(w.find(".cap").text()).toContain(`events per ${by} at M4.5+`);
+      expect(Number(w.find("rect.bin").attributes("width"))).toBeGreaterThanOrEqual(1);
+    }
+  });
+  it("marks the eras in per-event mode too, and only when they fall in the window", async () => {
+    const ctx = await makeContext({
+      range: { since: "1975-01-01T00:00:00.000Z", until: "2026-10-13T23:59:59.999Z" },
+    });
+    const w = mountWith(MagnitudeTimeChart, ctx);
+    expect(w.findAll("line.stem")).toHaveLength(1);
+    expect(w.findAll("g.era text").map((t) => t.text())).toEqual(["GCMT"]);
+    expect(w.find(".cap").text()).toContain("1976 (Global CMT begins");
+    expect(w.findAll(".axis text").some((t) => /^\d{4}$/.test(t.text()))).toBe(true);
+    const short = await chart([after, main]);
+    expect(short.w.findAll("g.era")).toHaveLength(0);
   });
   it("uses the plain caption without a sequence and says so when empty", async () => {
     const { w } = await chart([after], "wc");

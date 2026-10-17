@@ -5,6 +5,7 @@ import MapLegend from "./MapLegend.vue";
 import MapPlates from "./MapPlates.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
+import type { DensityLegend } from "../lib/density.js";
 import { AGE_CODES, FAULT_AGES } from "../lib/faults.js";
 import type { MapView } from "../lib/mapview.js";
 
@@ -22,8 +23,10 @@ const props = withDefaults(
     countLine: string;
     /** Whether the legend carries the earthquake rows; a page without events turns them off. */
     quakes?: boolean;
+    /** The density shading in force, passed to the legend; null when none is drawn. */
+    density?: DensityLegend | null;
   }>(),
-  { quakes: true },
+  { quakes: true, density: null },
 );
 const { mv } = props;
 </script>
@@ -180,6 +183,7 @@ const { mv } = props;
       :min-mag="mv.view.value.minMag"
       :faults="mv.hasFaults.value ? mv.faultAges.value : []"
       :quakes="quakes"
+      :density="density"
     >
       <slot name="legend"></slot>
     </MapLegend>

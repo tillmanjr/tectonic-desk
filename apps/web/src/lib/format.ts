@@ -99,6 +99,11 @@ export function fmtMag(mag: number | null, precise = false): string {
   return s.endsWith("0") ? s.slice(0, -1) : s;
 }
 
+/** "M4.5+" or "M6+": a magnitude floor as the page names it. */
+export function fmtFloor(m: number): string {
+  return `M${String(m)}+`;
+}
+
 export function fmtMoment(v: number | null): { mantissa: string; exponent: number } | null {
   if (v === null) return null;
   const exponent = Math.floor(Math.log10(v));

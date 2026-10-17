@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyFilter,
+  CATALOG_START,
   dateBoundsFor,
   dayEnd,
   dayStart,
@@ -13,6 +14,7 @@ import {
   parseFilter,
   rangeInstants,
   resolveDates,
+  spanStart,
 } from "../../src/lib/filters.js";
 import { event } from "../support/events.js";
 
@@ -23,8 +25,7 @@ const evs = [
   event({ id: "n", mag: null, depthKm: null }),
 ];
 const ids = (list: { id: string }[]) => list.map((e) => e.id);
-const bounds = { min: "2026-07-15", max: "2026-10-13" };
-// 2026-10-13 minus 90 days is 2026-07-15.
+const bounds = { min: CATALOG_START, max: "2026-10-13" };
 const now = new Date("2026-10-13T12:00:00Z");
 
 describe("parseBound / parseDate", () => {
@@ -55,8 +56,8 @@ describe("parseFilter", () => {
     expect(parseFilter({}, 4.5, bounds)).toEqual(EMPTY_FILTER);
   });
   it("keeps dates inside the bounds and ordered", () => {
-    expect(parseFilter({ since: "2026-01-01", until: "2027-01-01" }, 4.5, bounds)).toMatchObject({
-      since: "2026-07-15",
+    expect(parseFilter({ since: "1899-12-31", until: "2027-01-01" }, 4.5, bounds)).toMatchObject({
+      since: "1900-01-01",
       until: "2026-10-13",
     });
     expect(parseFilter({ since: "2026-10-10", until: "2026-10-01" }, 4.5, bounds)).toMatchObject({
@@ -119,8 +120,15 @@ describe("applyFilter", () => {
 });
 
 describe("dates and ranges", () => {
-  it("bounds the selectable dates to the last 90 days", () => {
+  it("bounds the selectable dates to the catalogue start and today", () => {
     expect(dateBoundsFor(now, "utc")).toEqual(bounds);
+  });
+  it("finds a span's start day, clamped to the catalogue start", () => {
+    expect(spanStart("2026-10-13", 30)).toBe("2026-09-13");
+    expect(spanStart("2026-10-13", 365)).toBe("2025-10-13");
+    expect(spanStart("2026-03-01", 1)).toBe("2026-02-28");
+    expect(spanStart("1900-02-01", 90)).toBe(CATALOG_START);
+    expect(spanStart("2026-10-13", null)).toBe(CATALOG_START);
   });
   it("finds day starts and ends in UTC and in the browser zone", () => {
     expect(dayStart("2026-10-13", "utc").toISOString()).toBe("2026-10-13T00:00:00.000Z");
