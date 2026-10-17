@@ -284,6 +284,8 @@ export interface VolcanoStore {
   liveAt: Ref<Date | null>;
   region: ShallowRef<ApiRegion | null>;
   filter: Ref<VolcanoFilter>;
+  /** Keep the triangles off the map without changing anything else; in memory only. */
+  hideMarkers: Ref<boolean>;
   selectedNumber: Ref<number | null>;
   selected: ComputedRef<Volcano | null>;
   byNumber: ComputedRef<Map<number, Volcano>>;
@@ -321,6 +323,7 @@ export function createVolcanoStore(api: ApiClient, now: () => Date): VolcanoStor
   const liveAt = ref<Date | null>(null);
   const region = shallowRef<ApiRegion | null>(null);
   const filter = ref<VolcanoFilter>(EMPTY_VOLCANO_FILTER);
+  const hideMarkers = ref(false);
   const selectedNumber = ref<number | null>(null);
 
   const byNumber = computed(() => new Map(volcanoes.value.map((v) => [v.number, v])));
@@ -474,6 +477,7 @@ export function createVolcanoStore(api: ApiClient, now: () => Date): VolcanoStor
     liveAt,
     region,
     filter,
+    hideMarkers,
     selectedNumber,
     selected,
     byNumber,

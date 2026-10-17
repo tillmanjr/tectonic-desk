@@ -161,6 +161,7 @@ watch(selected, (e) => {
         :grid="density"
       />
       <MapEvents
+        v-if="!catalog.hideMarkers.value"
         :frame="frame"
         :events="shown"
         :k="k"

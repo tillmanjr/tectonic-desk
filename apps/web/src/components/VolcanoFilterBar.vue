@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import RefineBar from "./RefineBar.vue";
 import { SET_VOLCANO_FILTER, useInjected, VOLCANOES } from "../lib/keys.js";
+import { volcanoParts } from "../lib/refine.js";
 import {
   EMPTY_VOLCANO_FILTER,
   ERUPTION_CLASS_CODES,
@@ -18,6 +20,7 @@ import {
 const store = useInjected(VOLCANOES);
 const setFilter = useInjected(SET_VOLCANO_FILTER);
 const active = computed(() => isVolcanoFilterActive(store.filter.value));
+const parts = computed(() => volcanoParts(store.filter.value));
 
 const settings = SETTING_GROUP_CODES.map((c) => ({ value: c, label: SETTING_GROUPS[c] }));
 const types = TYPE_GROUP_CODES.map((c) => ({ value: c, label: TYPE_GROUPS[c] }));
@@ -36,15 +39,21 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
 </script>
 
 <template>
-  <section class="filters" aria-label="Refine volcanoes">
-    <span class="ftitle">Refine</span>
-    <span
-      class="finfo"
-      role="img"
-      aria-label="These settings refine the map, table and charts; the summary tiles and cards are unaffected"
-      title="These settings refine the map, table and charts. The summary tiles and cards are unaffected."
-      >i</span
-    >
+  <RefineBar
+    dataset="volcanoes"
+    :parts="parts"
+    :hidden="store.hideMarkers.value"
+    @update:hidden="store.hideMarkers.value = $event"
+  >
+    <template #info>
+      <span
+        class="finfo"
+        role="img"
+        aria-label="These settings refine the map, table and charts; the summary tiles and cards are unaffected"
+        title="These settings refine the map, table and charts. The summary tiles and cards are unaffected."
+        >i</span
+      >
+    </template>
     <label class="fsel"
       >Setting
       <select :value="store.filter.value.setting ?? ''" @change="change('setting', $event)">
@@ -81,5 +90,5 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
     >
       Reset
     </button>
-  </section>
+  </RefineBar>
 </template>

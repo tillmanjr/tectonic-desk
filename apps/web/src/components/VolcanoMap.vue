@@ -62,6 +62,7 @@ watch(store.selected, (v) => {
   <MapShell :mv="mv" label="Map of Holocene volcanoes" :count-line="countLine" :quakes="false">
     <template #layers="{ frame, k, minRadius }">
       <MapVolcanoes
+        v-if="!store.hideMarkers.value"
         :frame="frame"
         :volcanoes="store.filtered.value"
         :k="k"

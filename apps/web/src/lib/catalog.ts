@@ -86,6 +86,8 @@ export interface Catalog {
   raised: ComputedRef<boolean>;
   /** Events in the window at the requested floor, else the loaded count. */
   windowTotal: ComputedRef<number>;
+  /** Keep the markers off the map without changing anything else; in memory only. */
+  hideMarkers: Ref<boolean>;
   setFilter(f: EventFilter): void;
   setRange(r: Range | null): void;
   /** The active region; throws when none is set (components below the region guard never see that). */
@@ -116,6 +118,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
   const selected = computed(() => events.value.find((e) => e.id === selectedId.value) ?? null);
   const filter = ref<EventFilter>(EMPTY_FILTER);
   const range = ref<Range | null>(null);
+  const hideMarkers = ref(false);
   const windowEvents = computed(() => rangeEvents.value ?? events.value);
   const filtered = computed(() => applyFilter(windowEvents.value, filter.value));
   const requested = computed(() => {
@@ -214,6 +217,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
     stats,
     raised,
     windowTotal,
+    hideMarkers,
     setFilter(f) {
       const before = requested.value;
       filter.value = f;

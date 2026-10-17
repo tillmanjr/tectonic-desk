@@ -38,6 +38,13 @@ describe("VolcanoesPage", () => {
     expect(w.find(".filters").exists()).toBe(true);
     expect(w.find("svg.map").exists()).toBe(true);
     expect(w.findAll("tr.ev")).toHaveLength(5);
+    expect(w.findComponent({ name: "MapVolcanoes" }).exists()).toBe(true);
+    await w.find(".filters .rhide input").setValue(true);
+    expect(w.findComponent({ name: "MapVolcanoes" }).exists()).toBe(false);
+    expect(w.find(".mapcount").text()).toBe("Showing 5 of 5 volcanoes");
+    expect(w.findAll("tr.ev")).toHaveLength(5);
+    await w.find(".filters .rhide input").setValue(false);
+    expect(w.findComponent({ name: "MapVolcanoes" }).exists()).toBe(true);
     expect(w.findAll(".chart")).toHaveLength(2);
     expect(w.find(".banner.error").exists()).toBe(false);
     ctx.volcanoes.error.value = "live feed down";
