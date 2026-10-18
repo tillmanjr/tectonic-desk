@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import CardGrid from "./CardGrid.vue";
 import { ago, fmtStamp } from "../lib/format.js";
 import { CLOCK, SELECT_VOLCANO, useInjected, VOLCANOES, ZONE } from "../lib/keys.js";
 import { aviationColor, isElevated, statusLabel } from "../lib/volcanoes.js";
 
+/** Rows of cards before the "more" control; null shows them all. */
+const props = withDefaults(defineProps<{ rows?: number | null }>(), { rows: null });
 const store = useInjected(VOLCANOES);
 const clock = useInjected(CLOCK);
 const zone = useInjected(ZONE);
@@ -10,12 +13,17 @@ const selectVolcano = useInjected(SELECT_VOLCANO);
 </script>
 
 <template>
-  <section class="major">
+  <CardGrid
+    v-slot="{ limit }"
+    label="Elevated or changed in the last 7 days"
+    :count="store.attention.value.length"
+    :rows="props.rows"
+  >
     <p v-if="store.attention.value.length === 0" class="note">
       No monitored volcano is above normal and none changed status in the last 7 days.
     </p>
     <button
-      v-for="a in store.attention.value"
+      v-for="a in store.attention.value.slice(0, limit ?? store.attention.value.length)"
       :key="`${a.status.source}:${a.status.key}`"
       type="button"
       class="mcard vcard"
@@ -41,5 +49,5 @@ const selectVolcano = useInjected(SELECT_VOLCANO);
         <span v-if="a.status.synopsis !== null" class="m">{{ a.status.synopsis }}</span>
       </span>
     </button>
-  </section>
+  </CardGrid>
 </template>

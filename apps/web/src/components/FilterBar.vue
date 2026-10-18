@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import RefineBar from "./RefineBar.vue";
 import {
   dateBoundsFor,
   EMPTY_FILTER,
@@ -15,6 +16,7 @@ import {
 } from "../lib/filters.js";
 import { fmtFloor, fmtInt } from "../lib/format.js";
 import { CATALOG, CLOCK, SET_FILTER, useInjected, ZONE } from "../lib/keys.js";
+import { quakeParts } from "../lib/refine.js";
 
 const catalog = useInjected(CATALOG);
 const clock = useInjected(CLOCK);
@@ -30,6 +32,15 @@ const presetIndex = computed(() =>
   SPANS.findIndex((s) => spanStart(span.value.until, s.days) === span.value.since),
 );
 const preset = computed(() => SPANS[presetIndex.value]);
+/** The collapsed bar's clauses. */
+const parts = computed(() =>
+  quakeParts(
+    catalog.filter.value,
+    span.value,
+    catalog.requested.value,
+    preset.value?.label ?? null,
+  ),
+);
 const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
 /** Why the page shows fewer events than the window holds. */
 const note = computed(() => {
@@ -72,15 +83,21 @@ function clear(): void {
 </script>
 
 <template>
-  <section class="filters" aria-label="Refine">
-    <span class="ftitle">Refine</span>
-    <span
-      class="finfo"
-      role="img"
-      aria-label="These settings refine the map, catalog and charts; the summary tiles and major events are unaffected"
-      title="These settings refine the map, catalog and charts. The summary tiles and major events are unaffected."
-      >i</span
-    >
+  <RefineBar
+    dataset="earthquakes"
+    :parts="parts"
+    :hidden="catalog.hideMarkers.value"
+    @update:hidden="catalog.hideMarkers.value = $event"
+  >
+    <template #info>
+      <span
+        class="finfo"
+        role="img"
+        aria-label="These settings refine the map, catalog and charts; the summary tiles and major events are unaffected"
+        title="These settings refine the map, catalog and charts. The summary tiles and major events are unaffected."
+        >i</span
+      >
+    </template>
     <span class="flabel">Magnitude</span>
     <input
       type="number"
@@ -150,6 +167,8 @@ function clear(): void {
       @change="changeDate('until', $event)"
     />
     <button type="button" class="fclear" :disabled="!active" @click="clear">Reset</button>
-    <p v-if="note !== null" class="fnote">{{ note }}</p>
-  </section>
+    <template #note>
+      <p v-if="note !== null" class="fnote">{{ note }}</p>
+    </template>
+  </RefineBar>
 </template>

@@ -72,6 +72,10 @@ describe("VolcanoFilterBar", () => {
   it("writes each select to the filter and resets", async () => {
     const ctx = await makeContext({ volcanoes: true });
     const w = mountWith(VolcanoFilterBar, ctx);
+    expect(w.find(".rsummary").text()).toBe(
+      "setting any · type any · last eruption any · status any",
+    );
+    await w.find(".rtoggle").trigger("click");
     const selects = w.findAll("select");
     expect(selects).toHaveLength(4);
     expect(w.find(".fclear").attributes("disabled")).toBeDefined();
@@ -111,6 +115,10 @@ describe("VolcanoFilterBar", () => {
     });
     await w.find(".fclear").trigger("click");
     expect(ctx.setVolcanoFilter).toHaveBeenLastCalledWith(EMPTY_VOLCANO_FILTER);
+    await w.find(".rtoggle").trigger("click");
+    expect(w.find(".rsummary .set").text()).toBe("type shield");
+    await w.find(".rhide input").setValue(true);
+    expect(ctx.volcanoes.hideMarkers.value).toBe(true);
   });
 });
 

@@ -4,7 +4,8 @@ import { defineComponent, h, onMounted, provide } from "vue";
 import { createMemoryHistory, RouterView } from "vue-router";
 import type { ApiClient } from "../../src/lib/api.js";
 import { createClock } from "../../src/lib/clock.js";
-import { API, CLOCK, SELECT, THEME, useInjected } from "../../src/lib/keys.js";
+import { API, CLOCK, SELECT, SETTINGS, THEME, useInjected } from "../../src/lib/keys.js";
+import { createSettings } from "../../src/lib/settings.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, status } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
@@ -25,6 +26,7 @@ async function mountApp(path = "/", api: ApiClient = fakeApi()) {
         createClock(1e9, () => NOW),
       );
       provide(THEME, theme);
+      provide(SETTINGS, createSettings(null));
       return () => h(RouterView);
     },
   });
@@ -111,6 +113,7 @@ describe("App", () => {
   it("round-trips the filters through the URL and keeps them across a region switch", async () => {
     stubCanvas();
     const { wrapper, router } = await mountApp("/?minMag=3&maxDepth=200");
+    await wrapper.find(".filters .rtoggle").trigger("click");
     const inputs = wrapper.findAll<HTMLInputElement>(".filters input");
     expect(inputs[0]?.element.value).toBe("4.5");
     expect(inputs[3]?.element.value).toBe("200");
@@ -130,6 +133,10 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.query).toEqual({});
     expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events");
+    await wrapper.find(".filters .rhide input").setValue(true);
+    expect(wrapper.findComponent({ name: "MapEvents" }).exists()).toBe(false);
+    expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events");
+    expect(wrapper.findAll("tr.ev")).toHaveLength(1);
   });
 
   it("switches every time to the browser zone and loads a date range", async () => {
@@ -146,6 +153,7 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.query.tz).toBe("local");
     expect(wrapper.find("th").text()).toBe("Time (local)");
+    await wrapper.find(".filters .rtoggle").trigger("click");
     expect(wrapper.find(".filters").text()).toContain("Window (local)");
     await wrapper.find("button[title^='Show every date']").trigger("click");
     await flushPromises();
@@ -227,6 +235,7 @@ describe("App", () => {
     await wrapper.find(".vdetail .close").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.volcano).toBeUndefined();
+    await wrapper.find(".filters .rtoggle").trigger("click");
     await wrapper.findAll(".filters select")[2]?.setValue("");
     await flushPromises();
     expect(router.currentRoute.value.query.age).toBeUndefined();
@@ -244,7 +253,7 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/");
     expect(wrapper.find(".pages button[aria-current='page']").text()).toBe("Earthquakes");
-    expect(wrapper.find(".filters .fclear").text()).toBe("Reset");
+    expect(wrapper.find(".filters .rsummary").text()).toContain("M4.5+");
     await wrapper.findAll(".pages button")[0]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/");
@@ -253,6 +262,34 @@ describe("App", () => {
     expect(router.currentRoute.value.path).toBe("/volcanoes");
     expect(vi.mocked(api.volcanoStatus).mock.calls.length).toBe(before + 1);
     expect(vi.mocked(api.geo).mock.calls.filter((c) => c[0] === "volcanoes")).toHaveLength(1);
+  });
+
+  it("serves Active Earth with both datasets and keeps one selection at a time", async () => {
+    stubCanvas();
+    const { wrapper, router, api } = await mountApp("/active/wc?volcano=321050");
+    await flushPromises();
+    expect(wrapper.find(".pages button[aria-current='page']").text()).toBe("Active Earth");
+    expect(api.geo).toHaveBeenCalledWith("volcanoes");
+    expect(wrapper.findAll(".stats")).toHaveLength(2);
+    expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events · 2 of 2 volcanoes");
+    expect(wrapper.find(".vdetail").classes()).toContain("open");
+    await wrapper.find(".grid2 tr.ev").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query).toEqual({ event: "us1" });
+    expect(wrapper.find(".vdetail").classes()).not.toContain("open");
+    expect(wrapper.find(".detail").classes()).toContain("open");
+    await wrapper.findAll(".grid2")[1]?.find("tr.ev").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query).toEqual({ volcano: "323010" });
+    expect(wrapper.find(".detail").classes()).not.toContain("open");
+    expect(wrapper.find(".vdetail").classes()).toContain("open");
+    await wrapper.findAll(".pages button")[0]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/wc");
+    expect(wrapper.find(".vdetail").exists()).toBe(false);
+    await wrapper.findAll(".pages button")[2]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/active/wc");
   });
 
   it("refreshes the volcano live state on a feed change while on the volcano page", async () => {

@@ -67,7 +67,7 @@ function hover(ev: MouseEvent, v: Volcano): void {
 </script>
 
 <template>
-  <g data-hit>
+  <g data-hit data-layer="volcanoes">
     <g
       v-for="m in marks"
       :key="m.v.number"

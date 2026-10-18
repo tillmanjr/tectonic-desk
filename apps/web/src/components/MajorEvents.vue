@@ -2,10 +2,11 @@
 import { faultingStyle, planesOf, type ApiEvent, type ApiMechanism } from "@tectonic/shared";
 import { computed } from "vue";
 import BeachballImage from "./BeachballImage.vue";
+import CardGrid from "./CardGrid.vue";
 import { ago, fmtMag, fmtStamp, placeOf } from "../lib/format.js";
 import { CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { sequenceOf, type Sequence } from "../lib/sequence.js";
-import { majorEvents, preferredMechanism } from "../lib/stats.js";
+import { majorEvents, majorLabel, preferredMechanism } from "../lib/stats.js";
 
 interface Card {
   e: ApiEvent;
@@ -14,6 +15,8 @@ interface Card {
   seq: Sequence | null;
 }
 
+/** Rows of cards before the "more" control; null shows them all. */
+const props = withDefaults(defineProps<{ rows?: number | null }>(), { rows: null });
 const catalog = useInjected(CATALOG);
 const { events } = catalog;
 const clock = useInjected(CLOCK);
@@ -40,10 +43,15 @@ const sevStyle = (alert: string | null): Record<string, string> | undefined =>
 </script>
 
 <template>
-  <section class="major">
+  <CardGrid
+    v-slot="{ limit }"
+    :label="majorLabel(catalog.requireRegion())"
+    :count="cards.length"
+    :rows="props.rows"
+  >
     <p v-if="cards.length === 0" class="note">No events meet the threshold in this window.</p>
     <button
-      v-for="c in cards"
+      v-for="c in cards.slice(0, limit ?? cards.length)"
       :key="c.e.id"
       type="button"
       class="mcard"
@@ -81,5 +89,5 @@ const sevStyle = (alert: string | null): Record<string, string> | undefined =>
         </span>
       </span>
     </button>
-  </section>
+  </CardGrid>
 </template>
