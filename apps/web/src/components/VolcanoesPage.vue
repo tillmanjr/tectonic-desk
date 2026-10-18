@@ -6,9 +6,10 @@ import VolcanoFilterBar from "./VolcanoFilterBar.vue";
 import VolcanoMap from "./VolcanoMap.vue";
 import VolcanoTable from "./VolcanoTable.vue";
 import VolcanoTiles from "./VolcanoTiles.vue";
-import { useInjected, VOLCANOES } from "../lib/keys.js";
+import { SETTINGS, useInjected, VOLCANOES } from "../lib/keys.js";
 
 const store = useInjected(VOLCANOES);
+const settings = useInjected(SETTINGS);
 </script>
 
 <template>
@@ -17,8 +18,7 @@ const store = useInjected(VOLCANOES);
     <button type="button" @click="store.load()">Retry</button>
   </div>
   <VolcanoTiles />
-  <p class="sectionlabel">Elevated or changed in the last 7 days</p>
-  <VolcanoCards />
+  <VolcanoCards :rows="settings.current.value.cardRows.alone" />
   <VolcanoFilterBar />
   <VolcanoMap />
   <section class="grid2">

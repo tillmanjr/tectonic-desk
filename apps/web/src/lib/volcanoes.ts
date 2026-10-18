@@ -9,6 +9,7 @@ import type {
 } from "@tectonic/shared";
 import { computed, ref, shallowRef, type ComputedRef, type Ref, type ShallowRef } from "vue";
 import { errorMessage, type ApiClient } from "./api.js";
+import type { DatePrecision } from "./format.js";
 
 /**
  * The volcano page's state and vocabulary: GVP's catalogue classified for
@@ -223,6 +224,30 @@ export function eruptionStart(e: Eruption): string {
   return s;
 }
 
+export interface EruptionAnchor {
+  date: Date;
+  precision: DatePrecision;
+  continuing: boolean;
+  label: string;
+}
+const startMs = (e: Eruption): number =>
+  Date.UTC(e.startYear, (e.startMonth ?? 1) - 1, e.startDay ?? 1);
+const latestOf = (list: Eruption[]): Eruption | null =>
+  list.reduce<Eruption | null>((a, e) => (a === null || startMs(e) > startMs(a) ? e : a), null);
+
+/** The eruption a volcano's seismicity is dated against: the continuing one with the latest start, else the latest start; CE dates only. */
+export function eruptionAnchor(eruptions: Eruption[]): EruptionAnchor | null {
+  const dated = eruptions.filter((e) => e.startYear > 0);
+  const pick = latestOf(dated.filter((e) => e.continuing)) ?? latestOf(dated);
+  if (pick === null) return null;
+  return {
+    date: new Date(startMs(pick)),
+    precision: pick.startMonth === null ? "year" : pick.startDay === null ? "month" : "day",
+    continuing: pick.continuing,
+    label: eruptionStart(pick),
+  };
+}
+
 /** The year a volcano last erupted as text, or "unknown". */
 export const lastEruptionText = (v: Volcano): string =>
   v.lastEruptionYear === null
@@ -259,6 +284,8 @@ export interface VolcanoStore {
   liveAt: Ref<Date | null>;
   region: ShallowRef<ApiRegion | null>;
   filter: Ref<VolcanoFilter>;
+  /** Keep the triangles off the map without changing anything else; in memory only. */
+  hideMarkers: Ref<boolean>;
   selectedNumber: Ref<number | null>;
   selected: ComputedRef<Volcano | null>;
   byNumber: ComputedRef<Map<number, Volcano>>;
@@ -296,6 +323,7 @@ export function createVolcanoStore(api: ApiClient, now: () => Date): VolcanoStor
   const liveAt = ref<Date | null>(null);
   const region = shallowRef<ApiRegion | null>(null);
   const filter = ref<VolcanoFilter>(EMPTY_VOLCANO_FILTER);
+  const hideMarkers = ref(false);
   const selectedNumber = ref<number | null>(null);
 
   const byNumber = computed(() => new Map(volcanoes.value.map((v) => [v.number, v])));
@@ -449,6 +477,7 @@ export function createVolcanoStore(api: ApiClient, now: () => Date): VolcanoStor
     liveAt,
     region,
     filter,
+    hideMarkers,
     selectedNumber,
     selected,
     byNumber,

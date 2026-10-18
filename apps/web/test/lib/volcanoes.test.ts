@@ -4,6 +4,7 @@ import {
   createVolcanoStore,
   distanceKm,
   EMPTY_VOLCANO_FILTER,
+  eruptionAnchor,
   eruptionClass,
   eruptionStart,
   inBBox,
@@ -19,7 +20,7 @@ import {
 } from "../../src/lib/volcanoes.js";
 import { fakeApi } from "../support/api.js";
 import { WC } from "../support/events.js";
-import { eruption, status, volcano } from "../support/volcanoes.js";
+import { eruption, ERUPTIONS, status, volcano } from "../support/volcanoes.js";
 
 const now = () => new Date("2026-10-13T12:00:00Z");
 
@@ -104,6 +105,29 @@ describe("classification", () => {
     expect(lastEruptionText(volcano())).toBe("last erupted 2026");
     expect(lastEruptionText(volcano({ lastEruptionYear: null }))).toBe("last eruption unknown");
     expect(lastEruptionText(volcano({ lastEruptionYear: -1000 }))).toBe("last erupted 1001 BCE");
+  });
+  it("anchors on the continuing eruption, else the latest, with the precision GVP gives", () => {
+    const etna = ERUPTIONS.filter((e) => e.volcano === 211060);
+    expect(eruptionAnchor(etna)).toEqual({
+      date: new Date("2022-11-27T00:00:00Z"),
+      precision: "day",
+      continuing: true,
+      label: "2022-11-27",
+    });
+    const helens = ERUPTIONS.filter((e) => e.volcano === 321050);
+    expect(eruptionAnchor(helens)).toMatchObject({
+      date: new Date("2004-10-01T00:00:00Z"),
+      precision: "day",
+      continuing: false,
+      label: "2004-10-01",
+    });
+    expect(
+      eruptionAnchor([
+        eruption({ startYear: 1980, startMonth: 5, startDay: null, continuing: false }),
+      ]),
+    ).toMatchObject({ date: new Date("1980-05-01T00:00:00Z"), precision: "month" });
+    expect(eruptionAnchor([eruption({ startYear: -6190, continuing: false })])).toBeNull();
+    expect(eruptionAnchor([])).toBeNull();
   });
 });
 

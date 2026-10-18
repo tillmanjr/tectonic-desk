@@ -4,6 +4,7 @@ import type { Catalog } from "./catalog.js";
 import type { Clock } from "./clock.js";
 import type { EventFilter } from "./filters.js";
 import type { Zone } from "./format.js";
+import type { SettingsStore } from "./settings.js";
 import type { StatusPoll } from "./status.js";
 import type { Theme } from "./theme.js";
 import type { VolcanoFilter, VolcanoStore } from "./volcanoes.js";
@@ -18,6 +19,8 @@ export const SELECT: InjectionKey<(id: string | null) => void> = Symbol("select"
 /** Replace the event filter (written to the URL by App). */
 export const SET_FILTER: InjectionKey<(f: EventFilter) => void> = Symbol("setFilter");
 export const VOLCANOES: InjectionKey<VolcanoStore> = Symbol("volcanoes");
+/** Reader-tunable settings (card rows for now). */
+export const SETTINGS: InjectionKey<SettingsStore> = Symbol("settings");
 /** Select a GVP volcano number (opens the volcano panel) or null (closes it). */
 export const SELECT_VOLCANO: InjectionKey<(number: number | null) => void> =
   Symbol("selectVolcano");

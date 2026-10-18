@@ -22,6 +22,7 @@ describe("FilterBar", () => {
     });
     const ctx = await makeContext({ api });
     const w = mountWith(FilterBar, ctx);
+    await w.find(".rtoggle").trigger("click");
     const inputs = w.findAll("input");
     expect(inputs[0]?.attributes("min")).toBe("4.5");
     expect(inputs[0]?.element.value).toBe("4.5");
@@ -31,7 +32,7 @@ describe("FilterBar", () => {
     expect(w.find(".finfo").attributes("title")).toContain(
       "summary tiles and major events are unaffected",
     );
-    expect(w.find("button").attributes("disabled")).toBeDefined();
+    expect(w.find(".fclear").attributes("disabled")).toBeDefined();
     await inputs[0]?.setValue("5.5");
     expect(ctx.setFilter).toHaveBeenLastCalledWith({ ...EMPTY_FILTER, minMag: 5.5 });
     await inputs[1]?.setValue("6.5");
@@ -44,13 +45,14 @@ describe("FilterBar", () => {
     await nextTick();
     expect(inputs[0]?.element.value).toBe("5.5");
     expect(inputs[3]?.element.value).toBe("200");
-    expect(w.find("button").attributes("disabled")).toBeUndefined();
-    await w.find("button").trigger("click");
+    expect(w.find(".fclear").attributes("disabled")).toBeUndefined();
+    await w.find(".fclear").trigger("click");
     expect(ctx.setFilter).toHaveBeenLastCalledWith(EMPTY_FILTER);
   });
   it("bounds the date inputs to the catalogue start and today, in the active zone", async () => {
     const ctx = await makeContext();
     const w = mountWith(FilterBar, ctx);
+    await w.find(".rtoggle").trigger("click");
     const dates = w.findAll<HTMLInputElement>("input.fdate");
     expect(dates[0]?.attributes("min")).toBe("1900-01-01");
     expect(dates[0]?.attributes("max")).toBe("2026-10-13");
@@ -84,6 +86,7 @@ describe("FilterBar", () => {
   });
   it("shows the same thirty days and the view's own floor for the West Coast", async () => {
     const w = mountWith(FilterBar, await makeContext({ regionId: "wc" }));
+    await w.find(".rtoggle").trigger("click");
     const dates = w.findAll<HTMLInputElement>("input.fdate");
     expect(dates[0]?.element.value).toBe("2026-09-13");
     expect(w.findAll("input")[0]?.element.value).toBe("2.5");
@@ -91,6 +94,7 @@ describe("FilterBar", () => {
   it("shows the span the dates match, sets the start from a preset, and reads Custom otherwise", async () => {
     const ctx = await makeContext();
     const w = mountWith(FilterBar, ctx);
+    await w.find(".rtoggle").trigger("click");
     const select = w.find<HTMLSelectElement>("select.fspan");
     expect(select.element.value).toBe("0");
     expect(select.element.selectedOptions[0]?.text).toBe("30 days");
@@ -137,11 +141,30 @@ describe("FilterBar", () => {
     expect(w.find(".fnote").text()).toBe(
       "This window holds 7,312 events at M4.5+. Markers, table and the magnitude charts show the 1 at M6+ so the page stays responsive; the time chart covers all of them, and the map's Density toggle shades where they fall.",
     );
+    await w.find(".rtoggle").trigger("click");
     expect(w.findAll("input")[0]?.element.value).toBe("4.5");
+  });
+  it("summarises the refinements in force while collapsed and toggles the hide flag", async () => {
+    const ctx = await makeContext();
+    const w = mountWith(FilterBar, ctx);
+    expect(w.find(".rsummary").text()).toBe(
+      "M4.5+ · 30 days from 2026-09-13 to 2026-10-13 · depth any",
+    );
+    expect(w.findAll(".rsummary .set")).toHaveLength(0);
+    ctx.catalog.setFilter({ ...EMPTY_FILTER, minMag: 5, maxDepth: 70, since: "2026-10-01" });
+    await nextTick();
+    expect(w.find(".rsummary").text()).toBe(
+      "M5+ · custom from 2026-10-01 to 2026-10-13 · depth to 70 km",
+    );
+    expect(w.findAll(".rsummary .set")).toHaveLength(3);
+    expect(w.find("input.fdate").exists()).toBe(false);
+    await w.find(".rhide input").setValue(true);
+    expect(ctx.catalog.hideMarkers.value).toBe(true);
   });
   it("ignores change events from something other than an input", async () => {
     const ctx = await makeContext();
     const w = mountWith(FilterBar, ctx);
+    await w.find(".rtoggle").trigger("click");
     const input = w.find("input");
     const ev = new Event("change");
     Object.defineProperty(ev, "target", { value: document.createElement("div") });

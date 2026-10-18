@@ -14,11 +14,13 @@ import {
   SELECT_VOLCANO,
   SET_FILTER,
   SET_VOLCANO_FILTER,
+  SETTINGS,
   STATUS,
   THEME,
   VOLCANOES,
   ZONE,
 } from "../../src/lib/keys.js";
+import { createSettings, type SettingsStore } from "../../src/lib/settings.js";
 import { createStatusPoll, type StatusPoll } from "../../src/lib/status.js";
 import { createTheme, type Theme } from "../../src/lib/theme.js";
 import {
@@ -39,6 +41,7 @@ export interface Context {
   volcanoes: VolcanoStore;
   selectVolcano: Mock<(number: number | null) => void>;
   setVolcanoFilter: Mock<(f: VolcanoFilter) => void>;
+  settings: SettingsStore;
   zone: Ref<Zone>;
   now: Date;
 }
@@ -103,6 +106,7 @@ export async function makeContext(
     volcanoes,
     selectVolcano: vi.fn(),
     setVolcanoFilter: vi.fn(),
+    settings: createSettings(null),
     zone: ref<Zone>("utc"),
     now,
   };
@@ -126,6 +130,7 @@ export function mountWith(
       provide(VOLCANOES, ctx.volcanoes);
       provide(SELECT_VOLCANO, ctx.selectVolcano);
       provide(SET_VOLCANO_FILTER, ctx.setVolcanoFilter);
+      provide(SETTINGS, ctx.settings);
       provide(ZONE, ctx.zone);
       return () => h(component, props);
     },
