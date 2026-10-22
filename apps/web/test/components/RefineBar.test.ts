@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import RefineBar from "../../src/components/RefineBar.vue";
 
 describe("RefineBar", () => {
-  it("collapses to a summary, expands on the toggle, and reports the hide checkbox", async () => {
+  it("collapses to a summary, toggles on the bar and its head, and reports the hide checkbox", async () => {
     const w = mount(RefineBar, {
       props: {
         dataset: "volcanoes",
@@ -21,11 +21,35 @@ describe("RefineBar", () => {
     expect(w.findAll(".rsummary .set").map((s) => s.text())).toEqual(["status elevated"]);
     expect(w.find(".inner").exists()).toBe(false);
     expect(w.find(".fnote").text()).toBe("note");
-    const toggle = w.find(".rtoggle");
-    expect(toggle.text()).toBe("edit");
-    expect(toggle.attributes("aria-expanded")).toBe("false");
-    await toggle.trigger("click");
-    expect(toggle.text()).toBe("done");
+    const head = w.find(".rhead");
+    expect(head.attributes("aria-expanded")).toBe("false");
+    // collapsed: the hide checkbox's label is the one place that does not expand
+    const onLabel = new Event("click", { bubbles: true });
+    Object.defineProperty(onLabel, "target", { value: w.find(".rhide").element });
+    w.element.dispatchEvent(onLabel);
+    await w.vm.$nextTick();
+    expect(w.classes()).not.toContain("expanded");
+    const noTarget = new Event("click");
+    Object.defineProperty(noTarget, "target", { value: null });
+    w.element.dispatchEvent(noTarget);
+    await w.vm.$nextTick();
+    expect(w.classes()).not.toContain("expanded");
+    await w.find(".fnote").trigger("click");
+    expect(w.classes()).toContain("expanded");
+    expect(head.attributes("aria-expanded")).toBe("true");
+    // expanded: only the head folds it
+    await w.find(".fnote").trigger("click");
+    await w.find(".inner").trigger("click");
+    expect(w.classes()).toContain("expanded");
+    await head.trigger("click");
+    expect(w.classes()).not.toContain("expanded");
+    await head.trigger("keydown", { key: "Enter" });
+    expect(w.classes()).toContain("expanded");
+    await head.trigger("keydown", { key: "a" });
+    expect(w.classes()).toContain("expanded");
+    await head.trigger("keydown", { key: " " });
+    expect(w.classes()).not.toContain("expanded");
+    await w.find(".rwho").trigger("click");
     expect(w.classes()).toContain("expanded");
     expect(w.find(".inner").exists()).toBe(true);
     expect(w.find(".rsummary").exists()).toBe(false);

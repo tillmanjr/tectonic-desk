@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, type LocationQuery } from "vue-router";
 import ActiveEarthPage from "./ActiveEarthPage.vue";
 import DetailPanel from "./DetailPanel.vue";
 import EarthquakesPage from "./EarthquakesPage.vue";
+import MarksOverlay from "./MarksOverlay.vue";
 import PageSwitch from "./PageSwitch.vue";
 import RegionTabs from "./RegionTabs.vue";
+import SettingsMenu from "./SettingsMenu.vue";
 import StatusLine from "./StatusLine.vue";
-import ThemeToggle from "./ThemeToggle.vue";
 import VolcanoDetail from "./VolcanoDetail.vue";
 import VolcanoesPage from "./VolcanoesPage.vue";
 import { createApiClient } from "../lib/api.js";
@@ -27,6 +28,8 @@ import {
   API,
   CATALOG,
   CLOCK,
+  MARKS,
+  MARKS_NAV,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -36,7 +39,9 @@ import {
   THEME,
   VOLCANOES,
   ZONE,
+  type MarksNav,
 } from "../lib/keys.js";
+import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createSettings } from "../lib/settings.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -52,6 +57,7 @@ const api = inject(API, null) ?? createApiClient((input, init) => fetch(input, i
 const clock = inject(CLOCK, null) ?? createClock();
 const theme = inject(THEME, null) ?? createTheme();
 const settings = inject(SETTINGS, null) ?? createSettings();
+const marks = inject(MARKS, null) ?? createMarks();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
@@ -64,6 +70,7 @@ provide(API, api);
 provide(CLOCK, clock);
 provide(THEME, theme);
 provide(SETTINGS, settings);
+provide(MARKS, marks);
 provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);
@@ -79,6 +86,33 @@ const zone = computed<Zone>(() => (route.query.tz === "local" ? "local" : "utc")
 provide(ZONE, zone);
 
 const page = computed(() => pageOf(route.meta.page));
+
+/** Query keys that address the marks overlay; never part of a saved view. */
+const OVERLAY_KEYS = ["marks", "show"];
+const withoutOverlay = (q: LocationQuery): LocationQuery =>
+  Object.fromEntries(Object.entries(q).filter(([k]) => !OVERLAY_KEYS.includes(k)));
+const viewUrl = computed(
+  () => router.resolve({ path: route.path, query: withoutOverlay(route.query) }).fullPath,
+);
+const overlay = computed(() => {
+  const g = route.query.marks;
+  if (typeof g !== "string" || g === "") return null;
+  return { group: g, panels: route.query.show === "panels" };
+});
+const listQuery = (group: string): LocationQuery => ({
+  ...withoutOverlay(route.query),
+  marks: group,
+});
+const nav: MarksNav = {
+  viewUrl,
+  overlay,
+  open: (group = ALL_GROUP) => void router.push({ query: listQuery(group) }),
+  list: (group) => void router.push({ query: listQuery(group) }),
+  show: (group) => void router.push({ query: { ...listQuery(group), show: "panels" } }),
+  close: () => void router.replace({ query: withoutOverlay(route.query) }),
+  goTo: (url) => void router.push(url),
+};
+provide(MARKS_NAV, nav);
 const routeRegion = computed(() => {
   const p = route.params.region;
   return typeof p === "string" && p !== "" ? p : "global";
@@ -206,18 +240,23 @@ onUnmounted(() => {
       <div class="hdr-left">
         <h1>Tectonic Desk<small>Earthquakes · volcanoes · plate boundaries</small></h1>
         <PageSwitch :page="page" @pick="pickPage" />
+        <nav class="pages" :aria-label="MARK_TERMS.title">
+          <button
+            type="button"
+            class="marks-btn"
+            aria-haspopup="dialog"
+            :aria-current="overlay !== null ? 'page' : undefined"
+            :title="`Your marked ${MARK_TERMS.things}, over the current page`"
+            @click="nav.open()"
+          >
+            {{ MARK_TERMS.noun
+            }}{{ marks.marks.value.length > 0 ? ` · ${String(marks.marks.value.length)}` : "" }}
+          </button>
+        </nav>
       </div>
       <div class="hdr-right">
         <RegionTabs @pick="pickRegion" />
-        <button
-          type="button"
-          class="theme-btn fixed"
-          title="Show every date and time in UTC or in your browser's zone"
-          @click="toggleZone"
-        >
-          Times: {{ zone === "utc" ? "UTC" : "local" }}
-        </button>
-        <ThemeToggle />
+        <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
       </div>
     </header>
     <StatusLine />
@@ -275,4 +314,5 @@ onUnmounted(() => {
   </div>
   <DetailPanel />
   <VolcanoDetail v-if="hasVolcanoes(page)" />
+  <MarksOverlay v-if="overlay !== null" />
 </template>

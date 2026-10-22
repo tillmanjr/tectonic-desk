@@ -10,6 +10,8 @@ import {
   API,
   CATALOG,
   CLOCK,
+  MARKS,
+  MARKS_NAV,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -19,7 +21,9 @@ import {
   THEME,
   VOLCANOES,
   ZONE,
+  type MarksNav,
 } from "../../src/lib/keys.js";
+import { createMarks, type MarksStore } from "../../src/lib/marks.js";
 import { createSettings, type SettingsStore } from "../../src/lib/settings.js";
 import { createStatusPoll, type StatusPoll } from "../../src/lib/status.js";
 import { createTheme, type Theme } from "../../src/lib/theme.js";
@@ -42,6 +46,10 @@ export interface Context {
   selectVolcano: Mock<(number: number | null) => void>;
   setVolcanoFilter: Mock<(f: VolcanoFilter) => void>;
   settings: SettingsStore;
+  marks: MarksStore;
+  /** Spies for every nav action; `overlay` is the writable ref behind `nav.overlay`. */
+  nav: MarksNav;
+  overlay: Ref<{ group: string; panels: boolean } | null>;
   zone: Ref<Zone>;
   now: Date;
 }
@@ -95,6 +103,7 @@ export async function makeContext(
   const volcanoes = createVolcanoStore(api, () => now);
   volcanoes.setRegion(catalog.region.value);
   if (over.volcanoes === true) await volcanoes.load();
+  const overlay = ref<{ group: string; panels: boolean } | null>(null);
   return {
     api,
     catalog,
@@ -107,6 +116,17 @@ export async function makeContext(
     selectVolcano: vi.fn(),
     setVolcanoFilter: vi.fn(),
     settings: createSettings(null),
+    marks: createMarks(null),
+    nav: {
+      viewUrl: ref("/wc?event=us1"),
+      overlay,
+      open: vi.fn(),
+      show: vi.fn(),
+      list: vi.fn(),
+      close: vi.fn(),
+      goTo: vi.fn(),
+    },
+    overlay,
     zone: ref<Zone>("utc"),
     now,
   };
@@ -131,6 +151,8 @@ export function mountWith(
       provide(SELECT_VOLCANO, ctx.selectVolcano);
       provide(SET_VOLCANO_FILTER, ctx.setVolcanoFilter);
       provide(SETTINGS, ctx.settings);
+      provide(MARKS, ctx.marks);
+      provide(MARKS_NAV, ctx.nav);
       provide(ZONE, ctx.zone);
       return () => h(component, props);
     },

@@ -108,6 +108,14 @@ describe("DetailPanel", () => {
     ctx.zone.value = "utc";
     await flushPromises();
     expect(t).toContain("0.000°N, 0.000°E");
+    await w.find(".markrow button.mark").trigger("click");
+    await w.find(".markrow input").trigger("keydown", { key: "Enter" });
+    expect(ctx.marks.marks.value[0]).toMatchObject({
+      kind: "event",
+      ref: "main",
+      frame: "world",
+      url: "/wc?event=us1",
+    });
     expect(t).toContain("195.2 km · intermediate (70–300 km)");
     expect(t).toContain("Moment tensor");
     expect(t).toContain("Other solutions");

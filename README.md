@@ -95,7 +95,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   are shareable.
 - The status line polls `GET /api/status` every minute and refetches the catalog when a feed sync
   has landed. It turns amber after 30 minutes without a sync and red when the API is unreachable.
-- Theme follows the system by default; the toggle cycles auto, light, dark.
+- The header's `⚙ Settings` menu holds the time zone (UTC or the browser's zone, kept in the URL as
+  `?tz=local`) and the theme, which follows the system by default and cycles auto, light, dark.
 - The focal-mechanism math lives in `packages/shared`; only the canvas raster is in the web app.
 - The filter bar above the map narrows magnitude and depth (inclusive, either bound optional) for
   the map, catalog and charts; the summary tiles and major events stay unfiltered. Filters live in
@@ -107,11 +108,11 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   returns to those defaults; only explicit bounds go in the URL (`since`, `until`). Dates reach
   back to 1900-01-01. The length select reads the dates (30 or 90 days, 1, 10 or 50 years, since
   1900, else Custom); picking a length sets "from" that far before "to", and changing "to" while a
-  length is in force moves "from" with it. The header's "Times" button switches every date and
+  length is in force moves "from" with it. The "Times" control in the header's Settings menu switches every date and
   time on the page, and the way the date filter is read, between UTC (default) and the browser's
   zone; it is kept in the URL as `tz=local`.
 - The refine bars open collapsed, one line stating the refinements in force (set clauses in ink,
-  defaults muted) with a small `edit` control that expands the inputs and `done` that folds them
+  defaults muted); a click anywhere on the bar opens the inputs and a click on its head line folds them
   back. Each bar's `Hide markers` box takes that dataset's markers off the map and changes nothing
   else: counts, tables, charts, cards, density and the legend stay as they are.
 - Major-event and volcano cards show a few rows and offer the rest behind `… N more`; the rows
@@ -126,6 +127,17 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   bars, one map with the volcano triangles under the earthquake markers and both legends, then the
   earthquake table and charts followed by the volcano table and charts. One selection is open at a
   time: picking a quake closes the volcano panel and vice versa.
+- **Marked events.** `☆ Mark` under the name in either detail panel saves the view (page, region,
+  window, filters and selection) under a name of your choosing, in the browser only
+  (`localStorage`, `tectonic.marks`); nothing is sent anywhere. `Marks · N` in the header opens
+  an overlay over the current view where marks can be renamed, deleted, reordered with `▲ ▼`,
+  gathered into groups (`All` always holds every mark) and reopened with `Open view`. Each mark carries a small
+  schematic of the world or the West Coast with a star at the event.
+- **Show events** on a group lays its marks out as full panels, the same sections as the side
+  panels, in as many columns as fit at 481 px or wider before wrapping to rows, so a set of events
+  can be read together. The URL carries
+  the overlay (`?marks=<group>`, `&show=panels`), so Escape, the close control and the back
+  button all return to the untouched view.
 - Long windows stay within a 2,000-event budget. The page first asks `GET /api/events/summary` for
   the window at the floor in force; if the total fits, every event is loaded, otherwise the marker
   floor is raised to M5, M6 or M7 (the lowest band that fits) and the page says so under the Refine

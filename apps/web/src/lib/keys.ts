@@ -4,6 +4,7 @@ import type { Catalog } from "./catalog.js";
 import type { Clock } from "./clock.js";
 import type { EventFilter } from "./filters.js";
 import type { Zone } from "./format.js";
+import type { MarksStore } from "./marks.js";
 import type { SettingsStore } from "./settings.js";
 import type { StatusPoll } from "./status.js";
 import type { Theme } from "./theme.js";
@@ -35,3 +36,23 @@ export function useInjected<T>(key: InjectionKey<T>): T {
   if (value === undefined) throw new Error(`${String(key.description)} was not provided`);
   return value;
 }
+
+/** The marks overlay's only route access, built in `App.vue`; components never touch the router. Function-typed properties so tests can spy on them. */
+export interface MarksNav {
+  /** The current route's path and query without `marks` and `show`: what a new mark saves. */
+  viewUrl: Readonly<Ref<string>>;
+  /** The overlay state the route asks for; null when closed. */
+  overlay: Readonly<Ref<{ group: string; panels: boolean } | null>>;
+  /** Opens the overlay on a group's list (default `all`). */
+  open: (group?: string) => void;
+  /** Shows a group's marks as stacked panels. */
+  show: (group: string) => void;
+  /** Returns to a group's list. */
+  list: (group: string) => void;
+  /** Closes the overlay, leaving the view underneath as it was. */
+  close: () => void;
+  /** Navigates to a saved view; the url carries no overlay keys, so the overlay closes. */
+  goTo: (url: string) => void;
+}
+export const MARKS: InjectionKey<MarksStore> = Symbol("marks");
+export const MARKS_NAV: InjectionKey<MarksNav> = Symbol("marksNav");

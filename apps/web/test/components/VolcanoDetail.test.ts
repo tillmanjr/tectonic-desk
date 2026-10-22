@@ -35,6 +35,15 @@ describe("VolcanoDetail", () => {
     await flushPromises();
     expect(w.find(".detail").classes()).toContain("open");
     expect(w.find(".hd .mag").text()).toBe("Kilauea");
+    await w.find(".markrow button.mark").trigger("click");
+    await w.find(".markrow input").trigger("keydown", { key: "Enter" });
+    expect(ctx.marks.marks.value[0]).toMatchObject({
+      kind: "volcano",
+      ref: "332010",
+      frame: "world",
+      headline: "Kilauea",
+      sub: "United States · Hawaii and Pacific Ocean",
+    });
     expect(w.text()).toContain("United States · Hawaii and Pacific Ocean");
     expect(w.text()).toContain("Shield(s) · Shield");
     expect(w.text()).toContain("1222 m");
