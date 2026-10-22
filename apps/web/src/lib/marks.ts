@@ -51,6 +51,8 @@ export const MARK_TERMS = {
   group: "Group",
   groups: "Groups",
   all: "All",
+  /** What gets marked, for tooltips. */
+  things: "earthquakes and eruptions",
 } as const;
 export const NAME_MAX = 120;
 

@@ -19,9 +19,12 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 const count = computed(() =>
   props.subject === null ? 0 : store.countFor(props.subject.kind, props.subject.ref),
 );
+const what = computed(() =>
+  props.subject === null ? "event" : props.subject.kind === "event" ? "earthquake" : "volcano",
+);
 const title = computed(() =>
   count.value === 0
-    ? `${MARK_TERMS.verb} this view`
+    ? `${MARK_TERMS.verb} this ${what.value}`
     : count.value === 1
       ? "Marked once"
       : `Marked ${String(count.value)} times`,

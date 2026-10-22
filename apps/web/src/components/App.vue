@@ -246,7 +246,7 @@ onUnmounted(() => {
             class="marks-btn"
             aria-haspopup="dialog"
             :aria-current="overlay !== null ? 'page' : undefined"
-            title="Your marked views, over the current page"
+            :title="`Your marked ${MARK_TERMS.things}, over the current page`"
             @click="nav.open()"
           >
             {{ MARK_TERMS.noun

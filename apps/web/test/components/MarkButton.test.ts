@@ -25,7 +25,7 @@ describe("MarkButton", () => {
     const w = mountWith(MarkButton, ctx, { subject: null });
     expect(w.find("button.mark").attributes("disabled")).toBeDefined();
     expect(w.find("button.mark").text()).toBe("☆ Mark");
-    expect(w.find("button.mark").attributes("title")).toBe("Mark this view");
+    expect(w.find("button.mark").attributes("title")).toBe("Mark this event");
     await w.find("button.mark").trigger("click");
     expect(w.find("input").exists()).toBe(false);
     w.unmount();
@@ -35,6 +35,7 @@ describe("MarkButton", () => {
     vi.useFakeTimers();
     const ctx = await makeContext();
     const w = mountWith(MarkButton, ctx, { subject });
+    expect(w.find("button.mark").attributes("title")).toBe("Mark this earthquake");
     await w.find("button.mark").trigger("click");
     const input = w.find<HTMLInputElement>("input");
     expect(input.element.value).toBe("M5.5 mww · 10 km N of Somewhere");
@@ -68,7 +69,8 @@ describe("MarkButton", () => {
 
   it("cancels on Escape and Cancel without closing the panel", async () => {
     const ctx = await makeContext();
-    const w = mountWith(MarkButton, ctx, { subject });
+    const w = mountWith(MarkButton, ctx, { subject: { ...subject, kind: "volcano", ref: "1" } });
+    expect(w.find("button.mark").attributes("title")).toBe("Mark this volcano");
     await w.find("button.mark").trigger("click");
     const stop = vi.fn();
     await w.find("input").trigger("keydown", { key: "Escape", stopPropagation: stop });
