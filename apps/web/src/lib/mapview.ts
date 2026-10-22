@@ -16,6 +16,7 @@ import {
   type ShallowRef,
 } from "vue";
 import type { ApiClient } from "./api.js";
+import { loadBasemapFor, resetBasemapCache } from "./basemap-cache.js";
 import { mustRef } from "./dom.js";
 import {
   AGE_CODES,
@@ -28,10 +29,7 @@ import {
 } from "./faults.js";
 import {
   frameFor,
-  loadWorld,
   plateFeature,
-  regionBasemap,
-  worldBasemap,
   zoomTransformFor,
   type Basemap,
   type MapFrame,
@@ -116,13 +114,9 @@ export const TIP_LIFT = 10;
 /** How close, in screen pixels, the pointer must come to a fault vertex. */
 const FAULT_HIT_PX = 6;
 
-let worldTopo: Topo | null = null;
-const regionCache = new Map<string, Basemap>();
-
-/** Drops the module-level basemap caches; for tests. */
+/** Drops the shared basemap cache; for tests. */
 export function resetMapCaches(): void {
-  worldTopo = null;
-  regionCache.clear();
+  resetBasemapCache();
 }
 
 export function useMapView(opts: MapViewOptions): MapView {
@@ -254,19 +248,9 @@ export function useMapView(opts: MapViewOptions): MapView {
   let loadSeq = 0;
   async function loadBasemap(r: ApiRegion): Promise<void> {
     const token = ++loadSeq;
-    basemap.value = regionCache.get(r.id) ?? null;
-    if (basemap.value !== null) return;
+    basemap.value = null;
     try {
-      let b: Basemap;
-      if (r.bbox === null) {
-        worldTopo ??= await loadWorld();
-        b = worldBasemap(worldTopo);
-      } else {
-        // The API serves one set of regional outlines, clipped to the West Coast preset.
-        const [land, states] = await Promise.all([api.geo("wc-land"), api.geo("wc-states")]);
-        b = regionBasemap(land as Topo, states as Topo);
-      }
-      regionCache.set(r.id, b);
+      const b = await loadBasemapFor(api, r);
       if (token === loadSeq) basemap.value = b;
     } catch (e) {
       console.error("basemap failed to load", e);
