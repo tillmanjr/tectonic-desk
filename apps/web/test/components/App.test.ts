@@ -324,6 +324,25 @@ describe("App", () => {
     await wrapper.find(".marks-btn").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query).toEqual({ event: "us1", marks: "all" });
+    expect(wrapper.find(".marks[role=dialog]").exists()).toBe(true);
+    await wrapper.find(".showevents").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.show).toBe("panels");
+    expect(wrapper.findAll("article.markcard")).toHaveLength(1);
+    await wrapper.find(".backtolist").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.show).toBeUndefined();
+    await wrapper.find(".marks-close").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query).toEqual({ event: "us1" });
+    expect(wrapper.find(".marks").exists()).toBe(false);
+    await router.replace("/volcanoes?marks=all");
+    await flushPromises();
+    await wrapper.find(".marks-rail button").trigger("click");
+    await wrapper.find(".openview").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.fullPath).toBe("/wc?event=us1");
+    expect(wrapper.find(".marks").exists()).toBe(false);
     wrapper.unmount();
   });
 

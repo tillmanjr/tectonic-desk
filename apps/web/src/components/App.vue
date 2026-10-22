@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
-import { stringifyQuery, useRoute, useRouter, type LocationQuery } from "vue-router";
+import { useRoute, useRouter, type LocationQuery } from "vue-router";
 import ActiveEarthPage from "./ActiveEarthPage.vue";
 import DetailPanel from "./DetailPanel.vue";
 import EarthquakesPage from "./EarthquakesPage.vue";
+import MarksOverlay from "./MarksOverlay.vue";
 import PageSwitch from "./PageSwitch.vue";
 import RegionTabs from "./RegionTabs.vue";
 import StatusLine from "./StatusLine.vue";
@@ -90,10 +91,9 @@ const page = computed(() => pageOf(route.meta.page));
 const OVERLAY_KEYS = ["marks", "show"];
 const withoutOverlay = (q: LocationQuery): LocationQuery =>
   Object.fromEntries(Object.entries(q).filter(([k]) => !OVERLAY_KEYS.includes(k)));
-const viewUrl = computed(() => {
-  const qs = stringifyQuery(withoutOverlay(route.query));
-  return qs === "" ? route.path : `${route.path}?${qs}`;
-});
+const viewUrl = computed(
+  () => router.resolve({ path: route.path, query: withoutOverlay(route.query) }).fullPath,
+);
 const overlay = computed(() => {
   const g = route.query.marks;
   if (typeof g !== "string" || g === "") return null;
@@ -319,4 +319,5 @@ onUnmounted(() => {
   </div>
   <DetailPanel />
   <VolcanoDetail v-if="hasVolcanoes(page)" />
+  <MarksOverlay v-if="overlay !== null" />
 </template>

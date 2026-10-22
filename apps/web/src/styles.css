@@ -1265,3 +1265,255 @@ a {
   stroke: var(--ink);
   stroke-width: 0.8;
 }
+
+/* Marked events overlay. */
+body.marks-open {
+  overflow: hidden;
+}
+.marks-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 30;
+}
+.marks {
+  position: fixed;
+  inset: 24px;
+  z-index: 31;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+.marks-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.marks-head h2 {
+  margin: 0;
+  font: 600 18px var(--f-ui);
+}
+.marks-close {
+  font: 600 20px var(--f-ui);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.marks-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-right: 1px solid var(--line);
+  overflow: auto;
+}
+.marks-rail button,
+.marks-rail input {
+  text-align: left;
+  font: 14px var(--f-ui);
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.marks-rail button[aria-current="true"] {
+  background: var(--bg);
+  border-color: var(--line);
+}
+.marks-rail .newgroup {
+  color: var(--muted);
+}
+.marks-rail input {
+  border-color: var(--line);
+  background: var(--bg);
+}
+.marks-main {
+  overflow: auto;
+  padding: 12px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.marks-grouphead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.marks-grouphead .gname {
+  font: 600 16px var(--f-ui);
+  background: none;
+  border: 0;
+  color: var(--ink);
+  padding: 0;
+  cursor: pointer;
+}
+.marks-grouphead .gname:disabled {
+  cursor: default;
+}
+.marks-grouphead .gname-input,
+.marks-main .mname-input {
+  font: 600 15px var(--f-ui);
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.marks-grouphead .showevents,
+.marks .openview,
+.marks .confirm button,
+.marks .backtolist {
+  font: 13px var(--f-ui);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+.marks .backtolist {
+  align-self: flex-start;
+}
+.marks button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.markrow-item {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.markrow-item .mname,
+.markcard .mname {
+  font: 600 15px var(--f-ui);
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.markcard .mname {
+  cursor: default;
+}
+.mfacts {
+  font: 13px var(--f-data);
+  color: var(--ink);
+}
+.mmeta,
+.muted {
+  font: 12px var(--f-ui);
+  color: var(--muted);
+}
+.mgroups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chip {
+  font: 12px var(--f-ui);
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+.mactions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+.confirm.asking {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font: 13px var(--f-ui);
+}
+.markpanels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.markcards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+.markcard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.markcard header {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.markcard .panelbody {
+  padding: 12px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (min-width: 1100px) {
+  .markcards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .marks {
+    inset: 0;
+    border-radius: 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+  .marks-rail {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .marks-rail button,
+  .marks-rail input {
+    white-space: nowrap;
+  }
+  .markrow-item,
+  .markcard header {
+    grid-template-columns: 96px 1fr;
+  }
+  .mactions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+}

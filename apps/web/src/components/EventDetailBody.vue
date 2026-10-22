@@ -4,6 +4,7 @@ import { computed, ref, shallowRef, watch } from "vue";
 import MechanismBlock from "./MechanismBlock.vue";
 import { ApiRequestError, errorMessage } from "../lib/api.js";
 import { depthClass, depthColor, DEPTH_LABEL } from "../lib/depth.js";
+import { mustRef } from "../lib/dom.js";
 import { ago, fmtCoord, fmtMag, fmtStamp, type Zone } from "../lib/format.js";
 import { API, CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { parentOf, sequenceOf } from "../lib/sequence.js";
@@ -62,9 +63,9 @@ watch(
   { immediate: true },
 );
 
+/** Read only while `detail` is set (the template gates on it), so a null here is a programming error. */
 const derived = computed(() => {
-  const d = detail.value;
-  if (d === null) return null;
+  const d = mustRef(detail, "event detail");
   const preferred = preferredMechanism(d);
   const impact: ImpactRow[] = [];
   if (d.sig !== null) impact.push({ k: "Significance", v: String(d.sig) });
@@ -110,7 +111,7 @@ function describe(m: ApiMechanism): string {
       <span>{{ error }}</span>
       <button type="button" class="retry" @click="retry">Retry</button>
     </div>
-    <template v-else-if="derived !== null">
+    <template v-else-if="detail !== null">
       <dl class="kv">
         <dt>Origin time</dt>
         <dd>{{ fmtStamp(derived.d.time, zone, { seconds: true }) }}</dd>
