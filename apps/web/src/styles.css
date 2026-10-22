@@ -578,6 +578,46 @@ tr.ev.sel td {
   flex-direction: column;
   gap: 14px;
 }
+.detail .bd > .panelbody {
+  display: contents;
+}
+.detail .markrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--line);
+  font: 13px var(--f-ui);
+}
+.detail .markrow input {
+  flex: 1;
+  min-width: 0;
+  font: 13px var(--f-ui);
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+}
+.detail .markrow button {
+  font: 13px var(--f-ui);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+.detail .markrow button.mark.marked {
+  color: var(--accent);
+}
+.detail .markrow button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.detail .markrow .flash {
+  color: var(--muted);
+}
 dl.kv {
   display: grid;
   grid-template-columns: max-content 1fr;

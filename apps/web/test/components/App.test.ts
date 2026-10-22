@@ -4,7 +4,8 @@ import { defineComponent, h, onMounted, provide } from "vue";
 import { createMemoryHistory, RouterView } from "vue-router";
 import type { ApiClient } from "../../src/lib/api.js";
 import { createClock } from "../../src/lib/clock.js";
-import { API, CLOCK, SELECT, SETTINGS, THEME, useInjected } from "../../src/lib/keys.js";
+import { API, CLOCK, MARKS, SELECT, SETTINGS, THEME, useInjected } from "../../src/lib/keys.js";
+import { createMarks } from "../../src/lib/marks.js";
 import { createSettings } from "../../src/lib/settings.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, status } from "../support/api.js";
@@ -18,9 +19,11 @@ async function mountApp(path = "/", api: ApiClient = fakeApi()) {
   const router = createAppRouter(createMemoryHistory());
   await router.push(path);
   const theme = fakeTheme();
+  const marks = createMarks(null);
   const Root = defineComponent({
     setup() {
       provide(API, api);
+      provide(MARKS, marks);
       provide(
         CLOCK,
         createClock(1e9, () => NOW),
@@ -32,7 +35,7 @@ async function mountApp(path = "/", api: ApiClient = fakeApi()) {
   });
   const wrapper = mount(Root, { global: { plugins: [router] }, attachTo: document.body });
   await flushPromises();
-  return { wrapper, router, api, theme };
+  return { wrapper, router, api, theme, marks };
 }
 
 describe("App", () => {
@@ -305,6 +308,22 @@ describe("App", () => {
     await vi.advanceTimersByTimeAsync(60_000);
     await flushPromises();
     expect(vi.mocked(api.volcanoStatus).mock.calls.length).toBe(before + 1);
+    wrapper.unmount();
+  });
+
+  it("saves the view without overlay keys and opens the marks overlay from the header", async () => {
+    stubCanvas();
+    const { wrapper, router, marks } = await mountApp("/wc?event=us1&marks=all");
+    expect(wrapper.find(".marks-btn").text()).toBe("Marks");
+    await wrapper.find(".detail .markrow button.mark").trigger("click");
+    await wrapper.find(".detail .markrow input").trigger("keydown", { key: "Enter" });
+    expect(marks.marks.value[0]?.url).toBe("/wc?event=us1");
+    expect(wrapper.find(".marks-btn").text()).toBe("Marks · 1");
+    await router.replace("/wc?event=us1");
+    await flushPromises();
+    await wrapper.find(".marks-btn").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query).toEqual({ event: "us1", marks: "all" });
     wrapper.unmount();
   });
 

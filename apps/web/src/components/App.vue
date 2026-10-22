@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { stringifyQuery, useRoute, useRouter, type LocationQuery } from "vue-router";
 import ActiveEarthPage from "./ActiveEarthPage.vue";
 import DetailPanel from "./DetailPanel.vue";
 import EarthquakesPage from "./EarthquakesPage.vue";
@@ -27,6 +27,8 @@ import {
   API,
   CATALOG,
   CLOCK,
+  MARKS,
+  MARKS_NAV,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -36,7 +38,9 @@ import {
   THEME,
   VOLCANOES,
   ZONE,
+  type MarksNav,
 } from "../lib/keys.js";
+import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createSettings } from "../lib/settings.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -52,6 +56,7 @@ const api = inject(API, null) ?? createApiClient((input, init) => fetch(input, i
 const clock = inject(CLOCK, null) ?? createClock();
 const theme = inject(THEME, null) ?? createTheme();
 const settings = inject(SETTINGS, null) ?? createSettings();
+const marks = inject(MARKS, null) ?? createMarks();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
@@ -64,6 +69,7 @@ provide(API, api);
 provide(CLOCK, clock);
 provide(THEME, theme);
 provide(SETTINGS, settings);
+provide(MARKS, marks);
 provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);
@@ -79,6 +85,34 @@ const zone = computed<Zone>(() => (route.query.tz === "local" ? "local" : "utc")
 provide(ZONE, zone);
 
 const page = computed(() => pageOf(route.meta.page));
+
+/** Query keys that address the marks overlay; never part of a saved view. */
+const OVERLAY_KEYS = ["marks", "show"];
+const withoutOverlay = (q: LocationQuery): LocationQuery =>
+  Object.fromEntries(Object.entries(q).filter(([k]) => !OVERLAY_KEYS.includes(k)));
+const viewUrl = computed(() => {
+  const qs = stringifyQuery(withoutOverlay(route.query));
+  return qs === "" ? route.path : `${route.path}?${qs}`;
+});
+const overlay = computed(() => {
+  const g = route.query.marks;
+  if (typeof g !== "string" || g === "") return null;
+  return { group: g, panels: route.query.show === "panels" };
+});
+const listQuery = (group: string): LocationQuery => ({
+  ...withoutOverlay(route.query),
+  marks: group,
+});
+const nav: MarksNav = {
+  viewUrl,
+  overlay,
+  open: (group = ALL_GROUP) => void router.push({ query: listQuery(group) }),
+  list: (group) => void router.push({ query: listQuery(group) }),
+  show: (group) => void router.push({ query: { ...listQuery(group), show: "panels" } }),
+  close: () => void router.replace({ query: withoutOverlay(route.query) }),
+  goTo: (url) => void router.push(url),
+};
+provide(MARKS_NAV, nav);
 const routeRegion = computed(() => {
   const p = route.params.region;
   return typeof p === "string" && p !== "" ? p : "global";
@@ -209,6 +243,16 @@ onUnmounted(() => {
       </div>
       <div class="hdr-right">
         <RegionTabs @pick="pickRegion" />
+        <button
+          type="button"
+          class="theme-btn fixed marks-btn"
+          aria-haspopup="dialog"
+          title="Your marked views"
+          @click="nav.open()"
+        >
+          {{ MARK_TERMS.noun
+          }}{{ marks.marks.value.length > 0 ? ` · ${String(marks.marks.value.length)}` : "" }}
+        </button>
         <button
           type="button"
           class="theme-btn fixed"
