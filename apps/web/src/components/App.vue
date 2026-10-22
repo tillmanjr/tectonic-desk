@@ -240,19 +240,22 @@ onUnmounted(() => {
       <div class="hdr-left">
         <h1>Tectonic Desk<small>Earthquakes · volcanoes · plate boundaries</small></h1>
         <PageSwitch :page="page" @pick="pickPage" />
+        <nav class="pages" :aria-label="MARK_TERMS.title">
+          <button
+            type="button"
+            class="marks-btn"
+            aria-haspopup="dialog"
+            :aria-current="overlay !== null ? 'page' : undefined"
+            title="Your marked views, over the current page"
+            @click="nav.open()"
+          >
+            {{ MARK_TERMS.noun
+            }}{{ marks.marks.value.length > 0 ? ` · ${String(marks.marks.value.length)}` : "" }}
+          </button>
+        </nav>
       </div>
       <div class="hdr-right">
         <RegionTabs @pick="pickRegion" />
-        <button
-          type="button"
-          class="theme-btn fixed marks-btn"
-          aria-haspopup="dialog"
-          title="Your marked views"
-          @click="nav.open()"
-        >
-          {{ MARK_TERMS.noun
-          }}{{ marks.marks.value.length > 0 ? ` · ${String(marks.marks.value.length)}` : "" }}
-        </button>
         <button
           type="button"
           class="theme-btn fixed"
