@@ -33,7 +33,7 @@ export interface MarkGroup {
 export type MarkDraft = Omit<Mark, "id" | "createdAt">;
 /** What a panel knows about its subject; the button adds `name` and `url`. */
 export type MarkSubject = Omit<MarkDraft, "name" | "url">;
-/** A group as shown: `All` resolved, members resolved to marks, newest first. */
+/** A group as shown: `All` resolved, members resolved to marks, in the group's own order. */
 export interface MarkView {
   id: string;
   name: string;
@@ -120,7 +120,9 @@ export interface MarksStore {
   removeGroup(id: string): void;
   /** Membership of a stored group; `all` and unknown ids are ignored. */
   setMember(markId: string, groupId: string, member: boolean): void;
-  /** `all` or a stored group with its members resolved; null for an unknown id. */
+  /** Moves a mark one place up (-1) or down (1) within `all` or a stored group; ends and unknown ids are no-ops. */
+  move(groupId: string, markId: string, delta: -1 | 1): void;
+  /** `all` or a stored group with its members resolved in its order; null for an unknown id. */
   view(groupId: string): MarkView | null;
   /** How many marks name this subject. */
   countFor(kind: MarkKind, ref: string): number;
@@ -161,6 +163,12 @@ export function createMarks(
   }
   const find = (id: string): Mark | undefined => marks.value.find((m) => m.id === id);
   const findGroup = (id: string): MarkGroup | undefined => groups.value.find((g) => g.id === id);
+  const isMark = (m: Mark | undefined): m is Mark => m !== undefined;
+  /** Marks in the order of an id list; ids always name a mark, since removal cascades and parsing filters. */
+  const inOrder = (ids: string[]): Mark[] => {
+    const byId = new Map(marks.value.map((m) => [m.id, m]));
+    return ids.map((id) => byId.get(id)).filter(isMark);
+  };
   return {
     marks,
     groups,
@@ -215,19 +223,26 @@ export function createMarks(
       else return;
       persist();
     },
+    move(groupId, markId, delta) {
+      const g = groupId === ALL_GROUP ? null : findGroup(groupId);
+      if (g === undefined) return;
+      const list = g === null ? marks.value.map((m) => m.id) : g.marks;
+      const i = list.indexOf(markId);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= list.length) return;
+      const next = [...list];
+      next.splice(j, 0, ...next.splice(i, 1));
+      if (g === null) marks.value = inOrder(next);
+      else g.marks = next;
+      persist();
+    },
     view(groupId) {
       if (groupId === ALL_GROUP) {
         return { id: ALL_GROUP, name: MARK_TERMS.all, virtual: true, marks: marks.value };
       }
       const g = findGroup(groupId);
       if (g === undefined) return null;
-      const set = new Set(g.marks);
-      return {
-        id: g.id,
-        name: g.name,
-        virtual: false,
-        marks: marks.value.filter((m) => set.has(m.id)),
-      };
+      return { id: g.id, name: g.name, virtual: false, marks: inOrder(g.marks) };
     },
     countFor: (kind, r) => marks.value.filter((m) => m.kind === kind && m.ref === r).length,
     groupsOf: (markId) => groups.value.filter((g) => g.marks.includes(markId)),

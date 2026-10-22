@@ -129,8 +129,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
 - **Marked events.** `☆ Mark` under the name in either detail panel saves the view (page, region,
   window, filters and selection) under a name of your choosing, in the browser only
   (`localStorage`, `tectonic.marks`); nothing is sent anywhere. `Marks · N` in the header opens
-  an overlay over the current view where marks can be renamed, deleted, gathered into groups
-  (`All` always holds every mark) and reopened with `Open view`. Each mark carries a small
+  an overlay over the current view where marks can be renamed, deleted, reordered with `▲ ▼`,
+  gathered into groups (`All` always holds every mark) and reopened with `Open view`. Each mark carries a small
   schematic of the world or the West Coast with a star at the event.
 - **Show events** on a group lays its marks out as full panels, the same sections as the side
   panels, in as many columns as fit at 481 px or wider before wrapping to rows, so a set of events

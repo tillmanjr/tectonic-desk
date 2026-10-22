@@ -90,7 +90,7 @@ describe("marks", () => {
     const g = s.addGroup("Pacific");
     s.setMember(a.id, g.id, true);
     s.setMember(b.id, g.id, true);
-    expect(s.view(g.id)?.marks.map((x) => x.id)).toEqual([b.id, a.id]);
+    expect(s.view(g.id)?.marks.map((x) => x.id)).toEqual([a.id, b.id]);
     s.remove(a.id);
     expect(s.marks.value.map((x) => x.id)).toEqual(["id3", b.id]);
     expect(s.groups.value[0]?.marks).toEqual([b.id]);
@@ -126,6 +126,37 @@ describe("marks", () => {
     s.removeGroup(g.id);
     s.removeGroup("nope");
     expect(s.groups.value).toEqual([]);
+  });
+
+  it("moves a mark within All and within a group, ignoring the ends and unknown ids", () => {
+    const m = memory();
+    const s = createMarks(m.storage, deps());
+    const a = s.add(quake);
+    const b = s.add(volcano);
+    const c = s.add({ ...quake, ref: "us3", name: "third" });
+    const ids = () => s.marks.value.map((x) => x.id);
+    expect(ids()).toEqual([c.id, b.id, a.id]);
+    s.move(ALL_GROUP, a.id, -1);
+    expect(ids()).toEqual([c.id, a.id, b.id]);
+    s.move(ALL_GROUP, c.id, -1);
+    s.move(ALL_GROUP, b.id, 1);
+    s.move(ALL_GROUP, "nope", 1);
+    s.move("nope", a.id, 1);
+    expect(ids()).toEqual([c.id, a.id, b.id]);
+    const written = () => JSON.parse(m.store.get(MARKS_KEY) ?? "") as { marks: { id: string }[] };
+    expect(written().marks.map((x) => x.id)).toEqual([c.id, a.id, b.id]);
+    const g = s.addGroup("Order");
+    s.setMember(a.id, g.id, true);
+    s.setMember(b.id, g.id, true);
+    s.setMember(c.id, g.id, true);
+    expect(s.view(g.id)?.marks.map((x) => x.id)).toEqual([a.id, b.id, c.id]);
+    s.move(g.id, c.id, -1);
+    expect(s.view(g.id)?.marks.map((x) => x.id)).toEqual([a.id, c.id, b.id]);
+    s.move(g.id, a.id, -1);
+    s.move(g.id, b.id, 1);
+    s.move(g.id, "nope", -1);
+    expect(s.groups.value[0]?.marks).toEqual([a.id, c.id, b.id]);
+    expect(ids()).toEqual([c.id, a.id, b.id]);
   });
 
   it("reads a seeded document and survives storage that throws", () => {

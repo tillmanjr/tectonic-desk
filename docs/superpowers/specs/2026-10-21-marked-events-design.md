@@ -98,7 +98,9 @@ export interface MarksStore {
   renameGroup(id: string, name: string): void;
   removeGroup(id: string): void;
   setMember(markId: string, groupId: string, member: boolean): void;
-  /** `all` or a stored group, members resolved newest first; null for an unknown id. */
+  /** Moves a mark one place within `all` or a stored group; the ends and unknown ids are no-ops. */
+  move(groupId: string, markId: string, delta: -1 | 1): void;
+  /** `all` or a stored group, members in the group's own order; null for an unknown id. */
   view(groupId: string): MarkView | null;
   /** How many marks name this subject. */
   countFor(kind: MarkKind, ref: string): number;
@@ -284,4 +286,12 @@ export interface MarksNav {
 ## Out of scope, recorded for later
 
 Opening a mark's event in the current view instead of the saved one; export and import of the
-marks document; reordering marks or groups; Pin and Probe.
+marks document; reordering groups; Pin and Probe.
+
+## Addendum 2026-10-22: order
+
+Order is meaningful everywhere. `All` lists the marks array as stored (new marks first), a stored
+group lists its `marks` array (members in the order assigned), and Show events follows the same
+order. Each row and card carries `▲ ▼` buttons (disabled at the ends) that call
+`store.move(groupId, markId, ±1)`; the move is persisted, so it survives reloads. Moving within a
+group never changes `All`, and the reverse.

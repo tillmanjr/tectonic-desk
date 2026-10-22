@@ -63,6 +63,18 @@ describe("MarksOverlay", () => {
     expect(rows[0]?.text()).toContain("marked 2026-10-");
     expect(rows[0]?.text()).toContain("no groups yet");
     expect(w.findAll("svg.thumb")).toHaveLength(2);
+    expect(rows[0]?.find(".morder .up").attributes("disabled")).toBeDefined();
+    expect(rows[1]?.find(".morder .down").attributes("disabled")).toBeDefined();
+    await rows[0]?.find(".morder .down").trigger("click");
+    expect(w.findAll(".markrow-item").map((r) => r.find(".mname").text())).toEqual([
+      "Kuril shock",
+      "Etna watch",
+    ]);
+    await w.findAll(".markrow-item")[1]?.find(".morder .up").trigger("click");
+    expect(w.findAll(".markrow-item").map((r) => r.find(".mname").text())).toEqual([
+      "Etna watch",
+      "Kuril shock",
+    ]);
     const row = rows[0];
     if (row === undefined) throw new Error("no row");
     await row.find(".mname").trigger("click");
@@ -180,6 +192,13 @@ describe("MarksOverlay", () => {
     expect(w.text()).toContain("Origin time");
     expect(w.text()).toContain("Eruptions");
     expect(w.find(".marks-grouphead").exists()).toBe(false);
+    const names = () => w.findAll("article.markcard .mname").map((n) => n.text());
+    expect(names()).toEqual(["Etna watch", "Kuril shock"]);
+    expect(w.find("article.markcard .morder .up").attributes("disabled")).toBeDefined();
+    await w.find("article.markcard .morder .down").trigger("click");
+    expect(names()).toEqual(["Kuril shock", "Etna watch"]);
+    await w.findAll("article.markcard")[1]?.find(".morder .up").trigger("click");
+    expect(names()).toEqual(["Etna watch", "Kuril shock"]);
     await w.find(".backtolist").trigger("click");
     expect(ctx.nav.list).toHaveBeenCalledWith("all");
     await w.find("article.markcard .openview").trigger("click");

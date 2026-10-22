@@ -176,7 +176,14 @@ onUnmounted(() => {
         <p v-else-if="view.marks.length === 0" class="note">
           No marks in this group yet. Add some from the chips on each mark in {{ MARK_TERMS.all }}.
         </p>
-        <MarkRow v-for="m in view.marks" :key="m.id" :mark="m" />
+        <MarkRow
+          v-for="(m, i) in view.marks"
+          :key="m.id"
+          :mark="m"
+          :group="view.id"
+          :first="i === 0"
+          :last="i === view.marks.length - 1"
+        />
       </template>
     </div>
   </section>

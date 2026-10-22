@@ -6,8 +6,8 @@ import { fmtStamp } from "../lib/format.js";
 import { MARKS, MARKS_NAV, useInjected, ZONE } from "../lib/keys.js";
 import { NAME_MAX, type Mark } from "../lib/marks.js";
 
-/** One marked view in the overlay list: thumbnail, editable name, facts, group chips, open and delete. */
-const props = defineProps<{ mark: Mark }>();
+/** One marked view in the overlay list: order buttons, thumbnail, editable name, facts, group chips, open and delete. */
+const props = defineProps<{ mark: Mark; group: string; first: boolean; last: boolean }>();
 const store = useInjected(MARKS);
 const nav = useInjected(MARKS_NAV);
 const zone = useInjected(ZONE);
@@ -41,6 +41,26 @@ function onKey(e: KeyboardEvent): void {
 
 <template>
   <div class="markrow-item">
+    <div class="morder">
+      <button
+        type="button"
+        class="up"
+        :disabled="first"
+        aria-label="Move up"
+        @click="store.move(group, mark.id, -1)"
+      >
+        ▲
+      </button>
+      <button
+        type="button"
+        class="down"
+        :disabled="last"
+        aria-label="Move down"
+        @click="store.move(group, mark.id, 1)"
+      >
+        ▼
+      </button>
+    </div>
     <MarkThumb :lon="mark.lon" :lat="mark.lat" :frame="mark.frame" :kind="mark.kind" />
     <div class="mbody">
       <input
