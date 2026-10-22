@@ -126,6 +126,16 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   bars, one map with the volcano triangles under the earthquake markers and both legends, then the
   earthquake table and charts followed by the volcano table and charts. One selection is open at a
   time: picking a quake closes the volcano panel and vice versa.
+- **Marked events.** `☆ Mark` under the name in either detail panel saves the view (page, region,
+  window, filters and selection) under a name of your choosing, in the browser only
+  (`localStorage`, `tectonic.marks`); nothing is sent anywhere. `Marks · N` in the header opens
+  an overlay over the current view where marks can be renamed, deleted, gathered into groups
+  (`All` always holds every mark) and reopened with `Open view`. Each mark carries a small
+  schematic of the world or the West Coast with a star at the event.
+- **Show events** on a group lays its marks out as full panels, the same sections as the side
+  panels, two across on a wide screen, so a set of events can be read together. The URL carries
+  the overlay (`?marks=<group>`, `&show=panels`), so Escape, the close control and the back
+  button all return to the untouched view.
 - Long windows stay within a 2,000-event budget. The page first asks `GET /api/events/summary` for
   the window at the floor in force; if the total fits, every event is loaded, otherwise the marker
   floor is raised to M5, M6 or M7 (the lowest band that fits) and the page says so under the Refine
