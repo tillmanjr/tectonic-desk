@@ -13,6 +13,8 @@ const subject: MarkSubject = {
   headline: "M5.5 mww",
   sub: "10 km N of Somewhere",
   stamp: "2026-10-13T10:00:00.000Z",
+  mag: 5.5,
+  depthKm: 10,
 };
 
 describe("MarkButton", () => {

@@ -334,6 +334,14 @@ describe("App", () => {
     await wrapper.find(".backtolist").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.show).toBeUndefined();
+    const first = marks.marks.value[0];
+    if (first === undefined) throw new Error("no mark");
+    marks.add({ ...first, name: "second", lon: first.lon + 1 });
+    await flushPromises();
+    await wrapper.find(".compare").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.query.show).toBe("matrix");
+    expect(wrapper.findAll(".matrix tbody td:not(.blank)")).toHaveLength(1);
     await wrapper.find(".marks-close").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query).toEqual({ event: "us1" });

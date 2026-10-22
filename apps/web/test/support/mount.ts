@@ -21,6 +21,7 @@ import {
   THEME,
   VOLCANOES,
   ZONE,
+  type MarksMode,
   type MarksNav,
 } from "../../src/lib/keys.js";
 import { createMarks, type MarksStore } from "../../src/lib/marks.js";
@@ -49,7 +50,7 @@ export interface Context {
   marks: MarksStore;
   /** Spies for every nav action; `overlay` is the writable ref behind `nav.overlay`. */
   nav: MarksNav;
-  overlay: Ref<{ group: string; panels: boolean } | null>;
+  overlay: Ref<{ group: string; mode: MarksMode } | null>;
   zone: Ref<Zone>;
   now: Date;
 }
@@ -103,7 +104,7 @@ export async function makeContext(
   const volcanoes = createVolcanoStore(api, () => now);
   volcanoes.setRegion(catalog.region.value);
   if (over.volcanoes === true) await volcanoes.load();
-  const overlay = ref<{ group: string; panels: boolean } | null>(null);
+  const overlay = ref<{ group: string; mode: MarksMode } | null>(null);
   return {
     api,
     catalog,
@@ -122,6 +123,7 @@ export async function makeContext(
       overlay,
       open: vi.fn(),
       show: vi.fn(),
+      compare: vi.fn(),
       list: vi.fn(),
       close: vi.fn(),
       goTo: vi.fn(),

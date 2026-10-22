@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
+import MarkMatrix from "./MarkMatrix.vue";
 import MarkPanels from "./MarkPanels.vue";
 import MarkRow from "./MarkRow.vue";
 import { MARKS, MARKS_NAV, useInjected } from "../lib/keys.js";
 import { ALL_GROUP, MARK_TERMS, NAME_MAX, type MarkView } from "../lib/marks.js";
+import { compareTitle } from "../lib/matrix.js";
 
 /** The full-screen manager for marked views: groups in a rail, marks as rows or as stacked panels. */
 const store = useInjected(MARKS);
 const nav = useInjected(MARKS_NAV);
 
-const state = computed(() => nav.overlay.value ?? { group: ALL_GROUP, panels: false });
+const state = computed(() => nav.overlay.value ?? { group: ALL_GROUP, mode: "list" });
 const view = computed(() => store.view(state.value.group));
 // An id the store does not know (a deleted group, a stale link) falls back to All.
 watch(
@@ -22,6 +24,13 @@ watch(
 );
 
 const closeBtn = ref<HTMLButtonElement | null>(null);
+/** The main area's inner width, so the Compare tooltip can say whether the grid will fit. */
+const MAIN_PAD_PX = 32;
+const mainEl = ref<HTMLElement | null>(null);
+const mainWidth = ref(0);
+function measure(): void {
+  mainWidth.value = mainEl.value?.clientWidth ?? 0;
+}
 const adding = ref(false);
 const newName = ref("");
 const newInput = ref<HTMLInputElement | null>(null);
@@ -70,14 +79,18 @@ function onKey(e: KeyboardEvent): void {
   if (e.target instanceof HTMLElement && e.target.dataset.keep !== undefined) return;
   nav.close();
 }
-onMounted(() => {
+onMounted(async () => {
   document.body.classList.add("marks-open");
   document.addEventListener("keydown", onKey);
+  window.addEventListener("resize", measure);
   closeBtn.value?.focus();
+  await nextTick();
+  measure();
 });
 onUnmounted(() => {
   document.body.classList.remove("marks-open");
   document.removeEventListener("keydown", onKey);
+  window.removeEventListener("resize", measure);
 });
 </script>
 
@@ -128,8 +141,9 @@ onUnmounted(() => {
         + New {{ MARK_TERMS.group.toLowerCase() }}
       </button>
     </nav>
-    <div v-if="view !== null" class="marks-main">
-      <MarkPanels v-if="state.panels" :view="view" />
+    <div v-if="view !== null" ref="mainEl" class="marks-main">
+      <MarkPanels v-if="state.mode === 'panels'" :view="view" />
+      <MarkMatrix v-else-if="state.mode === 'matrix'" :view="view" />
       <template v-else>
         <div class="marks-grouphead">
           <input
@@ -161,6 +175,15 @@ onUnmounted(() => {
             @click="nav.show(view.id)"
           >
             Show events
+          </button>
+          <button
+            type="button"
+            class="compare"
+            :disabled="view.marks.length < 2"
+            :title="compareTitle(view.marks.length, mainWidth - MAIN_PAD_PX)"
+            @click="nav.compare(view.id)"
+          >
+            Compare
           </button>
           <ConfirmButton
             v-if="!view.virtual"

@@ -22,6 +22,9 @@ export interface Mark {
   sub: string;
   /** Origin time (ISO) for an event; null for a volcano. */
   stamp: string | null;
+  /** Magnitude and depth for an earthquake; null for a volcano or when unknown. */
+  mag: number | null;
+  depthKm: number | null;
   createdAt: string;
 }
 export interface MarkGroup {
@@ -63,13 +66,37 @@ const isFrame = (v: unknown): v is ThumbFrame => v === "world" || v === "wc";
 const isStr = (v: unknown): v is string => typeof v === "string";
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
+/** The magnitude stored with a mark, else the one its headline opens with (marks saved before the field existed). */
+function magOf(v: unknown, headline: string): number | null {
+  if (isNum(v)) return v;
+  const m = /^M(\d+(?:\.\d+)?)\b/.exec(headline)?.[1];
+  return m === undefined ? null : Number(m);
+}
+
 function parseMark(v: unknown): Mark | null {
   if (!isRecord(v)) return null;
   const { id, kind, ref: r, name, url, frame, lon, lat, headline, sub, stamp, createdAt } = v;
   if (!isStr(id) || !isKind(kind) || !isStr(r) || !isStr(name) || !isStr(url)) return null;
   if (!isFrame(frame) || !isNum(lon) || !isNum(lat) || !isStr(headline) || !isStr(sub)) return null;
   if (!(isStr(stamp) || stamp === null) || !isStr(createdAt)) return null;
-  return { id, kind, ref: r, name, url, frame, lon, lat, headline, sub, stamp, createdAt };
+  const mag = magOf(v.mag, headline);
+  const depthKm = isNum(v.depthKm) ? v.depthKm : null;
+  return {
+    id,
+    kind,
+    ref: r,
+    name,
+    url,
+    frame,
+    lon,
+    lat,
+    headline,
+    sub,
+    stamp,
+    mag,
+    depthKm,
+    createdAt,
+  };
 }
 
 /** The stored document; malformed marks and groups are dropped rather than failing the whole read. */
