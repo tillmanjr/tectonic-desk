@@ -1206,3 +1206,22 @@ a {
     text-decoration: underline;
   }
 }
+
+/* Mark thumbnails: a schematic outline with a star at the event. */
+.thumb {
+  width: 96px;
+  height: 56px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+}
+.thumb .land {
+  fill: var(--muted);
+  fill-opacity: 0.35;
+  stroke: none;
+}
+.thumb .star {
+  stroke: var(--ink);
+  stroke-width: 0.8;
+}
