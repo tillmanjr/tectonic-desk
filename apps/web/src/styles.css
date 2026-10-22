@@ -10,6 +10,7 @@
   --border: #b9c2c9;
   --accent: #0a6a85;
   --plate: #7b4f9a;
+  --edge: color-mix(in srgb, var(--muted) 55%, var(--line));
   --vc-recent: #d9442a;
   --vc-historic: #e0a020;
   --vc-holocene: #6b7f8f;
@@ -1571,7 +1572,10 @@ body.marks-open {
   }
 }
 
-/* Marked events: the pairwise comparison grid. Column and row-header widths match COL_PX / ROW_HEADER_PX in matrix.ts. */
+/* Marked events: Compare as connected vertices. Top nodes are the column marks, left nodes the row
+   marks; each edge card reads from its left node to its top node. A table underneath keeps the
+   reading order; the spacing between cells is where the edges show. Node and card widths plus
+   spacing match ROW_HEADER_PX / COL_PX in matrix.ts. */
 .markmatrix {
   display: flex;
   flex-direction: column;
@@ -1579,32 +1583,35 @@ body.marks-open {
 }
 .matrixwrap {
   overflow-x: auto;
+  padding: 4px 0 8px;
 }
 table.matrix {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 20px 16px;
   font: 12px var(--f-data);
   font-variant-numeric: tabular-nums;
 }
 .matrix th,
 .matrix td {
-  border: 1px solid var(--line);
-  padding: 7px 9px;
-  vertical-align: top;
-  text-align: left;
-  min-width: 128px;
-  max-width: 190px;
-  white-space: normal;
+  padding: 0;
+  vertical-align: middle;
+  text-align: center;
+  position: relative;
   text-transform: none;
   letter-spacing: 0;
-  overflow-wrap: anywhere;
+  white-space: normal;
 }
-.matrix thead th,
-.matrix tbody th {
+.matrix .node {
+  display: block;
+  margin-inline: auto;
+  width: max-content;
+  min-width: 168px;
+  max-width: 200px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
   background: var(--bg);
-}
-.matrix tbody th {
-  width: 190px;
-  max-width: 190px;
+  text-align: left;
 }
 .matrix .mname {
   display: block;
@@ -1616,6 +1623,9 @@ table.matrix {
   color: var(--muted);
   font: 11px var(--f-data);
   margin-top: 2px;
+}
+.matrix .mwhen + .mwhen {
+  margin-top: 1px;
 }
 .matrix .kind {
   display: inline-block;
@@ -1631,17 +1641,113 @@ table.matrix {
   border-radius: 0;
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
-.matrix td.blank {
-  background: color-mix(in srgb, var(--ink) 10%, var(--bg));
+/* arrowhead under each top node: the spine below points up into it */
+.matrix thead .node::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 0;
+  height: 0;
+  margin-left: -6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid var(--edge);
 }
-.matrix .cl {
-  display: block;
-  white-space: nowrap;
+/* spine: every cell in a column carries the vertical edge up to the top node */
+.matrix td::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -16px;
+  height: calc(100% + 16px);
+  border-left: 2px solid var(--edge);
+}
+.matrix td.blank::before {
+  border-left-style: dotted;
+}
+/* rung: a card hangs off the horizontal edge from its row node */
+.matrix td.edge::after {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 20px;
+  border-top: 2px solid var(--edge);
+}
+.matrix .card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+  width: max-content;
+  min-width: 236px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  padding: 6px 8px 7px;
+}
+.matrix .chart {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr;
+  gap: 3px 10px;
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+}
+.matrix .chart .h {
+  font: 700 12px var(--f-ui);
   color: var(--muted);
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--line);
+  width: 100%;
 }
-.matrix .cl.time {
+.matrix .chart .h.arrow,
+.matrix .chart .h.dh {
+  color: var(--ink);
+  white-space: nowrap;
+}
+.matrix .chart .h.arrow {
+  line-height: 0;
+}
+.matrix .ar {
+  width: 15px;
+  height: 15px;
+  display: inline-block;
+  vertical-align: -2px;
+}
+.matrix .arl {
+  width: 19px;
+}
+.matrix .ar.sm {
+  width: 13px;
+  height: 13px;
+  vertical-align: -1px;
+}
+.matrix .arl.sm {
+  width: 16px;
+}
+.matrix .chart .k {
+  color: var(--muted);
+  font: 600 11px var(--f-ui);
+  justify-self: end;
+}
+.matrix .chart .v {
+  white-space: nowrap;
+}
+.matrix .chart .d {
+  white-space: nowrap;
   color: var(--ink);
   font-weight: 600;
+}
+.matrix .chart .foot {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  padding-top: 3px;
+  margin-top: 2px;
+  width: 100%;
 }
 .markmatrix .cap {
   color: var(--muted);

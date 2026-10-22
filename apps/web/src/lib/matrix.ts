@@ -9,22 +9,33 @@ export interface MarkPoint {
   when: { date: Date; precision: DatePrecision } | null;
 }
 
-/** What one cell of the comparison matrix says about a pair. */
-export interface PairCell {
-  /** Time apart in the two largest units at the coarser precision; null when either side is undated. */
-  time: string | null;
-  /** Magnitude difference; only between two earthquakes that both carry a magnitude. */
-  dMag: number | null;
-  /** Depth difference in km; only between two earthquakes that both carry a depth. */
-  dDepth: number | null;
-  /** Great-circle distance in km. */
+/** One line of an edge card: the left mark's value, the change from left to top, the top mark's value. */
+export interface CardRow {
+  label: string;
+  left: string;
+  delta: string;
+  top: string;
+}
+
+/** An edge card: three rows (time, M, depth) and the distance, read from the left mark to the top one. */
+export interface Card {
+  rows: CardRow[];
   km: number;
+}
+
+/** The staircase: columns are all marks but the last, rows all but the first; a cell exists where the row mark comes later in the group. */
+export interface Staircase {
+  cols: MarkPoint[];
+  rows: { p: MarkPoint; cells: (Card | null)[] }[];
 }
 
 const RANK: Record<DatePrecision, number> = { day: 0, month: 1, year: 2 };
 /** The coarser of two precisions, which is what a difference can honestly be stated at. */
 export const coarser = (a: DatePrecision, b: DatePrecision): DatePrecision =>
   RANK[a] >= RANK[b] ? a : b;
+const DIGITS: Record<DatePrecision, number> = { day: 10, month: 7, year: 4 };
+const DASH = "—";
+const MINUS = "−";
 
 /** Resolves a mark's instant; volcanoes ask `anchorFor` for their eruption onset. */
 export function pointOf(
@@ -41,42 +52,93 @@ export function pointOf(
   return { mark, when: a === null ? null : { date: a.date, precision: a.precision } };
 }
 
-const diff = (x: number | null, y: number | null): number | null =>
-  x === null || y === null ? null : Math.abs(x - y);
+/** A signed number for a delta column: `+0.6`, `−68`, or `0` without a sign. */
+export function fmtSigned(n: number, digits: number): string {
+  const abs = Math.abs(n).toFixed(digits);
+  return n > 0 ? `+${abs}` : n < 0 ? `${MINUS}${abs}` : abs;
+}
 
-/** The comparison of two points. Symmetric: every difference is an absolute value. */
-export function pairCell(a: MarkPoint, b: MarkPoint): PairCell {
-  const quakes = a.mark.kind === "event" && b.mark.kind === "event";
+/** The top mark's time relative to the left mark's: `+1 d 6 h` later, `−4 h 32 min` earlier, `same time`. */
+export function signedOffset(from: MarkPoint, to: MarkPoint): string {
+  if (from.when === null || to.when === null) return DASH;
+  const ms = to.when.date.getTime() - from.when.date.getTime();
+  if (ms === 0) return "same time";
+  const text = offsetText(
+    from.when.date,
+    to.when.date,
+    coarser(from.when.precision, to.when.precision),
+  );
+  return `${ms > 0 ? "+" : MINUS}${text}`;
+}
+
+/** A point's instant as a node line or a card value: the origin time, or the onset at its precision. */
+export function whenText(p: MarkPoint, zone: Zone, label = true): string {
+  if (p.when === null) return label ? "no dated eruption" : DASH;
+  if (p.mark.kind === "event") return fmtStamp(p.when.date.toISOString(), zone, { label });
+  return `${label ? "onset " : ""}${p.when.date.toISOString().slice(0, DIGITS[p.when.precision])}`;
+}
+
+/** The lines under a node's name: time, magnitude and depth for an earthquake; the onset for a volcano. */
+export function nodeLines(p: MarkPoint, zone: Zone): string[] {
+  const lines = [whenText(p, zone)];
+  if (p.mark.kind !== "event") return lines;
+  lines.push(`M${fmtMag(p.mark.mag)}`);
+  if (p.mark.depthKm !== null) lines.push(`${String(Math.round(p.mark.depthKm))} km deep`);
+  return lines;
+}
+
+const numOr = (n: number | null, f: (x: number) => string): string => (n === null ? DASH : f(n));
+const deltaOr = (a: number | null, b: number | null, f: (d: number) => string): string =>
+  a === null || b === null ? DASH : f(b - a);
+
+/** The card for an edge read from the left mark to the top mark. */
+export function cardOf(from: MarkPoint, to: MarkPoint, zone: Zone): Card {
+  const a = from.mark;
+  const b = to.mark;
   return {
-    time:
-      a.when === null || b.when === null
-        ? null
-        : offsetText(a.when.date, b.when.date, coarser(a.when.precision, b.when.precision)),
-    dMag: quakes ? diff(a.mark.mag, b.mark.mag) : null,
-    dDepth: quakes ? diff(a.mark.depthKm, b.mark.depthKm) : null,
-    km: distanceKm(
-      { latitude: a.mark.lat, longitude: a.mark.lon },
-      { latitude: b.mark.lat, longitude: b.mark.lon },
-    ),
+    rows: [
+      {
+        label: "time",
+        left: whenText(from, zone, false),
+        delta: signedOffset(from, to),
+        top: whenText(to, zone, false),
+      },
+      {
+        label: "M",
+        left: numOr(a.mag, (m) => fmtMag(m)),
+        delta: deltaOr(a.mag, b.mag, (d) => fmtSigned(d, 1)),
+        top: numOr(b.mag, (m) => fmtMag(m)),
+      },
+      {
+        label: "depth",
+        left: numOr(a.depthKm, (z) => `${String(Math.round(z))} km`),
+        delta: deltaOr(a.depthKm, b.depthKm, (d) => `${fmtSigned(Math.round(d), 0)} km`),
+        top: numOr(b.depthKm, (z) => `${String(Math.round(z))} km`),
+      },
+    ],
+    km: distanceKm({ latitude: a.lat, longitude: a.lon }, { latitude: b.lat, longitude: b.lon }),
   };
 }
 
-const DIGITS: Record<DatePrecision, number> = { day: 10, month: 7, year: 4 };
+/** The distance footer of a card. */
+export const kmText = (km: number): string => `${fmtInt(Math.round(km))} km apart`;
 
-/** The axis caption under a mark's name: origin time, magnitude and depth; or the eruption onset; or that it has none. */
-export function captionOf(p: MarkPoint, zone: Zone): string {
-  if (p.when === null) return "no dated eruption";
-  if (p.mark.kind !== "event") {
-    return `onset ${p.when.date.toISOString().slice(0, DIGITS[p.when.precision])}`;
-  }
-  const depth = p.mark.depthKm === null ? "" : ` · ${String(Math.round(p.mark.depthKm))} km`;
-  return `${fmtStamp(p.when.date.toISOString(), zone)} · M${fmtMag(p.mark.mag)}${depth}`;
+/** Lays the points out as the staircase: the left column holds n − 1 cards, each column to the right one fewer. */
+export function staircase(points: MarkPoint[], zone: Zone): Staircase {
+  const cols = points.slice(0, -1);
+  return {
+    cols,
+    rows: points.slice(1).map((p, i) => ({
+      p,
+      cells: cols.map((q, c) => (c <= i ? cardOf(p, q, zone) : null)),
+    })),
+  };
 }
 
-/** The grid's row header and one column, in CSS pixels, as `styles.css` sizes them. */
-export const ROW_HEADER_PX = 208;
-export const COL_PX = 147;
-export const matrixWidthPx = (n: number): number => ROW_HEADER_PX + n * COL_PX;
+/** The grid's row header and one column, in CSS pixels, as `styles.css` sizes them (node or card plus spacing). */
+export const ROW_HEADER_PX = 220;
+export const COL_PX = 256;
+export const matrixWidthPx = (n: number): number => ROW_HEADER_PX + (n - 1) * COL_PX;
 
 /** The Compare button's tooltip: what it compares, and a warning when the grid will overflow the given width. */
 export function compareTitle(n: number, availablePx: number): string {
