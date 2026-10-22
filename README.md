@@ -108,11 +108,11 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   returns to those defaults; only explicit bounds go in the URL (`since`, `until`). Dates reach
   back to 1900-01-01. The length select reads the dates (30 or 90 days, 1, 10 or 50 years, since
   1900, else Custom); picking a length sets "from" that far before "to", and changing "to" while a
-  length is in force moves "from" with it. The header's "Times" button switches every date and
+  length is in force moves "from" with it. The "Times" control in the header's Settings menu switches every date and
   time on the page, and the way the date filter is read, between UTC (default) and the browser's
   zone; it is kept in the URL as `tz=local`.
 - The refine bars open collapsed, one line stating the refinements in force (set clauses in ink,
-  defaults muted) with a small `edit` control that expands the inputs and `done` that folds them
+  defaults muted); a click anywhere on the bar opens the inputs and a click on its head line folds them
   back. Each bar's `Hide markers` box takes that dataset's markers off the map and changes nothing
   else: counts, tables, charts, cards, density and the legend stay as they are.
 - Major-event and volcano cards show a few rows and offer the rest behind `… N more`; the rows

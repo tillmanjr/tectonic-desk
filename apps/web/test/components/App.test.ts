@@ -116,7 +116,7 @@ describe("App", () => {
   it("round-trips the filters through the URL and keeps them across a region switch", async () => {
     stubCanvas();
     const { wrapper, router } = await mountApp("/?minMag=3&maxDepth=200");
-    await wrapper.find(".filters .rtoggle").trigger("click");
+    await wrapper.find(".filters .rhead").trigger("click");
     const inputs = wrapper.findAll<HTMLInputElement>(".filters input");
     expect(inputs[0]?.element.value).toBe("4.5");
     expect(inputs[3]?.element.value).toBe("200");
@@ -158,7 +158,7 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.query.tz).toBe("local");
     expect(wrapper.find("th").text()).toBe("Time (local)");
-    await wrapper.find(".filters .rtoggle").trigger("click");
+    await wrapper.find(".filters .rhead").trigger("click");
     expect(wrapper.find(".filters").text()).toContain("Window (local)");
     await wrapper.find("button[title^='Show every date']").trigger("click");
     await flushPromises();
@@ -240,7 +240,7 @@ describe("App", () => {
     await wrapper.find(".vdetail .close").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.volcano).toBeUndefined();
-    await wrapper.find(".filters .rtoggle").trigger("click");
+    await wrapper.find(".filters .rhead").trigger("click");
     await wrapper.findAll(".filters select")[2]?.setValue("");
     await flushPromises();
     expect(router.currentRoute.value.query.age).toBeUndefined();

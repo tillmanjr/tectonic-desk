@@ -174,3 +174,11 @@ and the settings key, the eruption-relative offsets. CLAUDE.md Front end: the `a
 
 Pin and Probe; a settings editor; correlation panels across the two datasets; changes to the
 single pages beyond the refine bars, hide toggles and card rows.
+
+## Addendum 2026-10-22: toggling without buttons
+
+The `edit`/`done` button is gone. The bar's first line is a `div.rhead` with `role="button"`,
+`tabindex="0"`, `aria-expanded` and `aria-controls`. Collapsed, a click anywhere on the bar other
+than the `Hide markers` checkbox (and other interactive elements) expands it; expanded, only a click
+on the head line folds it, so the inputs below are safe to use. Enter and Space on the head toggle
+as well.
