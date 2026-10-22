@@ -3,22 +3,30 @@ import App from "./components/App.vue";
 
 export type Page = "earthquakes" | "volcanoes" | "active";
 
-/** The shell renders every route; the page comes from the route's meta, the region from its param. */
+/**
+ * The shell renders every route; the page comes from the route's meta, the region from its param.
+ * `/` lands on Active Earth. Links from before 2026-10-22 named the earthquakes page by region alone
+ * (`/wc`), and saved marks may still, so a bare region redirects there with its query intact.
+ */
 export function createAppRouter(history: RouterHistory = createWebHistory()): Router {
   return createRouter({
     history,
     routes: [
       { path: "/active/:region?", component: App, meta: { page: "active" } },
       { path: "/volcanoes/:region?", component: App, meta: { page: "volcanoes" } },
-      { path: "/:region?", component: App, meta: { page: "earthquakes" } },
-      { path: "/:pathMatch(.*)*", redirect: "/" },
+      { path: "/earthquakes/:region?", component: App, meta: { page: "earthquakes" } },
+      { path: "/", redirect: "/active" },
+      {
+        path: "/:region",
+        redirect: (to) => ({ path: `/earthquakes/${String(to.params.region)}`, query: to.query }),
+      },
+      { path: "/:pathMatch(.*)*", redirect: "/active" },
     ],
   });
 }
 
 /** The base path of a page, to which the region is appended. */
-export const pageBase = (page: Page): string =>
-  page === "volcanoes" ? "/volcanoes" : page === "active" ? "/active" : "";
+export const pageBase = (page: Page): string => `/${page}`;
 
 /** The page a route's `meta.page` names; anything else is the earthquakes page. */
 export const pageOf = (meta: unknown): Page =>
@@ -28,4 +36,4 @@ export const pageOf = (meta: unknown): Page =>
 export const hasVolcanoes = (page: Page): boolean => page !== "earthquakes";
 
 export const pagePath = (page: Page, region: string): string =>
-  region === "global" ? pageBase(page) || "/" : `${pageBase(page)}/${region}`;
+  region === "global" ? pageBase(page) : `${pageBase(page)}/${region}`;

@@ -32,14 +32,15 @@ onUnmounted(() => {
   <div ref="root" class="settings" @keydown="onKey">
     <button
       type="button"
-      class="theme-btn settings-btn"
+      class="settings-btn"
       aria-haspopup="true"
       :aria-expanded="open"
       aria-controls="settings-menu"
-      title="Time zone and theme"
+      aria-label="Settings"
+      title="Settings: time zone and theme"
       @click="open = !open"
     >
-      ⚙ Settings
+      ⚙
     </button>
     <div v-if="open" id="settings-menu" class="settings-menu" aria-label="Settings">
       <div class="srow">

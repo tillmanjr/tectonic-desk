@@ -141,7 +141,9 @@ const routeVolcanoFilter = computed(() => parseVolcanoFilter(route.query));
 
 async function applyRegion(id: string): Promise<void> {
   const ok = await catalog.setRegion(id);
-  if (!ok && catalog.regions.value.length > 0) await router.replace("/");
+  if (!ok && catalog.regions.value.length > 0) {
+    await router.replace(pagePath(page.value, "global"));
+  }
 }
 async function boot(): Promise<void> {
   await catalog.init();
@@ -240,30 +242,36 @@ onUnmounted(() => {
 
 <template>
   <div class="wrap">
-    <header>
-      <div class="hdr-left">
-        <h1>Tectonic Desk<small>Earthquakes · volcanoes · plate boundaries</small></h1>
-        <PageSwitch :page="page" @pick="pickPage" />
-        <nav class="pages" :aria-label="MARK_TERMS.title">
-          <button
-            type="button"
-            class="marks-btn"
-            aria-haspopup="dialog"
-            :aria-current="overlay !== null ? 'page' : undefined"
-            :title="`Your marked ${MARK_TERMS.things}, over the current page`"
-            @click="nav.open()"
-          >
-            {{ MARK_TERMS.noun
-            }}{{ marks.marks.value.length > 0 ? ` · ${String(marks.marks.value.length)}` : "" }}
-          </button>
+    <div class="topbar">
+      <header>
+        <div class="hdr-left">
+          <h1>Tectonic Desk<small>Earthquakes · volcanoes · plate boundaries</small></h1>
+        </div>
+        <nav class="tools" aria-label="Controls">
+          <div class="grp">
+            <PageSwitch :page="page" @pick="pickPage" />
+            <nav class="pages" :aria-label="MARK_TERMS.title">
+              <button
+                type="button"
+                class="marks-btn"
+                aria-haspopup="dialog"
+                :aria-current="overlay !== null ? 'page' : undefined"
+                :title="`Your marked ${MARK_TERMS.things}, over the current page`"
+                @click="nav.open()"
+              >
+                {{ MARK_TERMS.noun
+                }}{{ marks.marks.value.length > 0 ? ` · ${String(marks.marks.value.length)}` : "" }}
+              </button>
+            </nav>
+          </div>
+          <div class="grp">
+            <RegionTabs @pick="pickRegion" />
+            <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
+          </div>
         </nav>
-      </div>
-      <div class="hdr-right">
-        <RegionTabs @pick="pickRegion" />
-        <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
-      </div>
-    </header>
-    <StatusLine />
+      </header>
+      <StatusLine />
+    </div>
     <div v-if="error !== null" class="banner error" role="alert">
       <span>{{ error }}</span>
       <button type="button" @click="retry">Retry</button>

@@ -7,9 +7,10 @@ describe("RegionTabs", () => {
     const ctx = await makeContext({ regionId: "wc" });
     const w = mountWith(RegionTabs, ctx);
     const tabs = w.findAll("[role=tab]");
-    expect(tabs.map((t) => t.text())).toEqual([
-      "GlobalM4.5+ · past 7 days",
-      "West Coast USM2.5+ · past 30 days",
+    expect(tabs.map((t) => t.text())).toEqual(["GlobalM4.5+ · 7 d", "West Coast USM2.5+ · 30 d"]);
+    expect(tabs.map((t) => t.attributes("title"))).toEqual([
+      "M4.5+ · past 7 days",
+      "M2.5+ · past 30 days",
     ]);
     expect(tabs.map((t) => t.attributes("aria-selected"))).toEqual(["false", "true"]);
     await tabs[0]?.trigger("click");
