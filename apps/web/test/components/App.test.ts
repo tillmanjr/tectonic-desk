@@ -341,7 +341,7 @@ describe("App", () => {
     await wrapper.find(".compare").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.show).toBe("matrix");
-    expect(wrapper.findAll(".matrix tbody td:not(.blank)")).toHaveLength(1);
+    expect(wrapper.findAll(".matrix tbody td.edge")).toHaveLength(1);
     await wrapper.find(".marks-close").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query).toEqual({ event: "us1" });
