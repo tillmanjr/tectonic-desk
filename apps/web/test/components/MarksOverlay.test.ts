@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import MarksOverlay from "../../src/components/MarksOverlay.vue";
 import { resetBasemapCache } from "../../src/lib/basemap-cache.js";
+import type { MarksMode } from "../../src/lib/keys.js";
 import type { MarkDraft } from "../../src/lib/marks.js";
 import { stubCanvas } from "../support/canvas.js";
 import { makeContext, mountWith, type Context } from "../support/mount.js";
@@ -19,6 +20,8 @@ const quake: MarkDraft = {
   headline: "M5.5 mww",
   sub: "10 km N of Somewhere",
   stamp: "2026-10-13T10:00:00.000Z",
+  mag: 5.5,
+  depthKm: 10,
 };
 const etna: MarkDraft = {
   ...quake,
@@ -29,10 +32,12 @@ const etna: MarkDraft = {
   headline: "Etna",
   sub: "Italy · Mediterranean",
   stamp: null,
+  mag: null,
+  depthKm: null,
 };
 
-async function open(ctx: Context, group = "all", panels = false) {
-  ctx.overlay.value = { group, panels };
+async function open(ctx: Context, group = "all", mode: MarksMode = "list") {
+  ctx.overlay.value = { group, mode };
   const w = mountWith(MarksOverlay, ctx);
   await flushPromises();
   return w;
@@ -127,7 +132,7 @@ describe("MarksOverlay", () => {
     expect(ctx.marks.groupsOf(a.id)).toEqual([]);
     await w.findAll(".marks-rail button")[1]?.trigger("click");
     expect(ctx.nav.list).toHaveBeenLastCalledWith(g.id);
-    ctx.overlay.value = { group: g.id, panels: false };
+    ctx.overlay.value = { group: g.id, mode: "list" };
     await nextTick();
     expect(w.find(".marks-main").text()).toContain("No marks in this group yet");
     expect(w.find(".showevents").attributes("disabled")).toBeDefined();
@@ -151,7 +156,9 @@ describe("MarksOverlay", () => {
     const ctx = await makeContext();
     const w = await open(ctx, "nope");
     expect(ctx.nav.list).toHaveBeenCalledWith("all");
-    ctx.overlay.value = { group: "all", panels: false };
+    // a resize with no main area to measure is harmless
+    window.dispatchEvent(new Event("resize"));
+    ctx.overlay.value = { group: "all", mode: "list" };
     await nextTick();
     expect(w.find(".marks-main").text()).toContain("Nothing marked yet");
     expect(w.find(".gname").attributes("disabled")).toBeDefined();
@@ -185,7 +192,7 @@ describe("MarksOverlay", () => {
     ctx.marks.add(quake);
     ctx.marks.add(etna);
     const load = vi.spyOn(ctx.volcanoes, "load");
-    const w = await open(ctx, "all", true);
+    const w = await open(ctx, "all", "panels");
     expect(load).toHaveBeenCalledTimes(1);
     expect(w.findAll("article.markcard")).toHaveLength(2);
     expect(w.findAll(".panelbody")).toHaveLength(2);
@@ -204,9 +211,9 @@ describe("MarksOverlay", () => {
     await w.find("article.markcard .openview").trigger("click");
     expect(ctx.nav.goTo).toHaveBeenCalledWith("/volcanoes?volcano=211060");
     // volcanoes are loaded now; re-entering the panels does not load again
-    ctx.overlay.value = { group: "all", panels: false };
+    ctx.overlay.value = { group: "all", mode: "list" };
     await nextTick();
-    ctx.overlay.value = { group: "all", panels: true };
+    ctx.overlay.value = { group: "all", mode: "panels" };
     await flushPromises();
     expect(load).toHaveBeenCalledTimes(1);
     w.unmount();
@@ -218,12 +225,66 @@ describe("MarksOverlay", () => {
     const ctx = await makeContext();
     ctx.marks.add(quake);
     const load = vi.spyOn(ctx.volcanoes, "load");
-    const w = await open(ctx, "all", true);
+    const w = await open(ctx, "all", "panels");
     expect(load).not.toHaveBeenCalled();
-    ctx.overlay.value = { group: "all", panels: false };
+    ctx.overlay.value = { group: "all", mode: "list" };
     await nextTick();
     await w.find(".showevents").trigger("click");
     expect(ctx.nav.show).toHaveBeenCalledWith("all");
+    w.unmount();
+  });
+
+  it("compares a group pairwise, warns in the tooltip when the grid will not fit, and needs two marks", async () => {
+    stubWorld();
+    const ctx = await makeContext({ volcanoes: true });
+    const w = await open(ctx);
+    expect(w.find(".compare").attributes("disabled")).toBeDefined();
+    expect(w.find(".compare").attributes("title")).toBe("Mark at least two events to compare them");
+    ctx.marks.add(quake);
+    ctx.marks.add({ ...quake, ref: "us2", name: "Second", lon: -121, mag: 4.7, depthKm: 34.4 });
+    ctx.marks.add(etna);
+    await nextTick();
+    // jsdom measures the main area at 0 px, so the grid is reported as too wide
+    expect(w.find(".compare").attributes("title")).toBe(
+      "Compare 3 events pairwise · about 649 px wide, wider than this window; the grid will scroll sideways",
+    );
+    Object.defineProperty(w.find(".marks-main").element, "clientWidth", { value: 1200 });
+    window.dispatchEvent(new Event("resize"));
+    await nextTick();
+    expect(w.find(".compare").attributes("title")).toBe("Compare 3 events pairwise");
+    await w.find(".compare").trigger("click");
+    expect(ctx.nav.compare).toHaveBeenCalledWith("all");
+    ctx.overlay.value = { group: "all", mode: "matrix" };
+    await nextTick();
+    expect(w.find(".marks-grouphead").exists()).toBe(false);
+    expect(w.findAll(".matrix thead th")).toHaveLength(4);
+    const heads = w.findAll(".matrix thead th .mname").map((h) => h.text());
+    expect(heads).toEqual(["Etna watch", "Second", "Kuril shock"]);
+    expect(w.findAll(".matrix thead th .mwhen").map((h) => h.text())).toEqual([
+      "onset 2022-11-27",
+      "2026-10-13 10:00 UTC · M4.7 · 34 km",
+      "2026-10-13 10:00 UTC · M5.5 · 10 km",
+    ]);
+    expect(w.findAll(".matrix tbody td.blank")).toHaveLength(6);
+    const filled = w.findAll(".matrix tbody td:not(.blank)");
+    expect(filled).toHaveLength(3);
+    expect(filled[0]?.text()).toContain("apart");
+    expect(filled[0]?.text()).not.toContain("ΔM");
+    expect(filled[2]?.text()).toContain("ΔM 0.8");
+    expect(filled[2]?.text()).toContain("Δdepth 24 km");
+    expect(filled[2]?.text()).toContain("89 km");
+    await w.find(".backtolist").trigger("click");
+    expect(ctx.nav.list).toHaveBeenCalledWith("all");
+    // a volcano the catalogue does not know has no onset to compare
+    ctx.marks.add({ ...etna, ref: "999999", name: "Unknown cone" });
+    await nextTick();
+    expect(w.findAll(".matrix thead th .mwhen")[0]?.text()).toBe("no dated eruption");
+    expect(w.findAll(".matrix tbody td:not(.blank)")[0]?.text()).toContain("— apart");
+    ctx.marks.remove(ctx.marks.marks.value[0]?.id ?? "");
+    ctx.marks.remove(ctx.marks.marks.value[0]?.id ?? "");
+    ctx.marks.remove(ctx.marks.marks.value[0]?.id ?? "");
+    await nextTick();
+    expect(w.find(".markmatrix .note").text()).toBe("Mark at least two events to compare them.");
     w.unmount();
   });
 });

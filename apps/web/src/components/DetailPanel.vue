@@ -28,6 +28,8 @@ const subject = computed<MarkSubject | null>(() => {
     headline: `M${fmtMag(h.mag, true)} ${h.magType ?? ""}`.trim(),
     sub: placeOf(h),
     stamp: h.time,
+    mag: h.mag,
+    depthKm: h.depthKm,
   };
 });
 watch(catalog.selectedId, (id) => {

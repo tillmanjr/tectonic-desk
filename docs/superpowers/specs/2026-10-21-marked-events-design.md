@@ -295,3 +295,17 @@ group lists its `marks` array (members in the order assigned), and Show events f
 order. Each row and card carries `▲ ▼` buttons (disabled at the ends) that call
 `store.move(groupId, markId, ±1)`; the move is persisted, so it survives reloads. Moving within a
 group never changes `All`, and the reverse.
+
+## Addendum 2026-10-22: Compare
+
+A third view per group, `?marks=<group>&show=matrix`, from a `Compare` button beside
+`Show events` (disabled below two marks). `MarkMatrix.vue` lays the group's marks on both axes in
+the group's order, upper triangle only; the diagonal and below share one dark fill. Each cell gives
+the time apart (two largest units at the coarser of the two precisions; a volcano dates from its
+latest eruption's onset via `eruptionAnchor`; "— apart" when a side is undated), `ΔM` and `Δdepth`
+when both marks are earthquakes, and the great-circle distance. Axis captions carry the origin time,
+magnitude and depth of an earthquake, or `onset YYYY[-MM[-DD]]` for a volcano. Marks therefore
+store `mag` and `depthKm`; marks saved before that get the magnitude parsed from the headline and
+a null depth. The Compare button's tooltip estimates the grid width (`ROW_HEADER_PX + n × COL_PX`)
+against the main area's measured width and warns that the grid will scroll sideways when it will
+not fit; the measurement repeats on window resize. The pure pieces live in `src/lib/matrix.ts`.

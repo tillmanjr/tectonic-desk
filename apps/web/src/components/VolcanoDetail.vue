@@ -24,6 +24,8 @@ const subject = computed<MarkSubject | null>(() => {
     headline: x.name,
     sub: `${x.country} · ${x.region}`,
     stamp: null,
+    mag: null,
+    depthKm: null,
   };
 });
 function close(): void {

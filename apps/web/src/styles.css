@@ -1415,6 +1415,7 @@ body.marks-open {
   color: var(--ink);
 }
 .marks-grouphead .showevents,
+.marks-grouphead .compare,
 .marks .openview,
 .marks .confirm button,
 .marks .backtolist {
@@ -1568,4 +1569,83 @@ body.marks-open {
     grid-column: 1 / -1;
     flex-direction: row;
   }
+}
+
+/* Marked events: the pairwise comparison grid. Column and row-header widths match COL_PX / ROW_HEADER_PX in matrix.ts. */
+.markmatrix {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.matrixwrap {
+  overflow-x: auto;
+}
+table.matrix {
+  border-collapse: collapse;
+  font: 12px var(--f-data);
+  font-variant-numeric: tabular-nums;
+}
+.matrix th,
+.matrix td {
+  border: 1px solid var(--line);
+  padding: 7px 9px;
+  vertical-align: top;
+  text-align: left;
+  min-width: 128px;
+  max-width: 190px;
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+.matrix thead th,
+.matrix tbody th {
+  background: var(--bg);
+}
+.matrix tbody th {
+  width: 190px;
+  max-width: 190px;
+}
+.matrix .mname {
+  display: block;
+  font: 600 13px var(--f-ui);
+  color: var(--ink);
+}
+.matrix .mwhen {
+  display: block;
+  color: var(--muted);
+  font: 11px var(--f-data);
+  margin-top: 2px;
+}
+.matrix .kind {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: 1px;
+  background: var(--accent);
+}
+.matrix .kind.volcano {
+  background: var(--vc-recent);
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.matrix td.blank {
+  background: color-mix(in srgb, var(--ink) 10%, var(--bg));
+}
+.matrix .cl {
+  display: block;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.matrix .cl.time {
+  color: var(--ink);
+  font-weight: 600;
+}
+.markmatrix .cap {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin: 0;
+  max-width: 72ch;
 }
