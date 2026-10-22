@@ -91,18 +91,22 @@ const numOr = (n: number | null, f: (x: number) => string): string => (n === nul
 const deltaOr = (a: number | null, b: number | null, f: (d: number) => string): string =>
   a === null || b === null ? DASH : f(b - a);
 
+/** Card time values: two earthquakes in the same year drop it (`10-13 10:00`), anything else keeps the full form. */
+function cardTimes(from: MarkPoint, to: MarkPoint, zone: Zone): [string, string] {
+  const l = whenText(from, zone, false);
+  const t = whenText(to, zone, false);
+  const quakes = from.mark.kind === "event" && to.mark.kind === "event";
+  return quakes && l.slice(0, 4) === t.slice(0, 4) ? [l.slice(5), t.slice(5)] : [l, t];
+}
+
 /** The card for an edge read from the left mark to the top mark. */
 export function cardOf(from: MarkPoint, to: MarkPoint, zone: Zone): Card {
   const a = from.mark;
   const b = to.mark;
+  const [left, top] = cardTimes(from, to, zone);
   return {
     rows: [
-      {
-        label: "time",
-        left: whenText(from, zone, false),
-        delta: signedOffset(from, to),
-        top: whenText(to, zone, false),
-      },
+      { label: "time", left, delta: signedOffset(from, to), top },
       {
         label: "M",
         left: numOr(a.mag, (m) => fmtMag(m)),
@@ -137,7 +141,7 @@ export function staircase(points: MarkPoint[], zone: Zone): Staircase {
 
 /** The grid's row header and one column, in CSS pixels, as `styles.css` sizes them (node or card plus spacing). */
 export const ROW_HEADER_PX = 220;
-export const COL_PX = 256;
+export const COL_PX = 340;
 export const matrixWidthPx = (n: number): number => ROW_HEADER_PX + (n - 1) * COL_PX;
 
 /** The Compare button's tooltip: what it compares, and a warning when the grid will overflow the given width. */

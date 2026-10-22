@@ -246,7 +246,7 @@ describe("MarksOverlay", () => {
     await nextTick();
     // jsdom measures the main area at 0 px, so the grid is reported as too wide
     expect(w.find(".compare").attributes("title")).toBe(
-      "Compare 3 events pairwise · about 732 px wide, wider than this window; the grid will scroll sideways",
+      "Compare 3 events pairwise · about 900 px wide, wider than this window; the grid will scroll sideways",
     );
     Object.defineProperty(w.find(".marks-main").element, "clientWidth", { value: 1200 });
     window.dispatchEvent(new Event("resize"));
@@ -284,8 +284,8 @@ describe("MarksOverlay", () => {
       "+24 km",
     ]);
     expect(filled[2]?.findAll(".chart .v").map((d) => d.text())).toEqual([
-      "2026-10-13 10:00",
-      "2026-10-13 10:00",
+      "10-13 10:00",
+      "10-13 10:00",
       "5.5",
       "4.7",
       "10 km",
