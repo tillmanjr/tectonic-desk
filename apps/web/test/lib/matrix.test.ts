@@ -139,7 +139,7 @@ describe("matrix", () => {
   it("builds a card from the left mark to the top mark", () => {
     const card = cardOf(pointOf(other, none), pointOf(quake, none), "utc");
     expect(card.rows).toEqual([
-      { label: "time", left: "2026-10-16 13:30", delta: "−3 d 3 h", top: "2026-10-13 10:00" },
+      { label: "time", left: "10-16 13:30", delta: "−3 d 3 h", top: "10-13 10:00" },
       { label: "M", left: "4.7", delta: "+0.8", top: "5.5" },
       { label: "depth", left: "34 km", delta: "−24 km", top: "10 km" },
     ]);
@@ -166,6 +166,12 @@ describe("matrix", () => {
       "utc",
     );
     expect(bare.rows[1]).toMatchObject({ left: "—", delta: "—", top: "5.5" });
+    const years = cardOf(
+      pointOf({ ...other, stamp: "2025-12-31T23:00:00.000Z" }, none),
+      pointOf(quake, none),
+      "utc",
+    );
+    expect(years.rows[0]).toMatchObject({ left: "2025-12-31 23:00", top: "2026-10-13 10:00" });
   });
 
   it("lays points out as a staircase with the fullest column on the left", () => {
@@ -182,11 +188,11 @@ describe("matrix", () => {
   });
 
   it("sizes the grid and words the Compare tooltip", () => {
-    expect(matrixWidthPx(3)).toBe(732);
+    expect(matrixWidthPx(3)).toBe(900);
     expect(compareTitle(1, 5000)).toBe("Mark at least two events to compare them");
-    expect(compareTitle(3, 800)).toBe("Compare 3 events pairwise");
-    expect(compareTitle(8, 800)).toBe(
-      "Compare 8 events pairwise · about 2,012 px wide, wider than this window; the grid will scroll sideways",
+    expect(compareTitle(3, 1000)).toBe("Compare 3 events pairwise");
+    expect(compareTitle(8, 1000)).toBe(
+      "Compare 8 events pairwise · about 2,600 px wide, wider than this window; the grid will scroll sideways",
     );
   });
 });
