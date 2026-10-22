@@ -299,13 +299,27 @@ group never changes `All`, and the reverse.
 ## Addendum 2026-10-22: Compare
 
 A third view per group, `?marks=<group>&show=matrix`, from a `Compare` button beside
-`Show events` (disabled below two marks). `MarkMatrix.vue` lays the group's marks on both axes in
-the group's order, upper triangle only; the diagonal and below share one dark fill. Each cell gives
-the time apart (two largest units at the coarser of the two precisions; a volcano dates from its
-latest eruption's onset via `eruptionAnchor`; "— apart" when a side is undated), `ΔM` and `Δdepth`
-when both marks are earthquakes, and the great-circle distance. Axis captions carry the origin time,
-magnitude and depth of an earthquake, or `onset YYYY[-MM[-DD]]` for a volcano. Marks therefore
-store `mag` and `depthKm`; marks saved before that get the magnitude parsed from the headline and
-a null depth. The Compare button's tooltip estimates the grid width (`ROW_HEADER_PX + n × COL_PX`)
-against the main area's measured width and warns that the grid will scroll sideways when it will
-not fit; the measurement repeats on window resize. The pure pieces live in `src/lib/matrix.ts`.
+`Show events` (disabled below two marks). Designed against an HTML mockup the user approved.
+
+- **Staircase.** Columns are all marks but the last, rows all but the first, in group order; a card
+  exists where the row mark comes later in the group than the column mark. The left column holds
+  n − 1 cards and each column to the right one fewer; no self pair, no empty row or column.
+- **Nodes.** Each header is a rounded node: name with the kind glyph (square for an earthquake,
+  triangle for a volcano), then one line each for origin time, magnitude and depth, or the
+  eruption onset at GVP's precision, or `no dated eruption`.
+- **Edges.** A vertical spine runs from each top node, through an arrowhead under it, down its
+  column (dotted where it passes empty positions); each card hangs off a horizontal rung from its
+  row node. Top nodes are centred over their columns, row nodes and cards vertically centred.
+- **Cards.** A three-column chart read from the left node to the top node. Headers: blank, a drawn
+  arrow curving back to the left node, `Δ` with the two small arrows, a drawn arrow pointing up to
+  the top node. Rows: `time`, `M`, `depth`, each as left value, change, top value; the change is
+  top minus left (`+1 d 6 h`, `−4 h 32 min`, `same time`; `+0.6`; `−68 km`), `—` where a side has
+  no value. Footer: `1,150 km apart`. Cells are centred both ways.
+- **Store.** Marks carry `mag` and `depthKm`; marks saved earlier get the magnitude parsed from
+  the headline and a null depth.
+- **Width warning.** The Compare tooltip estimates `ROW_HEADER_PX + (n − 1) × COL_PX` against the
+  main area's measured width and says the grid will scroll sideways when it will not fit;
+  remeasured on window resize.
+
+The pure pieces live in `src/lib/matrix.ts` (`pointOf`, `signedOffset`, `nodeLines`, `cardOf`,
+`staircase`, `compareTitle`); the arrows are `MatrixArrow.vue`.
