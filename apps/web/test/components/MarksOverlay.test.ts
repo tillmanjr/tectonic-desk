@@ -246,7 +246,7 @@ describe("MarksOverlay", () => {
     await nextTick();
     // jsdom measures the main area at 0 px, so the grid is reported as too wide
     expect(w.find(".compare").attributes("title")).toBe(
-      "Compare 3 events pairwise · about 649 px wide, wider than this window; the grid will scroll sideways",
+      "Compare 3 events pairwise · about 900 px wide, wider than this window; the grid will scroll sideways",
     );
     Object.defineProperty(w.find(".marks-main").element, "clientWidth", { value: 1200 });
     window.dispatchEvent(new Event("resize"));
@@ -257,29 +257,49 @@ describe("MarksOverlay", () => {
     ctx.overlay.value = { group: "all", mode: "matrix" };
     await nextTick();
     expect(w.find(".marks-grouphead").exists()).toBe(false);
-    expect(w.findAll(".matrix thead th")).toHaveLength(4);
-    const heads = w.findAll(".matrix thead th .mname").map((h) => h.text());
-    expect(heads).toEqual(["Etna watch", "Second", "Kuril shock"]);
-    expect(w.findAll(".matrix thead th .mwhen").map((h) => h.text())).toEqual([
-      "onset 2022-11-27",
-      "2026-10-13 10:00 UTC · M4.7 · 34 km",
-      "2026-10-13 10:00 UTC · M5.5 · 10 km",
+    // columns: all but the last mark; rows: all but the first (newest first: Etna, Second, Kuril)
+    expect(w.findAll(".matrix thead th")).toHaveLength(3);
+    expect(w.findAll(".matrix thead th .mname").map((h) => h.text())).toEqual([
+      "Etna watch",
+      "Second",
     ]);
-    expect(w.findAll(".matrix tbody td.blank")).toHaveLength(6);
-    const filled = w.findAll(".matrix tbody td:not(.blank)");
+    expect(
+      w.findAll(".matrix thead th .node").map((n) => n.findAll(".mwhen").map((l) => l.text())),
+    ).toEqual([["onset 2022-11-27"], ["2026-10-13 10:00 UTC", "M4.7", "34 km deep"]]);
+    expect(w.findAll(".matrix tbody th .mname").map((h) => h.text())).toEqual([
+      "Second",
+      "Kuril shock",
+    ]);
+    expect(w.findAll(".matrix tbody td.blank")).toHaveLength(1);
+    const filled = w.findAll(".matrix tbody td.edge");
     expect(filled).toHaveLength(3);
-    expect(filled[0]?.text()).toContain("apart");
-    expect(filled[0]?.text()).not.toContain("ΔM");
-    expect(filled[2]?.text()).toContain("ΔM 0.8");
-    expect(filled[2]?.text()).toContain("Δdepth 24 km");
-    expect(filled[2]?.text()).toContain("89 km");
+    // Second → Etna: a volcano on top, so no magnitude or depth change
+    const first = filled[0]?.findAll(".chart .d").map((d) => d.text());
+    expect(first).toEqual(["−3 y 10 mo", "—", "—"]);
+    expect(filled[0]?.find(".foot").text()).toMatch(/km apart$/);
+    // Kuril → Second: same instant, 0.8 smaller, 24 km deeper
+    expect(filled[2]?.findAll(".chart .d").map((d) => d.text())).toEqual([
+      "same time",
+      "−0.8",
+      "+24 km",
+    ]);
+    expect(filled[2]?.findAll(".chart .v").map((d) => d.text())).toEqual([
+      "10-13 10:00",
+      "10-13 10:00",
+      "5.5",
+      "4.7",
+      "10 km",
+      "34 km",
+    ]);
+    expect(filled[2]?.find(".foot").text()).toBe("89 km apart");
+    expect(filled[2]?.findAll(".chart .h svg")).toHaveLength(4);
     await w.find(".backtolist").trigger("click");
     expect(ctx.nav.list).toHaveBeenCalledWith("all");
     // a volcano the catalogue does not know has no onset to compare
     ctx.marks.add({ ...etna, ref: "999999", name: "Unknown cone" });
     await nextTick();
     expect(w.findAll(".matrix thead th .mwhen")[0]?.text()).toBe("no dated eruption");
-    expect(w.findAll(".matrix tbody td:not(.blank)")[0]?.text()).toContain("— apart");
+    expect(w.findAll(".matrix tbody td.edge")[0]?.findAll(".chart .d")[0]?.text()).toBe("—");
     ctx.marks.remove(ctx.marks.marks.value[0]?.id ?? "");
     ctx.marks.remove(ctx.marks.marks.value[0]?.id ?? "");
     ctx.marks.remove(ctx.marks.marks.value[0]?.id ?? "");
