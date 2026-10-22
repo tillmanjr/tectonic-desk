@@ -37,16 +37,21 @@ export function useInjected<T>(key: InjectionKey<T>): T {
   return value;
 }
 
+/** What the marks overlay shows for a group. */
+export type MarksMode = "list" | "panels" | "matrix";
+
 /** The marks overlay's only route access, built in `App.vue`; components never touch the router. Function-typed properties so tests can spy on them. */
 export interface MarksNav {
   /** The current route's path and query without `marks` and `show`: what a new mark saves. */
   viewUrl: Readonly<Ref<string>>;
   /** The overlay state the route asks for; null when closed. */
-  overlay: Readonly<Ref<{ group: string; panels: boolean } | null>>;
+  overlay: Readonly<Ref<{ group: string; mode: MarksMode } | null>>;
   /** Opens the overlay on a group's list (default `all`). */
   open: (group?: string) => void;
   /** Shows a group's marks as stacked panels. */
   show: (group: string) => void;
+  /** Shows a group's marks compared pairwise. */
+  compare: (group: string) => void;
   /** Returns to a group's list. */
   list: (group: string) => void;
   /** Closes the overlay, leaving the view underneath as it was. */

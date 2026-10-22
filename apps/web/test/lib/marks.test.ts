@@ -19,8 +19,18 @@ const quake: MarkDraft = {
   headline: "M5.5 mww",
   sub: "10 km N of Somewhere",
   stamp: "2026-10-13T10:00:00.000Z",
+  mag: 5.5,
+  depthKm: 10,
 };
-const volcano: MarkDraft = { ...quake, kind: "volcano", ref: "211060", name: "Etna", stamp: null };
+const volcano: MarkDraft = {
+  ...quake,
+  kind: "volcano",
+  ref: "211060",
+  name: "Etna",
+  stamp: null,
+  mag: null,
+  depthKm: null,
+};
 
 function memory(seed: string | null = null) {
   const store = new Map<string, string>();
@@ -61,6 +71,17 @@ describe("marks", () => {
     };
     const parsed = parseMarks(JSON.stringify(doc));
     expect(parsed.marks.map((m) => m.id)).toEqual(["a"]);
+    expect(parsed.marks[0]).toMatchObject({ mag: 5.5, depthKm: 10 });
+    // marks saved before mag and depth existed: the magnitude comes from the headline
+    const legacy: Record<string, unknown> = { ...good };
+    delete legacy.mag;
+    delete legacy.depthKm;
+    const old = parseMarks(JSON.stringify({ v: 1, marks: [legacy], groups: [] })).marks[0];
+    expect(old).toMatchObject({ mag: 5.5, depthKm: null });
+    const named = parseMarks(
+      JSON.stringify({ v: 1, marks: [{ ...legacy, headline: "Etna" }], groups: [] }),
+    ).marks[0];
+    expect(named).toMatchObject({ mag: null, depthKm: null });
     expect(parsed.groups).toEqual([{ id: "g1", name: "Pacific", marks: ["a"] }]);
     expect(parseMarks(null)).toEqual({ marks: [], groups: [] });
     expect(parseMarks("nope")).toEqual({ marks: [], groups: [] });

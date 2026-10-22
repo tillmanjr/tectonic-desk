@@ -39,6 +39,7 @@ import {
   THEME,
   VOLCANOES,
   ZONE,
+  type MarksMode,
   type MarksNav,
 } from "../lib/keys.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
@@ -97,7 +98,9 @@ const viewUrl = computed(
 const overlay = computed(() => {
   const g = route.query.marks;
   if (typeof g !== "string" || g === "") return null;
-  return { group: g, panels: route.query.show === "panels" };
+  const show = route.query.show;
+  const mode: MarksMode = show === "panels" || show === "matrix" ? show : "list";
+  return { group: g, mode };
 });
 const listQuery = (group: string): LocationQuery => ({
   ...withoutOverlay(route.query),
@@ -109,6 +112,7 @@ const nav: MarksNav = {
   open: (group = ALL_GROUP) => void router.push({ query: listQuery(group) }),
   list: (group) => void router.push({ query: listQuery(group) }),
   show: (group) => void router.push({ query: { ...listQuery(group), show: "panels" } }),
+  compare: (group) => void router.push({ query: { ...listQuery(group), show: "matrix" } }),
   close: () => void router.replace({ query: withoutOverlay(route.query) }),
   goTo: (url) => void router.push(url),
 };

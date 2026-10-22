@@ -138,6 +138,10 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   can be read together. The URL carries
   the overlay (`?marks=<group>`, `&show=panels`), so Escape, the close control and the back
   button all return to the untouched view.
+- **Compare** on a group lays its marks out pairwise: a grid with the marks on both axes (upper
+  triangle, each pair once) giving the time apart, ΔM and Δdepth between earthquakes, and the
+  great-circle distance; a volcano dates from its latest eruption's onset. The button's tooltip
+  warns when the grid will be wider than the window.
 - Long windows stay within a 2,000-event budget. The page first asks `GET /api/events/summary` for
   the window at the floor in force; if the total fits, every event is loaded, otherwise the marker
   floor is raised to M5, M6 or M7 (the lowest band that fits) and the page says so under the Refine
