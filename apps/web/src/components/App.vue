@@ -7,8 +7,8 @@ import EarthquakesPage from "./EarthquakesPage.vue";
 import MarksOverlay from "./MarksOverlay.vue";
 import PageSwitch from "./PageSwitch.vue";
 import RegionTabs from "./RegionTabs.vue";
+import SettingsMenu from "./SettingsMenu.vue";
 import StatusLine from "./StatusLine.vue";
-import ThemeToggle from "./ThemeToggle.vue";
 import VolcanoDetail from "./VolcanoDetail.vue";
 import VolcanoesPage from "./VolcanoesPage.vue";
 import { createApiClient } from "../lib/api.js";
@@ -256,15 +256,7 @@ onUnmounted(() => {
       </div>
       <div class="hdr-right">
         <RegionTabs @pick="pickRegion" />
-        <button
-          type="button"
-          class="theme-btn fixed"
-          title="Show every date and time in UTC or in your browser's zone"
-          @click="toggleZone"
-        >
-          Times: {{ zone === "utc" ? "UTC" : "local" }}
-        </button>
-        <ThemeToggle />
+        <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
       </div>
     </header>
     <StatusLine />

@@ -95,7 +95,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   are shareable.
 - The status line polls `GET /api/status` every minute and refetches the catalog when a feed sync
   has landed. It turns amber after 30 minutes without a sync and red when the API is unreachable.
-- Theme follows the system by default; the toggle cycles auto, light, dark.
+- The header's `⚙ Settings` menu holds the time zone (UTC or the browser's zone, kept in the URL as
+  `?tz=local`) and the theme, which follows the system by default and cycles auto, light, dark.
 - The focal-mechanism math lives in `packages/shared`; only the canvas raster is in the web app.
 - The filter bar above the map narrows magnitude and depth (inclusive, either bound optional) for
   the map, catalog and charts; the summary tiles and major events stay unfiltered. Filters live in
