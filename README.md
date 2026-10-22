@@ -133,7 +133,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   (`All` always holds every mark) and reopened with `Open view`. Each mark carries a small
   schematic of the world or the West Coast with a star at the event.
 - **Show events** on a group lays its marks out as full panels, the same sections as the side
-  panels, two across on a wide screen, so a set of events can be read together. The URL carries
+  panels, in as many columns as fit at 481 px or wider before wrapping to rows, so a set of events
+  can be read together. The URL carries
   the overlay (`?marks=<group>`, `&show=panels`), so Escape, the close control and the back
   button all return to the untouched view.
 - Long windows stay within a 2,000-event budget. The page first asks `GET /api/events/summary` for

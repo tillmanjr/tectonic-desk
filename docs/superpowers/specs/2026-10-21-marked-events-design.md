@@ -211,8 +211,8 @@ export interface MarksNav {
   body: `EventDetailBody` for an event, `VolcanoDetailBody` for a volcano. On mount and whenever
   the group changes, if any mark is a volcano and `volcanoes.volcanoes.value.length === 0` it calls
   `volcanoes.load()`. The bodies' window-derived sections (Sequence; Earthquakes within 50 km)
-  describe the window loaded under the overlay, as the side panel would. Cards flow in one column;
-  from 1100 px wide, two columns.
+  describe the window loaded under the overlay, as the side panel would. Cards fill columns first:
+  `repeat(auto-fill, minmax(min(481px, 100%), 1fr))`, so as many 481 px columns as fit, then rows.
 - `ConfirmButton.vue` takes `label: string` and emits `confirm`. Idle it is one button; clicked
   it becomes `Delete? ` with `yes` and `no` buttons, and reverts after `no`, Escape or five seconds.
 
