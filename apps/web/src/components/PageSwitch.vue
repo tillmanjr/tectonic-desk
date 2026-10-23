@@ -4,9 +4,9 @@ import type { Page } from "../router.js";
 defineProps<{ page: Page }>();
 const emit = defineEmits<{ pick: [page: Page] }>();
 const PAGES: { id: Page; label: string }[] = [
+  { id: "active", label: "Active Earth" },
   { id: "earthquakes", label: "Earthquakes" },
   { id: "volcanoes", label: "Volcanoes" },
-  { id: "active", label: "Active Earth" },
 ];
 </script>
 
