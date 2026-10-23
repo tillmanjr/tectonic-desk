@@ -1,0 +1,51 @@
+# Mirrors the GVP/USGS Weekly Volcanic Activity Report RSS into the `feeds` branch every six
+# hours. volcano.si.edu refuses every non-browser client, so the runner's Chrome fetches it here
+# (.github/scripts/mirror-weekly-report.js) and the server reads the raw copy whenever the feed
+# itself answers with an error (apps/server/src/volcano/client.ts, WEEKLY_REPORT_MIRROR_URL).
+name: Weekly report mirror
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: weekly-report-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    name: Fetch and commit the feed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: feeds
+          path: feeds
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Fetch the feed through Chrome
+        run: |
+          mkdir -p "$RUNNER_TEMP/mirror"
+          cp .github/scripts/mirror-weekly-report.js "$RUNNER_TEMP/mirror/mirror.mjs"
+          cd "$RUNNER_TEMP/mirror"
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund puppeteer-core@24.9.0
+          node mirror.mjs "$GITHUB_WORKSPACE/feeds/WeeklyVolcanoRSS.xml"
+      - name: Commit when the document changed
+        working-directory: feeds
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add WeeklyVolcanoRSS.xml
+          if git diff --cached --quiet; then
+            echo "unchanged"
+            exit 0
+          fi
+          git commit -m "Weekly report feed as of $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push

@@ -1,0 +1,26 @@
+
+ALASKA VOLCANO OBSERVATORY DAILY UPDATE
+U.S. Geological Survey
+Friday, October 16, 2026, 11:06 AM AKDT (Friday, October 16, 2026, 19:06 UTC)
+
+GREAT SITKIN VOLCANO(VNUM #311120)
+52&#176;4'35" N 176&#176;6'39" W,
+Summit Elevation 5709 ft (1740 m)
+Current Volcano Alert Level: WATCH
+Current Aviation Color Code: ORANGE
+
+Summary: Slow eruption of lava within the summit crater continues.
+
+Lava continues to erupt slowly within the summit crater of Great Sitkin Volcano, with satellite-based radar showing continued growth of the south lobe of the lava dome. A few small earthquakes were detected in the past day.The current eruption began in July 2021. Since then, lava flows have filled most of the summit crater and advanced into valleys below. The volcano is monitored using local seismic and infrasound sensors, satellite data, webcams, and regional infrasound and lightning networks.To view monitoring data and other information about Great Sitkin Volcano: https://avo.alaska.edu/volcano/great-sitkin
+
+SHISHALDIN VOLCANO(VNUM #311360)
+54&#176;45'19" N 163&#176;58'16" W,
+Summit Elevation 9373 ft (2857 m)
+Current Volcano Alert Level: ADVISORY
+Current Aviation Color Code: YELLOW
+
+Summary: Low-level unrest continues.
+
+Unrest continues with elevated seismic activity with small earthquakes and tremor detected over the past day. Steam emissions could be seen in web camera views over the past day. No activity observed in satellite views.Local seismic and infrasound sensors, web cameras, and a geodetic network are used to monitor Shishaldin Volcano.
+
+Information on all Alaska volcanoes is available at: https://avo.alaska.edu

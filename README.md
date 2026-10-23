@@ -201,9 +201,14 @@ The header's Earthquakes | Volcanoes switch opens the second page on the same re
 
 Reference data comes from `pnpm --filter @tectonic/server geo:volcanoes`, which pulls GVP's
 volcanoes, eruptions and since-1960 layers over WFS into `apps/server/data/geo` (see its README).
-The GVP/USGS Weekly Volcanic Activity Report is fetched every 6 hours from its RSS feed; the feed
-sat behind a bot filter that answered 403 to servers when this was built, so a blocked fetch is
-recorded as a failed run and the page falls back to the status-change count.
+The GVP/USGS Weekly Volcanic Activity Report is fetched every 6 hours from its RSS feed. The feed
+sits behind a bot filter that answers 403 to every client that is not a browser, so a scheduled
+GitHub workflow (`.github/workflows/weekly-report-mirror.yml`) reads it through the runner's
+Chrome every 6 hours and commits the document to the `feeds` branch; the server asks the feed
+first and reads that copy only when the feed refuses, so it returns to the source by itself if
+GVP lets it through. A run that gets neither is recorded as failed and the page falls back to
+the status-change count. Elevated US volcanoes also carry the one-line summary of their current
+HANS notice, read from the notice API's text rendering on each status poll.
 
 ## Deployment
 
