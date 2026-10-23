@@ -487,6 +487,23 @@ a:focus-visible,
   overflow: auto;
   border-top: 1px solid var(--line);
 }
+/* Beside the charts, the table panel takes the grid row's height and its scroll area fills the
+   panel below the heading, however long the table is; the scroller is positioned so the table's
+   own length never sets the row. Stacked on a narrow screen, it goes back to a capped height. */
+.grid2 > .tablepanel {
+  display: flex;
+  flex-direction: column;
+}
+.tablefill {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.grid2 > .tablepanel .tablewrap {
+  position: absolute;
+  inset: 0;
+  max-height: none;
+}
 table {
   border-collapse: collapse;
   width: 100%;
@@ -745,6 +762,10 @@ a {
 @media (max-width: 900px) {
   .grid2 {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .grid2 > .tablepanel .tablewrap {
+    position: static;
+    max-height: 430px;
   }
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
