@@ -5,6 +5,8 @@
 name: Weekly report mirror
 
 on:
+  push:
+    branches: [volcano-loose-ends] # temporary: a trial run before the merge
   schedule:
     - cron: "23 */6 * * *"
   workflow_dispatch:
