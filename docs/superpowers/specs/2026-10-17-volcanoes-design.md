@@ -171,11 +171,12 @@ notifications, volcano-specific regions.
 **Weekly report.** The feed loads in a browser and in headless Chrome with a browser user agent,
 and answers 403 to every other client (curl, Node's fetch, headless Chrome under its own name),
 from the dev machine and from the droplet alike; the 403 renders a Smithsonian "temporarily
-unavailable" page, so it is a Cloudflare bot rule for the whole host. Two measures: GVP is asked
-by mail to allow the site's agent, and until then a scheduled GitHub workflow
-(`.github/workflows/weekly-report-mirror.yml`, `.github/scripts/mirror-weekly-report.js`) fetches
-the feed through the runner's Chrome every six hours and commits it, re-encoded as UTF-8, to the
-`feeds` branch. The server asks the feed first and reads the raw copy only when the feed refuses
+unavailable" page, so it is a Cloudflare bot rule for the whole host. A GitHub-hosted runner's Chrome
+with a browser user agent was refused as well (2026-10-23), so the rule also covers datacenter
+addresses and a hosted mirror is out. Two measures: GVP is asked by mail to allow the site's
+agent, and until then `pnpm feeds:mirror` (`scripts/weekly-report-mirror.js`, run from an
+ordinary machine) fetches the feed through the local Chrome, re-encodes it as UTF-8 and commits
+it to the `feeds` branch when it changed. The server asks the feed first and reads the raw copy only when the feed refuses
 (`WEEKLY_REPORT_MIRROR_URL`), so it goes back to the source by itself; a run that gets neither
 fails with both reasons. Reading the live feed also corrected the parser: items link to the
 report page and carry the volcano in the guid as `#vn_<number>` (the old `vn=` link form is still

@@ -7,11 +7,12 @@ export const HANS_NOTICE_BASE = "https://volcanoes.usgs.gov/hans-public/api/noti
 export const GEONET_BASE = "https://api.geonet.org.nz";
 export const WEEKLY_REPORT_URL = "https://volcano.si.edu/news/WeeklyVolcanoRSS.xml";
 /**
- * A copy of the weekly report feed that a scheduled GitHub workflow
- * (`.github/workflows/weekly-report-mirror.yml`) refreshes every six hours
- * through a real browser, because volcano.si.edu refuses every other client.
- * Read only when the feed itself answers with an error, so the server goes
- * back to the source by itself should GVP let it through.
+ * A copy of the weekly report feed on the repository's `feeds` branch, which
+ * `pnpm feeds:mirror` (scripts/weekly-report-mirror.js) refreshes through a
+ * browser on an ordinary machine, because volcano.si.edu refuses every other
+ * client and every datacenter address. Read only when the feed itself answers
+ * with an error, so the server goes back to the source by itself should GVP
+ * let it through.
  */
 export const WEEKLY_REPORT_MIRROR_URL =
   "https://raw.githubusercontent.com/tillmanjr/tectonic-desk/feeds/WeeklyVolcanoRSS.xml";

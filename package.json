@@ -22,7 +22,8 @@
     "db:migrate": "pnpm --filter @tectonic/server db:migrate",
     "ingest": "pnpm --filter @tectonic/server ingest",
     "dev:server": "pnpm --filter @tectonic/server dev",
-    "dev:web": "pnpm --filter @tectonic/web dev"
+    "dev:web": "pnpm --filter @tectonic/web dev",
+    "feeds:mirror": "node scripts/weekly-report-mirror.js"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -32,6 +33,7 @@
     "eslint-plugin-vue": "10.11.1",
     "globals": "17.13.0",
     "prettier": "3.9.10",
+    "puppeteer-core": "24.9.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.2"
   },
