@@ -4,7 +4,14 @@ import { finishRun, startRun } from "../repositories/ingest-runs.js";
 import { upsertReports } from "../repositories/volcano-reports.js";
 import { recordStatuses } from "../repositories/volcano-status.js";
 import type { VolcanoClient } from "../volcano/client.js";
-import { parseGeonet, parseHans, parseWeeklyReport } from "../volcano/parse.js";
+import {
+  isElevatedUsgs,
+  noticeIdOf,
+  noticeSynopsis,
+  parseGeonet,
+  parseHans,
+  parseWeeklyReport,
+} from "../volcano/parse.js";
 import type { IngestLogger } from "./context.js";
 import { errorMessage } from "./feed.js";
 
@@ -23,6 +30,38 @@ export interface StatusRunResult {
 }
 
 /**
+ * Fills the synopsis of USGS statuses from their current notice: one fetch per
+ * distinct notice among the elevated volcanoes (an observatory's daily update
+ * covers all of them). A notice that fails to load is logged and leaves its
+ * volcanoes' synopsis null.
+ */
+async function withSynopses(
+  statuses: VolcanoStatus[],
+  ctx: VolcanoContext,
+): Promise<VolcanoStatus[]> {
+  const ids = new Set<string>();
+  for (const s of statuses) {
+    const id = noticeIdOf(s.url);
+    if (id !== null && isElevatedUsgs(s)) ids.add(id);
+  }
+  const texts = new Map<string, string>();
+  await Promise.all(
+    [...ids].map(async (id) => {
+      try {
+        texts.set(id, await ctx.volcano.fetchHansNoticeText(id));
+      } catch (err) {
+        ctx.log.warn({ notice: id, err }, "HANS notice unavailable");
+      }
+    }),
+  );
+  return statuses.map((s) => {
+    const id = noticeIdOf(s.url);
+    const text = id === null ? undefined : texts.get(id);
+    return text === undefined ? s : { ...s, synopsis: noticeSynopsis(text, s.key) };
+  });
+}
+
+/**
  * Polls USGS HANS and GeoNet and records every change of level, colour or
  * notice. A source that fails is logged and skipped; the run fails only when
  * both do.
@@ -36,7 +75,7 @@ export async function syncVolcanoStatus(ctx: VolcanoContext): Promise<StatusRunR
     const statuses: VolcanoStatus[] = [];
     const [usgs, geonet] = await Promise.allSettled([
       Promise.all([ctx.volcano.fetchHansMonitored(), ctx.volcano.fetchHansElevated()]).then(
-        ([monitored, elevated]) => parseHans(monitored, elevated, observedAt),
+        ([monitored, elevated]) => withSynopses(parseHans(monitored, elevated, observedAt), ctx),
       ),
       ctx.volcano.fetchGeonet().then((doc) => parseGeonet(doc, observedAt)),
     ]);
@@ -80,11 +119,11 @@ export interface ReportRunResult {
   updated: number;
 }
 
-/** Fetches the weekly report RSS and upserts its entries; a blocked feed is a failed run, not a crash. */
+/** Fetches the weekly report RSS (the feed or its mirror) and upserts its entries; a blocked feed is a failed run, not a crash. */
 export async function syncVolcanoReports(ctx: VolcanoContext): Promise<ReportRunResult> {
   const runId = await startRun(ctx.db, "volcano_reports", {}, ctx.now());
   try {
-    const xml = await ctx.volcano.fetchWeeklyReport();
+    const { xml, url } = await ctx.volcano.fetchWeeklyReport();
     const entries = parseWeeklyReport(xml, ctx.now());
     const { inserted, updated } = await upsertReports(ctx.db, entries);
     await finishRun(
@@ -94,7 +133,7 @@ export async function syncVolcanoReports(ctx: VolcanoContext): Promise<ReportRun
       ctx.now(),
     );
     ctx.log.info(
-      { runId, entries: entries.length, inserted, updated },
+      { runId, url, entries: entries.length, inserted, updated },
       "weekly report sync complete",
     );
     return { runId, entries: entries.length, inserted, updated };

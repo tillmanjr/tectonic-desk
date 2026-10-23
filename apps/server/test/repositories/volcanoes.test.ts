@@ -95,12 +95,25 @@ describe.skipIf(!docker)("volcano repositories and jobs", () => {
       eventsInserted: 20,
       error: null,
     });
+    // elevated US volcanoes carry the summary line of their current notice, one fetch per notice
+    const latest = await latestStatuses(t.db);
+    expect(latest.find((r) => r.key === "311120")?.synopsis).toBe(
+      "Slow eruption of lava within the summit crater continues.",
+    );
+    expect(latest.find((r) => r.key === "311360")?.synopsis).toBe("Low-level unrest continues.");
+    expect(latest.find((r) => r.key === "avo")?.synopsis).toBeNull();
+    expect(ctx.volcano.calls.filter((c) => c.startsWith("notice:"))).toHaveLength(3);
     clock = t1;
+    // a notice that fails to load only warns; a row without a notice has nothing to read
     const partial = await syncVolcanoStatus({
       ...ctx,
-      volcano: stubVolcano({ geonet: new Error("geonet down") }),
+      volcano: stubVolcano({
+        geonet: new Error("geonet down"),
+        monitored: [...hansMonitored, { volcano_name: "Nowhere" }],
+        notices: { "DOI-USGS-HVO-2026-10-16T18:37:16+00:00": new Error("notice down") },
+      }),
     });
-    expect(partial).toMatchObject({ fetched: { usgs: 8 }, inserted: 0 });
+    expect(partial).toMatchObject({ fetched: { usgs: 9 }, inserted: 1 });
     expect(await getRun(t.db, partial.runId)).toMatchObject({
       ok: true,
       error: "geonet: geonet down",

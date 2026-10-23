@@ -165,3 +165,27 @@ module conventions), `data/geo/README.md`, the footer credit.
 
 Ash advisories, thermal and SO2 products, JMA, Iceland and INGV feeds, the Pleistocene layer,
 notifications, volcano-specific regions.
+
+## Addendum 2026-10-22: the two loose ends
+
+**Weekly report.** The feed loads in a browser and in headless Chrome with a browser user agent,
+and answers 403 to every other client (curl, Node's fetch, headless Chrome under its own name),
+from the dev machine and from the droplet alike; the 403 renders a Smithsonian "temporarily
+unavailable" page, so it is a Cloudflare bot rule for the whole host. A GitHub-hosted runner's Chrome
+with a browser user agent was refused as well (2026-10-23), so the rule also covers datacenter
+addresses and a hosted mirror is out. Two measures: GVP is asked by mail to allow the site's
+agent, and until then `pnpm feeds:mirror` (`scripts/weekly-report-mirror.js`, run from an
+ordinary machine) fetches the feed through the local Chrome, re-encodes it as UTF-8 and commits
+it to the `feeds` branch when it changed. The server asks the feed first and reads the raw copy only when the feed refuses
+(`WEEKLY_REPORT_MIRROR_URL`), so it goes back to the source by itself; a run that gets neither
+fails with both reasons. Reading the live feed also corrected the parser: items link to the
+report page and carry the volcano in the guid as `#vn_<number>` (the old `vn=` link form is still
+read), and the kind of report is in the title (`New Eruptive Activity` / `Continuing Eruptive
+Activity`). The feed is declared ISO-8859-1, so documents are decoded by their declaration.
+
+**USGS synopsis.** HANS lists give level, colour and a notice link but no words. On each status
+poll the elevated US volcanoes' current notices (one per distinct notice identifier) are fetched
+from the notice API's text rendering (`getNoticeFormatted/{id}/text`), and each volcano's
+`Summary:` line, or its first paragraph, becomes the status `synopsis` (`noticeSynopsis`). A
+notice that fails to load is logged and leaves the synopsis null. Change detection is unchanged:
+a new notice already produces a new row.
