@@ -6,7 +6,7 @@ const { summary } = store;
 </script>
 
 <template>
-  <section class="stats" aria-label="Volcano summary">
+  <section class="stats volcanoes" aria-label="Volcano summary">
     <div class="stat">
       <div class="k">USGS elevated</div>
       <div class="v num">{{ summary.elevatedUs }}</div>

@@ -10,7 +10,7 @@ const s = computed(() => summary(events.value, clock.now.value));
 </script>
 
 <template>
-  <section class="stats" aria-label="Summary">
+  <section class="stats earthquakes" aria-label="Summary">
     <div class="stat">
       <div class="k">Events</div>
       <div class="v num">{{ s.count }}</div>

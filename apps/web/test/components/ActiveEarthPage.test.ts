@@ -39,6 +39,9 @@ describe("ActiveEarthPage", () => {
     expect(labels[0]).toBe("Major events · M6+ or a PAGER alert");
     expect(labels[1]).toBe("Elevated or changed in the last 7 days … 1 more");
     expect(labels.slice(2)).toEqual(["Earthquakes", "Volcanoes"]);
+    // the summary rows and the refine bars wear the same dataset colours
+    expect(w.find(".stats.earthquakes").exists()).toBe(true);
+    expect(w.find(".stats.volcanoes").exists()).toBe(true);
     expect(w.find(".filters.earthquakes").exists()).toBe(true);
     expect(w.find(".filters.volcanoes").exists()).toBe(true);
     expect(w.findAll("svg.map")).toHaveLength(1);
