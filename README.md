@@ -114,7 +114,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   zone; it is kept in the URL as `tz=local`.
 - The refine bars open collapsed, one line stating the refinements in force (set clauses in ink,
   defaults muted); a click anywhere on the bar opens the inputs and a click on its head line folds them
-  back. Each bar's `Hide markers` box takes that dataset's markers off the map and changes nothing
+  back. The bars and the summary tiles share a 3 px left edge in their dataset's colour, blue for
+  earthquakes and red for volcanoes, so the two rows of each read apart at a glance. Each bar's `Hide markers` box takes that dataset's markers off the map and changes nothing
   else: counts, tables, charts, cards, density and the legend stay as they are.
 - Major-event and volcano cards show a few rows and offer the rest behind `… N more`; the rows
   come from the settings store in `localStorage` (`tectonic.settings`, `cardRows.alone` 3 and
