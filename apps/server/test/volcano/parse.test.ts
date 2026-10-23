@@ -1,13 +1,24 @@
+import type { VolcanoStatus } from "@tectonic/shared";
 import { describe, expect, it } from "vitest";
 import {
   GEONET_NUMBERS,
   hansTime,
+  isElevatedUsgs,
+  noticeIdOf,
+  noticeSynopsis,
   parseGeonet,
   parseHans,
   parseWeeklyReport,
   tagText,
 } from "../../src/volcano/parse.js";
-import { geonetVal, hansElevated, hansMonitored, weeklyRss } from "../support/volcano-stub.js";
+import {
+  geonetVal,
+  hansElevated,
+  hansMonitored,
+  hansNoticeText,
+  weeklyRss,
+  weeklyRssLive,
+} from "../support/volcano-stub.js";
 
 const at = new Date("2026-10-17T00:00:00Z");
 
@@ -61,6 +72,48 @@ describe("parseHans", () => {
     expect(
       parseHans([{ volcano_name: "X", vnum: "12", color_code: " " }], [], at)[0],
     ).toMatchObject({ key: "12", number: null, color: null });
+  });
+});
+
+describe("HANS notices", () => {
+  const status = (level: string, color: string | null): VolcanoStatus => ({
+    source: "usgs",
+    key: "k",
+    number: null,
+    name: "V",
+    level,
+    color,
+    noticeAt: null,
+    synopsis: null,
+    url: null,
+    observedAt: at,
+  });
+  it("reads the notice id from a notice url and tells elevated statuses apart", () => {
+    expect(
+      noticeIdOf(
+        "https://volcanoes.usgs.gov/hans-public/notice/DOI-USGS-AVO-2026-10-16T19:06:04+00:00",
+      ),
+    ).toBe("DOI-USGS-AVO-2026-10-16T19:06:04+00:00");
+    expect(noticeIdOf("https://volcanoes.usgs.gov/hans-public/notice/X/")).toBe("X");
+    expect(noticeIdOf("nope")).toBeNull();
+    expect(noticeIdOf(null)).toBeNull();
+    expect(isElevatedUsgs(status("WATCH", "ORANGE"))).toBe(true);
+    expect(isElevatedUsgs(status("NORMAL", "GREEN"))).toBe(false);
+    expect(isElevatedUsgs(status("NORMAL", null))).toBe(false);
+    expect(isElevatedUsgs(status("UNASSIGNED", "YELLOW"))).toBe(true);
+    expect(isElevatedUsgs(status("NORMAL", "YELLOW"))).toBe(true);
+  });
+  it("takes a volcano's Summary line from a notice, falling back to its first paragraph", () => {
+    expect(noticeSynopsis(hansNoticeText, "311120")).toBe(
+      "Slow eruption of lava within the summit crater continues.",
+    );
+    expect(noticeSynopsis(hansNoticeText, "311360")).toBe("Low-level unrest continues.");
+    expect(noticeSynopsis(hansNoticeText, "332010")).toBeNull();
+    const bare =
+      "X VOLCANO(VNUM #1)\nCurrent Volcano Alert Level: WATCH\n\nLava keeps\n  coming.\n\nMore.\n\n" +
+      "Y VOLCANO(VNUM #2)\nCurrent Volcano Alert Level: NORMAL\n";
+    expect(noticeSynopsis(bare, "1")).toBe("Lava keeps coming.");
+    expect(noticeSynopsis(bare, "2")).toBeNull();
   });
 });
 
@@ -129,5 +182,27 @@ describe("tagText and parseWeeklyReport", () => {
     );
     expect(odd.map((e) => e.name)).toEqual(["(odd)"]);
     expect(parseWeeklyReport("<rss></rss>", at)).toEqual([]);
+  });
+  it("reads the live feed's shape: the number from the guid, the kind of report from the title", () => {
+    const live = parseWeeklyReport(weeklyRssLive, at);
+    expect(live.map((e) => [e.number, e.name, e.category])).toEqual([
+      [262000, "Krakatau", "new"],
+      [282080, "Aira", "ongoing"],
+      [311120, "Great Sitkin", "ongoing"],
+      [332010, "Kilauea", "ongoing"],
+    ]);
+    expect(live[0]?.url).toBe("https://volcano.si.edu/reports_weekly.cfm#vn_262000");
+    expect(live[0]?.week.toISOString()).toBe("2026-10-15T00:00:00.000Z");
+    expect(live[0]?.title).toBe(
+      "Krakatau (Indonesia) - Report for 8 October-14 October 2026 - New Eruptive Activity",
+    );
+    expect(live[2]?.body).toContain("slow lava effusion");
+    // a continuing report stays "ongoing" whatever its text says; a title without the kind reads the text
+    const mixed = parseWeeklyReport(
+      `<item><title>A - Continuing Eruptive Activity</title><guid>https://x/#vn_1</guid><pubDate>Thu, 15 Oct 2026 03:11:08 -0400</pubDate><description>unrest</description></item>
+       <item><title>B</title><guid>https://x/#vn_2</guid><pubDate>Thu, 15 Oct 2026 03:11:08 -0400</pubDate><description>Signs of unrest</description></item>`,
+      at,
+    );
+    expect(mixed.map((e) => e.category)).toEqual(["ongoing", "new"]);
   });
 });

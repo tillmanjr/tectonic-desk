@@ -237,6 +237,13 @@ a:focus-visible,
   padding: 10px 12px;
   min-width: 0;
 }
+/* Each summary row wears its dataset's colour on the tiles' left edge, as the refine bars do. */
+.stats.earthquakes .stat {
+  border-left: 3px solid var(--accent);
+}
+.stats.volcanoes .stat {
+  border-left: 3px solid var(--vc-recent);
+}
 .stat .k {
   font-size: 11.5px;
   text-transform: uppercase;

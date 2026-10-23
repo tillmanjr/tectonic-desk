@@ -114,7 +114,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   zone; it is kept in the URL as `tz=local`.
 - The refine bars open collapsed, one line stating the refinements in force (set clauses in ink,
   defaults muted); a click anywhere on the bar opens the inputs and a click on its head line folds them
-  back. Each bar's `Hide markers` box takes that dataset's markers off the map and changes nothing
+  back. The bars and the summary tiles share a 3 px left edge in their dataset's colour, blue for
+  earthquakes and red for volcanoes, so the two rows of each read apart at a glance. Each bar's `Hide markers` box takes that dataset's markers off the map and changes nothing
   else: counts, tables, charts, cards, density and the legend stay as they are.
 - Major-event and volcano cards show a few rows and offer the rest behind `… N more`; the rows
   come from the settings store in `localStorage` (`tectonic.settings`, `cardRows.alone` 3 and
@@ -200,9 +201,16 @@ The header's Earthquakes | Volcanoes switch opens the second page on the same re
 
 Reference data comes from `pnpm --filter @tectonic/server geo:volcanoes`, which pulls GVP's
 volcanoes, eruptions and since-1960 layers over WFS into `apps/server/data/geo` (see its README).
-The GVP/USGS Weekly Volcanic Activity Report is fetched every 6 hours from its RSS feed; the feed
-sat behind a bot filter that answered 403 to servers when this was built, so a blocked fetch is
-recorded as a failed run and the page falls back to the status-change count.
+The GVP/USGS Weekly Volcanic Activity Report is fetched every 6 hours from its RSS feed. The feed
+sits behind a bot filter that answers 403 to every client that is not a browser and to browsers
+on datacenter addresses (GitHub-hosted runners included), so the repository keeps a copy on its
+`feeds` branch, refreshed from an ordinary machine by `pnpm feeds:mirror`, which reads the feed
+through the local Chrome and pushes the document when it changed (the report appears by 2300 UTC
+on Thursdays). The server asks the feed first and reads that copy only when the feed refuses, so
+it returns to the source by itself if GVP lets it through; a run that gets neither is recorded
+as failed and the page falls back to the status-change count. Elevated US volcanoes also carry
+the one-line summary of their current HANS notice, read from the notice API's text rendering on
+each status poll.
 
 ## Deployment
 
