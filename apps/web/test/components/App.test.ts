@@ -47,7 +47,7 @@ describe("App", () => {
 
   it("boots into the routed region and selection", async () => {
     stubCanvas();
-    const { wrapper, router } = await mountApp("/wc?event=us1");
+    const { wrapper, router } = await mountApp("/earthquakes/wc?event=us1");
     expect(wrapper.find("[role=tab][aria-selected=true]").text()).toContain("West Coast");
     expect(wrapper.find(".sectionlabel").text()).toBe("Largest events in the region");
     expect(wrapper.find("footer").text()).toContain("Quaternary Fault and Fold Database");
@@ -64,16 +64,16 @@ describe("App", () => {
 
   it("redirects an unknown region to global", async () => {
     const { wrapper, router } = await mountApp("/mars");
-    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.path).toBe("/earthquakes");
     expect(wrapper.find("[role=tab][aria-selected=true]").text()).toContain("Global");
   });
 
   it("switches region from the tabs and writes the selection to the query", async () => {
     stubCanvas();
-    const { wrapper, router, api } = await mountApp("/");
+    const { wrapper, router, api } = await mountApp("/earthquakes");
     await wrapper.findAll("[role=tab]")[1]?.trigger("click");
     await flushPromises();
-    expect(router.currentRoute.value.path).toBe("/wc");
+    expect(router.currentRoute.value.path).toBe("/earthquakes/wc");
     expect(api.events).toHaveBeenCalledTimes(4);
     expect(vi.mocked(api.events).mock.calls.at(-1)?.[0]).toMatchObject({
       since: "2026-09-13T00:00:00.000Z",
@@ -88,7 +88,7 @@ describe("App", () => {
     expect(router.currentRoute.value.query.event).toBeUndefined();
     await wrapper.findAll("[role=tab]")[0]?.trigger("click");
     await flushPromises();
-    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.path).toBe("/earthquakes");
     expect(router.currentRoute.value.query.event).toBeUndefined();
   });
 
@@ -99,7 +99,7 @@ describe("App", () => {
         .mockRejectedValueOnce(new Error("no regions"))
         .mockResolvedValue([GLOBAL, WC]),
     });
-    const { wrapper } = await mountApp("/", api);
+    const { wrapper } = await mountApp("/earthquakes", api);
     expect(wrapper.find(".banner.error").text()).toContain("no regions");
     await wrapper.find(".banner.error button").trigger("click");
     await flushPromises();
@@ -115,7 +115,7 @@ describe("App", () => {
 
   it("round-trips the filters through the URL and keeps them across a region switch", async () => {
     stubCanvas();
-    const { wrapper, router } = await mountApp("/?minMag=3&maxDepth=200");
+    const { wrapper, router } = await mountApp("/earthquakes?minMag=3&maxDepth=200");
     await wrapper.find(".filters .rhead").trigger("click");
     const inputs = wrapper.findAll<HTMLInputElement>(".filters input");
     expect(inputs[0]?.element.value).toBe("4.5");
@@ -130,7 +130,7 @@ describe("App", () => {
     });
     await wrapper.findAll("[role=tab]")[1]?.trigger("click");
     await flushPromises();
-    expect(router.currentRoute.value.path).toBe("/wc");
+    expect(router.currentRoute.value.path).toBe("/earthquakes/wc");
     expect(router.currentRoute.value.query.maxDepth).toBe("200");
     await wrapper.find(".filters .fclear").trigger("click");
     await flushPromises();
@@ -144,7 +144,9 @@ describe("App", () => {
 
   it("switches every time to the browser zone and loads a date range", async () => {
     stubCanvas();
-    const { wrapper, router, api } = await mountApp("/?since=2026-10-01&until=2026-10-05");
+    const { wrapper, router, api } = await mountApp(
+      "/earthquakes?since=2026-10-01&until=2026-10-05",
+    );
     await flushPromises();
     expect(vi.mocked(api.events).mock.calls.at(-1)?.[0]).toMatchObject({
       since: "2026-10-01T00:00:00.000Z",
@@ -171,7 +173,7 @@ describe("App", () => {
         .fn()
         .mockResolvedValue({ events: [event()], count: 1, truncated: true, query: {} }),
     });
-    const { wrapper } = await mountApp("/", api);
+    const { wrapper } = await mountApp("/earthquakes", api);
     expect(wrapper.find(".banner").text()).toContain("newest 2000 events");
   });
 
@@ -181,7 +183,7 @@ describe("App", () => {
     vi.mocked(api.status)
       .mockResolvedValueOnce(status())
       .mockResolvedValueOnce(status({ lastSuccessfulFeed: "2026-10-13T12:05:00.000Z" }));
-    const { wrapper, theme } = await mountApp("/", api);
+    const { wrapper, theme } = await mountApp("/earthquakes", api);
     await vi.advanceTimersByTimeAsync(60_000);
     await flushPromises();
     expect(api.events).toHaveBeenCalledTimes(4);
@@ -205,7 +207,7 @@ describe("App", () => {
       },
     });
     const router = createAppRouter(createMemoryHistory());
-    await router.push("/?event=us1");
+    await router.push("/earthquakes?event=us1");
     const Root = defineComponent({
       setup() {
         provide(API, fakeApi());
@@ -254,15 +256,16 @@ describe("App", () => {
     expect(router.currentRoute.value.query).toEqual({ tz: "local" });
     expect(wrapper.find(".mapcount").text()).toBe("Showing 5 of 5 volcanoes");
     const before = vi.mocked(api.volcanoStatus).mock.calls.length;
-    await wrapper.findAll(".pages button")[0]?.trigger("click");
+    // page pills: Active Earth, Earthquakes, Volcanoes
+    await wrapper.findAll(".pages button")[1]?.trigger("click");
     await flushPromises();
-    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.path).toBe("/earthquakes");
     expect(wrapper.find(".pages button[aria-current='page']").text()).toBe("Earthquakes");
     expect(wrapper.find(".filters .rsummary").text()).toContain("M4.5+");
-    await wrapper.findAll(".pages button")[0]?.trigger("click");
-    await flushPromises();
-    expect(router.currentRoute.value.path).toBe("/");
     await wrapper.findAll(".pages button")[1]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/earthquakes");
+    await wrapper.findAll(".pages button")[2]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/volcanoes");
     expect(vi.mocked(api.volcanoStatus).mock.calls.length).toBe(before + 1);
@@ -288,11 +291,11 @@ describe("App", () => {
     expect(router.currentRoute.value.query).toEqual({ volcano: "323010" });
     expect(wrapper.find(".detail").classes()).not.toContain("open");
     expect(wrapper.find(".vdetail").classes()).toContain("open");
-    await wrapper.findAll(".pages button")[0]?.trigger("click");
+    await wrapper.findAll(".pages button")[1]?.trigger("click");
     await flushPromises();
-    expect(router.currentRoute.value.path).toBe("/wc");
+    expect(router.currentRoute.value.path).toBe("/earthquakes/wc");
     expect(wrapper.find(".vdetail").exists()).toBe(false);
-    await wrapper.findAll(".pages button")[2]?.trigger("click");
+    await wrapper.findAll(".pages button")[0]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/active/wc");
   });
@@ -315,13 +318,13 @@ describe("App", () => {
 
   it("saves the view without overlay keys and opens the marks overlay from the header", async () => {
     stubCanvas();
-    const { wrapper, router, marks } = await mountApp("/wc?event=us1&marks=all");
+    const { wrapper, router, marks } = await mountApp("/earthquakes/wc?event=us1&marks=all");
     expect(wrapper.find(".marks-btn").text()).toBe("Marks");
     await wrapper.find(".detail .markrow button.mark").trigger("click");
     await wrapper.find(".detail .markrow input").trigger("keydown", { key: "Enter" });
-    expect(marks.marks.value[0]?.url).toBe("/wc?event=us1");
+    expect(marks.marks.value[0]?.url).toBe("/earthquakes/wc?event=us1");
     expect(wrapper.find(".marks-btn").text()).toBe("Marks · 1");
-    await router.replace("/wc?event=us1");
+    await router.replace("/earthquakes/wc?event=us1");
     await flushPromises();
     await wrapper.find(".marks-btn").trigger("click");
     await flushPromises();
@@ -351,8 +354,27 @@ describe("App", () => {
     await wrapper.find(".marks-rail button").trigger("click");
     await wrapper.find(".openview").trigger("click");
     await flushPromises();
-    expect(router.currentRoute.value.fullPath).toBe("/wc?event=us1");
+    expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?event=us1");
     expect(wrapper.find(".marks").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("lands on Active Earth and redirects old region-only links to the earthquakes page", async () => {
+    stubCanvas();
+    const { wrapper, router } = await mountApp("/");
+    expect(router.currentRoute.value.path).toBe("/active");
+    expect(
+      wrapper
+        .find(".tools nav.pages")
+        .findAll("button")
+        .map((b) => b.text()),
+    ).toEqual(["Active Earth", "Earthquakes", "Volcanoes"]);
+    expect(wrapper.find(".pages button[aria-current=page]").text()).toBe("Active Earth");
+    expect(wrapper.find(".topbar header").exists()).toBe(true);
+    expect(wrapper.find(".topbar .status").exists()).toBe(true);
+    await router.push("/wc?event=us1&tz=local");
+    await flushPromises();
+    expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?event=us1&tz=local");
     wrapper.unmount();
   });
 
