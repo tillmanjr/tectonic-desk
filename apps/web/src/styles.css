@@ -260,6 +260,31 @@ a:focus-visible,
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 10px;
 }
+/* Where two card rows sit together each wears its dataset's colour down the left, as the refine bars do. */
+.cardrow {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cardrow.quakes,
+.cardrow.volcanoes {
+  padding-left: 13px;
+}
+.cardrow.quakes::before,
+.cardrow.volcanoes::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.cardrow.volcanoes::before {
+  background: var(--vc-recent);
+}
 .mcard {
   display: grid;
   grid-template-columns: 54px 1fr;

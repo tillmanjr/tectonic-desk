@@ -19,26 +19,31 @@ describe("ActiveEarthPage", () => {
     const ctx = await makeContext({ volcanoes: true });
     const w = mountWith(ActiveEarthPage, ctx);
     await flushPromises();
+    // each card row wears its dataset's trim; the analyses below are labelled plainly
     const order = w
-      .findAll(".stats, .sectionlabel, .filters, .mapcard, .grid2")
+      .findAll(".stats, .cardrow, .filters, .mapcard, .grid2")
       .map((n) => n.classes().find((c) => c !== "refine") ?? "");
     expect(order).toEqual([
       "stats",
       "stats",
-      "sectionlabel",
-      "sectionlabel",
+      "cardrow",
+      "cardrow",
       "filters",
       "filters",
       "mapcard",
-      "sectionlabel",
       "grid2",
-      "sectionlabel",
       "grid2",
     ]);
-    const labels = w.findAll(".sectionlabel").map((l) => l.text());
-    expect(labels[0]).toBe("Major events · M6+ or a PAGER alert");
-    expect(labels[1]).toBe("Elevated or changed in the last 7 days … 1 more");
-    expect(labels.slice(2)).toEqual(["Earthquakes", "Volcanoes"]);
+    expect(w.find(".cardrow.quakes .sectionlabel").text()).toBe(
+      "Major events · M6+ or a PAGER alert",
+    );
+    expect(w.find(".cardrow.volcanoes .sectionlabel").text()).toBe(
+      "Elevated or changed in the last 7 days … 1 more",
+    );
+    expect(w.findAll(".grid2").map((g) => g.element.previousElementSibling?.textContent)).toEqual([
+      "Earthquakes",
+      "Volcanoes",
+    ]);
     expect(w.find(".filters.earthquakes").exists()).toBe(true);
     expect(w.find(".filters.volcanoes").exists()).toBe(true);
     expect(w.findAll("svg.map")).toHaveLength(1);

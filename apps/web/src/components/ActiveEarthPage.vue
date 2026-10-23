@@ -27,8 +27,8 @@ const settings = useInjected(SETTINGS);
   </div>
   <StatsStrip />
   <VolcanoTiles />
-  <MajorEvents :rows="settings.current.value.cardRows.combined" />
-  <VolcanoCards :rows="settings.current.value.cardRows.combined" />
+  <MajorEvents :rows="settings.current.value.cardRows.combined" trim="quakes" />
+  <VolcanoCards :rows="settings.current.value.cardRows.combined" trim="volcanoes" />
   <FilterBar />
   <VolcanoFilterBar />
   <CombinedMap />

@@ -118,7 +118,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   else: counts, tables, charts, cards, density and the legend stay as they are.
 - Major-event and volcano cards show a few rows and offer the rest behind `… N more`; the rows
   come from the settings store in `localStorage` (`tectonic.settings`, `cardRows.alone` 3 and
-  `cardRows.combined` 1 by default; no editor yet).
+  `cardRows.combined` 1 by default; no editor yet). On Active Earth, where the two rows sit together,
+  each row wears its refine bar's colour as a rounded rule down its left edge.
 - The volcano panel's "Earthquakes within 50 km" list dates each quake against the volcano's most
   recent eruption (the continuing one, else the latest start) as `1 mo 9 d after onset` or
   `3 d 5 h before onset`, as precisely as GVP dates the start; without an eruption record it keeps

@@ -5,9 +5,16 @@ import { CATALOG, useInjected } from "../lib/keys.js";
 
 /**
  * A labelled card grid clipped to `rows` rows: the slot gets `limit`, how
- * many cards to render (null for all), and the label offers the rest.
+ * many cards to render (null for all), and the label offers the rest. `trim`
+ * names the dataset whose colour the row wears down its left edge, as the
+ * refine bars do, where two rows sit together.
  */
-const props = defineProps<{ label: string; count: number; rows: number | null }>();
+const props = defineProps<{
+  label: string;
+  count: number;
+  rows: number | null;
+  trim: "quakes" | "volcanoes" | null;
+}>();
 const catalog = useInjected(CATALOG);
 const el = ref<HTMLElement | null>(null);
 const columns = ref(1);
@@ -40,17 +47,19 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <p class="sectionlabel">
-    {{ label }}
-    <button
-      v-if="hidden > 0 || expanded"
-      type="button"
-      class="more"
-      :aria-expanded="expanded"
-      @click="expanded = !expanded"
-    >
-      {{ expanded ? "show fewer" : `… ${String(hidden)} more` }}
-    </button>
-  </p>
-  <section ref="el" class="major"><slot :limit="limit"></slot></section>
+  <div class="cardrow" :class="trim">
+    <p class="sectionlabel">
+      {{ label }}
+      <button
+        v-if="hidden > 0 || expanded"
+        type="button"
+        class="more"
+        :aria-expanded="expanded"
+        @click="expanded = !expanded"
+      >
+        {{ expanded ? "show fewer" : `… ${String(hidden)} more` }}
+      </button>
+    </p>
+    <section ref="el" class="major"><slot :limit="limit"></slot></section>
+  </div>
 </template>

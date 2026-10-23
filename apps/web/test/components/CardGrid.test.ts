@@ -20,7 +20,7 @@ describe("CardGrid", () => {
         setup: () => () =>
           h(
             CardGrid,
-            { label: "Major", count: 10, rows: 2 },
+            { label: "Major", count: 10, rows: 2, trim: null },
             { default: (s: { limit: number | null }) => h("i", String(s.limit)) },
           ),
       },
@@ -43,10 +43,12 @@ describe("CardGrid", () => {
   });
   it("shows everything with no rows limit or when nothing overflows", async () => {
     const ctx = await makeContext();
-    const all = mountWith(CardGrid, ctx, { label: "All", count: 3, rows: null });
+    const all = mountWith(CardGrid, ctx, { label: "All", count: 3, rows: null, trim: "quakes" });
     expect(all.find(".more").exists()).toBe(false);
-    const fits = mountWith(CardGrid, ctx, { label: "Fits", count: 1, rows: 3 });
+    expect(all.find(".cardrow").classes()).toEqual(["cardrow", "quakes"]);
+    const fits = mountWith(CardGrid, ctx, { label: "Fits", count: 1, rows: 3, trim: null });
     expect(fits.find(".more").exists()).toBe(false);
     expect(fits.find(".sectionlabel").text()).toBe("Fits");
+    expect(fits.find(".cardrow").classes()).toEqual(["cardrow"]);
   });
 });

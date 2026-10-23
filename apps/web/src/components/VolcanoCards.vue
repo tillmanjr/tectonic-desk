@@ -4,8 +4,11 @@ import { ago, fmtStamp } from "../lib/format.js";
 import { CLOCK, SELECT_VOLCANO, useInjected, VOLCANOES, ZONE } from "../lib/keys.js";
 import { aviationColor, isElevated, statusLabel } from "../lib/volcanoes.js";
 
-/** Rows of cards before the "more" control; null shows them all. */
-const props = withDefaults(defineProps<{ rows?: number | null }>(), { rows: null });
+/** Rows of cards before the "more" control (null shows them all) and the row's dataset trim. */
+const props = withDefaults(
+  defineProps<{ rows?: number | null; trim?: "quakes" | "volcanoes" | null }>(),
+  { rows: null, trim: null },
+);
 const store = useInjected(VOLCANOES);
 const clock = useInjected(CLOCK);
 const zone = useInjected(ZONE);
@@ -18,6 +21,7 @@ const selectVolcano = useInjected(SELECT_VOLCANO);
     label="Elevated or changed in the last 7 days"
     :count="store.attention.value.length"
     :rows="props.rows"
+    :trim="props.trim"
   >
     <p v-if="store.attention.value.length === 0" class="note">
       No monitored volcano is above normal and none changed status in the last 7 days.

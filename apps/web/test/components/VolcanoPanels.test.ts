@@ -32,6 +32,7 @@ describe("VolcanoCards", () => {
   it("lists elevated and changed volcanoes with their agency label and selects on click", async () => {
     const ctx = await makeContext({ volcanoes: true });
     const w = mountWith(VolcanoCards, ctx);
+    expect(w.find(".cardrow").classes()).toEqual(["cardrow"]);
     const cards = w.findAll(".mcard");
     expect(cards).toHaveLength(2);
     expect(cards[0]?.text()).toContain("Kilauea · United States");

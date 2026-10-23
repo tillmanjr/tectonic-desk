@@ -15,8 +15,11 @@ interface Card {
   seq: Sequence | null;
 }
 
-/** Rows of cards before the "more" control; null shows them all. */
-const props = withDefaults(defineProps<{ rows?: number | null }>(), { rows: null });
+/** Rows of cards before the "more" control (null shows them all) and the row's dataset trim. */
+const props = withDefaults(
+  defineProps<{ rows?: number | null; trim?: "quakes" | "volcanoes" | null }>(),
+  { rows: null, trim: null },
+);
 const catalog = useInjected(CATALOG);
 const { events } = catalog;
 const clock = useInjected(CLOCK);
@@ -48,6 +51,7 @@ const sevStyle = (alert: string | null): Record<string, string> | undefined =>
     :label="majorLabel(catalog.requireRegion())"
     :count="cards.length"
     :rows="props.rows"
+    :trim="props.trim"
   >
     <p v-if="cards.length === 0" class="note">No events meet the threshold in this window.</p>
     <button
