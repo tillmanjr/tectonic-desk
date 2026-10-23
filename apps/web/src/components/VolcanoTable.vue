@@ -79,7 +79,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
 </script>
 
 <template>
-  <div class="panel">
+  <div class="panel tablepanel">
     <h2>
       Volcanoes
       <span v-if="store.filtered.value.length !== store.inRegion.value.length"
@@ -88,46 +88,53 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
       >
       <span v-else>{{ store.filtered.value.length }} in this view · tap a row for detail</span>
     </h2>
-    <div class="tablewrap">
-      <table class="cat">
-        <thead>
-          <tr>
-            <th v-for="c in COLS" :key="c.key" :aria-sort="ariaSort(c.key)" @click="sortBy(c.key)">
-              {{ c.label }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="r in rows"
-            :key="r.v.number"
-            class="ev"
-            :class="{ sel: r.v.number === store.selectedNumber.value }"
-            :data-number="r.v.number"
-            tabindex="0"
-            @click="selectVolcano(r.v.number)"
-            @keydown.enter="selectVolcano(r.v.number)"
-          >
-            <td>
-              <span
-                class="dchip"
-                :style="{
-                  background: ERUPTION_CLASSES[eruptionClass(r.v.lastEruptionYear)].color,
-                }"
-              ></span
-              >{{ r.v.name }}
-            </td>
-            <td>{{ r.v.country }}</td>
-            <td>{{ TYPE_GROUPS[typeGroup(r.v.type)] }}</td>
-            <td class="num">{{ lastText(r.v) }}</td>
-            <td>
-              <template v-if="r.top !== null">{{ statusLabel(r.top) }}</template>
-              <span v-else class="muted">not monitored here</span>
-            </td>
-            <td class="num">{{ r.v.elevationM === null ? "—" : r.v.elevationM }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="tablefill">
+      <div class="tablewrap">
+        <table class="cat">
+          <thead>
+            <tr>
+              <th
+                v-for="c in COLS"
+                :key="c.key"
+                :aria-sort="ariaSort(c.key)"
+                @click="sortBy(c.key)"
+              >
+                {{ c.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="r in rows"
+              :key="r.v.number"
+              class="ev"
+              :class="{ sel: r.v.number === store.selectedNumber.value }"
+              :data-number="r.v.number"
+              tabindex="0"
+              @click="selectVolcano(r.v.number)"
+              @keydown.enter="selectVolcano(r.v.number)"
+            >
+              <td>
+                <span
+                  class="dchip"
+                  :style="{
+                    background: ERUPTION_CLASSES[eruptionClass(r.v.lastEruptionYear)].color,
+                  }"
+                ></span
+                >{{ r.v.name }}
+              </td>
+              <td>{{ r.v.country }}</td>
+              <td>{{ TYPE_GROUPS[typeGroup(r.v.type)] }}</td>
+              <td class="num">{{ lastText(r.v) }}</td>
+              <td>
+                <template v-if="r.top !== null">{{ statusLabel(r.top) }}</template>
+                <span v-else class="muted">not monitored here</span>
+              </td>
+              <td class="num">{{ r.v.elevationM === null ? "—" : r.v.elevationM }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>

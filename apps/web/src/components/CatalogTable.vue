@@ -46,7 +46,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
 </script>
 
 <template>
-  <div class="panel">
+  <div class="panel tablepanel">
     <h2>
       Catalog
       <span v-if="events.length !== windowTotal"
@@ -54,47 +54,54 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
       >
       <span v-else>{{ events.length }} events · tap a row for detail</span>
     </h2>
-    <div class="tablewrap">
-      <table class="cat">
-        <thead>
-          <tr>
-            <th v-for="c in COLS" :key="c.key" :aria-sort="ariaSort(c.key)" @click="sortBy(c.key)">
-              {{ c.label
-              }}<template v-if="c.key === 'time'">
-                ({{ zone === "utc" ? "UTC" : "local" }})</template
+    <div class="tablefill">
+      <div class="tablewrap">
+        <table class="cat">
+          <thead>
+            <tr>
+              <th
+                v-for="c in COLS"
+                :key="c.key"
+                :aria-sort="ariaSort(c.key)"
+                @click="sortBy(c.key)"
               >
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="e in rows"
-            :key="e.id"
-            class="ev"
-            :class="{ sel: e.id === selectedId }"
-            :data-id="e.id"
-            tabindex="0"
-            @click="select(e.id)"
-            @keydown.enter="select(e.id)"
-          >
-            <td class="num">{{ fmtStamp(e.time, zone, { date: "monthday", label: false }) }}</td>
-            <td class="num">
-              {{ fmtMag(e.mag)
-              }}<span v-if="e.magType !== null" class="magtype">{{ e.magType }}</span>
-            </td>
-            <td class="num">
-              <span class="dchip" :style="{ background: depthColor(e.depthKm) }"></span
-              >{{ e.depthKm === null ? "—" : e.depthKm.toFixed(0) }}
-            </td>
-            <td>
-              {{ placeOf(e) }}<span v-if="tag(e) !== null" class="mt"> {{ tag(e) }}</span>
-              <span v-if="e.eventType !== null && e.eventType !== 'earthquake'" class="pill">{{
-                e.eventType
-              }}</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                {{ c.label
+                }}<template v-if="c.key === 'time'">
+                  ({{ zone === "utc" ? "UTC" : "local" }})</template
+                >
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="e in rows"
+              :key="e.id"
+              class="ev"
+              :class="{ sel: e.id === selectedId }"
+              :data-id="e.id"
+              tabindex="0"
+              @click="select(e.id)"
+              @keydown.enter="select(e.id)"
+            >
+              <td class="num">{{ fmtStamp(e.time, zone, { date: "monthday", label: false }) }}</td>
+              <td class="num">
+                {{ fmtMag(e.mag)
+                }}<span v-if="e.magType !== null" class="magtype">{{ e.magType }}</span>
+              </td>
+              <td class="num">
+                <span class="dchip" :style="{ background: depthColor(e.depthKm) }"></span
+                >{{ e.depthKm === null ? "—" : e.depthKm.toFixed(0) }}
+              </td>
+              <td>
+                {{ placeOf(e) }}<span v-if="tag(e) !== null" class="mt"> {{ tag(e) }}</span>
+                <span v-if="e.eventType !== null && e.eventType !== 'earthquake'" class="pill">{{
+                  e.eventType
+                }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
