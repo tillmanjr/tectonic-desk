@@ -1483,6 +1483,39 @@ body.marks-open {
   border-color: var(--line);
   background: var(--bg);
 }
+.marks-io {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font: 13px var(--f-ui);
+  color: var(--muted);
+}
+.marks-io .io-buttons {
+  display: flex;
+  gap: 4px;
+}
+.marks-io .io-file {
+  display: none;
+}
+.marks-io .io-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink);
+}
+.marks-io .io-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.marks-io .io-actions button,
+.marks-io .io-buttons button {
+  border-color: var(--line);
+}
 .marks-main {
   overflow: auto;
   padding: 12px 16px 24px;
@@ -1519,6 +1552,7 @@ body.marks-open {
 }
 .marks-grouphead .showevents,
 .marks-grouphead .compare,
+.marks .openhere,
 .marks .openview,
 .marks .confirm button,
 .marks .backtolist {
@@ -1664,6 +1698,14 @@ body.marks-open {
   .marks-rail input {
     white-space: nowrap;
   }
+  .marks-io {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: 0;
+    flex-direction: row;
+    align-items: center;
+  }
   .markrow-item,
   .markcard header {
     grid-template-columns: auto 96px 1fr;
@@ -1672,6 +1714,31 @@ body.marks-open {
     grid-column: 1 / -1;
     flex-direction: row;
   }
+}
+
+/* App notice: one short line above everything, never interactive. */
+.notice {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 13px var(--f-ui);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+  pointer-events: none;
+}
+.notice-enter-active,
+.notice-leave-active {
+  transition: opacity 0.2s ease;
+}
+.notice-enter-from,
+.notice-leave-to {
+  opacity: 0;
 }
 
 /* Marked events: Compare as connected vertices. Top nodes are the column marks, left nodes the row

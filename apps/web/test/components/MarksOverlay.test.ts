@@ -99,6 +99,8 @@ describe("MarksOverlay", () => {
     expect(ctx.marks.marks.value[0]?.name).toBe("Blurred");
     await row.find(".openview").trigger("click");
     expect(ctx.nav.goTo).toHaveBeenCalledWith("/volcanoes?volcano=211060");
+    await row.find(".openhere").trigger("click");
+    expect(ctx.nav.openHere).toHaveBeenCalledWith(ctx.marks.marks.value[0]);
     await row.find(".confirm > button").trigger("click");
     await row.find("button.yes").trigger("click");
     expect(ctx.marks.marks.value.map((m) => m.id)).not.toContain(b.id);
@@ -210,6 +212,8 @@ describe("MarksOverlay", () => {
     expect(ctx.nav.list).toHaveBeenCalledWith("all");
     await w.find("article.markcard .openview").trigger("click");
     expect(ctx.nav.goTo).toHaveBeenCalledWith("/volcanoes?volcano=211060");
+    await w.find("article.markcard .openhere").trigger("click");
+    expect(ctx.nav.openHere).toHaveBeenCalledTimes(1);
     // volcanoes are loaded now; re-entering the panels does not load again
     ctx.overlay.value = { group: "all", mode: "list" };
     await nextTick();
@@ -305,6 +309,26 @@ describe("MarksOverlay", () => {
     ctx.marks.remove(ctx.marks.marks.value[0]?.id ?? "");
     await nextTick();
     expect(w.find(".markmatrix .note").text()).toBe("Mark at least two events to compare them.");
+    w.unmount();
+  });
+
+  it("reorders stored groups from the group head; All has no arrows", async () => {
+    stubWorld();
+    const ctx = await makeContext();
+    const a = ctx.marks.addGroup("A");
+    const b = ctx.marks.addGroup("B");
+    const w = await open(ctx);
+    expect(w.find(".marks-grouphead .morder").exists()).toBe(false);
+    ctx.overlay.value = { group: a.id, mode: "list" };
+    await nextTick();
+    expect(w.find(".marks-grouphead .up").attributes("disabled")).toBeDefined();
+    expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeUndefined();
+    await w.find(".marks-grouphead .down").trigger("click");
+    expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([b.id, a.id]);
+    expect(w.findAll(".marks-rail button")[1]?.text()).toBe("B · 0");
+    expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeDefined();
+    await w.find(".marks-grouphead .up").trigger("click");
+    expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([a.id, b.id]);
     w.unmount();
   });
 });
