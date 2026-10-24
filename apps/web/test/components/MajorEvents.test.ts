@@ -66,6 +66,8 @@ describe("MajorEvents", () => {
     const ctx = await makeContext({ api });
     const w = mountWith(MajorEvents, ctx);
     const cards = w.findAll(".mcard");
+    expect(cards[0]?.findAll(".lines > .m").length).toBeGreaterThan(0);
+    expect(cards[0]?.findAll(".m").length).toBe(cards[0]?.findAll(".lines > .m").length);
     expect(cards).toHaveLength(3);
     const first = cards[0]?.text().replace(/\s+/g, " ") ?? "";
     expect(first).toContain("M7.1 · 122 km W of Neiafu, Tonga");

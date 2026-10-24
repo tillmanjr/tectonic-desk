@@ -307,6 +307,14 @@ a:focus-visible,
   color: var(--muted);
   margin-top: 3px;
 }
+/* The detail lines of a card stop at five, with an ellipsis; the panel shows the rest. */
+.mcard .lines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+}
 .pill {
   display: inline-block;
   font: 600 10.5px var(--f-ui);

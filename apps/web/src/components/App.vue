@@ -339,7 +339,7 @@ onUnmounted(() => {
       </p>
       <p class="byline">
         Built for Barbara by
-        <a href="https://github.com/tillmanjr" rel="author">Tillman</a>
+        <a href="https://github.com/tillmanjr" rel="author noopener" target="_blank">Tillman</a>
       </p>
     </footer>
   </div>

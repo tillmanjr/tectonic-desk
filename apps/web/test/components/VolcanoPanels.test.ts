@@ -34,6 +34,8 @@ describe("VolcanoCards", () => {
     const w = mountWith(VolcanoCards, ctx);
     const cards = w.findAll(".mcard");
     expect(cards).toHaveLength(2);
+    expect(cards[0]?.findAll(".lines > .m").length).toBeGreaterThan(0);
+    expect(cards[0]?.findAll(".m").length).toBe(cards[0]?.findAll(".lines > .m").length);
     expect(cards[0]?.text()).toContain("Kilauea · United States");
     expect(cards[0]?.text()).toContain("USGS Watch · Orange");
     expect(cards[0]?.text()).toContain("at this level since");
