@@ -1,4 +1,4 @@
-import type { VueWrapper } from "@vue/test-utils";
+import { flushPromises, type VueWrapper } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import CatalogTable from "../../src/components/CatalogTable.vue";
 import { fakeApi, raisedApi } from "../support/api.js";
@@ -103,5 +103,49 @@ describe("CatalogTable", () => {
     expect(ctx.select).toHaveBeenLastCalledWith("b");
     await w.findAll("tr.ev")[2]?.trigger("keydown", { key: "a" });
     expect(ctx.select).toHaveBeenCalledTimes(2);
+  });
+
+  it("filters its rows by column behind the Filter toggle, marks headers, and clears", async () => {
+    const { ctx, w } = await table();
+    expect(w.find("tr.frow").exists()).toBe(false);
+    await w.find(".filtertoggle").trigger("click");
+    expect(w.find("tr.frow").exists()).toBe(true);
+    const magFrom = w.find("input[aria-label='Magnitude from']");
+    await magFrom.setValue("6");
+    await magFrom.trigger("change");
+    expect(ids(w)).toEqual(["b"]);
+    expect(w.find("h2").text()).toContain("1 of 4 events · filtered");
+    const heads = () => w.findAll("thead tr:first-child th");
+    expect(heads()[1]?.classes()).toContain("fon");
+    expect(heads()[0]?.classes()).not.toContain("fon");
+    await w.find(".clearall").trigger("click");
+    expect(ids(w)).toEqual(["a", "c", "b", "d"]);
+    expect(w.find(".clearall").exists()).toBe(false);
+    expect(w.find("h2").text()).toContain("4 events · tap");
+    const until = w.find("input[aria-label='Time to']");
+    await until.setValue("2026-10-11");
+    await until.trigger("change");
+    expect(ids(w)).toEqual(["d"]);
+    expect(heads()[0]?.classes()).toContain("fon");
+    expect(until.classes()).toContain("set");
+    const since = w.find("input[aria-label='Time from']");
+    await since.setValue("2026-10-11");
+    await since.trigger("change");
+    expect(ids(w)).toEqual(["d"]);
+    const depthTo = w.find("input[aria-label='Depth to']");
+    await depthTo.setValue("20");
+    await depthTo.trigger("change");
+    expect(ids(w)).toEqual([]);
+    expect(w.find("h2").text()).toContain("0 of 4 events · filtered");
+    // A malformed date clears that bound (b is after Oct 11 and shallow); a region change resets and closes the row.
+    await until.setValue("nope");
+    await until.trigger("change");
+    expect(ids(w)).toEqual(["b"]);
+    expect(heads()[0]?.classes()).toContain("fon");
+    await ctx.catalog.setRegion("wc");
+    await flushPromises();
+    expect(w.find("tr.frow").exists()).toBe(false);
+    expect(w.find(".clearall").exists()).toBe(false);
+    w.unmount();
   });
 });
