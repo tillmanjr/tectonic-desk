@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
   ALL_GROUP,
+  countsText,
   createMarks,
   defaultName,
+  exportDocument,
+  exportFileName,
   MARKS_KEY,
+  mergeDocuments,
   parseMarks,
+  reportText,
+  type Mark,
   type MarkDraft,
+  type MarksDocument,
 } from "../../src/lib/marks.js";
 
 const quake: MarkDraft = {
@@ -225,5 +232,83 @@ describe("marks", () => {
     expect(ids()).toEqual([c.id, a.id, b.id]);
     const written = JSON.parse(m.store.get(MARKS_KEY) ?? "") as { groups: { id: string }[] };
     expect(written.groups.map((g) => g.id)).toEqual([c.id, a.id, b.id]);
+  });
+
+  const at = new Date("2026-10-24T09:30:00Z");
+  const stored = (id: string, over: Partial<Mark> = {}): Mark => ({
+    ...quake,
+    id,
+    createdAt: "2026-10-21T00:00:00.000Z",
+    ...over,
+  });
+
+  it("exports the document as versioned, dated JSON with a dated file name", () => {
+    const doc: MarksDocument = {
+      marks: [stored("a")],
+      groups: [{ id: "g", name: "G", marks: ["a"] }],
+    };
+    const text = exportDocument(doc, at);
+    expect(JSON.parse(text)).toEqual({ v: 1, exportedAt: "2026-10-24T09:30:00.000Z", ...doc });
+    expect(text.startsWith("{\n")).toBe(true);
+    expect(parseMarks(text)).toEqual(doc);
+    expect(exportFileName(at)).toBe("tectonic-marks-2026-10-24.json");
+  });
+
+  it("merges what the incoming document adds and counts it", () => {
+    const current: MarksDocument = {
+      marks: [stored("a"), stored("b")],
+      groups: [{ id: "g1", name: "One", marks: ["a"] }],
+    };
+    const incoming: MarksDocument = {
+      marks: [stored("b", { name: "renamed" }), stored("c")],
+      groups: [
+        { id: "g1", name: "Other name", marks: ["a", "b", "c", "zz"] },
+        { id: "g2", name: "Two", marks: ["c", "zz"] },
+      ],
+    };
+    const { doc, report } = mergeDocuments(current, incoming);
+    expect(doc.marks.map((m) => m.id)).toEqual(["a", "b", "c"]);
+    expect(doc.marks[1]?.name).toBe("Kuril shock");
+    expect(doc.groups).toEqual([
+      { id: "g1", name: "One", marks: ["a", "b", "c"] },
+      { id: "g2", name: "Two", marks: ["c"] },
+    ]);
+    expect(report).toEqual({ marks: 1, groups: 1, members: 2 });
+    expect(mergeDocuments(doc, incoming).report).toEqual({ marks: 0, groups: 0, members: 0 });
+  });
+
+  it("words counts and reports", () => {
+    expect(countsText({ marks: [], groups: [] })).toBe("0 marks, 0 groups");
+    expect(countsText({ marks: [stored("a")], groups: [{ id: "g", name: "G", marks: [] }] })).toBe(
+      "1 mark, 1 group",
+    );
+    expect(reportText({ marks: 3, groups: 1, members: 2 })).toBe(
+      "Added 3 marks, 1 group, 2 memberships",
+    );
+    expect(reportText({ marks: 0, groups: 0, members: 1 })).toBe("Added 1 membership");
+    expect(reportText({ marks: 0, groups: 0, members: 0 })).toBe("Nothing new");
+  });
+
+  it("reads, merges and replaces the stored document", () => {
+    const m = memory();
+    const s = createMarks(m.storage, deps());
+    const a = s.add(quake);
+    const g = s.addGroup("G");
+    s.setMember(a.id, g.id, true);
+    expect(s.document()).toEqual({ marks: s.marks.value, groups: s.groups.value });
+    const r = s.merge({ marks: [stored("x")], groups: [{ id: g.id, name: "G", marks: ["x"] }] });
+    expect(r).toEqual({ marks: 1, groups: 0, members: 1 });
+    expect(s.marks.value.map((x) => x.id)).toEqual([a.id, "x"]);
+    expect(s.view(g.id)?.marks.map((x) => x.id)).toEqual([a.id, "x"]);
+    expect(JSON.parse(m.store.get(MARKS_KEY) ?? "")).toMatchObject({
+      marks: [{ id: a.id }, { id: "x" }],
+    });
+    s.replaceAll({ marks: [stored("y")], groups: [] });
+    expect(s.marks.value.map((x) => x.id)).toEqual(["y"]);
+    expect(s.groups.value).toEqual([]);
+    expect(JSON.parse(m.store.get(MARKS_KEY) ?? "")).toMatchObject({
+      marks: [{ id: "y" }],
+      groups: [],
+    });
   });
 });

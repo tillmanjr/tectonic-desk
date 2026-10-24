@@ -43,6 +43,18 @@ export interface MarkView {
   virtual: boolean;
   marks: Mark[];
 }
+/** The whole stored document: what `localStorage` holds and what an export file carries. */
+export interface MarksDocument {
+  marks: Mark[];
+  groups: MarkGroup[];
+}
+/** What a merge added. */
+export interface MergeReport {
+  marks: number;
+  groups: number;
+  /** Members added to groups already present. */
+  members: number;
+}
 
 export const MARKS_KEY = "tectonic.marks";
 export const ALL_GROUP = "all";
@@ -100,7 +112,7 @@ function parseMark(v: unknown): Mark | null {
 }
 
 /** The stored document; malformed marks and groups are dropped rather than failing the whole read. */
-export function parseMarks(raw: string | null): { marks: Mark[]; groups: MarkGroup[] } {
+export function parseMarks(raw: string | null): MarksDocument {
   let parsed: unknown = null;
   if (raw !== null) {
     try {
@@ -130,6 +142,65 @@ export function parseMarks(raw: string | null): { marks: Mark[]; groups: MarkGro
 /** The name offered for a subject before the reader edits it. */
 export const defaultName = (s: MarkSubject): string => `${s.headline} · ${s.sub}`;
 
+/** The JSON text of a document as the export file carries it. */
+export const exportDocument = (doc: MarksDocument, now: Date): string =>
+  JSON.stringify(
+    { v: 1, exportedAt: now.toISOString(), marks: doc.marks, groups: doc.groups },
+    null,
+    2,
+  );
+
+/** The name of an export made at `now`. */
+export const exportFileName = (now: Date): string =>
+  `tectonic-marks-${now.toISOString().slice(0, 10)}.json`;
+
+/**
+ * `current` plus what `incoming` has that it lacks: marks by id (appended in file order), groups
+ * by id (appended), and for a group present in both, the members it lacks whose marks are known.
+ * Names and order of what is already there are kept.
+ */
+export function mergeDocuments(
+  current: MarksDocument,
+  incoming: MarksDocument,
+): { doc: MarksDocument; report: MergeReport } {
+  const known = new Set(current.marks.map((m) => m.id));
+  const newMarks = incoming.marks.filter((m) => !known.has(m.id));
+  const marks = [...current.marks, ...newMarks];
+  for (const m of newMarks) known.add(m.id);
+  let members = 0;
+  const groups = current.groups.map((g) => {
+    const theirs = incoming.groups.find((x) => x.id === g.id);
+    if (theirs === undefined) return g;
+    const add = theirs.marks.filter((id) => known.has(id) && !g.marks.includes(id));
+    members += add.length;
+    return add.length === 0 ? g : { ...g, marks: [...g.marks, ...add] };
+  });
+  const newGroups = incoming.groups
+    .filter((g) => !current.groups.some((x) => x.id === g.id))
+    .map((g) => ({ ...g, marks: g.marks.filter((id) => known.has(id)) }));
+  return {
+    doc: { marks, groups: [...groups, ...newGroups] },
+    report: { marks: newMarks.length, groups: newGroups.length, members },
+  };
+}
+
+const plural = (n: number, word: string): string => `${String(n)} ${word}${n === 1 ? "" : "s"}`;
+
+/** "3 marks, 1 group". */
+export const countsText = (doc: MarksDocument): string =>
+  `${plural(doc.marks.length, "mark")}, ${plural(doc.groups.length, "group")}`;
+
+/** "Added 3 marks, 1 group, 2 memberships", zero parts left out; "Nothing new" when all are. */
+export function reportText(r: MergeReport): string {
+  const parts = [
+    [r.marks, "mark"],
+    [r.groups, "group"],
+    [r.members, "membership"],
+  ] as const;
+  const said = parts.filter(([n]) => n > 0).map(([n, w]) => plural(n, w));
+  return said.length === 0 ? "Nothing new" : `Added ${said.join(", ")}`;
+}
+
 const cleanName = (name: string, fallback: string): string => {
   const t = name.trim().slice(0, NAME_MAX);
   return t === "" ? fallback : t;
@@ -153,6 +224,12 @@ export interface MarksStore {
   move(groupId: string, markId: string, delta: -1 | 1): void;
   /** Moves a stored group one place up (-1) or down (1); ends and unknown ids are no-ops. */
   moveGroup(id: string, delta: -1 | 1): void;
+  /** The document as stored. */
+  document(): MarksDocument;
+  /** Adds what the document has that the store lacks; returns what was added. */
+  merge(doc: MarksDocument): MergeReport;
+  /** Discards the stored document for this one. */
+  replaceAll(doc: MarksDocument): void;
   /** `all` or a stored group with its members resolved in its order; null for an unknown id. */
   view(groupId: string): MarkView | null;
   /** How many marks name this subject. */
@@ -274,6 +351,22 @@ export function createMarks(
       const next = [...groups.value];
       next.splice(j, 0, ...next.splice(i, 1));
       groups.value = next;
+      persist();
+    },
+    document: () => ({ marks: marks.value, groups: groups.value }),
+    merge(doc) {
+      const { doc: next, report } = mergeDocuments(
+        { marks: marks.value, groups: groups.value },
+        doc,
+      );
+      marks.value = next.marks;
+      groups.value = next.groups;
+      persist();
+      return report;
+    },
+    replaceAll(doc) {
+      marks.value = doc.marks;
+      groups.value = doc.groups;
       persist();
     },
     view(groupId) {
