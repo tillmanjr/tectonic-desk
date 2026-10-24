@@ -51,12 +51,12 @@ const countryEl = ref<HTMLSelectElement | null>(null);
 const typeEl = ref<HTMLSelectElement | null>(null);
 
 function setName(): void {
-  const v = nameEl.value?.value.trim() ?? "";
-  filter.value = { ...filter.value, name: v === "" ? null : v };
+  const v = nameEl.value?.value.trim();
+  filter.value = { ...filter.value, name: v === undefined || v === "" ? null : v };
 }
 function setCountry(): void {
-  const v = countryEl.value?.value ?? "";
-  filter.value = { ...filter.value, country: v === "" ? null : v };
+  const v = countryEl.value?.value;
+  filter.value = { ...filter.value, country: v === undefined || v === "" ? null : v };
 }
 function setType(): void {
   const v = typeEl.value?.value;
