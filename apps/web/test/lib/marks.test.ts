@@ -207,4 +207,23 @@ describe("marks", () => {
     expect(m1.id).not.toBe(m2.id);
     expect(m1.createdAt).toMatch(/^\d{4}-/);
   });
+
+  it("moves a stored group up or down, ignoring the ends and unknown ids", () => {
+    const m = memory();
+    const s = createMarks(m.storage, deps());
+    const a = s.addGroup("A");
+    const b = s.addGroup("B");
+    const c = s.addGroup("C");
+    const ids = () => s.groups.value.map((g) => g.id);
+    s.moveGroup(c.id, -1);
+    expect(ids()).toEqual([a.id, c.id, b.id]);
+    s.moveGroup(a.id, -1);
+    s.moveGroup(b.id, 1);
+    s.moveGroup("nope", 1);
+    expect(ids()).toEqual([a.id, c.id, b.id]);
+    s.moveGroup(a.id, 1);
+    expect(ids()).toEqual([c.id, a.id, b.id]);
+    const written = JSON.parse(m.store.get(MARKS_KEY) ?? "") as { groups: { id: string }[] };
+    expect(written.groups.map((g) => g.id)).toEqual([c.id, a.id, b.id]);
+  });
 });

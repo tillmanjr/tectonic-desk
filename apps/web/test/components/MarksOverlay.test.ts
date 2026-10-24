@@ -311,4 +311,24 @@ describe("MarksOverlay", () => {
     expect(w.find(".markmatrix .note").text()).toBe("Mark at least two events to compare them.");
     w.unmount();
   });
+
+  it("reorders stored groups from the group head; All has no arrows", async () => {
+    stubWorld();
+    const ctx = await makeContext();
+    const a = ctx.marks.addGroup("A");
+    const b = ctx.marks.addGroup("B");
+    const w = await open(ctx);
+    expect(w.find(".marks-grouphead .morder").exists()).toBe(false);
+    ctx.overlay.value = { group: a.id, mode: "list" };
+    await nextTick();
+    expect(w.find(".marks-grouphead .up").attributes("disabled")).toBeDefined();
+    expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeUndefined();
+    await w.find(".marks-grouphead .down").trigger("click");
+    expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([b.id, a.id]);
+    expect(w.findAll(".marks-rail button")[1]?.text()).toBe("B · 0");
+    expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeDefined();
+    await w.find(".marks-grouphead .up").trigger("click");
+    expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([a.id, b.id]);
+    w.unmount();
+  });
 });

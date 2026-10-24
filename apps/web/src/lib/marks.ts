@@ -151,6 +151,8 @@ export interface MarksStore {
   setMember(markId: string, groupId: string, member: boolean): void;
   /** Moves a mark one place up (-1) or down (1) within `all` or a stored group; ends and unknown ids are no-ops. */
   move(groupId: string, markId: string, delta: -1 | 1): void;
+  /** Moves a stored group one place up (-1) or down (1); ends and unknown ids are no-ops. */
+  moveGroup(id: string, delta: -1 | 1): void;
   /** `all` or a stored group with its members resolved in its order; null for an unknown id. */
   view(groupId: string): MarkView | null;
   /** How many marks name this subject. */
@@ -263,6 +265,15 @@ export function createMarks(
       next.splice(j, 0, ...next.splice(i, 1));
       if (g === null) marks.value = inOrder(next);
       else g.marks = next;
+      persist();
+    },
+    moveGroup(id, delta) {
+      const i = groups.value.findIndex((g) => g.id === id);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= groups.value.length) return;
+      const next = [...groups.value];
+      next.splice(j, 0, ...next.splice(i, 1));
+      groups.value = next;
       persist();
     },
     view(groupId) {
