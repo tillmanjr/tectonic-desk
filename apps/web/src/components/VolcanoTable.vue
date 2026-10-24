@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import type { ApiVolcanoStatus, Volcano } from "@tectonic/shared";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
+import RangeInputs from "./RangeInputs.vue";
+import TableFilterHead from "./TableFilterHead.vue";
 import { SELECT_VOLCANO, useInjected, VOLCANOES } from "../lib/keys.js";
+import {
+  activeVolcanoColumns,
+  applyVolcanoTableFilter,
+  countriesOf,
+  EMPTY_VOLCANO_TABLE_FILTER,
+  type VolcanoTableFilter,
+} from "../lib/table-filters.js";
 import {
   ERUPTION_CLASSES,
   eruptionClass,
   statusLabel,
   statusRank,
+  TYPE_GROUP_CODES,
   TYPE_GROUPS,
   typeGroup,
 } from "../lib/volcanoes.js";
@@ -29,6 +39,45 @@ const store = useInjected(VOLCANOES);
 const selectVolcano = useInjected(SELECT_VOLCANO);
 const sortKey = ref<SortKey>("status");
 const sortDir = ref<1 | -1>(-1);
+
+/** The table's own column filter: narrows the rows only, resets with the region. */
+const filter = ref<VolcanoTableFilter>(EMPTY_VOLCANO_TABLE_FILTER);
+const open = ref(false);
+const activeCols = computed<Set<string>>(() => activeVolcanoColumns(filter.value));
+const narrowed = computed(() => applyVolcanoTableFilter(store.filtered.value, filter.value));
+const countries = computed(() => countriesOf(store.inRegion.value));
+const nameEl = ref<HTMLInputElement | null>(null);
+const countryEl = ref<HTMLSelectElement | null>(null);
+const typeEl = ref<HTMLSelectElement | null>(null);
+
+function setName(): void {
+  const v = nameEl.value?.value.trim() ?? "";
+  filter.value = { ...filter.value, name: v === "" ? null : v };
+}
+function setCountry(): void {
+  const v = countryEl.value?.value ?? "";
+  filter.value = { ...filter.value, country: v === "" ? null : v };
+}
+function setType(): void {
+  const v = typeEl.value?.value;
+  filter.value = { ...filter.value, type: TYPE_GROUP_CODES.find((c) => c === v) ?? null };
+}
+function setYears(r: { min: number | null; max: number | null }): void {
+  filter.value = { ...filter.value, minYear: r.min, maxYear: r.max };
+}
+function setElevation(r: { min: number | null; max: number | null }): void {
+  filter.value = { ...filter.value, minElev: r.min, maxElev: r.max };
+}
+function clear(): void {
+  filter.value = EMPTY_VOLCANO_TABLE_FILTER;
+}
+watch(
+  () => store.region.value?.id,
+  () => {
+    clear();
+    open.value = false;
+  },
+);
 
 function sortBy(k: SortKey): void {
   if (sortKey.value === k) {
@@ -59,7 +108,7 @@ function value(v: Volcano): string | number {
   }
 }
 const rows = computed<Row[]>(() =>
-  [...store.filtered.value]
+  [...narrowed.value]
     .sort((a, b) => {
       const x = value(a);
       const y = value(b);
@@ -80,13 +129,23 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
 
 <template>
   <div class="panel tablepanel">
-    <h2>
+    <h2 class="withfilter">
       Volcanoes
-      <span v-if="store.filtered.value.length !== store.inRegion.value.length"
+      <span v-if="activeCols.size > 0"
+        >{{ narrowed.length }} of {{ store.inRegion.value.length }} · filtered · tap a row for
+        detail</span
+      >
+      <span v-else-if="store.filtered.value.length !== store.inRegion.value.length"
         >{{ store.filtered.value.length }} of {{ store.inRegion.value.length }} · tap a row for
         detail</span
       >
       <span v-else>{{ store.filtered.value.length }} in this view · tap a row for detail</span>
+      <TableFilterHead
+        :open="open"
+        :active="activeCols.size"
+        @toggle="open = !open"
+        @clear="clear"
+      />
     </h2>
     <div class="tablefill">
       <div class="tablewrap">
@@ -96,10 +155,71 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
               <th
                 v-for="c in COLS"
                 :key="c.key"
+                :class="{ fon: activeCols.has(c.key) }"
                 :aria-sort="ariaSort(c.key)"
                 @click="sortBy(c.key)"
               >
                 {{ c.label }}
+              </th>
+            </tr>
+            <tr v-if="open" class="frow">
+              <th>
+                <input
+                  ref="nameEl"
+                  type="text"
+                  :class="{ set: filter.name !== null }"
+                  :value="filter.name ?? ''"
+                  placeholder="contains…"
+                  aria-label="Volcano name"
+                  @change="setName"
+                />
+              </th>
+              <th>
+                <select
+                  ref="countryEl"
+                  :class="{ set: filter.country !== null }"
+                  :value="filter.country ?? ''"
+                  aria-label="Country"
+                  @change="setCountry"
+                >
+                  <option value="">any</option>
+                  <option v-for="c in countries" :key="c" :value="c">{{ c }}</option>
+                </select>
+              </th>
+              <th>
+                <select
+                  ref="typeEl"
+                  :class="{ set: filter.type !== null }"
+                  :value="filter.type ?? ''"
+                  aria-label="Type"
+                  @change="setType"
+                >
+                  <option value="">any</option>
+                  <option v-for="code in TYPE_GROUP_CODES" :key="code" :value="code">
+                    {{ TYPE_GROUPS[code] }}
+                  </option>
+                </select>
+              </th>
+              <th>
+                <RangeInputs
+                  :min="filter.minYear"
+                  :max="filter.maxYear"
+                  label="Last eruption"
+                  step="1"
+                  placeholder-min="from"
+                  placeholder-max="to"
+                  @update="setYears"
+                />
+              </th>
+              <th></th>
+              <th>
+                <RangeInputs
+                  :min="filter.minElev"
+                  :max="filter.maxElev"
+                  label="Elevation"
+                  step="1"
+                  @update="setElevation"
+                />
               </th>
             </tr>
           </thead>

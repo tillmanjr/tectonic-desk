@@ -8,6 +8,7 @@ import VolcanoFilterBar from "../../src/components/VolcanoFilterBar.vue";
 import VolcanoTable from "../../src/components/VolcanoTable.vue";
 import VolcanoTiles from "../../src/components/VolcanoTiles.vue";
 import { EMPTY_VOLCANO_FILTER } from "../../src/lib/volcanoes.js";
+import { WC } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
 import { status, volcano } from "../support/volcanoes.js";
 
@@ -183,6 +184,65 @@ describe("VolcanoTable", () => {
     ctx.volcanoes.setFilter({ ...EMPTY_VOLCANO_FILTER, type: "shield" });
     await nextTick();
     expect(w.text()).toContain("1 of 6");
+  });
+
+  it("filters its rows by name, country, type, year and elevation, and resets on region change", async () => {
+    const ctx = await makeContext({ volcanoes: true });
+    const w = mountWith(VolcanoTable, ctx);
+    const names = () => w.findAll("tr.ev td:first-child").map((td) => td.text());
+    const heads = () => w.findAll("thead tr:first-child th");
+    expect(w.find("tr.frow").exists()).toBe(false);
+    await w.find(".filtertoggle").trigger("click");
+    const name = w.find("input[aria-label='Volcano name']");
+    await name.setValue("  hel ");
+    await name.trigger("change");
+    expect(names()).toEqual(["St. Helens"]);
+    expect(w.find("h2").text()).toContain("1 of 5 · filtered");
+    expect(heads()[0]?.classes()).toContain("fon");
+    expect(name.classes()).toContain("set");
+    await name.setValue("   ");
+    await name.trigger("change");
+    expect(names()).toHaveLength(5);
+    const country = w.find("select[aria-label='Country']");
+    expect(country.findAll("option").map((o) => o.text())).toEqual([
+      "any",
+      "Italy",
+      "New Zealand",
+      "United States",
+    ]);
+    await country.setValue("United States");
+    expect(names()).toEqual(["Kilauea", "Clear Lake", "St. Helens"]);
+    expect(heads()[1]?.classes()).toContain("fon");
+    const type = w.find("select[aria-label='Type']");
+    await type.setValue("shield");
+    expect(names()).toEqual(["Kilauea"]);
+    expect(heads()[2]?.classes()).toContain("fon");
+    await type.setValue("");
+    await country.setValue("");
+    expect(names()).toHaveLength(5);
+    expect(w.find(".clearall").exists()).toBe(false);
+    const yearFrom = w.find("input[aria-label='Last eruption from']");
+    await yearFrom.setValue("2010");
+    await yearFrom.trigger("change");
+    expect(names()).toEqual(["Kilauea", "Whakaari/White Island", "Etna"]);
+    expect(heads()[3]?.classes()).toContain("fon");
+    const elevTo = w.find("input[aria-label='Elevation to']");
+    await elevTo.setValue("1000");
+    await elevTo.trigger("change");
+    expect(names()).toEqual(["Whakaari/White Island"]);
+    expect(heads()[5]?.classes()).toContain("fon");
+    expect(heads()[4]?.classes()).not.toContain("fon");
+    await w.find(".clearall").trigger("click");
+    expect(names()).toHaveLength(5);
+    await yearFrom.setValue("2010");
+    await yearFrom.trigger("change");
+    expect(names()).toHaveLength(3);
+    ctx.volcanoes.setRegion(WC);
+    await nextTick();
+    expect(w.find("tr.frow").exists()).toBe(false);
+    expect(w.find(".clearall").exists()).toBe(false);
+    expect(w.find("h2").text()).not.toContain("filtered");
+    w.unmount();
   });
 });
 
