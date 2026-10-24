@@ -111,7 +111,7 @@ const gvpUrl = (number: number): string =>
         </dd>
         <dt>GVP number</dt>
         <dd>
-          <a :href="gvpUrl(v.number)">{{ v.number }}</a>
+          <a :href="gvpUrl(v.number)" target="_blank" rel="noopener">{{ v.number }}</a>
         </dd>
       </dl>
       <p v-if="v.summary !== null" class="summary">{{ v.summary }}</p>
@@ -129,7 +129,7 @@ const gvpUrl = (number: number): string =>
             <span>
               <b>{{ statusLabel(s) }}</b> since {{ fmtStamp(s.observedAt, zone) }}
               <template v-if="s.synopsis !== null"> · {{ s.synopsis }}</template>
-              <a v-if="s.url !== null" :href="s.url"> notice</a>
+              <a v-if="s.url !== null" :href="s.url" target="_blank" rel="noopener"> notice</a>
             </span>
           </li>
         </ul>

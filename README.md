@@ -144,7 +144,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   filters (time, magnitude and depth; name, country, type, last eruption and elevation). They
   narrow the table only, after the Refine bar, and reset when the region changes; `Clear all`
   sits beside the toggle while anything is set and the title says `filtered`. Cards cap their
-  detail text at five lines; the panel has the rest.
+  detail text at five lines; the panel has the rest. Links to outside sources (USGS event page, GVP
+  number, agency notices, the author) open in a new tab.
 - **Show events** on a group lays its marks out as full panels, the same sections as the side
   panels, in as many columns as fit at 481 px or wider before wrapping to rows, so a set of events
   can be read together. The URL carries

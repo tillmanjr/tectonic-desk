@@ -163,6 +163,12 @@ Coverage stays at 100%.
 - `.gitignore`: `.superpowers/`.
 - `UI Items to clean up or tune.md` is the reader's own untracked note and is left in place.
 
+## Addendum 2026-10-24: side panel links
+
+Item 4 of the note: every anchor to an external source in the panel bodies opens in a new tab with
+`rel="noopener"`. The USGS event page link already did; the volcano panel's GVP number and each
+status `notice` link now do too. In-app anchors (`Open that event`) stay in place.
+
 ## Out of scope, recorded for later
 
 Filters in the route; sharing header filters with the Refine bars; a Status filter.
