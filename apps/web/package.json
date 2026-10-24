@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "geo:fields": "node --import tsx scripts/fields-cli.ts"
   },
   "dependencies": {
     "@tectonic/shared": "workspace:*",

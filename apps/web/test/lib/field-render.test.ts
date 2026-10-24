@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   albersForward,
   colourAt,
+  colourAtPosition,
   DDS9_ALBERS,
   equalisedStops,
   linearStops,
+  positionOf,
+  quantise,
   RAMP,
   renderRaster,
   sampleLonLat,
@@ -61,7 +64,7 @@ describe("sampleProjected", () => {
 });
 
 describe("albersForward", () => {
-  // Nodes read from isograv.xyz (USGS DDS-9): x = -2574000 + col·4000, y = 2539000 - row·4000.
+  // Nodes read from isograv.xyz (USGS DDS-9): x = -2574000 + col·4000, y = 2539000 + row·4000.
   it("lands USGS XYZ nodes on grid nodes within 20 m", () => {
     const nodes: [number, number][] = [
       [-97.657, 24.6384],
@@ -71,7 +74,7 @@ describe("albersForward", () => {
     for (const [lon, lat] of nodes) {
       const [x, y] = albersForward(DDS9_ALBERS, lon, lat);
       const col = (x - DDS9_ALBERS.xOrigin) / 4000;
-      const row = (DDS9_ALBERS.yOrigin - y) / 4000;
+      const row = (y - DDS9_ALBERS.yOrigin) / 4000;
       expect(Math.abs(col - Math.round(col)) * 4000).toBeLessThan(20);
       expect(Math.abs(row - Math.round(row)) * 4000).toBeLessThan(20);
     }
@@ -88,10 +91,9 @@ describe("ramps", () => {
 
   it("places equalised stops at percentiles of the finite values", () => {
     const values = new Float32Array([NaN, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(equalisedStops(values, RAMP).map(([v]) => v)).toEqual([0, 2.5, 5, 7.5, 10]);
-    expect(equalisedStops(new Float32Array([NaN]), RAMP).map(([v]) => v)).toEqual([
-      0, 0, 0, 0, 0,
-    ]);
+    const got = equalisedStops(values, RAMP).map(([v]) => v);
+    expect(got.map((v) => Number(v.toFixed(3)))).toEqual([0.2, 2.6, 5, 7.4, 9.8]);
+    expect(equalisedStops(new Float32Array([NaN]), RAMP).map(([v]) => v)).toEqual([0, 0, 0, 0, 0]);
   });
 
   it("interpolates colours and clamps at the ends", () => {
@@ -112,6 +114,45 @@ describe("ramps", () => {
   });
 });
 
+describe("positions and quantise", () => {
+  it("places a value along the ramp by its stops, not by value, and clamps", () => {
+    const stops: [number, string][] = [
+      [-1000, "#000000"],
+      [-10, "#111111"],
+      [0, "#222222"],
+      [10, "#333333"],
+      [1000, "#444444"],
+    ];
+    expect(positionOf(stops, -2000)).toBe(0);
+    expect(positionOf(stops, -10)).toBe(0.25);
+    expect(positionOf(stops, 5)).toBe(0.625);
+    expect(positionOf(stops, 1000)).toBe(1);
+    expect(positionOf(stops, 5000)).toBe(1);
+    expect(positionOf([], 1)).toBe(0);
+    expect(positionOf([[1, "#000000"]], 1)).toBe(0);
+  });
+
+  it("snaps a position to its band centre", () => {
+    expect(quantise(0)).toBe(0.5 / 64);
+    expect(quantise(0.1601)).toBe(10.5 / 64);
+    expect(quantise(1)).toBe(63.5 / 64);
+    expect(quantise(-1)).toBe(0.5 / 64);
+    expect(quantise(2)).toBe(63.5 / 64);
+  });
+
+  it("colours a position between its two stops and survives degenerate stop lists", () => {
+    const stops: [number, string][] = [
+      [0, "#000000"],
+      [1, "#101010"],
+      [2, "#ffffff"],
+    ];
+    expect(colourAtPosition(stops, 0.25)).toEqual([8, 8, 8]);
+    expect(colourAtPosition(stops, 1)).toEqual([255, 255, 255]);
+    expect(colourAtPosition([], 0.5)).toEqual([0, 0, 0]);
+    expect(colourAtPosition([[0, "#102030"]], 0.5)).toEqual([16, 32, 48]);
+  });
+});
+
 describe("renderRaster", () => {
   it("writes RGBA with transparent pixels off the map and on missing data", () => {
     const stops: [number, string][] = [
@@ -125,6 +166,7 @@ describe("renderRaster", () => {
       (lon) => (lon > 2 ? NaN : 1),
       stops,
     );
-    expect(Array.from(px)).toEqual([0, 0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 0]);
+    // Value 1 sits in the top band, whose centre is 63.5/64 of the way to white.
+    expect(Array.from(px)).toEqual([0, 0, 0, 0, 253, 253, 253, 255, 0, 0, 0, 0]);
   });
 });

@@ -17,7 +17,10 @@ const term = (w: number, v: number): number => (w === 0 ? 0 : w * v);
 /** Bilinear blend of the four neighbours (a b / c d) at fractions fx, fy. */
 function lerp2(a: number, b: number, c: number, d: number, fx: number, fy: number): number {
   return (
-    term((1 - fx) * (1 - fy), a) + term(fx * (1 - fy), b) + term((1 - fx) * fy, c) + term(fx * fy, d)
+    term((1 - fx) * (1 - fy), a) +
+    term(fx * (1 - fy), b) +
+    term((1 - fx) * fy, c) +
+    term(fx * fy, d)
   );
 }
 
@@ -66,7 +69,7 @@ export interface AlbersParams {
   /** Origin, degrees. */
   lat0: number;
   lon0: number;
-  /** Metres at the grid's north-west node. */
+  /** Metres at the grid's origin node (south-west for a GXF with sense 1). */
   xOrigin: number;
   yOrigin: number;
 }
@@ -120,14 +123,18 @@ export function linearStops(limit: number, ramp: readonly string[]): [number, st
   return ramp.map((c, i) => [-limit + (2 * limit * i) / n, c]);
 }
 
-/** Stops at evenly spaced percentiles of the finite values, so each band holds equal area. */
+/** The percentile band the equalised stops span; the outer 2% are outliers the ends absorb. */
+const EQUALISED_SPAN: [number, number] = [0.02, 0.98];
+
+/** Stops at evenly spaced percentiles of the finite values, so each colour band holds equal area. */
 export function equalisedStops(values: Float32Array, ramp: readonly string[]): [number, string][] {
   const finite = Array.from(values)
     .filter((v) => Number.isFinite(v))
     .sort((x, y) => x - y);
   const n = ramp.length - 1;
+  const [lo0, hi0] = EQUALISED_SPAN;
   return ramp.map((c, i) => {
-    const pos = (i / n) * (finite.length - 1);
+    const pos = (lo0 + ((hi0 - lo0) * i) / n) * (finite.length - 1);
     const lo = Math.floor(pos);
     const hi = Math.min(lo + 1, finite.length - 1);
     const a = finite[lo] ?? 0;
@@ -143,29 +150,50 @@ const rgb = (hex: string): Rgb => [
   parseInt(hex.slice(5, 7), 16),
 ];
 
-/** The colour for a value: interpolated between its two stops, clamped at the ends. */
-export function colourAt(stops: [number, string][], v: number): Rgb {
-  const first = stops[0];
-  const last = stops[stops.length - 1];
-  if (first === undefined || last === undefined) return [0, 0, 0];
-  if (v <= first[0]) return rgb(first[1]);
-  if (v >= last[0]) return rgb(last[1]);
-  for (let i = 1; i < stops.length; i++) {
-    const hi = stops[i];
-    const lo = stops[i - 1];
-    if (hi === undefined || lo === undefined || v > hi[0]) continue;
-    const t = (v - lo[0]) / (hi[0] - lo[0]);
-    const a = rgb(lo[1]);
-    const b = rgb(hi[1]);
-    const mix = (k: 0 | 1 | 2): number => Math.round(a[k] + (b[k] - a[k]) * t);
-    return [mix(0), mix(1), mix(2)];
+/** Where a value sits along the ramp, 0 at the first stop and 1 at the last, linear within each pair of stops. */
+export function positionOf(stops: [number, string][], v: number): number {
+  const n = stops.length - 1;
+  if (n < 1) return 0;
+  let i = 0;
+  let lo: [number, string] | null = null;
+  for (const hi of stops) {
+    if (lo !== null) {
+      if (v <= lo[0]) return (i - 1) / n;
+      if (v <= hi[0]) return (i - 1 + (v - lo[0]) / (hi[0] - lo[0])) / n;
+    }
+    lo = hi;
+    i++;
   }
-  return rgb(last[1]);
+  return 1;
 }
 
+/** The colour at a ramp position, interpolated between the two stops either side; black with no stops. */
+export function colourAtPosition(stops: [number, string][], t: number): Rgb {
+  const n = stops.length - 1;
+  const scaled = Math.min(Math.max(t, 0), 1) * n;
+  const i = Math.min(Math.floor(scaled), Math.max(n - 1, 0));
+  const hex = (k: number): string => stops[Math.min(k, n)]?.[1] ?? "#000000";
+  const a = rgb(hex(i));
+  const b = rgb(hex(i + 1));
+  const f = scaled - i;
+  const mix = (k: 0 | 1 | 2): number => Math.round(a[k] + (b[k] - a[k]) * f);
+  return [mix(0), mix(1), mix(2)];
+}
+
+/** The colour for a value: its ramp position's colour, clamped at the ends. */
+export const colourAt = (stops: [number, string][], v: number): Rgb =>
+  colourAtPosition(stops, positionOf(stops, v));
+
+/** Colour bands across the ramp: few enough distinct colours that the PNG stays small. */
+export const BANDS = 64;
+
+/** A ramp position snapped to the centre of its band. */
+export const quantise = (t: number): number =>
+  (Math.min(Math.floor(Math.min(Math.max(t, 0), 1) * BANDS), BANDS - 1) + 0.5) / BANDS;
+
 /**
- * RGBA bytes for a width × height image: each pixel centre is inverted to a lon/lat, sampled
- * and coloured; pixels off the map or on missing data stay transparent.
+ * RGBA bytes for a width × height image: each pixel centre is inverted to a lon/lat, sampled,
+ * quantised and coloured; pixels off the map or on missing data stay transparent.
  */
 export function renderRaster(
   width: number,
@@ -181,7 +209,7 @@ export function renderRaster(
       if (ll === null) continue;
       const v = sample(ll[0], ll[1]);
       if (!Number.isFinite(v)) continue;
-      const [r, g, b] = colourAt(stops, v);
+      const [r, g, b] = colourAtPosition(stops, quantise(positionOf(stops, v)));
       const i = (y * width + x) * 4;
       out[i] = r;
       out[i + 1] = g;
