@@ -403,4 +403,46 @@ describe("QuakeMap", () => {
     const empty = createCatalog(fakeApi(), () => ctx.now);
     expect(() => mountWith(QuakeMap, { ...ctx, catalog: empty })).toThrow("no region selected");
   });
+
+  it("draws the chosen field raster for the view, switches it with the region, and reports a failed load", async () => {
+    stubWorld();
+    const ctx = await makeContext();
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    expect(w.find("image.field").exists()).toBe(false);
+    const pick = w.find("select[aria-label='Field overlay']");
+    await pick.setValue("gravity");
+    await flushPromises();
+    expect(ctx.api.fields).toHaveBeenCalledTimes(1);
+    const img = w.find("image.field");
+    expect(img.attributes("href")).toBe("/fields/gravity-global.png");
+    expect(img.attributes("width")).toBe("1000");
+    expect(img.attributes("height")).toBe("520");
+    expect(w.find(".legend .fieldrow").text()).toContain("mGal");
+    await ctx.catalog.setRegion("wc");
+    await flushPromises();
+    expect(w.find("image.field").attributes("href")).toBe("/fields/gravity-wc.png");
+    expect(w.find("image.field").attributes("height")).toBe("700");
+    await pick.setValue("magnetic");
+    await flushPromises();
+    expect(w.find("image.field").exists()).toBe(false);
+    expect(w.find(".legend .fieldrow").exists()).toBe(false);
+    expect(ctx.api.fields).toHaveBeenCalledTimes(1);
+    await pick.setValue("none");
+    await flushPromises();
+    expect(w.find("image.field").exists()).toBe(false);
+    w.unmount();
+
+    resetMapCaches();
+    const broken = await makeContext({
+      api: fakeApi({ fields: vi.fn().mockRejectedValue(new Error("offline")) }),
+    });
+    const b = mountWith(QuakeMap, broken, { animate: false });
+    await flushPromises();
+    await b.find("select[aria-label='Field overlay']").setValue("magnetic");
+    await flushPromises();
+    expect(b.find(".fielderr").text()).toBe("unavailable");
+    expect(b.find("image.field").exists()).toBe(false);
+    b.unmount();
+  });
 });

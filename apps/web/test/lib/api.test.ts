@@ -25,6 +25,7 @@ describe("createApiClient", () => {
     await api.volcanoChanges(7);
     await api.volcanoReports(4);
     await api.volcano(332010);
+    await api.fields();
     expect(fetchFn.mock.calls.map((c: unknown[]) => c[0])).toEqual([
       "/api/regions",
       "/api/events?since=2026-10-06T00%3A00%3A00.000Z&minMag=4.5&limit=2000",
@@ -38,6 +39,7 @@ describe("createApiClient", () => {
       "/api/volcanoes/changes?days=7",
       "/api/volcanoes/reports?weeks=4",
       "/api/volcanoes/332010",
+      "/fields/fields.json",
     ]);
   });
   it("throws ApiRequestError with the body's error message", async () => {

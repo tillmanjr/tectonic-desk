@@ -1,4 +1,4 @@
-import type { ApiRegion } from "@tectonic/shared";
+import type { ApiRegion, FieldRaster, FieldsFile } from "@tectonic/shared";
 import { geoPath, type GeoPath } from "d3-geo";
 import { select as d3select } from "d3-selection";
 import "d3-transition";
@@ -17,6 +17,7 @@ import {
 } from "vue";
 import type { ApiClient } from "./api.js";
 import { loadBasemapFor, resetBasemapCache } from "./basemap-cache.js";
+import { loadFields, rasterFor, resetFieldsCache, viewOf, type FieldChoice } from "./fields.js";
 import { mustRef } from "./dom.js";
 import {
   AGE_CODES,
@@ -83,6 +84,12 @@ export interface MapView {
   basemap: ShallowRef<Basemap | null>;
   showPlates: Ref<boolean>;
   showTeeth: Ref<boolean>;
+  /** The anomaly raster to draw under the layers: none, gravity or magnetic. */
+  field: Ref<FieldChoice>;
+  /** The raster for the choice and the current frame; null while none, loading, failed or missing. */
+  fieldRaster: ComputedRef<FieldRaster | null>;
+  /** True after the rasters file failed to load; the next choice retries. */
+  fieldError: Ref<boolean>;
   plateSegments: ShallowRef<PlateSegment[]>;
   plates: ShallowRef<Feature<LineString, PlateProps>[]>;
   hoveredPlate: Ref<number | null>;
@@ -114,9 +121,10 @@ export const TIP_LIFT = 10;
 /** How close, in screen pixels, the pointer must come to a fault vertex. */
 const FAULT_HIT_PX = 6;
 
-/** Drops the shared basemap cache; for tests. */
+/** Drops the shared basemap and fields caches; for tests. */
 export function resetMapCaches(): void {
   resetBasemapCache();
+  resetFieldsCache();
 }
 
 export function useMapView(opts: MapViewOptions): MapView {
@@ -132,6 +140,23 @@ export function useMapView(opts: MapViewOptions): MapView {
   const transform = shallowRef<ZoomTransform>(zoomIdentity);
   const showPlates = ref(true);
   const showTeeth = ref(true);
+  const field = ref<FieldChoice>("none");
+  const fields = shallowRef<FieldsFile | null>(null);
+  const fieldError = ref(false);
+  watch(field, (f) => {
+    if (f === "none" || fields.value !== null) return;
+    fieldError.value = false;
+    loadFields(api)
+      .then((file) => {
+        fields.value = file;
+      })
+      .catch(() => {
+        fieldError.value = true;
+      });
+  });
+  const fieldRaster = computed(() =>
+    rasterFor(fields.value, field.value, viewOf(view.value.frame.global)),
+  );
   const coarse = coarsePointer();
   /**
    * When set, wheel, drag and one finger leave the map alone (the page
@@ -362,6 +387,9 @@ export function useMapView(opts: MapViewOptions): MapView {
     basemap,
     showPlates,
     showTeeth,
+    field,
+    fieldRaster,
+    fieldError,
     plateSegments,
     plates,
     hoveredPlate,

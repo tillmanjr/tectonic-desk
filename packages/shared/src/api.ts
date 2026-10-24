@@ -184,3 +184,31 @@ export interface ApiError {
   error: string;
   issues?: ApiIssue[];
 }
+
+/** The two anomaly rasters a map can draw under its layers. */
+export type FieldId = "gravity" | "magnetic";
+export type FieldView = "global" | "wc";
+
+/** One rendered raster and the legend that explains it; `/fields/fields.json` lists them. */
+export interface FieldRaster {
+  field: FieldId;
+  view: FieldView;
+  /** Path under the web root. */
+  src: string;
+  width: number;
+  height: number;
+  units: string;
+  /** Ramp stops as [value, "#rrggbb"], ascending. */
+  stops: [number, string][];
+  /** Values labelled on the ramp. */
+  ticks: number[];
+  /** True when the stops are histogram-equalised rather than linear. */
+  equalised: boolean;
+  caption: string;
+  source: { name: string; url: string; doi: string | null };
+}
+
+export interface FieldsFile {
+  generated: string;
+  rasters: FieldRaster[];
+}

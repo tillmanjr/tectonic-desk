@@ -10,6 +10,7 @@ import type {
   ApiVolcanoDetail,
   ApiVolcanoReportList,
   ApiVolcanoStatusList,
+  FieldsFile,
 } from "@tectonic/shared";
 
 /** The window filters shared by the list and the aggregates. */
@@ -41,6 +42,8 @@ export interface ApiClient {
   volcanoChanges: (days: number) => Promise<ApiVolcanoChanges>;
   volcanoReports: (weeks: number) => Promise<ApiVolcanoReportList>;
   volcano: (number: number) => Promise<ApiVolcanoDetail>;
+  /** The gravity and magnetic rasters file, a static asset beside the app rather than an API route. */
+  fields: () => Promise<FieldsFile>;
 }
 
 export class ApiRequestError extends Error {
@@ -71,8 +74,8 @@ function toParams(q: EventsFilterQuery & { limit?: number; cell?: number }): str
 }
 
 export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
-  async function get<T>(path: string): Promise<T> {
-    const res = await fetchFn(base + path, { headers: { accept: "application/json" } });
+  async function getUrl<T>(url: string): Promise<T> {
+    const res = await fetchFn(url, { headers: { accept: "application/json" } });
     if (!res.ok) {
       let message = `HTTP ${String(res.status)}`;
       try {
@@ -85,6 +88,7 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     }
     return (await res.json()) as T;
   }
+  const get = <T>(path: string): Promise<T> => getUrl(base + path);
   return {
     regions: () => get("/regions"),
     events: (query) => get(`/events?${toParams(query)}`),
@@ -97,5 +101,6 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     volcanoChanges: (days) => get(`/volcanoes/changes?days=${String(days)}`),
     volcanoReports: (weeks) => get(`/volcanoes/reports?weeks=${String(weeks)}`),
     volcano: (number) => get(`/volcanoes/${String(number)}`),
+    fields: () => getUrl("/fields/fields.json"),
   };
 }

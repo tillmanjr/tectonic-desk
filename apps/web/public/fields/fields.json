@@ -1,0 +1,181 @@
+{
+  "generated": "2026-10-24T23:24:33.814Z",
+  "rasters": [
+    {
+      "field": "gravity",
+      "view": "global",
+      "units": "mGal",
+      "stops": [
+        [
+          -120,
+          "#2f5f9e"
+        ],
+        [
+          -60,
+          "#8db0d6"
+        ],
+        [
+          0,
+          "#efeee9"
+        ],
+        [
+          60,
+          "#dc9a84"
+        ],
+        [
+          120,
+          "#a63d2f"
+        ]
+      ],
+      "ticks": [
+        -120,
+        -60,
+        0,
+        60,
+        120
+      ],
+      "equalised": false,
+      "caption": "Free-air gravity anomaly · Scripps v33 (Sandwell et al. 2019) via GMT · 6′ grid · EGM2008 over land · clipped at ±120",
+      "source": {
+        "name": "Scripps marine gravity via GMT earth_faa",
+        "url": "https://www.generic-mapping-tools.org/remote-datasets/earth-faa.html",
+        "doi": "10.1016/j.asr.2019.09.011"
+      },
+      "src": "/fields/gravity-global.png",
+      "width": 1536,
+      "height": 799
+    },
+    {
+      "field": "gravity",
+      "view": "wc",
+      "units": "mGal",
+      "stops": [
+        [
+          -80,
+          "#2f5f9e"
+        ],
+        [
+          -40,
+          "#8db0d6"
+        ],
+        [
+          0,
+          "#efeee9"
+        ],
+        [
+          40,
+          "#dc9a84"
+        ],
+        [
+          80,
+          "#a63d2f"
+        ]
+      ],
+      "ticks": [
+        -80,
+        -40,
+        0,
+        40,
+        80
+      ],
+      "equalised": false,
+      "caption": "Isostatic residual gravity anomaly · USGS DDS-9 (Simpson and Jachens) · 4 km grid · Airy-Heiskanen, 2.67 g/cm³ · conterminous US only, free-air offshore · clipped at ±80",
+      "source": {
+        "name": "USGS mrdata gravity",
+        "url": "https://mrdata.usgs.gov/gravity/",
+        "doi": null
+      },
+      "src": "/fields/gravity-wc.png",
+      "width": 2048,
+      "height": 1434
+    },
+    {
+      "field": "magnetic",
+      "view": "global",
+      "units": "nT",
+      "stops": [
+        [
+          -167.60000610351562,
+          "#2f5f9e"
+        ],
+        [
+          -36,
+          "#8db0d6"
+        ],
+        [
+          -3.5999999046325684,
+          "#efeee9"
+        ],
+        [
+          26.399999618530273,
+          "#dc9a84"
+        ],
+        [
+          208,
+          "#a63d2f"
+        ]
+      ],
+      "ticks": [
+        -168,
+        -36,
+        -4,
+        26,
+        208
+      ],
+      "equalised": true,
+      "caption": "Total-field magnetic anomaly · EMAG2v3 (Meyer, Chulliat and Saltus 2017) via GMT · 6′ grid · 4 km above the geoid",
+      "source": {
+        "name": "NCEI EMAG2v3 via GMT earth_mag4km",
+        "url": "https://www.ncei.noaa.gov/products/earth-magnetic-model-anomaly-grid-2",
+        "doi": "10.7289/V5H70CVX"
+      },
+      "src": "/fields/magnetic-global.png",
+      "width": 1536,
+      "height": 799
+    },
+    {
+      "field": "magnetic",
+      "view": "wc",
+      "units": "nT",
+      "stops": [
+        [
+          -167.60000610351562,
+          "#2f5f9e"
+        ],
+        [
+          -36,
+          "#8db0d6"
+        ],
+        [
+          -3.5999999046325684,
+          "#efeee9"
+        ],
+        [
+          26.399999618530273,
+          "#dc9a84"
+        ],
+        [
+          208,
+          "#a63d2f"
+        ]
+      ],
+      "ticks": [
+        -168,
+        -36,
+        -4,
+        26,
+        208
+      ],
+      "equalised": true,
+      "caption": "Total-field magnetic anomaly · EMAG2v3 (Meyer, Chulliat and Saltus 2017) via GMT · 6′ grid · 4 km above the geoid",
+      "source": {
+        "name": "NCEI EMAG2v3 via GMT earth_mag4km",
+        "url": "https://www.ncei.noaa.gov/products/earth-magnetic-model-anomaly-grid-2",
+        "doi": "10.7289/V5H70CVX"
+      },
+      "src": "/fields/magnetic-wc.png",
+      "width": 2048,
+      "height": 1434
+    }
+  ]
+}
