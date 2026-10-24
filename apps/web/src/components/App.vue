@@ -134,7 +134,12 @@ const nav: MarksNav = {
   close: () => void router.replace({ query: withoutOverlay(route.query) }),
   goTo: (url) => void router.push(url),
   openHere: (mark) => {
-    const t = hereTarget(page.value, routeRegion.value, flatQuery(withoutOverlay(route.query)), mark);
+    const t = hereTarget(
+      page.value,
+      routeRegion.value,
+      flatQuery(withoutOverlay(route.query)),
+      mark,
+    );
     void router.push(t.url);
     if (t.switched) notice.post("Switching to Active Earth");
   },
@@ -339,7 +344,7 @@ onUnmounted(() => {
       </p>
       <p class="byline">
         Built for Barbara by
-        <a href="https://github.com/tillmanjr" rel="author">Tillman</a>
+        <a href="https://github.com/tillmanjr" rel="author noopener" target="_blank">Tillman</a>
       </p>
     </footer>
   </div>

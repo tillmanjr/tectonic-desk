@@ -75,17 +75,19 @@ const sevStyle = (alert: string | null): Record<string, string> | undefined =>
         <span v-if="c.e.eventType !== null && c.e.eventType !== 'earthquake'" class="pill">{{
           c.e.eventType
         }}</span>
-        <span class="m">
-          {{ fmtStamp(c.e.time, zone) }} · {{ ago(c.e.time, clock.now.value) }} ago ·
-          {{ depthText(c.e.depthKm) }} km<template v-if="c.style !== null">
-            · {{ c.style }}</template
-          >
-        </span>
-        <span v-if="c.seq !== null" class="m">
-          Followed by {{ c.seq.count }} {{ c.seq.count === 1 ? "event" : "events" }} ≥M{{
-            minMag
-          }}
-          within 150 km; largest M{{ fmtMag(c.seq.largest.mag) }}
+        <span class="lines">
+          <span class="m">
+            {{ fmtStamp(c.e.time, zone) }} · {{ ago(c.e.time, clock.now.value) }} ago ·
+            {{ depthText(c.e.depthKm) }} km<template v-if="c.style !== null">
+              · {{ c.style }}</template
+            >
+          </span>
+          <span v-if="c.seq !== null" class="m">
+            Followed by {{ c.seq.count }} {{ c.seq.count === 1 ? "event" : "events" }} ≥M{{
+              minMag
+            }}
+            within 150 km; largest M{{ fmtMag(c.seq.largest.mag) }}
+          </span>
         </span>
       </span>
     </button>

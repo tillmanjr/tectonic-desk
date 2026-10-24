@@ -48,7 +48,12 @@ describe("VolcanoDetail", () => {
     expect(w.text()).toContain("Shield(s) · Shield");
     expect(w.text()).toContain("1222 m");
     expect(w.text()).toContain("2024 · Eruption Observed");
-    expect(w.find("a[href*='vn=332010']").exists()).toBe(true);
+    expect(w.find("a[href*='vn=332010']").attributes("target")).toBe("_blank");
+    expect(w.find("a[href*='vn=332010']").attributes("rel")).toBe("noopener");
+    for (const a of w.findAll(".statuslist a")) {
+      expect(a.attributes("target")).toBe("_blank");
+      expect(a.attributes("rel")).toBe("noopener");
+    }
     expect(w.findAll(".statuslist li")).toHaveLength(2);
     expect(w.findAll(".statuslist li")[0]?.text()).toContain("USGS Watch · Orange");
     expect(w.text()).not.toContain("Weekly report");

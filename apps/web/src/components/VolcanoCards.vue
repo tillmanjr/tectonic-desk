@@ -41,12 +41,14 @@ const selectVolcano = useInjected(SELECT_VOLCANO);
           statusLabel(a.status)
         }}</span>
         <span v-if="!isElevated(a.status)" class="pill">back to normal</span>
-        <span class="m">
-          {{ isElevated(a.status) ? "at this level since" : "changed" }}
-          {{ fmtStamp(a.status.observedAt, zone) }} ·
-          {{ ago(a.status.observedAt, clock.now.value) }} ago
+        <span class="lines">
+          <span class="m">
+            {{ isElevated(a.status) ? "at this level since" : "changed" }}
+            {{ fmtStamp(a.status.observedAt, zone) }} ·
+            {{ ago(a.status.observedAt, clock.now.value) }} ago
+          </span>
+          <span v-if="a.status.synopsis !== null" class="m">{{ a.status.synopsis }}</span>
         </span>
-        <span v-if="a.status.synopsis !== null" class="m">{{ a.status.synopsis }}</span>
       </span>
     </button>
   </CardGrid>

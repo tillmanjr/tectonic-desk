@@ -154,7 +154,8 @@ export function filterQuery(f: EventFilter): Record<FilterKey, string | undefine
   return q;
 }
 
-function within(value: number | null, min: number | null, max: number | null): boolean {
+/** True when `value` lies within the set bounds (inclusive); null fails once a bound is set. */
+export function within(value: number | null, min: number | null, max: number | null): boolean {
   if (min === null && max === null) return true;
   if (value === null) return false;
   return (min === null || value >= min) && (max === null || value <= max);

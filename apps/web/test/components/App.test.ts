@@ -55,6 +55,8 @@ describe("App", () => {
     expect(wrapper.find("footer .byline a").attributes("href")).toBe(
       "https://github.com/tillmanjr",
     );
+    expect(wrapper.find("footer .byline a").attributes("target")).toBe("_blank");
+    expect(wrapper.find("footer .byline a").attributes("rel")).toBe("author noopener");
     expect(wrapper.find(".detail").classes()).toContain("open");
     expect(wrapper.find(".detail .mag").text()).toContain("M5.5");
     await router.replace({ query: {} });

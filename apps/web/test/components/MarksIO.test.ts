@@ -40,12 +40,12 @@ describe("MarksIO", () => {
     const create = vi.fn<(blob: Blob) => string>(() => "blob:marks");
     const revoke = vi.fn();
     Object.assign(URL, { createObjectURL: create, revokeObjectURL: revoke });
-    const click = vi
-      .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(function (this: HTMLAnchorElement) {
-        expect(this.download).toBe("tectonic-marks-2026-10-13.json");
-        expect(this.href).toContain("blob:marks");
-      });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      expect(this.download).toBe("tectonic-marks-2026-10-13.json");
+      expect(this.href).toContain("blob:marks");
+    });
     const w = mountWith(MarksIO, ctx);
     await w.find(".export").trigger("click");
     expect(click).toHaveBeenCalledTimes(1);

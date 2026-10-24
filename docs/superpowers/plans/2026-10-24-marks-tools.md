@@ -24,10 +24,12 @@
 ### Task 1: `hereTarget` (pure URL arithmetic)
 
 **Files:**
+
 - Create: `apps/web/src/lib/marks-nav.ts`
 - Test: `apps/web/test/lib/marks-nav.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Page`, `pagePath` from `src/router.ts`; `Mark`, `MarkKind` from `src/lib/marks.ts`.
 - Produces: `showsKind(page, kind): boolean`, `hereTarget(page, region, query, mark): HereTarget` with `HereTarget = { url: string; switched: boolean }`.
 
@@ -158,6 +160,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 2: Notice store and strip
 
 **Files:**
+
 - Create: `apps/web/src/lib/notice.ts`
 - Test: `apps/web/test/lib/notice.test.ts`
 - Modify: `apps/web/src/lib/keys.ts` (add `NOTICE`)
@@ -167,6 +170,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `apps/web/test/components/App.test.ts` (one assertion in a new test, see Task 3; here only make sure the strip is absent at boot)
 
 **Interfaces:**
+
 - Produces: `NoticeStore { current: Readonly<Ref<string | null>>; post(text, ms?): void; clear(): void }`, `createNotice(timers?)`, `NOTICE_MS = 2500`, `NOTICE: InjectionKey<NoticeStore>`.
 
 - [ ] **Step 1: Write the failing unit test**
@@ -299,11 +303,11 @@ provide(NOTICE, notice);
 At the end of the template, after `<MarksOverlay v-if="overlay !== null" />`, add
 
 ```html
-  <Transition name="notice">
-    <div v-if="notice.current.value !== null" class="notice" role="status">
-      {{ notice.current.value }}
-    </div>
-  </Transition>
+<Transition name="notice">
+  <div v-if="notice.current.value !== null" class="notice" role="status">
+    {{ notice.current.value }}
+  </div>
+</Transition>
 ```
 
 - [ ] **Step 7: Styles**
@@ -366,6 +370,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 3: `Open here` on rows and cards
 
 **Files:**
+
 - Modify: `apps/web/src/lib/keys.ts` (`MarksNav.openHere`)
 - Modify: `apps/web/src/components/App.vue` (implement `openHere`)
 - Modify: `apps/web/src/components/MarkRow.vue`
@@ -374,6 +379,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Test: `apps/web/test/components/MarksOverlay.test.ts`, `apps/web/test/components/App.test.ts`
 
 **Interfaces:**
+
 - Consumes: `hereTarget` from Task 1, `NOTICE`/`createNotice` from Task 2.
 - Produces: `MarksNav.openHere(mark: Mark): void`.
 
@@ -382,15 +388,15 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 In `apps/web/test/components/MarksOverlay.test.ts`, inside the first test (`lists marks newest first ... opens a view`), find the line that clicks `.openview` and asserts `ctx.nav.goTo`; add right after it:
 
 ```ts
-    await w.findAll(".openhere")[0]?.trigger("click");
-    expect(ctx.nav.openHere).toHaveBeenCalledWith(ctx.marks.marks.value[0]);
+await w.findAll(".openhere")[0]?.trigger("click");
+expect(ctx.nav.openHere).toHaveBeenCalledWith(ctx.marks.marks.value[0]);
 ```
 
 In the test `shows a group's panels, loading volcanoes once, and goes back to the list`, after the existing `Open view` assertion on a card (search for `.markcard .openview` or the `goTo` assertion in that test), add:
 
 ```ts
-    await w.find(".markcard .openhere").trigger("click");
-    expect(ctx.nav.openHere).toHaveBeenCalledTimes(1);
+await w.find(".markcard .openhere").trigger("click");
+expect(ctx.nav.openHere).toHaveBeenCalledTimes(1);
 ```
 
 (If that test has no `Open view` click, add both clicks after the cards are asserted to exist.)
@@ -398,41 +404,41 @@ In the test `shows a group's panels, loading volcanoes once, and goes back to th
 In `apps/web/test/components/App.test.ts`, add a new test at the end of the `describe`:
 
 ```ts
-  it("opens a mark in the current view, switching to Active Earth only when the page lacks the panel", async () => {
-    stubCanvas();
-    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    const { wrapper, router, marks } = await mountApp("/volcanoes/wc?from=2026-01-01&marks=all");
-    marks.add({
-      kind: "event",
-      ref: "us1",
-      name: "Kuril shock",
-      url: "/earthquakes/wc?event=us1",
-      frame: "wc",
-      lon: -122,
-      lat: 37,
-      headline: "M5.5 mww",
-      sub: "10 km N of Somewhere",
-      stamp: "2026-10-13T10:00:00.000Z",
-      mag: 5.5,
-      depthKm: 10,
-    });
-    await flushPromises();
-    await wrapper.find(".openhere").trigger("click");
-    await flushPromises();
-    expect(router.currentRoute.value.fullPath).toBe("/active/wc?from=2026-01-01&event=us1");
-    expect(wrapper.find(".notice").text()).toBe("Switching to Active Earth");
-    vi.advanceTimersByTime(3000);
-    await flushPromises();
-    expect(wrapper.find(".notice").exists()).toBe(false);
-
-    await router.push("/earthquakes/wc?volcano=1&marks=all");
-    await flushPromises();
-    await wrapper.find(".openhere").trigger("click");
-    await flushPromises();
-    expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?event=us1");
-    expect(wrapper.find(".notice").exists()).toBe(false);
-    wrapper.unmount();
+it("opens a mark in the current view, switching to Active Earth only when the page lacks the panel", async () => {
+  stubCanvas();
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  const { wrapper, router, marks } = await mountApp("/volcanoes/wc?from=2026-01-01&marks=all");
+  marks.add({
+    kind: "event",
+    ref: "us1",
+    name: "Kuril shock",
+    url: "/earthquakes/wc?event=us1",
+    frame: "wc",
+    lon: -122,
+    lat: 37,
+    headline: "M5.5 mww",
+    sub: "10 km N of Somewhere",
+    stamp: "2026-10-13T10:00:00.000Z",
+    mag: 5.5,
+    depthKm: 10,
   });
+  await flushPromises();
+  await wrapper.find(".openhere").trigger("click");
+  await flushPromises();
+  expect(router.currentRoute.value.fullPath).toBe("/active/wc?from=2026-01-01&event=us1");
+  expect(wrapper.find(".notice").text()).toBe("Switching to Active Earth");
+  vi.advanceTimersByTime(3000);
+  await flushPromises();
+  expect(wrapper.find(".notice").exists()).toBe(false);
+
+  await router.push("/earthquakes/wc?volcano=1&marks=all");
+  await flushPromises();
+  await wrapper.find(".openhere").trigger("click");
+  await flushPromises();
+  expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?event=us1");
+  expect(wrapper.find(".notice").exists()).toBe(false);
+  wrapper.unmount();
+});
 ```
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -488,30 +494,30 @@ const flatQuery = (q: LocationQuery): Record<string, string> => {
 `apps/web/src/components/MarkRow.vue`, inside `.mactions`, before `Open view`:
 
 ```html
-      <button
-        type="button"
-        class="openhere"
-        title="Select it in the view you were in"
-        @click="nav.openHere(mark)"
-      >
-        Open here
-      </button>
+<button
+  type="button"
+  class="openhere"
+  title="Select it in the view you were in"
+  @click="nav.openHere(mark)"
+>
+  Open here
+</button>
 ```
 
 `apps/web/src/components/MarkPanels.vue`: the card header is a four-column grid whose last track holds the one button, so wrap the buttons in the row's `.mactions` block (already styled to stack, and to sit on its own line under 720 px):
 
 ```html
-          <div class="mactions">
-            <button
-              type="button"
-              class="openhere"
-              title="Select it in the view you were in"
-              @click="nav.openHere(m)"
-            >
-              Open here
-            </button>
-            <button type="button" class="openview" @click="nav.goTo(m.url)">Open view</button>
-          </div>
+<div class="mactions">
+  <button
+    type="button"
+    class="openhere"
+    title="Select it in the view you were in"
+    @click="nav.openHere(m)"
+  >
+    Open here
+  </button>
+  <button type="button" class="openview" @click="nav.goTo(m.url)">Open view</button>
+</div>
 ```
 
 Styles: in `apps/web/src/styles.css`, the rule `.marks .openview,` (around line 1522, grouped with `.showevents` and `.compare`) gets `.marks .openhere,` added on the line before it so the new button shares the look.
@@ -535,11 +541,13 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 4: Group order
 
 **Files:**
+
 - Modify: `apps/web/src/lib/marks.ts` (`moveGroup`)
 - Modify: `apps/web/src/components/MarksOverlay.vue`
 - Test: `apps/web/test/lib/marks.test.ts`, `apps/web/test/components/MarksOverlay.test.ts`
 
 **Interfaces:**
+
 - Produces: `MarksStore.moveGroup(id: string, delta: -1 | 1): void`.
 
 - [ ] **Step 1: Write the failing unit test**
@@ -547,24 +555,24 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 Append inside the `describe("marks")` in `apps/web/test/lib/marks.test.ts`:
 
 ```ts
-  it("moves a stored group up or down, ignoring the ends and unknown ids", () => {
-    const m = memory();
-    const s = createMarks(m.storage, deps());
-    const a = s.addGroup("A");
-    const b = s.addGroup("B");
-    const c = s.addGroup("C");
-    const ids = () => s.groups.value.map((g) => g.id);
-    s.moveGroup(c.id, -1);
-    expect(ids()).toEqual([a.id, c.id, b.id]);
-    s.moveGroup(a.id, -1);
-    s.moveGroup(b.id, 1);
-    s.moveGroup("nope", 1);
-    expect(ids()).toEqual([a.id, c.id, b.id]);
-    s.moveGroup(a.id, 1);
-    expect(ids()).toEqual([c.id, a.id, b.id]);
-    const written = JSON.parse(m.store.get(MARKS_KEY) ?? "") as { groups: { id: string }[] };
-    expect(written.groups.map((g) => g.id)).toEqual([c.id, a.id, b.id]);
-  });
+it("moves a stored group up or down, ignoring the ends and unknown ids", () => {
+  const m = memory();
+  const s = createMarks(m.storage, deps());
+  const a = s.addGroup("A");
+  const b = s.addGroup("B");
+  const c = s.addGroup("C");
+  const ids = () => s.groups.value.map((g) => g.id);
+  s.moveGroup(c.id, -1);
+  expect(ids()).toEqual([a.id, c.id, b.id]);
+  s.moveGroup(a.id, -1);
+  s.moveGroup(b.id, 1);
+  s.moveGroup("nope", 1);
+  expect(ids()).toEqual([a.id, c.id, b.id]);
+  s.moveGroup(a.id, 1);
+  expect(ids()).toEqual([c.id, a.id, b.id]);
+  const written = JSON.parse(m.store.get(MARKS_KEY) ?? "") as { groups: { id: string }[] };
+  expect(written.groups.map((g) => g.id)).toEqual([c.id, a.id, b.id]);
+});
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -605,25 +613,25 @@ Expected: PASS.
 Append to `apps/web/test/components/MarksOverlay.test.ts`:
 
 ```ts
-  it("reorders stored groups from the group head; All has no arrows", async () => {
-    stubWorld();
-    const ctx = await makeContext();
-    const a = ctx.marks.addGroup("A");
-    const b = ctx.marks.addGroup("B");
-    const w = await open(ctx);
-    expect(w.find(".marks-grouphead .morder").exists()).toBe(false);
-    ctx.overlay.value = { group: a.id, mode: "list" };
-    await nextTick();
-    expect(w.find(".marks-grouphead .up").attributes("disabled")).toBeDefined();
-    expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeUndefined();
-    await w.find(".marks-grouphead .down").trigger("click");
-    expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([b.id, a.id]);
-    expect(w.findAll(".marks-rail button")[1]?.text()).toBe("B · 0");
-    expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeDefined();
-    await w.find(".marks-grouphead .up").trigger("click");
-    expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([a.id, b.id]);
-    w.unmount();
-  });
+it("reorders stored groups from the group head; All has no arrows", async () => {
+  stubWorld();
+  const ctx = await makeContext();
+  const a = ctx.marks.addGroup("A");
+  const b = ctx.marks.addGroup("B");
+  const w = await open(ctx);
+  expect(w.find(".marks-grouphead .morder").exists()).toBe(false);
+  ctx.overlay.value = { group: a.id, mode: "list" };
+  await nextTick();
+  expect(w.find(".marks-grouphead .up").attributes("disabled")).toBeDefined();
+  expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeUndefined();
+  await w.find(".marks-grouphead .down").trigger("click");
+  expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([b.id, a.id]);
+  expect(w.findAll(".marks-rail button")[1]?.text()).toBe("B · 0");
+  expect(w.find(".marks-grouphead .down").attributes("disabled")).toBeDefined();
+  await w.find(".marks-grouphead .up").trigger("click");
+  expect(ctx.marks.groups.value.map((g) => g.id)).toEqual([a.id, b.id]);
+  w.unmount();
+});
 ```
 
 - [ ] **Step 6: Run to verify it fails**
@@ -643,26 +651,26 @@ const groupIndex = computed(() => store.groups.value.findIndex((g) => g.id === s
 In the template, as the first child of `.marks-grouphead` (before the rename input):
 
 ```html
-          <div v-if="!view.virtual" class="morder">
-            <button
-              type="button"
-              class="up"
-              :disabled="groupIndex === 0"
-              aria-label="Move group up"
-              @click="store.moveGroup(view.id, -1)"
-            >
-              ▲
-            </button>
-            <button
-              type="button"
-              class="down"
-              :disabled="groupIndex === store.groups.value.length - 1"
-              aria-label="Move group down"
-              @click="store.moveGroup(view.id, 1)"
-            >
-              ▼
-            </button>
-          </div>
+<div v-if="!view.virtual" class="morder">
+  <button
+    type="button"
+    class="up"
+    :disabled="groupIndex === 0"
+    aria-label="Move group up"
+    @click="store.moveGroup(view.id, -1)"
+  >
+    ▲
+  </button>
+  <button
+    type="button"
+    class="down"
+    :disabled="groupIndex === store.groups.value.length - 1"
+    aria-label="Move group down"
+    @click="store.moveGroup(view.id, 1)"
+  >
+    ▼
+  </button>
+</div>
 ```
 
 `.morder` is already styled for rows (`.marks .morder button`), so nothing else is needed.
@@ -686,10 +694,12 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 5: Document export and merge (pure + store)
 
 **Files:**
+
 - Modify: `apps/web/src/lib/marks.ts`
 - Test: `apps/web/test/lib/marks.test.ts`
 
 **Interfaces:**
+
 - Produces: `MarksDocument { marks: Mark[]; groups: MarkGroup[] }`, `MergeReport { marks: number; groups: number; members: number }`, `exportDocument(doc, now): string`, `exportFileName(now): string`, `mergeDocuments(current, incoming): { doc: MarksDocument; report: MergeReport }`, `countsText(doc): string`, `reportText(r): string`, and on `MarksStore`: `document(): MarksDocument`, `merge(doc): MergeReport`, `replaceAll(doc): void`. `parseMarks` now returns `MarksDocument` (same shape as before, named).
 
 - [ ] **Step 1: Write the failing tests**
@@ -697,75 +707,83 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 Add to the import in `apps/web/test/lib/marks.test.ts`: `countsText, exportDocument, exportFileName, mergeDocuments, reportText, type Mark, type MarksDocument`. Append inside the describe:
 
 ```ts
-  const at = new Date("2026-10-24T09:30:00Z");
-  const stored = (id: string, over: Partial<Mark> = {}): Mark => ({
-    ...quake,
-    id,
-    createdAt: "2026-10-21T00:00:00.000Z",
-    ...over,
-  });
+const at = new Date("2026-10-24T09:30:00Z");
+const stored = (id: string, over: Partial<Mark> = {}): Mark => ({
+  ...quake,
+  id,
+  createdAt: "2026-10-21T00:00:00.000Z",
+  ...over,
+});
 
-  it("exports the document as versioned, dated JSON with a dated file name", () => {
-    const doc: MarksDocument = { marks: [stored("a")], groups: [{ id: "g", name: "G", marks: ["a"] }] };
-    const text = exportDocument(doc, at);
-    expect(JSON.parse(text)).toEqual({ v: 1, exportedAt: "2026-10-24T09:30:00.000Z", ...doc });
-    expect(text.startsWith("{\n")).toBe(true);
-    expect(parseMarks(text)).toEqual(doc);
-    expect(exportFileName(at)).toBe("tectonic-marks-2026-10-24.json");
-  });
+it("exports the document as versioned, dated JSON with a dated file name", () => {
+  const doc: MarksDocument = {
+    marks: [stored("a")],
+    groups: [{ id: "g", name: "G", marks: ["a"] }],
+  };
+  const text = exportDocument(doc, at);
+  expect(JSON.parse(text)).toEqual({ v: 1, exportedAt: "2026-10-24T09:30:00.000Z", ...doc });
+  expect(text.startsWith("{\n")).toBe(true);
+  expect(parseMarks(text)).toEqual(doc);
+  expect(exportFileName(at)).toBe("tectonic-marks-2026-10-24.json");
+});
 
-  it("merges what the incoming document adds and counts it", () => {
-    const current: MarksDocument = {
-      marks: [stored("a"), stored("b")],
-      groups: [{ id: "g1", name: "One", marks: ["a"] }],
-    };
-    const incoming: MarksDocument = {
-      marks: [stored("b", { name: "renamed" }), stored("c")],
-      groups: [
-        { id: "g1", name: "Other name", marks: ["a", "b", "c", "zz"] },
-        { id: "g2", name: "Two", marks: ["c", "zz"] },
-      ],
-    };
-    const { doc, report } = mergeDocuments(current, incoming);
-    expect(doc.marks.map((m) => m.id)).toEqual(["a", "b", "c"]);
-    expect(doc.marks[1]?.name).toBe("Kuril shock");
-    expect(doc.groups).toEqual([
-      { id: "g1", name: "One", marks: ["a", "b", "c"] },
-      { id: "g2", name: "Two", marks: ["c"] },
-    ]);
-    expect(report).toEqual({ marks: 1, groups: 1, members: 2 });
-    expect(mergeDocuments(doc, incoming).report).toEqual({ marks: 0, groups: 0, members: 0 });
-  });
+it("merges what the incoming document adds and counts it", () => {
+  const current: MarksDocument = {
+    marks: [stored("a"), stored("b")],
+    groups: [{ id: "g1", name: "One", marks: ["a"] }],
+  };
+  const incoming: MarksDocument = {
+    marks: [stored("b", { name: "renamed" }), stored("c")],
+    groups: [
+      { id: "g1", name: "Other name", marks: ["a", "b", "c", "zz"] },
+      { id: "g2", name: "Two", marks: ["c", "zz"] },
+    ],
+  };
+  const { doc, report } = mergeDocuments(current, incoming);
+  expect(doc.marks.map((m) => m.id)).toEqual(["a", "b", "c"]);
+  expect(doc.marks[1]?.name).toBe("Kuril shock");
+  expect(doc.groups).toEqual([
+    { id: "g1", name: "One", marks: ["a", "b", "c"] },
+    { id: "g2", name: "Two", marks: ["c"] },
+  ]);
+  expect(report).toEqual({ marks: 1, groups: 1, members: 2 });
+  expect(mergeDocuments(doc, incoming).report).toEqual({ marks: 0, groups: 0, members: 0 });
+});
 
-  it("words counts and reports", () => {
-    expect(countsText({ marks: [], groups: [] })).toBe("0 marks, 0 groups");
-    expect(countsText({ marks: [stored("a")], groups: [{ id: "g", name: "G", marks: [] }] })).toBe(
-      "1 mark, 1 group",
-    );
-    expect(reportText({ marks: 3, groups: 1, members: 2 })).toBe(
-      "Added 3 marks, 1 group, 2 memberships",
-    );
-    expect(reportText({ marks: 0, groups: 0, members: 1 })).toBe("Added 1 membership");
-    expect(reportText({ marks: 0, groups: 0, members: 0 })).toBe("Nothing new");
-  });
+it("words counts and reports", () => {
+  expect(countsText({ marks: [], groups: [] })).toBe("0 marks, 0 groups");
+  expect(countsText({ marks: [stored("a")], groups: [{ id: "g", name: "G", marks: [] }] })).toBe(
+    "1 mark, 1 group",
+  );
+  expect(reportText({ marks: 3, groups: 1, members: 2 })).toBe(
+    "Added 3 marks, 1 group, 2 memberships",
+  );
+  expect(reportText({ marks: 0, groups: 0, members: 1 })).toBe("Added 1 membership");
+  expect(reportText({ marks: 0, groups: 0, members: 0 })).toBe("Nothing new");
+});
 
-  it("reads, merges and replaces the stored document", () => {
-    const m = memory();
-    const s = createMarks(m.storage, deps());
-    const a = s.add(quake);
-    const g = s.addGroup("G");
-    s.setMember(a.id, g.id, true);
-    expect(s.document()).toEqual({ marks: s.marks.value, groups: s.groups.value });
-    const r = s.merge({ marks: [stored("x")], groups: [{ id: g.id, name: "G", marks: ["x"] }] });
-    expect(r).toEqual({ marks: 1, groups: 0, members: 1 });
-    expect(s.marks.value.map((x) => x.id)).toEqual([a.id, "x"]);
-    expect(s.view(g.id)?.marks.map((x) => x.id)).toEqual([a.id, "x"]);
-    expect(JSON.parse(m.store.get(MARKS_KEY) ?? "")).toMatchObject({ marks: [{ id: a.id }, { id: "x" }] });
-    s.replaceAll({ marks: [stored("y")], groups: [] });
-    expect(s.marks.value.map((x) => x.id)).toEqual(["y"]);
-    expect(s.groups.value).toEqual([]);
-    expect(JSON.parse(m.store.get(MARKS_KEY) ?? "")).toMatchObject({ marks: [{ id: "y" }], groups: [] });
+it("reads, merges and replaces the stored document", () => {
+  const m = memory();
+  const s = createMarks(m.storage, deps());
+  const a = s.add(quake);
+  const g = s.addGroup("G");
+  s.setMember(a.id, g.id, true);
+  expect(s.document()).toEqual({ marks: s.marks.value, groups: s.groups.value });
+  const r = s.merge({ marks: [stored("x")], groups: [{ id: g.id, name: "G", marks: ["x"] }] });
+  expect(r).toEqual({ marks: 1, groups: 0, members: 1 });
+  expect(s.marks.value.map((x) => x.id)).toEqual([a.id, "x"]);
+  expect(s.view(g.id)?.marks.map((x) => x.id)).toEqual([a.id, "x"]);
+  expect(JSON.parse(m.store.get(MARKS_KEY) ?? "")).toMatchObject({
+    marks: [{ id: a.id }, { id: "x" }],
   });
+  s.replaceAll({ marks: [stored("y")], groups: [] });
+  expect(s.marks.value.map((x) => x.id)).toEqual(["y"]);
+  expect(s.groups.value).toEqual([]);
+  expect(JSON.parse(m.store.get(MARKS_KEY) ?? "")).toMatchObject({
+    marks: [{ id: "y" }],
+    groups: [],
+  });
+});
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -797,7 +815,11 @@ Change `parseMarks`'s return type annotation to `MarksDocument`. Then, after `de
 ```ts
 /** The JSON text of a document as the export file carries it. */
 export const exportDocument = (doc: MarksDocument, now: Date): string =>
-  JSON.stringify({ v: 1, exportedAt: now.toISOString(), marks: doc.marks, groups: doc.groups }, null, 2);
+  JSON.stringify(
+    { v: 1, exportedAt: now.toISOString(), marks: doc.marks, groups: doc.groups },
+    null,
+    2,
+  );
 
 /** The export file's name for a given moment. */
 export const exportFileName = (now: Date): string =>
@@ -904,12 +926,14 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 6: `MarksIO` in the rail footer
 
 **Files:**
+
 - Create: `apps/web/src/components/MarksIO.vue`
 - Modify: `apps/web/src/components/MarksOverlay.vue` (render it at the foot of the rail)
 - Modify: `apps/web/src/styles.css`
 - Test: `apps/web/test/components/MarksIO.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MARKS`, `CLOCK` keys; `exportDocument`, `exportFileName`, `parseMarks`, `countsText`, `reportText`, `MarksDocument` from `marks.ts`; `ConfirmButton`.
 - Produces: `RESULT_MS = 4000` export from the component's script (for tests), class names `.marks-io`, `.export`, `.import`, `.io-strip`, `.merge`, `.replace`, `.cancel`, `.io-result`.
 
@@ -1142,7 +1166,12 @@ onUnmounted(clearTimer);
     <div v-if="picked !== null" class="io-strip">
       <span class="io-facts">{{ picked.name }}: {{ countsText(picked.doc) }}</span>
       <span class="io-actions">
-        <button type="button" class="merge" title="Add what is missing, keep everything here" @click="merge(picked.doc)">
+        <button
+          type="button"
+          class="merge"
+          title="Add what is missing, keep everything here"
+          @click="merge(picked.doc)"
+        >
           Merge
         </button>
         <ConfirmButton class="replace" label="Replace" @confirm="replace(picked.doc)" />
@@ -1152,10 +1181,20 @@ onUnmounted(clearTimer);
     <template v-else>
       <div v-if="result !== null" class="io-result" role="status">{{ result }}</div>
       <div class="io-buttons">
-        <button type="button" class="export" title="Download every mark and group as a JSON file" @click="exportAll">
+        <button
+          type="button"
+          class="export"
+          title="Download every mark and group as a JSON file"
+          @click="exportAll"
+        >
           Export
         </button>
-        <button type="button" class="import" title="Read a marks file and merge or replace" @click="chooseFile">
+        <button
+          type="button"
+          class="import"
+          title="Read a marks file and merge or replace"
+          @click="chooseFile"
+        >
           Import
         </button>
         <input
@@ -1221,14 +1260,14 @@ Append to `apps/web/src/styles.css`, right after the `.marks-rail input {` rule 
 In the `@media (max-width: 720px)` block, after the `.marks-rail button, .marks-rail input { white-space: nowrap; }` rule, add:
 
 ```css
-  .marks-io {
-    margin-top: 0;
-    margin-left: auto;
-    padding-top: 0;
-    border-top: 0;
-    flex-direction: row;
-    align-items: center;
-  }
+.marks-io {
+  margin-top: 0;
+  margin-left: auto;
+  padding-top: 0;
+  border-top: 0;
+  flex-direction: row;
+  align-items: center;
+}
 ```
 
 - [ ] **Step 6: Run the tests**
@@ -1250,6 +1289,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 7: Docs, full gate and browser check
 
 **Files:**
+
 - Modify: `README.md` (Marked events bullet)
 - Modify: `CLAUDE.md` (Marks bullet)
 
