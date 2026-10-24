@@ -128,27 +128,28 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
             </tr>
             <tr v-if="open" class="frow">
               <th>
-                <input
-                  ref="sinceEl"
-                  type="date"
-                  :class="{ set: filter.since !== null }"
-                  :value="filter.since ?? ''"
-                  :min="bounds.min"
-                  :max="bounds.max"
-                  aria-label="Time from"
-                  @change="setDates"
-                />
-                <span class="dash">–</span>
-                <input
-                  ref="untilEl"
-                  type="date"
-                  :class="{ set: filter.until !== null }"
-                  :value="filter.until ?? ''"
-                  :min="bounds.min"
-                  :max="bounds.max"
-                  aria-label="Time to"
-                  @change="setDates"
-                />
+                <span class="dates">
+                  <input
+                    ref="sinceEl"
+                    type="date"
+                    :class="{ set: filter.since !== null }"
+                    :value="filter.since ?? ''"
+                    :min="bounds.min"
+                    :max="bounds.max"
+                    aria-label="Time from"
+                    @change="setDates"
+                  />
+                  <input
+                    ref="untilEl"
+                    type="date"
+                    :class="{ set: filter.until !== null }"
+                    :value="filter.until ?? ''"
+                    :min="bounds.min"
+                    :max="bounds.max"
+                    aria-label="Time to"
+                    @change="setDates"
+                  />
+                </span>
               </th>
               <th>
                 <RangeInputs

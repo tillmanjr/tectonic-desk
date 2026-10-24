@@ -595,22 +595,27 @@ tr.frow select {
 tr.frow input[type="number"] {
   width: 58px;
 }
+/* Pairs stack so a filter cell is never wider than its column's data. */
+tr.frow .dates,
+tr.frow .range {
+  display: inline-grid;
+  gap: 3px;
+}
 tr.frow input[type="date"] {
   width: 128px;
 }
 tr.frow input[type="text"] {
-  width: 140px;
+  width: 104px;
 }
 tr.frow select {
-  max-width: 160px;
+  max-width: 112px;
 }
 tr.frow input.set,
 tr.frow select.set {
   border-color: var(--accent);
 }
 tr.frow .dash {
-  color: var(--muted);
-  margin: 0 3px;
+  display: none;
 }
 td.num {
   white-space: nowrap;
