@@ -5,6 +5,7 @@ import type { Clock } from "./clock.js";
 import type { EventFilter } from "./filters.js";
 import type { Zone } from "./format.js";
 import type { MarksStore } from "./marks.js";
+import type { NoticeStore } from "./notice.js";
 import type { SettingsStore } from "./settings.js";
 import type { StatusPoll } from "./status.js";
 import type { Theme } from "./theme.js";
@@ -22,6 +23,8 @@ export const SET_FILTER: InjectionKey<(f: EventFilter) => void> = Symbol("setFil
 export const VOLCANOES: InjectionKey<VolcanoStore> = Symbol("volcanoes");
 /** Reader-tunable settings (card rows for now). */
 export const SETTINGS: InjectionKey<SettingsStore> = Symbol("settings");
+/** The one-line app notice; `post` from anywhere, rendered once by `App.vue`. */
+export const NOTICE: InjectionKey<NoticeStore> = Symbol("notice");
 /** Select a GVP volcano number (opens the volcano panel) or null (closes it). */
 export const SELECT_VOLCANO: InjectionKey<(number: number | null) => void> =
   Symbol("selectVolcano");

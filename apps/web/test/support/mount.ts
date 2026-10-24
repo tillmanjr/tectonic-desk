@@ -12,6 +12,7 @@ import {
   CLOCK,
   MARKS,
   MARKS_NAV,
+  NOTICE,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -25,6 +26,7 @@ import {
   type MarksNav,
 } from "../../src/lib/keys.js";
 import { createMarks, type MarksStore } from "../../src/lib/marks.js";
+import { createNotice, type NoticeStore } from "../../src/lib/notice.js";
 import { createSettings, type SettingsStore } from "../../src/lib/settings.js";
 import { createStatusPoll, type StatusPoll } from "../../src/lib/status.js";
 import { createTheme, type Theme } from "../../src/lib/theme.js";
@@ -48,6 +50,7 @@ export interface Context {
   setVolcanoFilter: Mock<(f: VolcanoFilter) => void>;
   settings: SettingsStore;
   marks: MarksStore;
+  notice: NoticeStore;
   /** Spies for every nav action; `overlay` is the writable ref behind `nav.overlay`. */
   nav: MarksNav;
   overlay: Ref<{ group: string; mode: MarksMode } | null>;
@@ -118,6 +121,7 @@ export async function makeContext(
     setVolcanoFilter: vi.fn(),
     settings: createSettings(null),
     marks: createMarks(null),
+    notice: createNotice(),
     nav: {
       viewUrl: ref("/wc?event=us1"),
       overlay,
@@ -155,6 +159,7 @@ export function mountWith(
       provide(SETTINGS, ctx.settings);
       provide(MARKS, ctx.marks);
       provide(MARKS_NAV, ctx.nav);
+      provide(NOTICE, ctx.notice);
       provide(ZONE, ctx.zone);
       return () => h(component, props);
     },

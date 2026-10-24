@@ -30,6 +30,7 @@ import {
   CLOCK,
   MARKS,
   MARKS_NAV,
+  NOTICE,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -43,6 +44,7 @@ import {
   type MarksNav,
 } from "../lib/keys.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
+import { createNotice } from "../lib/notice.js";
 import { createSettings } from "../lib/settings.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -59,6 +61,7 @@ const clock = inject(CLOCK, null) ?? createClock();
 const theme = inject(THEME, null) ?? createTheme();
 const settings = inject(SETTINGS, null) ?? createSettings();
 const marks = inject(MARKS, null) ?? createMarks();
+const notice = createNotice();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
@@ -72,6 +75,7 @@ provide(CLOCK, clock);
 provide(THEME, theme);
 provide(SETTINGS, settings);
 provide(MARKS, marks);
+provide(NOTICE, notice);
 provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);
@@ -327,4 +331,9 @@ onUnmounted(() => {
   <DetailPanel />
   <VolcanoDetail v-if="hasVolcanoes(page)" />
   <MarksOverlay v-if="overlay !== null" />
+  <Transition name="notice">
+    <div v-if="notice.current.value !== null" class="notice" role="status">
+      {{ notice.current.value }}
+    </div>
+  </Transition>
 </template>

@@ -1674,6 +1674,31 @@ body.marks-open {
   }
 }
 
+/* App notice: one short line above everything, never interactive. */
+.notice {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 13px var(--f-ui);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+  pointer-events: none;
+}
+.notice-enter-active,
+.notice-leave-active {
+  transition: opacity 0.2s ease;
+}
+.notice-enter-from,
+.notice-leave-to {
+  opacity: 0;
+}
+
 /* Marked events: Compare as connected vertices. Top nodes are the column marks, left nodes the row
    marks; each edge card reads from its left node to its top node. A table underneath keeps the
    reading order; the spacing between cells is where the edges show. Node and card widths plus
