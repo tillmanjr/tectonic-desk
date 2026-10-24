@@ -537,6 +537,81 @@ td {
   border-bottom: 1px solid var(--line);
   vertical-align: top;
 }
+/* Table column filters: Clear all and the toggle in the title, inputs in a second header row
+   that sticks under the sort row. Set inputs and bounded headers take the accent. */
+.panel h2.withfilter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.panel h2.withfilter > span:first-of-type {
+  flex: 1;
+}
+.filterhead {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.filterhead button {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 12px var(--f-ui);
+  cursor: pointer;
+}
+.filterhead .clearall {
+  color: var(--muted);
+}
+.filterhead .filtertoggle.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+th.fon {
+  color: var(--accent);
+}
+tr.frow th {
+  top: 29px;
+  padding: 3px 6px 6px;
+  cursor: default;
+  background: var(--bg);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+tr.frow input,
+tr.frow select {
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 12px var(--f-data);
+  vertical-align: middle;
+}
+tr.frow input[type="number"] {
+  width: 58px;
+}
+tr.frow input[type="date"] {
+  width: 128px;
+}
+tr.frow input[type="text"] {
+  width: 140px;
+}
+tr.frow select {
+  max-width: 160px;
+}
+tr.frow input.set,
+tr.frow select.set {
+  border-color: var(--accent);
+}
+tr.frow .dash {
+  color: var(--muted);
+  margin: 0 3px;
+}
 td.num {
   white-space: nowrap;
 }
