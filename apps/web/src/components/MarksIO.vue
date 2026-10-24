@@ -24,6 +24,8 @@ const clock = useInjected(CLOCK);
 const picked = ref<{ name: string; doc: MarksDocument } | null>(null);
 const result = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+/** Bumped after each pick so the input is fresh and picking the same file again fires change. */
+const inputKey = ref(0);
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 function clearTimer(): void {
@@ -54,12 +56,10 @@ function exportAll(): void {
 function chooseFile(): void {
   fileInput.value?.click();
 }
-async function onFile(e: Event): Promise<void> {
-  const input = e.target instanceof HTMLInputElement ? e.target : null;
-  const file = input?.files?.[0];
-  if (input === null || file === undefined) return;
+async function onFile(file: File | undefined): Promise<void> {
+  if (file === undefined) return;
   const doc = parseMarks(await file.text());
-  input.value = "";
+  inputKey.value += 1;
   if (doc.marks.length === 0 && doc.groups.length === 0) {
     report("Not a marks file");
     return;
@@ -118,11 +118,12 @@ onUnmounted(clearTimer);
         </button>
         <input
           ref="fileInput"
+          :key="inputKey"
           type="file"
           accept="application/json,.json"
           class="io-file"
           aria-label="Marks file"
-          @change="onFile"
+          @change="onFile(fileInput?.files?.[0])"
         />
       </div>
     </template>

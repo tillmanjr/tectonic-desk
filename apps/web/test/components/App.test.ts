@@ -417,11 +417,11 @@ describe("App", () => {
     await flushPromises();
     expect(wrapper.find(".notice").exists()).toBe(false);
 
-    await router.push("/earthquakes/wc?volcano=1&marks=all");
+    await router.push("/earthquakes/wc?volcano=1&tz=local&tz=utc&bare&marks=all");
     await flushPromises();
     await wrapper.find(".openhere").trigger("click");
     await flushPromises();
-    expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?event=us1");
+    expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?tz=local&event=us1");
     expect(wrapper.find(".notice").exists()).toBe(false);
     wrapper.unmount();
   });

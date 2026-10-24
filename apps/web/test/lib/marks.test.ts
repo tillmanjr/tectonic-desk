@@ -257,7 +257,10 @@ describe("marks", () => {
   it("merges what the incoming document adds and counts it", () => {
     const current: MarksDocument = {
       marks: [stored("a"), stored("b")],
-      groups: [{ id: "g1", name: "One", marks: ["a"] }],
+      groups: [
+        { id: "g0", name: "Mine", marks: ["b"] },
+        { id: "g1", name: "One", marks: ["a"] },
+      ],
     };
     const incoming: MarksDocument = {
       marks: [stored("b", { name: "renamed" }), stored("c")],
@@ -270,6 +273,7 @@ describe("marks", () => {
     expect(doc.marks.map((m) => m.id)).toEqual(["a", "b", "c"]);
     expect(doc.marks[1]?.name).toBe("Kuril shock");
     expect(doc.groups).toEqual([
+      { id: "g0", name: "Mine", marks: ["b"] },
       { id: "g1", name: "One", marks: ["a", "b", "c"] },
       { id: "g2", name: "Two", marks: ["c"] },
     ]);
