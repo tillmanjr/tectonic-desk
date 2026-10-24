@@ -133,8 +133,19 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   window, filters and selection) under a name of your choosing, in the browser only
   (`localStorage`, `tectonic.marks`); nothing is sent anywhere. `Marks · N` in the header opens
   an overlay over the current view where marks can be renamed, deleted, reordered with `▲ ▼`,
-  gathered into groups (`All` always holds every mark) and reopened with `Open view`. Each mark carries a small
-  schematic of the world or the West Coast with a star at the event.
+  gathered into groups (`All` always holds every mark) and reopened with `Open view`. `Open here`
+  instead selects the mark's event or volcano in the view you were in (region, window and filters
+  kept; the page switches to Active Earth only when it cannot show that kind, with a short notice).
+  Groups are reordered with the same `▲ ▼` in the group head. `Export` at the foot of the group
+  list downloads every mark and group as a JSON file (`tectonic-marks-<date>.json`); `Import`
+  reads one back and offers `Merge` (add what is missing, delete nothing) or `Replace`. Each mark
+  carries a small schematic of the world or the West Coast with a star at the event.
+- **Table filters.** `Filter` in the Catalog and Volcanoes table titles opens a row of column
+  filters (time, magnitude and depth; name, country, type, last eruption and elevation). They
+  narrow the table only, after the Refine bar, and reset when the region changes; `Clear all`
+  sits beside the toggle while anything is set and the title says `filtered`. Cards cap their
+  detail text at five lines; the panel has the rest. Links to outside sources (USGS event page, GVP
+  number, agency notices, the author) open in a new tab.
 - **Show events** on a group lays its marks out as full panels, the same sections as the side
   panels, in as many columns as fit at 481 px or wider before wrapping to rows, so a set of events
   can be read together. The URL carries

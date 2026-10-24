@@ -307,6 +307,14 @@ a:focus-visible,
   color: var(--muted);
   margin-top: 3px;
 }
+/* The detail lines of a card stop at five, with an ellipsis; the panel shows the rest. */
+.mcard .lines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+}
 .pill {
   display: inline-block;
   font: 600 10.5px var(--f-ui);
@@ -528,6 +536,86 @@ td {
   padding: 5px 6px;
   border-bottom: 1px solid var(--line);
   vertical-align: top;
+}
+/* Table column filters: Clear all and the toggle in the title, inputs in a second header row
+   that sticks under the sort row. Set inputs and bounded headers take the accent. */
+.panel h2.withfilter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.panel h2.withfilter > span:first-of-type {
+  flex: 1;
+}
+.filterhead {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.filterhead button {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 12px var(--f-ui);
+  cursor: pointer;
+}
+.filterhead .clearall {
+  color: var(--muted);
+}
+.filterhead .filtertoggle.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+th.fon {
+  color: var(--accent);
+}
+tr.frow th {
+  top: 29px;
+  padding: 3px 6px 6px;
+  cursor: default;
+  background: var(--bg);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+tr.frow input,
+tr.frow select {
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 12px var(--f-data);
+  vertical-align: middle;
+}
+tr.frow input[type="number"] {
+  width: 58px;
+}
+/* Pairs stack so a filter cell is never wider than its column's data. */
+tr.frow .dates,
+tr.frow .range {
+  display: inline-grid;
+  gap: 3px;
+}
+tr.frow input[type="date"] {
+  width: 128px;
+}
+tr.frow input[type="text"] {
+  width: 104px;
+}
+tr.frow select {
+  max-width: 112px;
+}
+tr.frow input.set,
+tr.frow select.set {
+  border-color: var(--accent);
+}
+tr.frow .dash {
+  display: none;
 }
 td.num {
   white-space: nowrap;
@@ -1483,6 +1571,39 @@ body.marks-open {
   border-color: var(--line);
   background: var(--bg);
 }
+.marks-io {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font: 13px var(--f-ui);
+  color: var(--muted);
+}
+.marks-io .io-buttons {
+  display: flex;
+  gap: 4px;
+}
+.marks-io .io-file {
+  display: none;
+}
+.marks-io .io-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink);
+}
+.marks-io .io-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.marks-io .io-actions button,
+.marks-io .io-buttons button {
+  border-color: var(--line);
+}
 .marks-main {
   overflow: auto;
   padding: 12px 16px 24px;
@@ -1519,6 +1640,7 @@ body.marks-open {
 }
 .marks-grouphead .showevents,
 .marks-grouphead .compare,
+.marks .openhere,
 .marks .openview,
 .marks .confirm button,
 .marks .backtolist {
@@ -1664,6 +1786,14 @@ body.marks-open {
   .marks-rail input {
     white-space: nowrap;
   }
+  .marks-io {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: 0;
+    flex-direction: row;
+    align-items: center;
+  }
   .markrow-item,
   .markcard header {
     grid-template-columns: auto 96px 1fr;
@@ -1672,6 +1802,31 @@ body.marks-open {
     grid-column: 1 / -1;
     flex-direction: row;
   }
+}
+
+/* App notice: one short line above everything, never interactive. */
+.notice {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 13px var(--f-ui);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+  pointer-events: none;
+}
+.notice-enter-active,
+.notice-leave-active {
+  transition: opacity 0.2s ease;
+}
+.notice-enter-from,
+.notice-leave-to {
+  opacity: 0;
 }
 
 /* Marked events: Compare as connected vertices. Top nodes are the column marks, left nodes the row

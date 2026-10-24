@@ -6,3 +6,4 @@ coverage/
 *.zip
 *.tsbuildinfo
 .DS_Store
+.superpowers/

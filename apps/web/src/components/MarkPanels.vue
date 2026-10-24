@@ -53,7 +53,17 @@ watch(
             <div class="mname">{{ m.name }}</div>
             <div class="mfacts">{{ m.headline }} · {{ m.sub }}</div>
           </div>
-          <button type="button" class="openview" @click="nav.goTo(m.url)">Open view</button>
+          <div class="mactions">
+            <button
+              type="button"
+              class="openhere"
+              title="Select it in the view you were in"
+              @click="nav.openHere(m)"
+            >
+              Open here
+            </button>
+            <button type="button" class="openview" @click="nav.goTo(m.url)">Open view</button>
+          </div>
         </header>
         <EventDetailBody v-if="m.kind === 'event'" :id="m.ref" />
         <VolcanoDetailBody v-else :number="Number(m.ref)" />

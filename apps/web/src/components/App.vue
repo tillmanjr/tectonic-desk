@@ -30,6 +30,7 @@ import {
   CLOCK,
   MARKS,
   MARKS_NAV,
+  NOTICE,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -42,7 +43,9 @@ import {
   type MarksMode,
   type MarksNav,
 } from "../lib/keys.js";
+import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
+import { createNotice } from "../lib/notice.js";
 import { createSettings } from "../lib/settings.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -59,6 +62,7 @@ const clock = inject(CLOCK, null) ?? createClock();
 const theme = inject(THEME, null) ?? createTheme();
 const settings = inject(SETTINGS, null) ?? createSettings();
 const marks = inject(MARKS, null) ?? createMarks();
+const notice = createNotice();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
@@ -72,6 +76,7 @@ provide(CLOCK, clock);
 provide(THEME, theme);
 provide(SETTINGS, settings);
 provide(MARKS, marks);
+provide(NOTICE, notice);
 provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);
@@ -92,9 +97,22 @@ const page = computed(() => pageOf(route.meta.page));
 const OVERLAY_KEYS = ["marks", "show"];
 const withoutOverlay = (q: LocationQuery): LocationQuery =>
   Object.fromEntries(Object.entries(q).filter(([k]) => !OVERLAY_KEYS.includes(k)));
+/** The query as flat strings: repeated keys keep their first value, which a saved view never has anyway. */
+const flatQuery = (q: LocationQuery): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(q)) {
+    const first = Array.isArray(v) ? v[0] : v;
+    if (typeof first === "string") out[k] = first;
+  }
+  return out;
+};
 const viewUrl = computed(
   () => router.resolve({ path: route.path, query: withoutOverlay(route.query) }).fullPath,
 );
+const routeRegion = computed(() => {
+  const p = route.params.region;
+  return typeof p === "string" && p !== "" ? p : "global";
+});
 const overlay = computed(() => {
   const g = route.query.marks;
   if (typeof g !== "string" || g === "") return null;
@@ -115,12 +133,18 @@ const nav: MarksNav = {
   compare: (group) => void router.push({ query: { ...listQuery(group), show: "matrix" } }),
   close: () => void router.replace({ query: withoutOverlay(route.query) }),
   goTo: (url) => void router.push(url),
+  openHere: (mark) => {
+    const t = hereTarget(
+      page.value,
+      routeRegion.value,
+      flatQuery(withoutOverlay(route.query)),
+      mark,
+    );
+    void router.push(t.url);
+    if (t.switched) notice.post("Switching to Active Earth");
+  },
 };
 provide(MARKS_NAV, nav);
-const routeRegion = computed(() => {
-  const p = route.params.region;
-  return typeof p === "string" && p !== "" ? p : "global";
-});
 const routeEvent = computed(() => {
   const q = route.query.event;
   return typeof q === "string" ? q : null;
@@ -320,11 +344,16 @@ onUnmounted(() => {
       </p>
       <p class="byline">
         Built for Barbara by
-        <a href="https://github.com/tillmanjr" rel="author">Tillman</a>
+        <a href="https://github.com/tillmanjr" rel="author noopener" target="_blank">Tillman</a>
       </p>
     </footer>
   </div>
   <DetailPanel />
   <VolcanoDetail v-if="hasVolcanoes(page)" />
   <MarksOverlay v-if="overlay !== null" />
+  <Transition name="notice">
+    <div v-if="notice.current.value !== null" class="notice" role="status">
+      {{ notice.current.value }}
+    </div>
+  </Transition>
 </template>

@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import MarkMatrix from "./MarkMatrix.vue";
+import MarksIO from "./MarksIO.vue";
 import MarkPanels from "./MarkPanels.vue";
 import MarkRow from "./MarkRow.vue";
 import { MARKS, MARKS_NAV, useInjected } from "../lib/keys.js";
@@ -14,6 +15,8 @@ const nav = useInjected(MARKS_NAV);
 
 const state = computed(() => nav.overlay.value ?? { group: ALL_GROUP, mode: "list" });
 const view = computed(() => store.view(state.value.group));
+/** The viewed group's place in the rail, for the order arrows; -1 for All. */
+const groupIndex = computed(() => store.groups.value.findIndex((g) => g.id === state.value.group));
 // An id the store does not know (a deleted group, a stale link) falls back to All.
 watch(
   view,
@@ -140,12 +143,33 @@ onUnmounted(() => {
       <button v-else type="button" class="newgroup" @click="beginAdd">
         + New {{ MARK_TERMS.group.toLowerCase() }}
       </button>
+      <MarksIO />
     </nav>
     <div v-if="view !== null" ref="mainEl" class="marks-main">
       <MarkPanels v-if="state.mode === 'panels'" :view="view" />
       <MarkMatrix v-else-if="state.mode === 'matrix'" :view="view" />
       <template v-else>
         <div class="marks-grouphead">
+          <div v-if="!view.virtual" class="morder">
+            <button
+              type="button"
+              class="up"
+              :disabled="groupIndex === 0"
+              aria-label="Move group up"
+              @click="store.moveGroup(view.id, -1)"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              class="down"
+              :disabled="groupIndex === store.groups.value.length - 1"
+              aria-label="Move group down"
+              @click="store.moveGroup(view.id, 1)"
+            >
+              ▼
+            </button>
+          </div>
           <input
             v-if="renaming !== null"
             ref="groupInput"
