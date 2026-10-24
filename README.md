@@ -140,6 +140,15 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   list downloads every mark and group as a JSON file (`tectonic-marks-<date>.json`); `Import`
   reads one back and offers `Merge` (add what is missing, delete nothing) or `Replace`. Each mark
   carries a small schematic of the world or the West Coast with a star at the event.
+- **Field overlays.** `Field` in the map toolbar draws a gravity or magnetic anomaly raster under
+  the line work, on every map page, off by default. Gravity is the Scripps free-air anomaly on
+  the global view (EGM2008 over land, clipped at ±120 mGal) and the USGS DDS-9 isostatic residual
+  on the West Coast view (conterminous US only, ±80 mGal); magnetic is the EMAG2v3 total-field
+  anomaly at 4 km on both views, on an equalised ramp. The legend gains the ramp, its ticks and a
+  caption naming product, grid and vintage. The four PNGs and `fields.json` under
+  `apps/web/public/fields/` are rendered in the map's own projections by
+  `pnpm --filter @tectonic/web geo:fields` (sources cached in `apps/web/.cache/fields/`) and
+  checked in; they are about 9 MB together and load only when picked.
 - **Table filters.** `Filter` in the Catalog and Volcanoes table titles opens a row of column
   filters (time, magnitude and depth; name, country, type, last eruption and elevation). They
   narrow the table only, after the Refine bar, and reset when the region changes; `Clear all`

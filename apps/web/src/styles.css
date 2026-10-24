@@ -371,6 +371,38 @@ a:focus-visible,
 .maptools .sp {
   flex: 1;
 }
+/* Field overlay: the raster sits between the land and the line work; it multiplies on the light
+   theme so the land tint stays, and lies plain on dark. */
+.field {
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+}
+.maptools .fieldpick select {
+  font: inherit;
+  font-size: 13px;
+  padding: 2px 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+}
+.legend .fieldrow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.legend .fieldrow .ticks {
+  display: flex;
+  justify-content: space-between;
+  width: 160px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.maptools .fielderr {
+  color: var(--muted);
+  font-size: 12px;
+}
 .layerpick {
   position: relative;
   display: flex;
@@ -2011,4 +2043,15 @@ table.matrix {
   font-size: 12.5px;
   margin: 0;
   max-width: 72ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .field {
+    mix-blend-mode: normal;
+    opacity: 0.55;
+  }
+}
+:root[data-theme="dark"] .field {
+  mix-blend-mode: normal;
+  opacity: 0.55;
 }

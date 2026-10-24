@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import MapLegend from "../../src/components/MapLegend.vue";
 import { frameFor } from "../../src/lib/geo.js";
 import { GLOBAL, WC } from "../support/events.js";
+import { raster } from "../support/fields.js";
 
 describe("MapLegend", () => {
   it("lists depth classes, size samples, the beachball note and plate classes", () => {
@@ -43,5 +44,40 @@ describe("MapLegend", () => {
     expect(w.text()).toContain("M6");
     expect(w.text()).toContain("M8");
     expect(w.text()).not.toContain("M4.5");
+  });
+
+  it("adds a ramp row for a field raster with its ticks and caption", () => {
+    const w = mount(MapLegend, {
+      props: { frame: frameFor(GLOBAL), minMag: 4.5, field: raster() },
+    });
+    const row = w.find(".fieldrow");
+    expect(row.findAll("stop").map((s) => s.attributes("offset"))).toEqual([
+      "0%",
+      "25%",
+      "50%",
+      "75%",
+      "100%",
+    ]);
+    expect(row.findAll("stop")[0]?.attributes("stop-color")).toBe("#2f5f9e");
+    expect(row.find("rect").attributes("fill")).toBe("url(#fieldgrad-gravity-global)");
+    expect(row.findAll(".ticks span").map((t) => t.text())).toEqual([
+      "-120",
+      "-60",
+      "0",
+      "60",
+      "120",
+    ]);
+    expect(row.find(".fieldcap").text()).toBe("mGal · Free-air gravity anomaly · test");
+    const e = mount(MapLegend, {
+      props: {
+        frame: frameFor(GLOBAL),
+        minMag: 4.5,
+        field: raster({ equalised: true, stops: [[5, "#000000"]], ticks: [5] }),
+      },
+    });
+    expect(e.find(".fieldcap").text()).toContain("· equalised ramp");
+    expect(e.find("stop").attributes("offset")).toBe("0%");
+    const none = mount(MapLegend, { props: { frame: frameFor(GLOBAL), minMag: 4.5 } });
+    expect(none.find(".fieldrow").exists()).toBe(false);
   });
 });

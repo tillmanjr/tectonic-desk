@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { FieldRaster } from "@tectonic/shared";
 import { computed } from "vue";
 import { DENSITY_RAMP, type DensityLegend } from "../lib/density.js";
 import { FAULT_AGES, type AgeCode } from "../lib/faults.js";
@@ -15,9 +16,20 @@ const props = withDefaults(
     quakes?: boolean;
     /** The density shading in force, for its ramp row; null when the map draws none. */
     density?: DensityLegend | null;
+    /** The gravity or magnetic raster under the map, for its ramp row; null when none is drawn. */
+    field?: FieldRaster | null;
   }>(),
-  { faults: () => [], quakes: true, density: null },
+  { faults: () => [], quakes: true, density: null, field: null },
 );
+/** A gradient id unique to the raster, so two legends on one page do not share one. */
+const gradId = (f: FieldRaster): string => `fieldgrad-${f.field}-${f.view}`;
+/** A stop's place along the ramp as a percentage of the value span. */
+function offsetOf(f: FieldRaster, v: number): string {
+  const values = f.stops.map(([x]) => x);
+  const first = Math.min(...values);
+  const span = Math.max(...values) - first;
+  return `${String(span === 0 ? 0 : Math.round(((v - first) / span) * 1000) / 10)}%`;
+}
 const sizes = computed(() => {
   const min = props.minMag;
   const mags = props.frame.global && min <= 4.5 ? [4.5, 5.5, 6.5, 7.5] : [min, min + 1, min + 2];
@@ -57,6 +69,28 @@ const plates = Object.values(PLATE_CLASSES);
         {{ fmtInt(density.max) }} (log scale)
       </span>
     </template>
+    <span v-if="field !== null" class="sw fieldrow">
+      <svg width="160" height="10" aria-hidden="true">
+        <defs>
+          <linearGradient :id="gradId(field)" x1="0" x2="1" y1="0" y2="0">
+            <stop
+              v-for="(s, i) in field.stops"
+              :key="i"
+              :offset="offsetOf(field, s[0])"
+              :stop-color="s[1]"
+            />
+          </linearGradient>
+        </defs>
+        <rect width="160" height="10" :fill="`url(#${gradId(field)})`" />
+      </svg>
+      <span class="ticks"
+        ><span v-for="t in field.ticks" :key="t">{{ t }}</span></span
+      >
+      <span class="fieldcap"
+        >{{ field.units }} · {{ field.caption
+        }}<template v-if="field.equalised"> · equalised ramp</template></span
+      >
+    </span>
     <span v-for="p in plates" :key="p.name" class="sw">
       <svg width="26" height="10">
         <line

@@ -12,7 +12,16 @@ import tseslint from "typescript-eslint";
 configureVueProject({ rootDir: import.meta.dirname });
 
 export default defineConfigWithVueTs(
-  { ignores: ["**/node_modules/", "**/dist/", "**/coverage/", "quake/", "**/drizzle/migrations/"] },
+  {
+    ignores: [
+      "**/node_modules/",
+      "**/dist/",
+      "**/coverage/",
+      "**/.cache/",
+      "quake/",
+      "**/drizzle/migrations/",
+    ],
+  },
   js.configs.recommended,
   pluginVue.configs["flat/recommended"],
   vueTsConfigs.strictTypeChecked,

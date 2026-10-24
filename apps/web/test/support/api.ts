@@ -17,6 +17,7 @@ import {
   statusList,
   volcanoFile,
 } from "./volcanoes.js";
+import { fieldsFile } from "./fields.js";
 
 export function status(over: Partial<ApiStatus> = {}): ApiStatus {
   return {
@@ -119,6 +120,7 @@ export function fakeApi(over: Partial<ApiClient> = {}): ApiClient {
     volcanoChanges: vi.fn().mockResolvedValue(changeList),
     volcanoReports: vi.fn().mockResolvedValue(reportList),
     volcano: vi.fn().mockResolvedValue(kilaueaDetail),
+    fields: vi.fn().mockResolvedValue(fieldsFile),
     ...over,
   };
 }

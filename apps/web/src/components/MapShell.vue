@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import MapBasemap from "./MapBasemap.vue";
 import MapFaults from "./MapFaults.vue";
+import MapField from "./MapField.vue";
 import MapLegend from "./MapLegend.vue";
 import MapPlates from "./MapPlates.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
 import type { DensityLegend } from "../lib/density.js";
 import { AGE_CODES, FAULT_AGES } from "../lib/faults.js";
+import { FIELD_CHOICES } from "../lib/fields.js";
 import type { MapView } from "../lib/mapview.js";
 
 /**
@@ -82,6 +84,13 @@ const { mv } = props;
           </div>
         </div>
       </div>
+      <label class="fieldpick"
+        >Field
+        <select v-model="mv.field.value" aria-label="Field overlay">
+          <option v-for="c in FIELD_CHOICES" :key="c.id" :value="c.id">{{ c.label }}</option>
+        </select>
+        <span v-if="mv.fieldError.value" class="fielderr">unavailable</span>
+      </label>
       <span class="sp"></span>
       <button type="button" class="zbtn" aria-label="Zoom in" @click="mv.scaleBy(1.8)">+</button>
       <button type="button" class="zbtn" aria-label="Zoom out" @click="mv.scaleBy(1 / 1.8)">
@@ -147,6 +156,11 @@ const { mv } = props;
             :path="mv.view.value.path"
             :basemap="mv.basemap.value"
           />
+          <MapField
+            v-if="mv.fieldRaster.value !== null"
+            :raster="mv.fieldRaster.value"
+            :frame="mv.view.value.frame"
+          />
           <MapFaults
             v-if="mv.faultsOn.value"
             :path="mv.view.value.path"
@@ -186,6 +200,7 @@ const { mv } = props;
       :faults="mv.hasFaults.value ? mv.faultAges.value : []"
       :quakes="quakes"
       :density="density"
+      :field="mv.fieldRaster.value"
     >
       <slot name="legend"></slot>
     </MapLegend>
