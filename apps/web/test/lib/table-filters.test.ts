@@ -43,7 +43,9 @@ describe("event table filter", () => {
       "c",
     ]);
     expect(
-      ids(applyEventTableFilter(events, { ...EE, since: "2026-10-11", until: "2026-10-11" }, "utc")),
+      ids(
+        applyEventTableFilter(events, { ...EE, since: "2026-10-11", until: "2026-10-11" }, "utc"),
+      ),
     ).toEqual(["b"]);
     // Local days follow the test machine's offset; the day holding b's local instant keeps it.
     const local = new Date("2026-10-11T23:30:00Z");

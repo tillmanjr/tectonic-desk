@@ -12,17 +12,17 @@ fixes. The third adds table-local column filters, approved through mockups (opti
 
 ## Decisions
 
-| Topic           | Decision                                                                                                                                                                                                                                             |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Card lines      | The detail lines of a card (the when-line, then the synopsis or the sequence line) live in one `.lines` block clamped to five lines with an ellipsis. Title and pills stay above the clamp. The panel still shows everything.                        |
-| Author link     | `target="_blank"` and `rel="author noopener"` on the footer anchor. Text unchanged.                                                                                                                                                                  |
-| Scope of filter | Table-local: a column filter narrows the table's rows after the store's own filter and before sorting. The map, charts and Refine bars are untouched.                                                                                               |
-| Placement       | Option C: a `Filter` toggle in the panel title opens a second header row holding the inputs. `Clear all` sits beside the toggle in the title and shows only while something is set. With the row closed and filters set, the toggle stays accent.    |
-| Indication      | The title's count reads `12 of 146 events · filtered`; each header whose column is set carries the accent class; set inputs carry the accent border.                                                                                               |
-| Lifetime        | In memory per table, not in the route. Reset when the region changes, like the card grids' "more" state.                                                                                                                                            |
+| Topic           | Decision                                                                                                                                                                                                                                                                                        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Card lines      | The detail lines of a card (the when-line, then the synopsis or the sequence line) live in one `.lines` block clamped to five lines with an ellipsis. Title and pills stay above the clamp. The panel still shows everything.                                                                   |
+| Author link     | `target="_blank"` and `rel="author noopener"` on the footer anchor. Text unchanged.                                                                                                                                                                                                             |
+| Scope of filter | Table-local: a column filter narrows the table's rows after the store's own filter and before sorting. The map, charts and Refine bars are untouched.                                                                                                                                           |
+| Placement       | Option C: a `Filter` toggle in the panel title opens a second header row holding the inputs. `Clear all` sits beside the toggle in the title and shows only while something is set. With the row closed and filters set, the toggle stays accent.                                               |
+| Indication      | The title's count reads `12 of 146 events · filtered`; each header whose column is set carries the accent class; set inputs carry the accent border.                                                                                                                                            |
+| Lifetime        | In memory per table, not in the route. Reset when the region changes, like the card grids' "more" state.                                                                                                                                                                                        |
 | Controls        | Catalog: Time as two `type="date"` inputs in the zone in force, M and Depth as number pairs. Volcanoes: Volcano text contains (case-insensitive), Country select of the countries in the region, Type select of `TYPE_GROUPS`, Last eruption and Elev. m as number pairs. Status has no filter. |
-| Nulls           | A row whose value is null for a bounded column drops out once either bound of that column is set. Text and selects ignore nulls (there are none).                                                                                                    |
-| Apply           | Inputs apply on `change`. No Apply button.                                                                                                                                                                                                           |
+| Nulls           | A row whose value is null for a bounded column drops out once either bound of that column is set. Text and selects ignore nulls (there are none).                                                                                                                                               |
+| Apply           | Inputs apply on `change`. No Apply button.                                                                                                                                                                                                                                                      |
 
 ## 1. Cards
 
@@ -75,10 +75,16 @@ export const EMPTY_VOLCANO_TABLE_FILTER: VolcanoTableFilter;
 
 /** How many columns carry a bound: Time, M, Depth count once each however many of their inputs are set. */
 export function activeEventColumns(f: EventTableFilter): Set<"time" | "mag" | "depthKm">;
-export function activeVolcanoColumns(f: VolcanoTableFilter): Set<"name" | "country" | "type" | "last" | "elevation">;
+export function activeVolcanoColumns(
+  f: VolcanoTableFilter,
+): Set<"name" | "country" | "type" | "last" | "elevation">;
 
 /** Rows within every set bound; `since` starts at the day's first instant, `until` ends before the next day's. */
-export function applyEventTableFilter(events: ApiEvent[], f: EventTableFilter, zone: Zone): ApiEvent[];
+export function applyEventTableFilter(
+  events: ApiEvent[],
+  f: EventTableFilter,
+  zone: Zone,
+): ApiEvent[];
 export function applyVolcanoTableFilter(volcanoes: Volcano[], f: VolcanoTableFilter): Volcano[];
 
 /** Countries of the given volcanoes, each once, sorted. */

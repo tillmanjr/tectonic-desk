@@ -11,16 +11,16 @@ fourth, Pin and Probe, stays parked.
 
 ## Decisions
 
-| Topic           | Decision                                                                                                                                                                                                                                                                                             |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Open here       | A second button beside `Open view` on each mark row and each Show events card. It keeps the current page, region, window and filters and selects the mark's subject. The map does not move; when the event lies outside the loaded window the panel still opens, since the panel fetches by id.      |
-| Page mismatch   | When the current page lacks the panel for the mark's kind (an event on the Volcanoes page, a volcano on the Earthquakes page) the path becomes Active Earth with the same region and query, and a notice says `Switching to Active Earth`. Otherwise the page is kept.                               |
-| Notice          | One app-level strip (`role="status"`) at the bottom of the viewport, fed by a tiny store any component can post to. Posting replaces the text and restarts the timer. Only the Marks nav uses it in this change.                                                                                     |
-| Group order     | Stored groups carry the order of the `groups` array. The overlay's group head gets ▲▼ for a stored group, mirroring the mark rows. `All` stays first and has no arrows.                                                                                                                             |
-| Export          | A JSON file of the whole document, `{ v: 1, exportedAt, marks, groups }`, downloaded as `tectonic-marks-<yyyy-mm-dd>.json`. Never a single group: the document is the unit of backup.                                                                                                              |
-| Import          | Reads one such file through `parseMarks`, so malformed entries drop as they do for a corrupt `localStorage`. The reader then chooses `Merge` (add what is missing, delete nothing) or `Replace` (inline confirm, the file becomes the document). A short result line reports what happened.           |
-| Placement       | `Export` and `Import` sit in a footer of the overlay's rail, under the group list. The import strip (file facts, Merge, Replace, Cancel, then the result) renders in the same footer.                                                                                                              |
-| Router access   | Unchanged: components call `MarksNav`, never the router. The new `openHere` is the only addition to the nav. The URL arithmetic is a pure function so it is tested without a router.                                                                                                                 |
+| Topic         | Decision                                                                                                                                                                                                                                                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open here     | A second button beside `Open view` on each mark row and each Show events card. It keeps the current page, region, window and filters and selects the mark's subject. The map does not move; when the event lies outside the loaded window the panel still opens, since the panel fetches by id. |
+| Page mismatch | When the current page lacks the panel for the mark's kind (an event on the Volcanoes page, a volcano on the Earthquakes page) the path becomes Active Earth with the same region and query, and a notice says `Switching to Active Earth`. Otherwise the page is kept.                          |
+| Notice        | One app-level strip (`role="status"`) at the bottom of the viewport, fed by a tiny store any component can post to. Posting replaces the text and restarts the timer. Only the Marks nav uses it in this change.                                                                                |
+| Group order   | Stored groups carry the order of the `groups` array. The overlay's group head gets ▲▼ for a stored group, mirroring the mark rows. `All` stays first and has no arrows.                                                                                                                         |
+| Export        | A JSON file of the whole document, `{ v: 1, exportedAt, marks, groups }`, downloaded as `tectonic-marks-<yyyy-mm-dd>.json`. Never a single group: the document is the unit of backup.                                                                                                           |
+| Import        | Reads one such file through `parseMarks`, so malformed entries drop as they do for a corrupt `localStorage`. The reader then chooses `Merge` (add what is missing, delete nothing) or `Replace` (inline confirm, the file becomes the document). A short result line reports what happened.     |
+| Placement     | `Export` and `Import` sit in a footer of the overlay's rail, under the group list. The import strip (file facts, Merge, Replace, Cancel, then the result) renders in the same footer.                                                                                                           |
+| Router access | Unchanged: components call `MarksNav`, never the router. The new `openHere` is the only addition to the nav. The URL arithmetic is a pure function so it is tested without a router.                                                                                                            |
 
 ## 1. Open here
 
@@ -91,7 +91,10 @@ export interface NoticeStore {
 }
 export const NOTICE_MS = 2500;
 export function createNotice(
-  timers: { set: typeof setTimeout; clear: typeof clearTimeout } = { set: setTimeout, clear: clearTimeout },
+  timers: { set: typeof setTimeout; clear: typeof clearTimeout } = {
+    set: setTimeout,
+    clear: clearTimeout,
+  },
 ): NoticeStore;
 ```
 
@@ -142,14 +145,18 @@ export function exportDocument(doc: MarksDocument, now: Date): string;
 // JSON.stringify({ v: 1, exportedAt: now.toISOString(), marks, groups }, null, 2)
 
 /** The file name for an export made at `now`. */
-export const exportFileName = (now: Date): string => `tectonic-marks-${now.toISOString().slice(0, 10)}.json`;
+export const exportFileName = (now: Date): string =>
+  `tectonic-marks-${now.toISOString().slice(0, 10)}.json`;
 
 /**
  * `current` plus whatever `incoming` has that it lacks: marks by id (appended after the current
  * ones, in file order), groups by id (appended), and for a group present in both, the members the
  * current group lacks (appended, only ids the merged mark list knows).
  */
-export function mergeDocuments(current: MarksDocument, incoming: MarksDocument): { doc: MarksDocument; report: MergeReport };
+export function mergeDocuments(
+  current: MarksDocument,
+  incoming: MarksDocument,
+): { doc: MarksDocument; report: MergeReport };
 ```
 
 `parseMarks` already returns a `MarksDocument` shape and is what the import uses on the file text.
