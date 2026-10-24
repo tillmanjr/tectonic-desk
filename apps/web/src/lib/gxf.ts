@@ -59,8 +59,9 @@ export function parseGxf(text: string): GxfGrid {
   const dummy = need("DUMMY");
   const values = new Float32Array(points * rows);
   let n = 0;
-  for (let i = gridAt; i < lines.length && n < values.length; i++) {
-    for (const tok of lines[i]?.trim().split(/\s+/) ?? []) {
+  for (const line of lines.slice(gridAt)) {
+    if (n >= values.length) break;
+    for (const tok of line.trim().split(/\s+/)) {
       if (tok === "" || n >= values.length) continue;
       const v = Number(tok);
       values[n++] = v === dummy ? NaN : v;

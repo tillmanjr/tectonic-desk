@@ -21,14 +21,13 @@ const props = withDefaults(
   }>(),
   { faults: () => [], quakes: true, density: null, field: null },
 );
-const gradId = computed(() =>
-  props.field === null ? "" : `fieldgrad-${props.field.field}-${props.field.view}`,
-);
+/** A gradient id unique to the raster, so two legends on one page do not share one. */
+const gradId = (f: FieldRaster): string => `fieldgrad-${f.field}-${f.view}`;
 /** A stop's place along the ramp as a percentage of the value span. */
 function offsetOf(f: FieldRaster, v: number): string {
-  const first = f.stops[0]?.[0] ?? 0;
-  const last = f.stops[f.stops.length - 1]?.[0] ?? first;
-  const span = last - first;
+  const values = f.stops.map(([x]) => x);
+  const first = Math.min(...values);
+  const span = Math.max(...values) - first;
   return `${String(span === 0 ? 0 : Math.round(((v - first) / span) * 1000) / 10)}%`;
 }
 const sizes = computed(() => {
@@ -73,7 +72,7 @@ const plates = Object.values(PLATE_CLASSES);
     <span v-if="field !== null" class="sw fieldrow">
       <svg width="160" height="10" aria-hidden="true">
         <defs>
-          <linearGradient :id="gradId" x1="0" x2="1" y1="0" y2="0">
+          <linearGradient :id="gradId(field)" x1="0" x2="1" y1="0" y2="0">
             <stop
               v-for="(s, i) in field.stops"
               :key="i"
@@ -82,7 +81,7 @@ const plates = Object.values(PLATE_CLASSES);
             />
           </linearGradient>
         </defs>
-        <rect width="160" height="10" :fill="`url(#${gradId})`" />
+        <rect width="160" height="10" :fill="`url(#${gradId(field)})`" />
       </svg>
       <span class="ticks"
         ><span v-for="t in field.ticks" :key="t">{{ t }}</span></span
