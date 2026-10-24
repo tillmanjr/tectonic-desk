@@ -1483,6 +1483,39 @@ body.marks-open {
   border-color: var(--line);
   background: var(--bg);
 }
+.marks-io {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font: 13px var(--f-ui);
+  color: var(--muted);
+}
+.marks-io .io-buttons {
+  display: flex;
+  gap: 4px;
+}
+.marks-io .io-file {
+  display: none;
+}
+.marks-io .io-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink);
+}
+.marks-io .io-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.marks-io .io-actions button,
+.marks-io .io-buttons button {
+  border-color: var(--line);
+}
 .marks-main {
   overflow: auto;
   padding: 12px 16px 24px;
@@ -1664,6 +1697,14 @@ body.marks-open {
   .marks-rail button,
   .marks-rail input {
     white-space: nowrap;
+  }
+  .marks-io {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: 0;
+    flex-direction: row;
+    align-items: center;
   }
   .markrow-item,
   .markcard header {

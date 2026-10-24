@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import MarkMatrix from "./MarkMatrix.vue";
+import MarksIO from "./MarksIO.vue";
 import MarkPanels from "./MarkPanels.vue";
 import MarkRow from "./MarkRow.vue";
 import { MARKS, MARKS_NAV, useInjected } from "../lib/keys.js";
@@ -142,6 +143,7 @@ onUnmounted(() => {
       <button v-else type="button" class="newgroup" @click="beginAdd">
         + New {{ MARK_TERMS.group.toLowerCase() }}
       </button>
+      <MarksIO />
     </nav>
     <div v-if="view !== null" ref="mainEl" class="marks-main">
       <MarkPanels v-if="state.mode === 'panels'" :view="view" />
