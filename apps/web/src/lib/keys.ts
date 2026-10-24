@@ -4,7 +4,7 @@ import type { Catalog } from "./catalog.js";
 import type { Clock } from "./clock.js";
 import type { EventFilter } from "./filters.js";
 import type { Zone } from "./format.js";
-import type { MarksStore } from "./marks.js";
+import type { Mark, MarksStore } from "./marks.js";
 import type { NoticeStore } from "./notice.js";
 import type { SettingsStore } from "./settings.js";
 import type { StatusPoll } from "./status.js";
@@ -61,6 +61,8 @@ export interface MarksNav {
   close: () => void;
   /** Navigates to a saved view; the url carries no overlay keys, so the overlay closes. */
   goTo: (url: string) => void;
+  /** Selects a mark's subject in the current view; switches to Active Earth when the page cannot show it. */
+  openHere: (mark: Mark) => void;
 }
 export const MARKS: InjectionKey<MarksStore> = Symbol("marks");
 export const MARKS_NAV: InjectionKey<MarksNav> = Symbol("marksNav");

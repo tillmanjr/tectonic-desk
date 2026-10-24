@@ -389,4 +389,40 @@ describe("App", () => {
     wrapper.unmount();
     vi.unstubAllGlobals();
   });
+
+  it("opens a mark in the current view, switching to Active Earth only when the page lacks the panel", async () => {
+    stubCanvas();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { wrapper, router, marks } = await mountApp("/volcanoes/wc?from=2026-01-01&marks=all");
+    marks.add({
+      kind: "event",
+      ref: "us1",
+      name: "Kuril shock",
+      url: "/earthquakes/wc?event=us1",
+      frame: "wc",
+      lon: -122,
+      lat: 37,
+      headline: "M5.5 mww",
+      sub: "10 km N of Somewhere",
+      stamp: "2026-10-13T10:00:00.000Z",
+      mag: 5.5,
+      depthKm: 10,
+    });
+    await flushPromises();
+    await wrapper.find(".openhere").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.fullPath).toBe("/active/wc?from=2026-01-01&event=us1");
+    expect(wrapper.find(".notice").text()).toBe("Switching to Active Earth");
+    vi.advanceTimersByTime(3000);
+    await flushPromises();
+    expect(wrapper.find(".notice").exists()).toBe(false);
+
+    await router.push("/earthquakes/wc?volcano=1&marks=all");
+    await flushPromises();
+    await wrapper.find(".openhere").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?event=us1");
+    expect(wrapper.find(".notice").exists()).toBe(false);
+    wrapper.unmount();
+  });
 });

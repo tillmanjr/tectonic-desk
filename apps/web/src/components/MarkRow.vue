@@ -98,6 +98,14 @@ function onKey(e: KeyboardEvent): void {
       </div>
     </div>
     <div class="mactions">
+      <button
+        type="button"
+        class="openhere"
+        title="Select it in the view you were in"
+        @click="nav.openHere(mark)"
+      >
+        Open here
+      </button>
       <button type="button" class="openview" @click="nav.goTo(mark.url)">Open view</button>
       <ConfirmButton label="Delete" @confirm="store.remove(mark.id)" />
     </div>

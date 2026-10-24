@@ -43,6 +43,7 @@ import {
   type MarksMode,
   type MarksNav,
 } from "../lib/keys.js";
+import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
 import { createSettings } from "../lib/settings.js";
@@ -96,9 +97,22 @@ const page = computed(() => pageOf(route.meta.page));
 const OVERLAY_KEYS = ["marks", "show"];
 const withoutOverlay = (q: LocationQuery): LocationQuery =>
   Object.fromEntries(Object.entries(q).filter(([k]) => !OVERLAY_KEYS.includes(k)));
+/** The query as flat strings: repeated keys keep their first value, which a saved view never has anyway. */
+const flatQuery = (q: LocationQuery): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(q)) {
+    const first = Array.isArray(v) ? v[0] : v;
+    if (typeof first === "string") out[k] = first;
+  }
+  return out;
+};
 const viewUrl = computed(
   () => router.resolve({ path: route.path, query: withoutOverlay(route.query) }).fullPath,
 );
+const routeRegion = computed(() => {
+  const p = route.params.region;
+  return typeof p === "string" && p !== "" ? p : "global";
+});
 const overlay = computed(() => {
   const g = route.query.marks;
   if (typeof g !== "string" || g === "") return null;
@@ -119,12 +133,13 @@ const nav: MarksNav = {
   compare: (group) => void router.push({ query: { ...listQuery(group), show: "matrix" } }),
   close: () => void router.replace({ query: withoutOverlay(route.query) }),
   goTo: (url) => void router.push(url),
+  openHere: (mark) => {
+    const t = hereTarget(page.value, routeRegion.value, flatQuery(withoutOverlay(route.query)), mark);
+    void router.push(t.url);
+    if (t.switched) notice.post("Switching to Active Earth");
+  },
 };
 provide(MARKS_NAV, nav);
-const routeRegion = computed(() => {
-  const p = route.params.region;
-  return typeof p === "string" && p !== "" ? p : "global";
-});
 const routeEvent = computed(() => {
   const q = route.query.event;
   return typeof q === "string" ? q : null;

@@ -131,6 +131,7 @@ export async function makeContext(
       list: vi.fn(),
       close: vi.fn(),
       goTo: vi.fn(),
+      openHere: vi.fn(),
     },
     overlay,
     zone: ref<Zone>("utc"),

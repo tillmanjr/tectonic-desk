@@ -99,6 +99,8 @@ describe("MarksOverlay", () => {
     expect(ctx.marks.marks.value[0]?.name).toBe("Blurred");
     await row.find(".openview").trigger("click");
     expect(ctx.nav.goTo).toHaveBeenCalledWith("/volcanoes?volcano=211060");
+    await row.find(".openhere").trigger("click");
+    expect(ctx.nav.openHere).toHaveBeenCalledWith(ctx.marks.marks.value[0]);
     await row.find(".confirm > button").trigger("click");
     await row.find("button.yes").trigger("click");
     expect(ctx.marks.marks.value.map((m) => m.id)).not.toContain(b.id);
@@ -210,6 +212,8 @@ describe("MarksOverlay", () => {
     expect(ctx.nav.list).toHaveBeenCalledWith("all");
     await w.find("article.markcard .openview").trigger("click");
     expect(ctx.nav.goTo).toHaveBeenCalledWith("/volcanoes?volcano=211060");
+    await w.find("article.markcard .openhere").trigger("click");
+    expect(ctx.nav.openHere).toHaveBeenCalledTimes(1);
     // volcanoes are loaded now; re-entering the panels does not load again
     ctx.overlay.value = { group: "all", mode: "list" };
     await nextTick();
