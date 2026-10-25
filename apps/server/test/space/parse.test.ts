@@ -231,8 +231,18 @@ describe("record parsers", () => {
   it("reads the hemispheric power table and matches it to a frame", () => {
     const rows = parseHemiPower(hemiPower);
     expect(rows).toEqual([
-      { observed: new Date("2026-10-25T12:02:00Z"), north: 18, south: 17 },
-      { observed: new Date("2026-10-25T12:12:00Z"), north: 20, south: 19 },
+      {
+        observed: new Date("2026-10-25T12:02:00Z"),
+        forecast: new Date("2026-10-25T13:20:00Z"),
+        north: 18,
+        south: 17,
+      },
+      {
+        observed: new Date("2026-10-25T12:12:00Z"),
+        forecast: new Date("2026-10-25T13:30:00Z"),
+        north: 20,
+        south: 19,
+      },
     ]);
     expect(parseHemiPower("")).toEqual([]);
     const frame = parseAuroraFrame(aurora);

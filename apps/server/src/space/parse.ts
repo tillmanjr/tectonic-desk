@@ -230,13 +230,15 @@ export function parseAuroraFrame(doc: AuroraDoc): AuroraFrame {
 
 export interface HemiPowerRow {
   observed: Date;
+  forecast: Date;
   north: number;
   south: number;
 }
 
 /**
  * `text/aurora-nowcast-hemi-power.txt`: `#` comments, then rows of observation time, forecast
- * time, north and south GW at `YYYY-MM-DD_HH:MM`. Rows that do not parse are skipped.
+ * time, north and south GW at `YYYY-MM-DD_HH:MM`. Rows that do not parse are skipped. The
+ * observation column is the run time, which is not the frame's; the forecast column is shared.
  */
 export function parseHemiPower(text: string): HemiPowerRow[] {
   const out: HemiPowerRow[] = [];
@@ -245,18 +247,24 @@ export function parseHemiPower(text: string): HemiPowerRow[] {
     const fields = line.trim().split(/\s+/);
     if (fields.length < 4) continue;
     const observed = parseTime(fields[0]?.replace("_", "T"));
+    const forecast = parseTime(fields[1]?.replace("_", "T"));
     const north = Number(fields[2]);
     const south = Number(fields[3]);
-    if (observed !== null && Number.isFinite(north) && Number.isFinite(south)) {
-      out.push({ observed, north, south });
+    if (
+      observed !== null &&
+      forecast !== null &&
+      Number.isFinite(north) &&
+      Number.isFinite(south)
+    ) {
+      out.push({ observed, forecast, north, south });
     }
   }
   return out;
 }
 
-/** The frame with the power pair of the row observed at the same instant, if there is one. */
+/** The frame with the power pair of the row forecast for the same instant, if there is one. */
 export function withPower(frame: AuroraFrame, rows: HemiPowerRow[]): AuroraFrame {
-  const at = frame.observed.getTime();
-  const row = rows.find((r) => r.observed.getTime() === at);
+  const at = frame.forecast.getTime();
+  const row = rows.find((r) => r.forecast.getTime() === at);
   return row === undefined ? frame : { ...frame, powerNorth: row.north, powerSouth: row.south };
 }

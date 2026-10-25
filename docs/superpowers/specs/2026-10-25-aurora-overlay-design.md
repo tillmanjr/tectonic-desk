@@ -23,16 +23,16 @@ Both halves of the original item, in order:
 
 ## Decisions
 
-| Topic     | Decision                                                                                                                                                                                                                                       |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Where     | A full-width band under the stack and rail on the Space page: two polar maps side by side with a caption column. The indices stay first on the page; the maps get the width they need.                                                         |
-| History   | Every frame kept 72 hours (864 frames, about 56 MB), since the solar wind takes one to three days to arrive and a storm is worth re-reading the next morning. Older frames are deleted by the ingest part itself, so the window is exact.      |
-| Drawing   | Filled probability bands from d3-contour at 10, 30, 50, 70 and 90 %, projected through geoPath. Few nodes, quotable thresholds, and the same polygons will serve the world-map toggle later.                                                   |
-| Maps      | Azimuthal equal-area about each pole, rim at 40° latitude, the subsolar meridian at the top so noon is up and the shaded night side is always the lower half. Land from the cached world basemap, graticule at 10° latitude and 30° longitude. |
-| Power     | Hemispheric power (GW, north and south) from the small tabular file `text/aurora-nowcast-hemi-power.txt`, matched to the frame by observation time, null when absent. The two large per-hemisphere text dumps are not fetched.                 |
-| Transport | The grid travels as a base64 string inside JSON (about 87 KB), one fetch per new frame or scrub step, cached by time in the web. Frames are immutable so the frame read caches for an hour.                                                    |
-| Copy      | Always the observation time and the forecast time, "chance of aurora" for the bands, the OVATION Prime attribution, and never "aurora visible here".                                                                                           |
-| Credits   | The footer paragraph and README rows name the OVATION Prime model beside SWPC.                                                                                                                                                                 |
+| Topic     | Decision                                                                                                                                                                                                                                                                                                     |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Where     | A full-width band under the stack and rail on the Space page: two polar maps side by side with a caption column. The indices stay first on the page; the maps get the width they need.                                                                                                                       |
+| History   | Every frame kept 72 hours (864 frames, about 56 MB), since the solar wind takes one to three days to arrive and a storm is worth re-reading the next morning. Older frames are deleted by the ingest part itself, so the window is exact.                                                                    |
+| Drawing   | Filled probability bands from d3-contour at 10, 30, 50, 70 and 90 %, projected through geoPath. Few nodes, quotable thresholds, and the same polygons will serve the world-map toggle later.                                                                                                                 |
+| Maps      | Azimuthal equal-area about each pole, rim at 40° latitude, the subsolar meridian at the top so noon is up and the shaded night side is always the lower half. Land from the cached world basemap, graticule at 10° latitude and 30° longitude.                                                               |
+| Power     | Hemispheric power (GW, north and south) from the small tabular file `text/aurora-nowcast-hemi-power.txt`, matched to the frame by forecast time (the table's observation column is the run time, which the frame does not share), null when absent. The two large per-hemisphere text dumps are not fetched. |
+| Transport | The grid travels as a base64 string inside JSON (about 87 KB), one fetch per new frame or scrub step, cached by time in the web. Frames are immutable so the frame read caches for an hour.                                                                                                                  |
+| Copy      | Always the observation time and the forecast time, "chance of aurora" for the bands, the OVATION Prime attribution, and never "aurora visible here".                                                                                                                                                         |
+| Credits   | The footer paragraph and README rows name the OVATION Prime model beside SWPC.                                                                                                                                                                                                                               |
 
 ## 1. Shared (`packages/shared/src/space.ts`, `api.ts`)
 
@@ -77,10 +77,10 @@ object with `"Observation Time"`, `"Forecast Time"` (strings) and `coordinates:
   `Uint8Array(AURORA_CELLS)`; each triple with an integer longitude in 0..359 and latitude in
   -90..90 writes `clamp(round(value), 0, 100)` at `auroraIndex`; other triples are skipped.
   Times go through the existing `parseTime`.
-- `parseHemiPower(text): { observed: Date; north: number; south: number }[]`: skips blank and
-  `#` lines, reads `YYYY-MM-DD_HH:MM` observation, forecast, north, south; rows that do not
-  parse are skipped.
-- `withPower(frame, rows)`: fills `powerNorth`/`powerSouth` from the row whose `observed`
+- `parseHemiPower(text): { observed: Date; forecast: Date; north: number; south: number }[]`:
+  skips blank and `#` lines, reads `YYYY-MM-DD_HH:MM` observation, forecast, north, south; rows
+  that do not parse are skipped.
+- `withPower(frame, rows)`: fills `powerNorth`/`powerSouth` from the row whose `forecast`
   equals the frame's, else leaves null.
 
 ### Table
@@ -142,7 +142,7 @@ export interface AuroraStore {
   start(): void;
   stop(): void;
 }
-export function createAuroraStore(api, readNow, { intervalMs = 60_000, doc }): AuroraStore;
+export function createAuroraStore(api, { intervalMs = 60_000, doc }): AuroraStore;
 export const decodeGrid = (b64: string): Uint8Array;
 ```
 
