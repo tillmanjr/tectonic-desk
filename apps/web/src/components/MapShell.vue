@@ -4,6 +4,7 @@ import MapFaults from "./MapFaults.vue";
 import MapField from "./MapField.vue";
 import MapLegend from "./MapLegend.vue";
 import MapPlates from "./MapPlates.vue";
+import MapSection from "./MapSection.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
 import type { DensityLegend } from "../lib/density.js";
@@ -29,8 +30,10 @@ const props = withDefaults(
     density?: DensityLegend | null;
     /** The magnitude floor the legend's size key is scaled from; null uses the view's own. */
     floor?: number | null;
+    /** Whether the Section tool and its line are offered; the Volcanoes page has no profile. */
+    sectionTool?: boolean;
   }>(),
-  { quakes: true, density: null, floor: null },
+  { quakes: true, density: null, floor: null, sectionTool: true },
 );
 const { mv } = props;
 </script>
@@ -91,6 +94,16 @@ const { mv } = props;
         </select>
         <span v-if="mv.fieldError.value" class="fielderr">unavailable</span>
       </label>
+      <button
+        v-if="sectionTool"
+        type="button"
+        class="sectionbtn"
+        :aria-pressed="mv.section.armed.value"
+        title="Draw a section line: click two points on the map; drag the ends to adjust"
+        @click="mv.section.toggle()"
+      >
+        Section
+      </button>
       <span class="sp"></span>
       <button type="button" class="zbtn" aria-label="Zoom in" @click="mv.scaleBy(1.8)">+</button>
       <button type="button" class="zbtn" aria-label="Zoom out" @click="mv.scaleBy(1 / 1.8)">
@@ -142,12 +155,14 @@ const { mv } = props;
       <svg
         :ref="mv.svgEl"
         class="map"
-        :class="{ locked: mv.locked.value }"
         role="img"
         :aria-label="label"
         :viewBox="`0 0 ${String(mv.view.value.frame.width)} ${String(mv.view.value.frame.height)}`"
+        :class="{ locked: mv.locked.value, arming: mv.section.armed.value }"
         @mousemove="mv.onMapMove"
         @mouseleave="mv.onMapLeave()"
+        @mousedown="mv.onMapDown"
+        @click="mv.onMapClick"
         @touchstart.passive="mv.onTouchStart"
       >
         <g :transform="mv.transform.value.toString()">
@@ -187,6 +202,20 @@ const { mv } = props;
             :k="mv.transform.value.k"
             :min-radius="mv.minRadius.value"
           ></slot>
+          <MapSection
+            v-if="
+              sectionTool && (mv.section.shown.value !== null || mv.section.pending.value !== null)
+            "
+            :frame="mv.view.value.frame"
+            :path="mv.view.value.path"
+            :k="mv.transform.value.k"
+            :section="mv.section.shown.value"
+            :pending="mv.section.pending.value"
+            :cursor="mv.section.cursor.value"
+            @drag-start="mv.section.dragStart"
+            @drag-move="mv.onSectionDragMove"
+            @drag-end="mv.section.dragEnd()"
+          />
         </g>
       </svg>
     </div>

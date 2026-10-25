@@ -3,11 +3,13 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import { HttpError, registerErrorHandlers } from "./api/errors.js";
 import type { Db } from "./db/client.js";
 import { loadGeoAssets, type GeoAssets } from "./geo/assets.js";
+import { DEFAULT_RELIEF_FILE, loadRelief, RELIEF, type ReliefLayout } from "./geo/relief.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { eventRoutes } from "./routes/events.js";
 import { geoRoutes } from "./routes/geo.js";
 import { healthRoutes } from "./routes/health.js";
 import { regionRoutes } from "./routes/regions.js";
+import { reliefRoutes } from "./routes/relief.js";
 import { runRoutes } from "./routes/runs.js";
 import { statusRoutes } from "./routes/status.js";
 import { volcanoRoutes } from "./routes/volcanoes.js";
@@ -17,6 +19,9 @@ declare module "fastify" {
     db: Db;
     now: () => Date;
     geo: GeoAssets;
+    /** The relief grid for the section profile, or null when the image has none. */
+    relief: Int16Array | null;
+    reliefLayout: ReliefLayout;
   }
 }
 
@@ -39,6 +44,10 @@ export interface AppOptions {
   now?: () => Date;
   /** Directory holding the geo JSON files; defaults to apps/server/data/geo. */
   geoDir?: string;
+  /** The raw relief grid; defaults to apps/server/data/relief/earth_relief_03m.i16, `null` for none. */
+  reliefFile?: string | null;
+  /** The grid's layout; tests pass a tiny one. */
+  reliefLayout?: ReliefLayout;
 }
 
 /** Builds the Fastify app without listening, so tests can inject requests. */
@@ -47,6 +56,8 @@ export function buildApp({
   logger = false,
   now = () => new Date(),
   geoDir,
+  reliefFile = DEFAULT_RELIEF_FILE,
+  reliefLayout = RELIEF,
   rateLimit: limit = DEFAULT_RATE_LIMIT,
   trustProxy = false,
 }: AppOptions): FastifyInstance {
@@ -54,6 +65,8 @@ export function buildApp({
   app.decorate("db", db);
   app.decorate("now", now);
   app.decorate("geo", loadGeoAssets(geoDir));
+  app.decorate("relief", reliefFile === null ? null : loadRelief(reliefFile));
+  app.decorate("reliefLayout", reliefLayout);
   registerErrorHandlers(app);
   if (limit.max > 0) {
     void app.register(rateLimit, {
@@ -70,6 +83,7 @@ export function buildApp({
   void app.register(statusRoutes);
   void app.register(runRoutes);
   void app.register(geoRoutes);
+  void app.register(reliefRoutes);
   void app.register(volcanoRoutes);
   void app.register(catalogRoutes);
   return app;

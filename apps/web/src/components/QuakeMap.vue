@@ -3,7 +3,16 @@ import AnimationBar from "./AnimationBar.vue";
 import MapDensity from "./MapDensity.vue";
 import MapEvents from "./MapEvents.vue";
 import MapShell from "./MapShell.vue";
-import { API, CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
+import {
+  API,
+  CATALOG,
+  CLOCK,
+  SECTION,
+  SELECT,
+  SET_SECTION,
+  useInjected,
+  ZONE,
+} from "../lib/keys.js";
 import { useQuakeLayer } from "../lib/layers.js";
 import { useMapView } from "../lib/mapview.js";
 
@@ -19,6 +28,8 @@ const mv = useMapView({
   api,
   region: () => catalog.requireRegion(),
   animate: () => props.animate,
+  section: useInjected(SECTION),
+  setSection: useInjected(SET_SECTION),
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });
 </script>

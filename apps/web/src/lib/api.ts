@@ -9,6 +9,7 @@ import type {
   ApiVolcanoChanges,
   ApiVolcanoDetail,
   ApiVolcanoReportList,
+  ApiRelief,
   ApiVolcanoStatusList,
   FieldsFile,
 } from "@tectonic/shared";
@@ -44,6 +45,8 @@ export interface ApiClient {
   volcano: (number: number) => Promise<ApiVolcanoDetail>;
   /** The gravity and magnetic rasters file, a static asset beside the app rather than an API route. */
   fields: () => Promise<FieldsFile>;
+  /** Elevations along a section line (`lon1,lat1,lon2,lat2`), `n` samples. */
+  relief: (section: string, n: number) => Promise<ApiRelief>;
 }
 
 export class ApiRequestError extends Error {
@@ -102,5 +105,6 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     volcanoReports: (weeks) => get(`/volcanoes/reports?weeks=${String(weeks)}`),
     volcano: (number) => get(`/volcanoes/${String(number)}`),
     fields: () => getUrl("/fields/fields.json"),
+    relief: (section, n) => get(`/relief?section=${encodeURIComponent(section)}&n=${String(n)}`),
   };
 }

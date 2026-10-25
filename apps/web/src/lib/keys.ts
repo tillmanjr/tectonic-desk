@@ -6,6 +6,7 @@ import type { EventFilter } from "./filters.js";
 import type { Zone } from "./format.js";
 import type { Mark, MarksStore } from "./marks.js";
 import type { NoticeStore } from "./notice.js";
+import type { Section } from "./section.js";
 import type { SettingsStore } from "./settings.js";
 import type { StatusPoll } from "./status.js";
 import type { Theme } from "./theme.js";
@@ -25,6 +26,10 @@ export const VOLCANOES: InjectionKey<VolcanoStore> = Symbol("volcanoes");
 export const SETTINGS: InjectionKey<SettingsStore> = Symbol("settings");
 /** The one-line app notice; `post` from anywhere, rendered once by `App.vue`. */
 export const NOTICE: InjectionKey<NoticeStore> = Symbol("notice");
+/** The cross-section line in the route (`?section=`), or null. */
+export const SECTION: InjectionKey<Readonly<Ref<Section | null>>> = Symbol("section");
+/** Writes or clears the section in the route. */
+export const SET_SECTION: InjectionKey<(s: Section | null) => void> = Symbol("setSection");
 /** Select a GVP volcano number (opens the volcano panel) or null (closes it). */
 export const SELECT_VOLCANO: InjectionKey<(number: number | null) => void> =
   Symbol("selectVolcano");

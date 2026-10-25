@@ -31,9 +31,11 @@ import {
   MARKS,
   MARKS_NAV,
   NOTICE,
+  SECTION,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
+  SET_SECTION,
   SET_VOLCANO_FILTER,
   SETTINGS,
   STATUS,
@@ -46,6 +48,7 @@ import {
 import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
+import { parseSection, sectionQuery, type Section } from "../lib/section.js";
 import { createSettings } from "../lib/settings.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -197,6 +200,14 @@ function setFilter(f: EventFilter): void {
 function setVolcanoFilter(f: VolcanoFilter): void {
   void router.replace({ query: { ...route.query, ...volcanoFilterQuery(f) } });
 }
+const routeSection = computed(() => parseSection(route.query.section));
+provide(SECTION, routeSection);
+function setSection(s: Section | null): void {
+  void router.replace({
+    query: { ...route.query, section: s === null ? undefined : sectionQuery(s) },
+  });
+}
+provide(SET_SECTION, setSection);
 function toggleZone(): void {
   const query = { ...route.query };
   if (zone.value === "utc") query.tz = "local";
@@ -341,6 +352,36 @@ onUnmounted(() => {
         <a href="https://www.geonet.org.nz/volcano">GeoNet</a>; each agency's scale is shown as
         published, they are not interchangeable. Weekly activity entries from the GVP/USGS Weekly
         Volcanic Activity Report when its feed is reachable.
+      </p>
+      <p>
+        <b>Gravity and magnetics.</b> Global free-air gravity anomaly from the Scripps marine
+        gravity model v33 (Sandwell et al. 2019,
+        <a href="https://doi.org/10.1016/j.asr.2019.09.011" rel="noopener" target="_blank"
+          >doi:10.1016/j.asr.2019.09.011</a
+        >), EGM2008 over land; West Coast isostatic residual gravity from the
+        <a href="https://mrdata.usgs.gov/gravity/" rel="noopener" target="_blank"
+          >USGS Digital Data Series DDS-9</a
+        >
+        (Kucks 1999; isostatic reduction by Simpson, Jachens and Blakely), conterminous US only.
+        Total-field magnetic anomaly from EMAG2v3 (Meyer, Chulliat and Saltus 2017,
+        <a href="https://doi.org/10.7289/V5H70CVX" rel="noopener" target="_blank"
+          >doi:10.7289/V5H70CVX</a
+        >), upward-continued to 4 km. The global grids are the 6-arc-minute copies served by the
+        <a
+          href="https://www.generic-mapping-tools.org/remote-datasets/"
+          rel="noopener"
+          target="_blank"
+          >Generic Mapping Tools remote dataset server</a
+        >
+        (Wessel et al. 2019,
+        <a href="https://doi.org/10.1029/2019GC008515" rel="noopener" target="_blank"
+          >doi:10.1029/2019GC008515</a
+        >), rendered here into the map projections with equalised or clipped colour ramps as each
+        legend states. Topography and bathymetry along a cross-section from SRTM15+ v2.7 (Tozer et
+        al. 2019,
+        <a href="https://doi.org/10.1029/2019EA000658" rel="noopener" target="_blank"
+          >doi:10.1029/2019EA000658</a
+        >), the 3-arc-minute tiles from the same server.
       </p>
       <p class="byline">
         Built for Barbara by
