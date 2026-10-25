@@ -26,52 +26,85 @@ Also backlog: F10.7, sunspot number and the 27-day outlook on the page; DONKI CM
 
 ## Decisions
 
-| Topic       | Decision                                                                                                                                                                                                                              |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Content     | Core plus second ring: Kp (1-minute estimate and 3-hour), NOAA scales R/S/G now and D+1..D+3, solar wind Bz and Bt, speed and density, GOES X-ray long and short channels, protons ≥10 and ≥100 MeV, flares, alerts, Kyoto Dst. |
-| Time        | Window select 6 h, 24 h, 3 d, 7 d, 30 d plus a from/to range; all charts share the window. One-minute rows kept 30 days, then a 5-minute mean indefinitely; 3-hour Kp, Dst, flares, alerts and scales kept forever.                    |
-| Shell       | A fourth page pill, Space, at `/space`. No region: the region tabs hide, the refine bar carries the window and range, the status line shows SWPC freshness and sources. Active Earth is unchanged.                                    |
-| Layout      | Six tiles across the top; one tall stack of every series on one time axis; forecast, flares and alerts in a right-hand rail that drops under the stack below 900 px (mockup A).                                                        |
-| Storage     | One tall `space_samples` table keyed `(series, time, source)` plus record tables `space_flares`, `space_alerts`, `space_scales`. Adding a series is a new id, not a migration.                                                        |
-| Polling     | Five-minute jobs for the fast series and the event files, hourly for the slow ones, six-hourly prune. SWPC gzips on the wire (the 1.4 MB mag file is 136 KB) and Node's fetch asks for gzip, so the solar wind costs ~100 MB a day.    |
-| Ingest runs | The space jobs do not write `ingest_runs` (288 rows a day per job would drown the status page); the `now` read reports each series' latest sample time, which is the health signal that matters.                                      |
-| Credits     | A "Space weather" footer paragraph (NOAA SWPC, public domain; Kyoto WDC for Geomagnetism for Dst; NOAA GOES) and matching rows in the README table.                                                                                   |
+| Topic       | Decision                                                                                                                                                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Content     | Core plus second ring: Kp (1-minute estimate and 3-hour), NOAA scales R/S/G now and D+1..D+3, solar wind Bz and Bt, speed and density, GOES X-ray long and short channels, protons ≥10 and ≥100 MeV, flares, alerts, Kyoto Dst.     |
+| Time        | Window select 6 h, 24 h, 3 d, 7 d, 30 d plus a from/to range; all charts share the window. One-minute rows kept 30 days, then a 5-minute mean indefinitely; 3-hour Kp, Dst, flares, alerts and scales kept forever.                 |
+| Shell       | A fourth page pill, Space, at `/space`. No region: the region tabs hide, the refine bar carries the window and range, the status line shows SWPC freshness and sources. Active Earth is unchanged.                                  |
+| Layout      | Six tiles across the top; one tall stack of every series on one time axis; forecast, flares and alerts in a right-hand rail that drops under the stack below 900 px (mockup A).                                                     |
+| Storage     | One tall `space_samples` table keyed `(series, time, source)` plus record tables `space_flares`, `space_alerts`, `space_scales`. Adding a series is a new id, not a migration.                                                      |
+| Polling     | Five-minute jobs for the fast series and the event files, hourly for the slow ones, six-hourly prune. SWPC gzips on the wire (the 1.4 MB mag file is 136 KB) and Node's fetch asks for gzip, so the solar wind costs ~100 MB a day. |
+| Ingest runs | The space jobs do not write `ingest_runs` (288 rows a day per job would drown the status page); the `now` read reports each series' latest sample time, which is the health signal that matters.                                    |
+| Credits     | A "Space weather" footer paragraph (NOAA SWPC, public domain; Kyoto WDC for Geomagnetism for Dst; NOAA GOES) and matching rows in the README table.                                                                                 |
 
 ## 1. Shared (`packages/shared/src/space.ts`, `api.ts`)
 
 ```ts
 export const SPACE_SERIES = [
-  "kp_1m", "kp_3h", "dst", "bz_gsm", "bt", "speed", "density",
-  "xray_long", "xray_short", "p10", "p100",
+  "kp_1m",
+  "kp_3h",
+  "dst",
+  "bz_gsm",
+  "bt",
+  "speed",
+  "density",
+  "xray_long",
+  "xray_short",
+  "p10",
+  "p100",
 ] as const;
 export type SpaceSeries = (typeof SPACE_SERIES)[number];
 
 /** One measurement of one series from one instrument or agency. */
-export interface SpaceSample { series: SpaceSeries; time: Date; source: string; value: number }
+export interface SpaceSample {
+  series: SpaceSeries;
+  time: Date;
+  source: string;
+  value: number;
+}
 
 /** A GOES X-ray flare as SWPC lists it; end fields arrive after the begin. */
 export interface SpaceFlare {
-  beginTime: Date; maxTime: Date | null; endTime: Date | null;
-  beginClass: string | null; maxClass: string | null; endClass: string | null;
+  beginTime: Date;
+  maxTime: Date | null;
+  endTime: Date | null;
+  beginClass: string | null;
+  maxClass: string | null;
+  endClass: string | null;
   /** Peak 0.1–0.8 nm flux, W/m². */
-  maxXrlong: number | null; satellite: number | null;
+  maxXrlong: number | null;
+  satellite: number | null;
 }
 
-export interface SpaceAlert { productId: string; issueTime: Date; message: string }
+export interface SpaceAlert {
+  productId: string;
+  issueTime: Date;
+  message: string;
+}
 
 export type ScalesKind = "observed" | "predicted";
 /** NOAA scales for one UTC day: observed levels, or predicted G level with R and S probabilities. */
 export interface SpaceScales {
-  day: Date; kind: ScalesKind; issued: Date;
-  r: number | null; s: number | null; g: number | null;
-  rMinorProb: number | null; rMajorProb: number | null; sProb: number | null;
+  day: Date;
+  kind: ScalesKind;
+  issued: Date;
+  r: number | null;
+  s: number | null;
+  g: number | null;
+  rMinorProb: number | null;
+  rMajorProb: number | null;
+  sProb: number | null;
   /** The day's largest 3-hour Kp (observed or predicted). */
   kpMax: number | null;
 }
 ```
 
 ```ts
-export interface ApiSpaceReading { time: string; value: number; source: string }
+export interface ApiSpaceReading {
+  time: string;
+  value: number;
+  source: string;
+}
 export type ApiSpaceFlare = Json<SpaceFlare>;
 export type ApiSpaceAlert = Json<SpaceAlert>;
 export type ApiSpaceScales = Json<SpaceScales>;
@@ -88,12 +121,15 @@ export interface ApiSpaceNow {
 
 /** `GET /api/space/window?from=&to=`: samples thinned to one shared bucket, with the events inside. */
 export interface ApiSpaceWindow {
-  from: string; to: string;
+  from: string;
+  to: string;
   /** Seconds per bucket when thinned; null when the rows came back raw. */
   bucketSeconds: number | null;
   /** Per series, `[epoch ms, value]` ascending. */
   samples: Record<SpaceSeries, [number, number][]>;
-  flares: ApiSpaceFlare[]; alerts: ApiSpaceAlert[]; scales: ApiSpaceScales[];
+  flares: ApiSpaceFlare[];
+  alerts: ApiSpaceAlert[];
+  scales: ApiSpaceScales[];
 }
 ```
 
@@ -104,11 +140,11 @@ export interface ApiSpaceWindow {
 - `space_samples(series text, time timestamptz, source text, value real)` primary key
   `(series, time, source)`, index `(series, time desc)`.
 - `space_flares(begin_time timestamptz pk, max_time, end_time, begin_class text, max_class text,
-  end_class text, max_xrlong double precision, satellite integer)`.
+end_class text, max_xrlong double precision, satellite integer)`.
 - `space_alerts(product_id text, issue_time timestamptz, message text)` primary key
   `(product_id, issue_time)`, index `(issue_time desc)`.
 - `space_scales(day date, kind text, issued timestamptz, r, s, g, r_minor_prob, r_major_prob,
-  s_prob integer, kp_max real)` primary key `(day, kind)`, check `kind in ('observed','predicted')`.
+s_prob integer, kp_max real)` primary key `(day, kind)`, check `kind in ('observed','predicted')`.
 
 ### Client and parsers (`src/space/{schema,client,parse}.ts`)
 
@@ -116,19 +152,19 @@ export interface ApiSpaceWindow {
 `SpaceHttpError(status, url)` like the volcano client. Files and schemas (loose objects, read
 fields checked, the others pass through):
 
-| Method               | File                                               | Parsed to                                                                 |
-| -------------------- | -------------------------------------------------- | ------------------------------------------------------------------------- |
-| `fetchKp1m`          | `json/planetary_k_index_1m.json`                   | `kp_1m` from `estimated_kp`, source `swpc`                                |
-| `fetchKp3h`          | `products/noaa-planetary-k-index.json`             | `kp_3h` from `Kp`, source `swpc`                                          |
-| `fetchKpForecast`    | `products/noaa-planetary-k-index-forecast.json`    | per-day `kpMax` for the scales rows                                       |
-| `fetchDst`           | `products/kyoto-dst.json`                          | `dst`, source `kyoto`                                                     |
-| `fetchMag`           | `json/rtsw/rtsw_mag_1m.json`                       | `bz_gsm`, `bt` from rows with `active: true`, source = spacecraft         |
-| `fetchWind`          | `json/rtsw/rtsw_wind_1m.json`                      | `speed` (`proton_speed`), `density` (`proton_density`), active rows only  |
-| `fetchXrays`         | `json/goes/primary/xrays-6-hour.json`              | `xray_long` (`0.1-0.8nm`), `xray_short` (`0.05-0.4nm`) from `flux`, source `GOES-<n>` |
-| `fetchProtons`       | `json/goes/primary/integral-protons-6-hour.json`   | `p10` (`>=10 MeV`), `p100` (`>=100 MeV`), source `GOES-<n>`               |
-| `fetchFlares`        | `json/goes/primary/xray-flares-7-day.json`         | `SpaceFlare[]`                                                            |
-| `fetchAlerts`        | `products/alerts.json`                             | `SpaceAlert[]`; `issue_datetime` `2026-10-24 09:04:23.307` read as UTC    |
-| `fetchScales`        | `products/noaa-scales.json`                        | `SpaceScales[]`: keys `-1`,`0` observed, `1`..`3` predicted; `issued` is key `0`'s stamp |
+| Method            | File                                             | Parsed to                                                                                |
+| ----------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `fetchKp1m`       | `json/planetary_k_index_1m.json`                 | `kp_1m` from `estimated_kp`, source `swpc`                                               |
+| `fetchKp3h`       | `products/noaa-planetary-k-index.json`           | `kp_3h` from `Kp`, source `swpc`                                                         |
+| `fetchKpForecast` | `products/noaa-planetary-k-index-forecast.json`  | per-day `kpMax` for the scales rows                                                      |
+| `fetchDst`        | `products/kyoto-dst.json`                        | `dst`, source `kyoto`                                                                    |
+| `fetchMag`        | `json/rtsw/rtsw_mag_1m.json`                     | `bz_gsm`, `bt` from rows with `active: true`, source = spacecraft                        |
+| `fetchWind`       | `json/rtsw/rtsw_wind_1m.json`                    | `speed` (`proton_speed`), `density` (`proton_density`), active rows only                 |
+| `fetchXrays`      | `json/goes/primary/xrays-6-hour.json`            | `xray_long` (`0.1-0.8nm`), `xray_short` (`0.05-0.4nm`) from `flux`, source `GOES-<n>`    |
+| `fetchProtons`    | `json/goes/primary/integral-protons-6-hour.json` | `p10` (`>=10 MeV`), `p100` (`>=100 MeV`), source `GOES-<n>`                              |
+| `fetchFlares`     | `json/goes/primary/xray-flares-7-day.json`       | `SpaceFlare[]`                                                                           |
+| `fetchAlerts`     | `products/alerts.json`                           | `SpaceAlert[]`; `issue_datetime` `2026-10-24 09:04:23.307` read as UTC                   |
+| `fetchScales`     | `products/noaa-scales.json`                      | `SpaceScales[]`: keys `-1`,`0` observed, `1`..`3` predicted; `issued` is key `0`'s stamp |
 
 `parseTime(s)` accepts `2026-10-25T03:13:00`, `…03:13:02`, `…Z` and the alerts form, always as
 UTC. Rows with a null value are skipped. `kpMaxByDay(forecastRows)` gives `Map<day, max kp>`
@@ -151,12 +187,12 @@ not a multiple of 300; returns the deleted count).
 `Promise.allSettled`, parses and writes each result that arrived, logs each failure with the
 file name, and throws only when every file failed (so the scheduler logs a run failure).
 
-| Job            | Files                                            | Every (config, default)                       |
-| -------------- | ------------------------------------------------ | --------------------------------------------- |
-| `space_fast`   | Kp 1-min, mag, wind, X-rays, protons             | `SPACE_FAST_INTERVAL_MS`, 300 000             |
-| `space_events` | flares, alerts, scales + Kp forecast             | `SPACE_EVENTS_INTERVAL_MS`, 300 000           |
-| `space_slow`   | Kp 3-hour, Dst                                   | `SPACE_SLOW_INTERVAL_MS`, 3 600 000           |
-| `space_prune`  | `downsampleBefore(now − 30 d)`                   | `SPACE_PRUNE_INTERVAL_MS`, 21 600 000         |
+| Job            | Files                                | Every (config, default)               |
+| -------------- | ------------------------------------ | ------------------------------------- |
+| `space_fast`   | Kp 1-min, mag, wind, X-rays, protons | `SPACE_FAST_INTERVAL_MS`, 300 000     |
+| `space_events` | flares, alerts, scales + Kp forecast | `SPACE_EVENTS_INTERVAL_MS`, 300 000   |
+| `space_slow`   | Kp 3-hour, Dst                       | `SPACE_SLOW_INTERVAL_MS`, 3 600 000   |
+| `space_prune`  | `downsampleBefore(now − 30 d)`       | `SPACE_PRUNE_INTERVAL_MS`, 21 600 000 |
 
 `SPACE_ENABLED` (default true) lets a deployment leave the jobs out. `index.ts` registers them
 beside the volcano jobs.
@@ -219,7 +255,7 @@ values)`, `linePath(points, x, y, gapMs)` (breaks the line across gaps longer th
 - `SpaceRefine.vue`: `RefineBar`-styled bar (`.filters.refine.space`) with the Window select and
   From/To `datetime-local` inputs in the active zone; a fixed range shows "Custom" in the select.
 - `SpaceStatus.vue`: `Live · NOAA SWPC · newest sample <stamp> · <ago> · mag SOLAR1 · plasma
-  SOLAR1 · GOES-18`; `warn` class when the newest sample is older than 15 minutes, `bad` when
+SOLAR1 · GOES-18`; `warn` class when the newest sample is older than 15 minutes, `bad` when
   the store has an error.
 - `SpaceTiles.vue`: six `.stat` tiles in `.stats.space` with a `.spark` sparkline from the window
   series: Kp (1-min, `3-h 4-` sub), Scales (G R S chips, D+1 line), Bz·Bt, Speed·density, X-ray
