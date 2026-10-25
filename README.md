@@ -350,3 +350,20 @@ trusts Cloudflare's ranges, nginx takes the client from `X-Forwarded-For`, and t
 | `pnpm ingest feed day\|week`                   | one feed sync, including detail fetches                                                                                                                                            |
 | `pnpm ingest details`                          | one detail pass over pending candidates (`--limit N`, `--by-magnitude`)                                                                                                            |
 | `pnpm ingest backfill --from DATE [--to DATE]` | load history newest first, freezing settled windows; `--days N` for a recent range, `--min-magnitude M` or `--all-magnitudes`, `--bbox`, `--force`, `--skip-details`, `--pause-ms` |
+
+## Data sources and credits
+
+Every dataset the desk shows is also credited in the site footer. Please keep both lists in
+step when a source is added.
+
+| Layer                           | Source                                                                                                                               | Terms / citation                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Earthquakes, mechanisms         | USGS ANSS Comprehensive Catalog (ComCat) and its product feeds; ISC-GEM and Centennial compilations before 1973 as carried by ComCat | US public domain                                                                   |
+| Plate boundaries                | Bird (2003), _An updated digital model of plate boundaries_, G³ 4(3), 1027 (PB2002), via the fraxen/tectonicplates repository        | Cite Bird (2003)                                                                   |
+| Basemap                         | Natural Earth via world-atlas and us-atlas                                                                                           | Public domain                                                                      |
+| Quaternary faults               | USGS Quaternary Fault and Fold Database of the United States                                                                         | US public domain                                                                   |
+| Volcanoes, eruptions            | Smithsonian Institution Global Volcanism Program, Volcanoes of the World database                                                    | Non-commercial use, with thanks; cite GVP                                          |
+| Volcano alert levels            | USGS Volcano Hazards Program (HANS), GeoNet; weekly activity from the GVP/USGS Weekly Volcanic Activity Report                       | Agency scales shown as published                                                   |
+| Free-air gravity (global)       | Scripps marine gravity v33 (Sandwell et al. 2019, doi:10.1016/j.asr.2019.09.011), EGM2008 over land, via GMT `earth_faa_06m`         | Cite Sandwell et al. (2019) and GMT (Wessel et al. 2019, doi:10.1029/2019GC008515) |
+| Isostatic residual gravity (WC) | USGS Digital Data Series DDS-9 (Kucks 1999; isostatic reduction by Simpson, Jachens and Blakely), `isograv.gxf`                      | US public domain                                                                   |
+| Magnetic anomaly                | EMAG2v3 (Meyer, Chulliat and Saltus 2017, doi:10.7289/V5H70CVX), 4 km upward-continued, via GMT `earth_mag4km_06m`                   | US government work; cite Meyer et al. (2017) and GMT                               |

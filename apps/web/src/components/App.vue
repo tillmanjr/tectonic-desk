@@ -353,6 +353,32 @@ onUnmounted(() => {
         published, they are not interchangeable. Weekly activity entries from the GVP/USGS Weekly
         Volcanic Activity Report when its feed is reachable.
       </p>
+      <p>
+        <b>Gravity and magnetics.</b> Global free-air gravity anomaly from the Scripps marine
+        gravity model v33 (Sandwell et al. 2019,
+        <a href="https://doi.org/10.1016/j.asr.2019.09.011" rel="noopener" target="_blank"
+          >doi:10.1016/j.asr.2019.09.011</a
+        >), EGM2008 over land; West Coast isostatic residual gravity from the
+        <a href="https://mrdata.usgs.gov/gravity/" rel="noopener" target="_blank"
+          >USGS Digital Data Series DDS-9</a
+        >
+        (Kucks 1999; isostatic reduction by Simpson, Jachens and Blakely), conterminous US only.
+        Total-field magnetic anomaly from EMAG2v3 (Meyer, Chulliat and Saltus 2017,
+        <a href="https://doi.org/10.7289/V5H70CVX" rel="noopener" target="_blank"
+          >doi:10.7289/V5H70CVX</a
+        >), upward-continued to 4 km. The global grids are the 6-arc-minute copies served by the
+        <a
+          href="https://www.generic-mapping-tools.org/remote-datasets/"
+          rel="noopener"
+          target="_blank"
+          >Generic Mapping Tools remote dataset server</a
+        >
+        (Wessel et al. 2019,
+        <a href="https://doi.org/10.1029/2019GC008515" rel="noopener" target="_blank"
+          >doi:10.1029/2019GC008515</a
+        >), rendered here into the map projections with equalised or clipped colour ramps as each
+        legend states.
+      </p>
       <p class="byline">
         Built for Barbara by
         <a href="https://github.com/tillmanjr" rel="author noopener" target="_blank">Tillman</a>
