@@ -7,6 +7,7 @@ const PAGES: { id: Page; label: string }[] = [
   { id: "active", label: "Active Earth" },
   { id: "earthquakes", label: "Earthquakes" },
   { id: "volcanoes", label: "Volcanoes" },
+  { id: "space", label: "Space" },
 ];
 </script>
 

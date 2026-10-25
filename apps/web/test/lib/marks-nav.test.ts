@@ -28,6 +28,8 @@ describe("marks-nav", () => {
     expect(showsKind("volcanoes", "volcano")).toBe(true);
     expect(showsKind("active", "event")).toBe(true);
     expect(showsKind("active", "volcano")).toBe(true);
+    expect(showsKind("space", "event")).toBe(false);
+    expect(showsKind("space", "volcano")).toBe(false);
   });
 
   it("selects the mark in the current view, dropping the other selection", () => {

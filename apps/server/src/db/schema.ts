@@ -1,4 +1,4 @@
-import type { RunKind, VolcanoSource } from "@tectonic/shared";
+import type { RunKind, ScalesKind, SpaceSeries, VolcanoSource } from "@tectonic/shared";
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
@@ -9,6 +9,8 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
+  real,
   serial,
   text,
   timestamp,
@@ -200,6 +202,66 @@ export const volcanoReports = pgTable(
   ],
 );
 
+/** Every numeric space weather series, one row per (series, instant, source); 1-minute rows thin to 5-minute means after 30 days. */
+export const spaceSamples = pgTable(
+  "space_samples",
+  {
+    series: text("series").$type<SpaceSeries>().notNull(),
+    time: timestamp("time", tz).notNull(),
+    source: text("source").notNull(),
+    value: real("value").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.series, t.time, t.source] }),
+    index("space_samples_series_time_idx").on(t.series, t.time.desc()),
+  ],
+);
+
+export const spaceFlares = pgTable("space_flares", {
+  beginTime: timestamp("begin_time", tz).primaryKey(),
+  maxTime: timestamp("max_time", tz),
+  endTime: timestamp("end_time", tz),
+  beginClass: text("begin_class"),
+  maxClass: text("max_class"),
+  endClass: text("end_class"),
+  maxXrlong: doublePrecision("max_xrlong"),
+  satellite: integer("satellite"),
+});
+
+export const spaceAlerts = pgTable(
+  "space_alerts",
+  {
+    productId: text("product_id").notNull(),
+    issueTime: timestamp("issue_time", tz).notNull(),
+    message: text("message").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.productId, t.issueTime] }),
+    index("space_alerts_issue_idx").on(t.issueTime.desc()),
+  ],
+);
+
+/** NOAA scales per UTC day; the latest issue of a day's row replaces the earlier one. */
+export const spaceScales = pgTable(
+  "space_scales",
+  {
+    day: date("day", { mode: "date" }).notNull(),
+    kind: text("kind").$type<ScalesKind>().notNull(),
+    issued: timestamp("issued", tz).notNull(),
+    r: integer("r"),
+    s: integer("s"),
+    g: integer("g"),
+    rMinorProb: integer("r_minor_prob"),
+    rMajorProb: integer("r_major_prob"),
+    sProb: integer("s_prob"),
+    kpMax: real("kp_max"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.day, t.kind] }),
+    check("space_scales_kind_check", sql`${t.kind} in ('observed', 'predicted')`),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type EventInsert = typeof events.$inferInsert;
 export type MechanismRow = typeof mechanisms.$inferSelect;
@@ -211,3 +273,7 @@ export type VolcanoStatusRow = typeof volcanoStatus.$inferSelect;
 export type VolcanoStatusInsert = typeof volcanoStatus.$inferInsert;
 export type VolcanoReportRow = typeof volcanoReports.$inferSelect;
 export type VolcanoReportInsert = typeof volcanoReports.$inferInsert;
+export type SpaceSampleRow = typeof spaceSamples.$inferSelect;
+export type SpaceFlareRow = typeof spaceFlares.$inferSelect;
+export type SpaceAlertRow = typeof spaceAlerts.$inferSelect;
+export type SpaceScalesRow = typeof spaceScales.$inferSelect;

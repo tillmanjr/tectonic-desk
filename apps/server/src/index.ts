@@ -1,9 +1,11 @@
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db/client.js";
-import { startScheduler } from "./ingest/scheduler.js";
+import { startScheduler, type ScheduledJob } from "./ingest/scheduler.js";
+import { pruneSpace, syncSpaceEvents, syncSpaceFast, syncSpaceSlow } from "./ingest/space.js";
 import { syncVolcanoReports, syncVolcanoStatus } from "./ingest/volcanoes.js";
 import { buildLoggerOptions } from "./logging.js";
+import { createSpaceClient } from "./space/client.js";
 import { createUsgsClient } from "./usgs/client.js";
 import { createVolcanoClient } from "./volcano/client.js";
 
@@ -23,6 +25,32 @@ if (config.INGEST_ENABLED) {
   });
   const volcano = createVolcanoClient({ userAgent: config.USGS_USER_AGENT });
   const volcanoCtx = { db, volcano, log: app.log, now: () => new Date() };
+  const space = createSpaceClient({ userAgent: config.USGS_USER_AGENT });
+  const spaceCtx = { db, space, log: app.log, now: () => new Date() };
+  const spaceJobs: ScheduledJob[] = config.SPACE_ENABLED
+    ? [
+        {
+          name: "space_fast",
+          everyMs: config.SPACE_FAST_INTERVAL_MS,
+          run: () => syncSpaceFast(spaceCtx),
+        },
+        {
+          name: "space_events",
+          everyMs: config.SPACE_EVENTS_INTERVAL_MS,
+          run: () => syncSpaceEvents(spaceCtx),
+        },
+        {
+          name: "space_slow",
+          everyMs: config.SPACE_SLOW_INTERVAL_MS,
+          run: () => syncSpaceSlow(spaceCtx),
+        },
+        {
+          name: "space_prune",
+          everyMs: config.SPACE_PRUNE_INTERVAL_MS,
+          run: () => pruneSpace(spaceCtx),
+        },
+      ]
+    : [];
   const scheduler = startScheduler(
     { db, usgs, log: app.log, now: () => new Date() },
     {
@@ -39,6 +67,7 @@ if (config.INGEST_ENABLED) {
           everyMs: config.VOLCANO_REPORTS_INTERVAL_MS,
           run: () => syncVolcanoReports(volcanoCtx),
         },
+        ...spaceJobs,
       ],
     },
   );

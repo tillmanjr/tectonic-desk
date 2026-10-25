@@ -158,3 +158,43 @@ export const reliefQuerySchema = z.strictObject({
   section: fourNumbers,
   n: z.coerce.number().int().min(2).max(1024).default(256),
 });
+
+const isoInstant = z.iso.datetime({ offset: true }).transform((s) => new Date(s));
+
+/** `GET /api/space/window`: two instants, `to` defaulting to now. */
+export const spaceWindowQuerySchema = z.strictObject({
+  from: isoInstant,
+  to: isoInstant.optional(),
+});
+
+/** The longest window the route serves. */
+export const SPACE_WINDOW_MAX_MS = 93 * DAY_MS;
+/** Windows up to this long come back as the stored rows; longer ones are thinned. */
+export const SPACE_RAW_MAX_MS = 25 * 3_600_000;
+/** How many points per series a thinned window carries, at most. */
+export const SPACE_POINTS = 1500;
+
+/** Seconds per bucket for a window: null (raw rows) up to 25 hours, else the span over 1,500 points rounded up to a whole minute. */
+export function bucketFor(from: Date, to: Date): number | null {
+  const span = to.getTime() - from.getTime();
+  if (span <= SPACE_RAW_MAX_MS) return null;
+  return Math.ceil(span / 1000 / SPACE_POINTS / 60) * 60;
+}
+
+export interface SpaceWindowQuery {
+  from: Date;
+  to: Date;
+  bucketSeconds: number | null;
+}
+
+export function parseSpaceWindow(input: unknown, now: Date): SpaceWindowQuery {
+  const q = parseOrThrow(spaceWindowQuerySchema, input);
+  const to = q.to ?? now;
+  if (to.getTime() < q.from.getTime()) {
+    throw badRequest([{ path: "to", message: "to must not precede from" }]);
+  }
+  if (to.getTime() - q.from.getTime() > SPACE_WINDOW_MAX_MS) {
+    throw badRequest([{ path: "to", message: "window must not exceed 93 days" }]);
+  }
+  return { from: q.from, to, bucketSeconds: bucketFor(q.from, to) };
+}

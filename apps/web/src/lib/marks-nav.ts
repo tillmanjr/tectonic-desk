@@ -1,9 +1,9 @@
 import { pagePath, type Page } from "../router.js";
 import type { Mark, MarkKind } from "./marks.js";
 
-/** Pages whose panels can show a mark's kind. */
+/** Pages whose panels can show a mark's kind; the Space page has no panels. */
 export const showsKind = (page: Page, kind: MarkKind): boolean =>
-  kind === "event" ? page !== "volcanoes" : page !== "earthquakes";
+  page !== "space" && (kind === "event" ? page !== "volcanoes" : page !== "earthquakes");
 
 export interface HereTarget {
   /** Path and query to push. */
