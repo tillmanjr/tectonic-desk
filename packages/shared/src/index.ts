@@ -4,6 +4,7 @@ export * from "./mechanism/classify.js";
 export * from "./mechanism/solution.js";
 export * from "./api.js";
 export * from "./greatcircle.js";
+export * from "./space.js";
 
 export type MechanismKind = "mt" | "fm";
 
