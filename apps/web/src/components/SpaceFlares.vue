@@ -3,6 +3,7 @@ import type { ApiSpaceFlare } from "@tectonic/shared";
 import { computed } from "vue";
 import { fmtStamp } from "../lib/format.js";
 import { SET_SPACE_RANGE, SPACE, useInjected, ZONE } from "../lib/keys.js";
+import { windowLabel } from "../lib/space.js";
 import { minutesBetween } from "../lib/space-format.js";
 
 /**
@@ -49,6 +50,12 @@ const rows = computed<Row[]>(() => {
     }));
 });
 
+/** True while the range is fixed, as it is after framing a flare. */
+const framed = computed(() => store.range.value.kind === "fixed");
+function back(): void {
+  setRange({ kind: "window", id: store.lastWindow.value });
+}
+
 function frame(f: ApiSpaceFlare): void {
   setRange({
     kind: "fixed",
@@ -92,6 +99,14 @@ function frame(f: ApiSpaceFlare): void {
         </tr>
       </tbody>
     </table>
-    <p class="cap">Click a flare to frame it, an hour before to two hours after.</p>
+    <p class="cap">
+      <template v-if="framed"
+        >The range is fixed; the list shows the flares inside it.
+        <button type="button" class="fclear backbtn" @click="back">
+          Back to {{ windowLabel(store.lastWindow.value) }}
+        </button></template
+      >
+      <template v-else>Click a flare to frame it, an hour before to two hours after.</template>
+    </p>
   </div>
 </template>
