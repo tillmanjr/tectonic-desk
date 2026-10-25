@@ -29,6 +29,8 @@ describe("createApiClient", () => {
     await api.relief("0,0,10,0", 64);
     await api.spaceNow();
     await api.spaceWindow("2026-10-12T12:00:00.000Z", "2026-10-13T12:00:00.000Z");
+    await api.auroraIndex();
+    await api.auroraFrame("2026-10-13T11:50:00.000Z");
     expect(fetchFn.mock.calls.map((c: unknown[]) => c[0])).toEqual([
       "/api/regions",
       "/api/events?since=2026-10-06T00%3A00%3A00.000Z&minMag=4.5&limit=2000",
@@ -46,6 +48,8 @@ describe("createApiClient", () => {
       "/api/relief?section=0%2C0%2C10%2C0&n=64",
       "/api/space/now",
       "/api/space/window?from=2026-10-12T12%3A00%3A00.000Z&to=2026-10-13T12%3A00%3A00.000Z",
+      "/api/space/aurora",
+      "/api/space/aurora/2026-10-13T11%3A50%3A00.000Z",
     ]);
   });
   it("throws ApiRequestError with the body's error message", async () => {

@@ -2,12 +2,14 @@ import { mount, type VueWrapper } from "@vue/test-utils";
 import { vi, type Mock } from "vitest";
 import { defineComponent, h, provide, ref, type Component, type Ref } from "vue";
 import type { ApiClient } from "../../src/lib/api.js";
+import { createAuroraStore, type AuroraStore } from "../../src/lib/aurora.js";
 import { createCatalog, type Catalog } from "../../src/lib/catalog.js";
 import { createClock, type Clock } from "../../src/lib/clock.js";
 import type { EventFilter, Range } from "../../src/lib/filters.js";
 import type { Zone } from "../../src/lib/format.js";
 import {
   API,
+  AURORA,
   CATALOG,
   CLOCK,
   MARKS,
@@ -60,6 +62,7 @@ export interface Context {
   section: Ref<Section | null>;
   setSection: Mock<(s: Section | null) => void>;
   space: SpaceStore;
+  aurora: AuroraStore;
   setSpaceRange: Mock<(r: SpaceRange) => void>;
   /** Spies for every nav action; `overlay` is the writable ref behind `nav.overlay`. */
   nav: MarksNav;
@@ -120,7 +123,11 @@ export async function makeContext(
   volcanoes.setRegion(catalog.region.value);
   if (over.volcanoes === true) await volcanoes.load();
   const space = createSpaceStore(api, () => now, { intervalMs: 1e9, doc: noDoc });
-  if (over.space === true) await space.load();
+  const aurora = createAuroraStore(api, { intervalMs: 1e9, doc: noDoc });
+  if (over.space === true) {
+    await space.load();
+    await aurora.load();
+  }
   const overlay = ref<{ group: string; mode: MarksMode } | null>(null);
   return {
     api,
@@ -139,6 +146,7 @@ export async function makeContext(
     section: ref<Section | null>(null),
     setSection: vi.fn(),
     space,
+    aurora,
     setSpaceRange: vi.fn(),
     nav: {
       viewUrl: ref("/wc?event=us1"),
@@ -182,6 +190,7 @@ export function mountWith(
       provide(SECTION, ctx.section);
       provide(SET_SECTION, ctx.setSection);
       provide(SPACE, ctx.space);
+      provide(AURORA, ctx.aurora);
       provide(SET_SPACE_RANGE, ctx.setSpaceRange);
       provide(ZONE, ctx.zone);
       return () => h(component, props);

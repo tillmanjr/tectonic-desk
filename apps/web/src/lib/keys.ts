@@ -1,5 +1,6 @@
 import { inject, type InjectionKey, type Ref } from "vue";
 import type { ApiClient } from "./api.js";
+import type { AuroraStore } from "./aurora.js";
 import type { Catalog } from "./catalog.js";
 import type { Clock } from "./clock.js";
 import type { EventFilter } from "./filters.js";
@@ -33,6 +34,8 @@ export const SECTION: InjectionKey<Readonly<Ref<Section | null>>> = Symbol("sect
 export const SET_SECTION: InjectionKey<(s: Section | null) => void> = Symbol("setSection");
 /** The Space page's readings and window. */
 export const SPACE: InjectionKey<SpaceStore> = Symbol("space");
+/** The aurora frames and the one on show. */
+export const AURORA: InjectionKey<AuroraStore> = Symbol("aurora");
 /** Replace the space weather range (written to the URL by App). */
 export const SET_SPACE_RANGE: InjectionKey<(r: SpaceRange) => void> = Symbol("setSpaceRange");
 /** Select a GVP volcano number (opens the volcano panel) or null (closes it). */
