@@ -139,3 +139,22 @@ export function toListFilter(q: EventsFilter & { limit?: number }): ListEventsFi
   if (q.bbox) filter.bbox = q.bbox;
   return filter;
 }
+
+/** Four comma-separated numbers: lon, lat, lon, lat. */
+const fourNumbers = z
+  .string()
+  .transform((v, ctx) => {
+    const parts = v.split(",").map(Number);
+    if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) {
+      ctx.addIssue({ code: "custom", message: "expected lon,lat,lon,lat" });
+      return z.NEVER;
+    }
+    return parts;
+  })
+  .pipe(z.tuple([lon, lat, lon, lat]));
+
+/** `GET /api/relief`: the section's ends and how many samples to take along it. */
+export const reliefQuerySchema = z.strictObject({
+  section: fourNumbers,
+  n: z.coerce.number().int().min(2).max(1024).default(256),
+});

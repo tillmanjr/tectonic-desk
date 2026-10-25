@@ -254,3 +254,35 @@ export async function loadWorld(fetchFn: FetchLike = (u) => fetch(u)): Promise<T
   if (!res.ok) throw new Error(`world basemap: HTTP ${String(res.status)}`);
   return (await res.json()) as Topo;
 }
+
+/** How far, in projected units, a round trip may drift before a point counts as off the map. */
+const ROUND_TRIP_TOLERANCE = 1;
+
+/**
+ * The lon/lat under a projected point, or null when the projection cannot say or the point is
+ * off the map: some inverses answer for points outside the globe's outline, so the answer is
+ * projected forward again and must land back where it started.
+ */
+export function invertPoint(
+  projection: GeoProjection,
+  point: [number, number],
+): [number, number] | null {
+  const ll = projection.invert?.(point);
+  if (ll === undefined || ll === null || !Number.isFinite(ll[0]) || !Number.isFinite(ll[1])) {
+    return null;
+  }
+  const back = projection([ll[0], ll[1]]);
+  if (back === null || Math.hypot(back[0] - point[0], back[1] - point[1]) > ROUND_TRIP_TOLERANCE) {
+    return null;
+  }
+  return [ll[0], ll[1]];
+}
+
+/** A projected point, or NaNs when the projection has no answer, so callers can filter rather than branch. */
+export function projectPoint(
+  projection: GeoProjection,
+  lonLat: [number, number],
+): [number, number] {
+  const p = projection(lonLat);
+  return p === null ? [NaN, NaN] : [p[0], p[1]];
+}

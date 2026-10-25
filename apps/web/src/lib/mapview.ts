@@ -18,6 +18,8 @@ import {
 import type { ApiClient } from "./api.js";
 import { loadBasemapFor, resetBasemapCache } from "./basemap-cache.js";
 import { loadFields, rasterFor, resetFieldsCache, viewOf, type FieldChoice } from "./fields.js";
+import type { Section } from "./section.js";
+import { useSectionTool, type SectionTool } from "./section-tool.js";
 import { mustRef } from "./dom.js";
 import {
   AGE_CODES,
@@ -30,6 +32,7 @@ import {
 } from "./faults.js";
 import {
   frameFor,
+  invertPoint,
   plateFeature,
   zoomTransformFor,
   type Basemap,
@@ -61,6 +64,9 @@ export interface MapViewOptions {
   region: () => ApiRegion;
   /** Animate zoom transitions (off in tests). */
   animate: () => boolean;
+  /** The section in the route and its setter, for the section tool. */
+  section: Readonly<Ref<Section | null>>;
+  setSection: (s: Section | null) => void;
 }
 
 export interface MapViewFrame {
@@ -90,6 +96,8 @@ export interface MapView {
   fieldRaster: ComputedRef<FieldRaster | null>;
   /** True after the rasters file failed to load; the next choice retries. */
   fieldError: Ref<boolean>;
+  /** The section tool: arming, placing and dragging the line. */
+  section: SectionTool;
   plateSegments: ShallowRef<PlateSegment[]>;
   plates: ShallowRef<Feature<LineString, PlateProps>[]>;
   hoveredPlate: Ref<number | null>;
@@ -113,6 +121,13 @@ export interface MapView {
   onPlateLeave(): void;
   onMapMove(ev: MouseEvent): void;
   onMapLeave(): void;
+  /** Records where a press began, so a click that ends a pan is not a placement. */
+  onMapDown(ev: MouseEvent): void;
+  /** Places a section point while the tool is armed. */
+  onMapClick(ev: MouseEvent): void;
+  onSectionDragMove(ev: PointerEvent): void;
+  /** The lon/lat under a pointer event, or null off the map. */
+  invertPointer(ev: MouseEvent): [number, number] | null;
   onTouchStart(ev: Event): void;
 }
 
@@ -157,6 +172,15 @@ export function useMapView(opts: MapViewOptions): MapView {
   const fieldRaster = computed(() =>
     rasterFor(fields.value, field.value, viewOf(view.value.frame.global)),
   );
+  const section = useSectionTool(opts.section, opts.setSection);
+  let lastDown: [number, number] | null = null;
+  function onEscape(ev: KeyboardEvent): void {
+    if (ev.key === "Escape") section.cancel();
+  }
+  watch(section.armed, (on) => {
+    if (on) document.addEventListener("keydown", onEscape);
+    else document.removeEventListener("keydown", onEscape);
+  });
   const coarse = coarsePointer();
   /**
    * When set, wheel, drag and one finger leave the map alone (the page
@@ -333,8 +357,31 @@ export function useMapView(opts: MapViewOptions): MapView {
     ]);
     return { x, y, unit };
   }
+  function invertPointer(ev: MouseEvent): [number, number] | null {
+    const { x, y } = projectedPointer(ev);
+    return invertPoint(view.value.frame.projection, [x, y]);
+  }
+  function onMapDown(ev: MouseEvent): void {
+    lastDown = [ev.clientX, ev.clientY];
+  }
+  /** How far a press may travel and still count as a click rather than a pan. */
+  const CLICK_SLOP_PX = 3;
+  function onMapClick(ev: MouseEvent): void {
+    if (!section.armed.value) return;
+    const down = lastDown;
+    if (down !== null && Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > CLICK_SLOP_PX) {
+      return;
+    }
+    const ll = invertPointer(ev);
+    if (ll !== null) section.place(ll);
+  }
+  function onSectionDragMove(ev: PointerEvent): void {
+    const ll = invertPointer(ev);
+    if (ll !== null) section.dragMove(ll);
+  }
   /** Fault traces have no hit paths of their own; the svg looks one up under the pointer. */
   function onMapMove(ev: MouseEvent): void {
+    if (section.armed.value) section.hover(invertPointer(ev));
     if (!faultsOn.value || visibleFaults.value.length === 0) return;
     const target = ev.target;
     if (target instanceof Element && target.closest("[data-hit]") !== null) return;
@@ -369,6 +416,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     void loadPlates();
   });
   onUnmounted(() => {
+    document.removeEventListener("keydown", onEscape);
     document.removeEventListener("mousedown", closePickOnOutside);
     window.removeEventListener("resize", measure);
     if (hintTimer !== null) clearTimeout(hintTimer);
@@ -413,6 +461,11 @@ export function useMapView(opts: MapViewOptions): MapView {
     onPlateLeave,
     onMapMove,
     onMapLeave,
+    onMapDown,
+    onMapClick,
+    onSectionDragMove,
+    invertPointer,
+    section,
     onTouchStart,
   };
 }

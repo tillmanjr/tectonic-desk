@@ -2,7 +2,15 @@
 import MapShell from "./MapShell.vue";
 import MapVolcanoes from "./MapVolcanoes.vue";
 import VolcanoLegendRows from "./VolcanoLegendRows.vue";
-import { API, CATALOG, SELECT_VOLCANO, useInjected, VOLCANOES } from "../lib/keys.js";
+import {
+  API,
+  CATALOG,
+  SECTION,
+  SELECT_VOLCANO,
+  SET_SECTION,
+  useInjected,
+  VOLCANOES,
+} from "../lib/keys.js";
 import { useVolcanoLayer } from "../lib/layers.js";
 import { useMapView } from "../lib/mapview.js";
 
@@ -17,6 +25,8 @@ const mv = useMapView({
   api,
   region: () => catalog.requireRegion(),
   animate: () => props.animate,
+  section: useInjected(SECTION),
+  setSection: useInjected(SET_SECTION),
 });
 const v = useVolcanoLayer({ store, mv });
 </script>
@@ -24,6 +34,7 @@ const v = useVolcanoLayer({ store, mv });
 <template>
   <MapShell
     :mv="mv"
+    :section-tool="false"
     label="Map of Holocene volcanoes"
     :count-line="v.countLine.value"
     :quakes="false"

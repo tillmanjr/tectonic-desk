@@ -14,6 +14,7 @@ export default defineConfig({
         "src/ingest-cli.ts",
         "src/qfaults-cli.ts",
         "src/gvp-cli.ts",
+        "src/relief-cli.ts",
       ],
       thresholds: { lines: 100, branches: 100, functions: 100, statements: 100 },
     },

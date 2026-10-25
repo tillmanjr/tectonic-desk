@@ -13,9 +13,11 @@ import {
   MARKS,
   MARKS_NAV,
   NOTICE,
+  SECTION,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
+  SET_SECTION,
   SET_VOLCANO_FILTER,
   SETTINGS,
   STATUS,
@@ -27,6 +29,7 @@ import {
 } from "../../src/lib/keys.js";
 import { createMarks, type MarksStore } from "../../src/lib/marks.js";
 import { createNotice, type NoticeStore } from "../../src/lib/notice.js";
+import type { Section } from "../../src/lib/section.js";
 import { createSettings, type SettingsStore } from "../../src/lib/settings.js";
 import { createStatusPoll, type StatusPoll } from "../../src/lib/status.js";
 import { createTheme, type Theme } from "../../src/lib/theme.js";
@@ -51,6 +54,8 @@ export interface Context {
   settings: SettingsStore;
   marks: MarksStore;
   notice: NoticeStore;
+  section: Ref<Section | null>;
+  setSection: Mock<(s: Section | null) => void>;
   /** Spies for every nav action; `overlay` is the writable ref behind `nav.overlay`. */
   nav: MarksNav;
   overlay: Ref<{ group: string; mode: MarksMode } | null>;
@@ -122,6 +127,8 @@ export async function makeContext(
     settings: createSettings(null),
     marks: createMarks(null),
     notice: createNotice(),
+    section: ref<Section | null>(null),
+    setSection: vi.fn(),
     nav: {
       viewUrl: ref("/wc?event=us1"),
       overlay,
@@ -161,6 +168,8 @@ export function mountWith(
       provide(MARKS, ctx.marks);
       provide(MARKS_NAV, ctx.nav);
       provide(NOTICE, ctx.notice);
+      provide(SECTION, ctx.section);
+      provide(SET_SECTION, ctx.setSection);
       provide(ZONE, ctx.zone);
       return () => h(component, props);
     },

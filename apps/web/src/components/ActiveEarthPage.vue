@@ -7,6 +7,7 @@ import FilterBar from "./FilterBar.vue";
 import FrequencyMagnitudeChart from "./FrequencyMagnitudeChart.vue";
 import MagnitudeTimeChart from "./MagnitudeTimeChart.vue";
 import MajorEvents from "./MajorEvents.vue";
+import SectionProfile from "./SectionProfile.vue";
 import StatsStrip from "./StatsStrip.vue";
 import VeiChart from "./VeiChart.vue";
 import VolcanoCards from "./VolcanoCards.vue";
@@ -32,6 +33,7 @@ const settings = useInjected(SETTINGS);
   <FilterBar />
   <VolcanoFilterBar />
   <CombinedMap />
+  <SectionProfile volcanoes />
   <p class="sectionlabel">Earthquakes</p>
   <section class="grid2">
     <CatalogTable />
