@@ -10,8 +10,10 @@ import {
   API,
   CATALOG,
   CLOCK,
+  SECTION,
   SELECT,
   SELECT_VOLCANO,
+  SET_SECTION,
   useInjected,
   VOLCANOES,
   ZONE,
@@ -34,6 +36,8 @@ const mv = useMapView({
   api,
   region: () => catalog.requireRegion(),
   animate: () => props.animate,
+  section: useInjected(SECTION),
+  setSection: useInjected(SET_SECTION),
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });
 const v = useVolcanoLayer({ store, mv });

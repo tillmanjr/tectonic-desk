@@ -2,6 +2,7 @@ import { geoPath, type GeoProjection } from "d3-geo";
 import { describe, expect, it, vi } from "vitest";
 import {
   frameFor,
+  invertPoint,
   graticuleFor,
   loadWorld,
   pathOf,
@@ -146,5 +147,24 @@ describe("basemaps", () => {
     );
     await expect(loadWorld()).resolves.toEqual(squareTopology);
     vi.unstubAllGlobals();
+  });
+
+  it("inverts a projected point to lon/lat, or null when it cannot", () => {
+    const frame = frameFor(GLOBAL);
+    const centre = frame.projection([-150, 0]);
+    if (centre === null) throw new Error("no centre");
+    const back = invertPoint(frame.projection, centre);
+    expect(back?.[0]).toBeCloseTo(-150, 5);
+    expect(back?.[1]).toBeCloseTo(0, 5);
+    const noInvert: GeoProjection = Object.assign(() => null, {
+      invert: undefined,
+    }) as unknown as GeoProjection;
+    expect(invertPoint(noInvert, [1, 1])).toBeNull();
+    const nullInvert = { invert: () => null } as unknown as GeoProjection;
+    expect(invertPoint(nullInvert, [1, 1])).toBeNull();
+    const nanInvert = { invert: () => [NaN, 0] } as unknown as GeoProjection;
+    expect(invertPoint(nanInvert, [1, 1])).toBeNull();
+    const nanLat = { invert: () => [0, NaN] } as unknown as GeoProjection;
+    expect(invertPoint(nanLat, [1, 1])).toBeNull();
   });
 });
