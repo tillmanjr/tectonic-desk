@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import SpaceAurora from "../../src/components/SpaceAurora.vue";
 import { resetBasemapCache } from "../../src/lib/basemap-cache.js";
+import { fmtClock } from "../../src/lib/format.js";
 import { auroraMeta } from "../support/aurora.js";
 import { makeContext, mountWith } from "../support/mount.js";
 import { stubWorld } from "../support/world.js";
@@ -64,9 +65,13 @@ describe("SpaceAurora", () => {
       expect(w.find(".times").text()).toBe("Observed 11:50 UTC · forecast for 13:05 UTC");
     });
 
+    // the reading follows the zone switch (the runner's own zone may itself be UTC)
     ctx.zone.value = "local";
     await nextTick();
-    expect(w.find(".times").text()).not.toContain("UTC");
+    const newest = auroraMeta(10);
+    expect(w.find(".times").text()).toBe(
+      `Observed ${fmtClock(newest.observed, "local")} · forecast for ${fmtClock(newest.forecast, "local")}`,
+    );
     w.unmount();
   });
 
