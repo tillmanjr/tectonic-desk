@@ -1,289 +1,169 @@
 {
- "type": "FeatureCollection",
- "features": [
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -121.91005899858122,
-      37.72335399979456
-     ],
-     [
-      -121.91220099993517,
-      37.726341999653
-     ],
-     [
-      -121.9132729999879,
-      37.72767300003304
-     ],
-     [
-      -121.91602199926753,
-      37.730414999772634
-     ],
-     [
-      -121.9251850002185,
-      37.73992000010087
-     ],
-     [
-      -121.93325600012693,
-      37.748511999856746
-     ],
-     [
-      -121.94343700070397,
-      37.75948199964851
-     ],
-     [
-      -121.94741500039515,
-      37.763318999949874
-     ],
-     [
-      -121.95314100035671,
-      37.76742199987629
-     ],
-     [
-      -121.96168900029112,
-      37.777111000297886
-     ],
-     [
-      -121.96743500034411,
-      37.78461199968016
-     ],
-     [
-      -121.98034799958403,
-      37.80392200002921
-     ]
-    ]
-   },
-   "properties": {
-    "fault_name": "Pleasanton fault",
-    "section_name": "",
-    "fault_id": "238",
-    "section_id": "",
-    "age": "latest Quaternary",
-    "slip_rate": "Unspecified",
-    "slip_sense": "Unspecified",
-    "dip_direction": "Unspecified",
-    "symbology": "latest Quaternary Inferred",
-    "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=238&section_id="
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -121.90974899985814,
-      37.722921999729
-     ],
-     [
-      -121.90997699856545,
-      37.72322100000831
-     ]
-    ]
-   },
-   "properties": {
-    "fault_name": "Pleasanton fault",
-    "section_name": "",
-    "fault_id": "238",
-    "section_id": "",
-    "age": "latest Quaternary",
-    "slip_rate": "Unspecified",
-    "slip_sense": "Unspecified",
-    "dip_direction": "Unspecified",
-    "symbology": "latest Quaternary Moderately Constrained",
-    "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=238&section_id="
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -121.90825899933067,
-      37.72105499971838
-     ],
-     [
-      -121.90784099975424,
-      37.7204819997025
-     ],
-     [
-      -121.90740499973616,
-      37.71981400025054
-     ],
-     [
-      -121.90712899955162,
-      37.71925799987466
-     ],
-     [
-      -121.90701699939864,
-      37.718933000292544
-     ]
-    ]
-   },
-   "properties": {
-    "fault_name": "Pleasanton fault",
-    "section_name": "",
-    "fault_id": "238",
-    "section_id": "",
-    "age": "latest Quaternary",
-    "slip_rate": "Unspecified",
-    "slip_sense": "Unspecified",
-    "dip_direction": "Unspecified",
-    "symbology": "latest Quaternary Moderately Constrained",
-    "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=238&section_id="
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -122.03984199971647,
-      37.87700300014786
-     ],
-     [
-      -121.82393399987991,
-      37.730006999716004
-     ]
-    ]
-   },
-   "properties": {
-    "fault_name": "Mount Diablo thrust fault",
-    "section_name": "",
-    "fault_id": "353",
-    "section_id": "",
-    "age": "undifferentiated Quaternary",
-    "slip_rate": "",
-    "slip_sense": "Thrust",
-    "dip_direction": "NE",
-    "symbology": "undifferentiated Quaternary Inferred",
-    "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=353&section_id="
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -122.16119200144335,
-      37.791816999283746
-     ],
-     [
-      -122.16198199966716,
-      37.79218200024629
-     ],
-     [
-      -122.16254699955668,
-      37.792411999994755
-     ],
-     [
-      -122.16299900036664,
-      37.792528000176574
-     ],
-     [
-      -122.16359200074355,
-      37.792735000219906
-     ],
-     [
-      -122.16415400026001,
-      37.79316600005073
-     ],
-     [
-      -122.16502600029621,
-      37.79387000002947
-     ],
-     [
-      -122.16687800032363,
-      37.795593000194465
-     ],
-     [
-      -122.16861599964989,
-      37.79740400013876
-     ],
-     [
-      -122.16967999930671,
-      37.7986259999481
-     ],
-     [
-      -122.17023699969862,
-      37.79957499968103
-     ],
-     [
-      -122.17056899995964,
-      37.80034199982252
-     ],
-     [
-      -122.17106600007709,
-      37.801695000048824
-     ],
-     [
-      -122.17190499960303,
-      37.80268999969699
-     ],
-     [
-      -122.17314099968728,
-      37.80377900027178
-     ]
-    ]
-   },
-   "properties": {
-    "fault_name": "Chabot fault",
-    "section_name": "",
-    "fault_id": "380",
-    "section_id": "",
-    "age": "undifferentiated Quaternary",
-    "slip_rate": "Unspecified",
-    "slip_sense": "",
-    "dip_direction": "Unspecified",
-    "symbology": "undifferentiated Quaternary Well Constrained",
-    "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=380&section_id="
-   }
-  },
-  {
-   "type": "Feature",
-   "geometry": {
-    "type": "LineString",
-    "coordinates": [
-     [
-      -121.94865199940601,
-      37.781601000032616
-     ],
-     [
-      -121.95386899955452,
-      37.78434300034766
-     ],
-     [
-      -121.95984199938825,
-      37.788007999830675
-     ],
-     [
-      -121.96537499990423,
-      37.791160000248254
-     ]
-    ]
-   },
-   "properties": {
-    "fault_name": "Sherburne Hills thrust fault",
-    "section_name": "",
-    "fault_id": "400",
-    "section_id": "",
-    "age": "undifferentiated Quaternary",
-    "slip_rate": "Unspecified",
-    "slip_sense": "Unspecified",
-    "dip_direction": "Unspecified",
-    "symbology": "undifferentiated Quaternary Well Constrained",
-    "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=400&section_id="
-   }
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-121.91005899858122, 37.72335399979456],
+          [-121.91220099993517, 37.726341999653],
+          [-121.9132729999879, 37.72767300003304],
+          [-121.91602199926753, 37.730414999772634],
+          [-121.9251850002185, 37.73992000010087],
+          [-121.93325600012693, 37.748511999856746],
+          [-121.94343700070397, 37.75948199964851],
+          [-121.94741500039515, 37.763318999949874],
+          [-121.95314100035671, 37.76742199987629],
+          [-121.96168900029112, 37.777111000297886],
+          [-121.96743500034411, 37.78461199968016],
+          [-121.98034799958403, 37.80392200002921]
+        ]
+      },
+      "properties": {
+        "fault_name": "Pleasanton fault",
+        "section_name": "",
+        "fault_id": "238",
+        "section_id": "",
+        "age": "latest Quaternary",
+        "slip_rate": "Unspecified",
+        "slip_sense": "Unspecified",
+        "dip_direction": "Unspecified",
+        "symbology": "latest Quaternary Inferred",
+        "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=238&section_id="
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-121.90974899985814, 37.722921999729],
+          [-121.90997699856545, 37.72322100000831]
+        ]
+      },
+      "properties": {
+        "fault_name": "Pleasanton fault",
+        "section_name": "",
+        "fault_id": "238",
+        "section_id": "",
+        "age": "latest Quaternary",
+        "slip_rate": "Unspecified",
+        "slip_sense": "Unspecified",
+        "dip_direction": "Unspecified",
+        "symbology": "latest Quaternary Moderately Constrained",
+        "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=238&section_id="
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-121.90825899933067, 37.72105499971838],
+          [-121.90784099975424, 37.7204819997025],
+          [-121.90740499973616, 37.71981400025054],
+          [-121.90712899955162, 37.71925799987466],
+          [-121.90701699939864, 37.718933000292544]
+        ]
+      },
+      "properties": {
+        "fault_name": "Pleasanton fault",
+        "section_name": "",
+        "fault_id": "238",
+        "section_id": "",
+        "age": "latest Quaternary",
+        "slip_rate": "Unspecified",
+        "slip_sense": "Unspecified",
+        "dip_direction": "Unspecified",
+        "symbology": "latest Quaternary Moderately Constrained",
+        "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=238&section_id="
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-122.03984199971647, 37.87700300014786],
+          [-121.82393399987991, 37.730006999716004]
+        ]
+      },
+      "properties": {
+        "fault_name": "Mount Diablo thrust fault",
+        "section_name": "",
+        "fault_id": "353",
+        "section_id": "",
+        "age": "undifferentiated Quaternary",
+        "slip_rate": "",
+        "slip_sense": "Thrust",
+        "dip_direction": "NE",
+        "symbology": "undifferentiated Quaternary Inferred",
+        "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=353&section_id="
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-122.16119200144335, 37.791816999283746],
+          [-122.16198199966716, 37.79218200024629],
+          [-122.16254699955668, 37.792411999994755],
+          [-122.16299900036664, 37.792528000176574],
+          [-122.16359200074355, 37.792735000219906],
+          [-122.16415400026001, 37.79316600005073],
+          [-122.16502600029621, 37.79387000002947],
+          [-122.16687800032363, 37.795593000194465],
+          [-122.16861599964989, 37.79740400013876],
+          [-122.16967999930671, 37.7986259999481],
+          [-122.17023699969862, 37.79957499968103],
+          [-122.17056899995964, 37.80034199982252],
+          [-122.17106600007709, 37.801695000048824],
+          [-122.17190499960303, 37.80268999969699],
+          [-122.17314099968728, 37.80377900027178]
+        ]
+      },
+      "properties": {
+        "fault_name": "Chabot fault",
+        "section_name": "",
+        "fault_id": "380",
+        "section_id": "",
+        "age": "undifferentiated Quaternary",
+        "slip_rate": "Unspecified",
+        "slip_sense": "",
+        "dip_direction": "Unspecified",
+        "symbology": "undifferentiated Quaternary Well Constrained",
+        "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=380&section_id="
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-121.94865199940601, 37.781601000032616],
+          [-121.95386899955452, 37.78434300034766],
+          [-121.95984199938825, 37.788007999830675],
+          [-121.96537499990423, 37.791160000248254]
+        ]
+      },
+      "properties": {
+        "fault_name": "Sherburne Hills thrust fault",
+        "section_name": "",
+        "fault_id": "400",
+        "section_id": "",
+        "age": "undifferentiated Quaternary",
+        "slip_rate": "Unspecified",
+        "slip_sense": "Unspecified",
+        "dip_direction": "Unspecified",
+        "symbology": "undifferentiated Quaternary Well Constrained",
+        "fault_url": "https://earthquake.usgs.gov/cfusion/qfault/show_report_AB_archive.cfm?fault_id=400&section_id="
+      }
+    }
+  ],
+  "exceededTransferLimit": true,
+  "properties": {
+    "exceededTransferLimit": true
   }
- ],
- "exceededTransferLimit": true,
- "properties": {
-  "exceededTransferLimit": true
- }
 }

@@ -5,7 +5,7 @@ import {
   SWPC_BASE,
   SWPC_FILES,
 } from "../../src/space/client.js";
-import { kp1m, scales } from "../support/space-stub.js";
+import { aurora, hemiPower, kp1m, scales } from "../support/space-stub.js";
 
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -31,6 +31,12 @@ describe("createSpaceClient", () => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
       if (url.endsWith(SWPC_FILES.fetchKp1m)) return Promise.resolve(jsonResponse(kp1m));
       if (url.endsWith(SWPC_FILES.fetchScales)) return Promise.resolve(jsonResponse(scales));
+      if (url.endsWith(SWPC_FILES.fetchAurora)) return Promise.resolve(jsonResponse(aurora));
+      if (url.endsWith(SWPC_FILES.fetchHemiPower)) {
+        return Promise.resolve(
+          new Response(hemiPower, { headers: { "content-type": "text/plain" } }),
+        );
+      }
       return Promise.resolve(jsonResponse([]));
     });
     const client = createSpaceClient({ fetch: fetchFn, userAgent: "test/1" });
@@ -45,6 +51,10 @@ describe("createSpaceClient", () => {
     expect(await client.fetchProtons()).toEqual([]);
     expect(await client.fetchFlares()).toEqual([]);
     expect(await client.fetchAlerts()).toEqual([]);
+    expect((await client.fetchAurora()).coordinates.length).toBe(aurora.coordinates.length);
+    expect(await client.fetchHemiPower()).toBe(hemiPower);
+    const textInit = fetchFn.mock.calls.at(-1)?.[1];
+    expect(textInit?.headers).toEqual({ "user-agent": "test/1", accept: "text/plain" });
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(url).toBe(`${SWPC_BASE}/json/planetary_k_index_1m.json`);
     expect(init?.headers).toEqual({ "user-agent": "test/1", accept: "application/json" });

@@ -47,7 +47,7 @@ export async function startPostgres(): Promise<TestDb> {
     db,
     truncate: async () => {
       await db.execute(
-        sql`truncate table mechanisms, events, ingest_runs, catalog_windows, volcano_status, volcano_reports, space_samples, space_flares, space_alerts, space_scales restart identity cascade`,
+        sql`truncate table mechanisms, events, ingest_runs, catalog_windows, volcano_status, volcano_reports, space_samples, space_flares, space_alerts, space_scales, space_aurora restart identity cascade`,
       );
     },
     stop: async () => {

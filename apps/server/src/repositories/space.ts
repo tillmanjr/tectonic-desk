@@ -1,15 +1,18 @@
 import {
   seriesRecord,
+  type AuroraFrame,
+  type AuroraFrameMeta,
   type SpaceAlert,
   type SpaceFlare,
   type SpaceSample,
   type SpaceScales,
   type SpaceSeries,
 } from "@tectonic/shared";
-import { and, asc, desc, gte, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import {
   spaceAlerts,
+  spaceAurora,
   spaceFlares,
   spaceSamples,
   spaceScales,
@@ -238,4 +241,49 @@ export async function downsampleBefore(db: Db, cutoff: Date): Promise<Downsample
     where time < ${cutoff} and extract(epoch from time)::bigint % 300 <> 0
   `);
   return { thinned: Number(thinned.rowCount), deleted: Number(deleted.rowCount) };
+}
+
+/** Stores a frame; a repeated observation time is the same frame and is left alone. */
+export async function insertAuroraFrame(db: Db, frame: AuroraFrame): Promise<number> {
+  const inserted = await db
+    .insert(spaceAurora)
+    .values(frame)
+    .onConflictDoNothing()
+    .returning({ observed: spaceAurora.observed });
+  return inserted.length;
+}
+
+/** Deletes frames observed before `cutoff`; returns how many went. */
+export async function pruneAurora(db: Db, cutoff: Date): Promise<number> {
+  const gone = await db
+    .delete(spaceAurora)
+    .where(lt(spaceAurora.observed, cutoff))
+    .returning({ observed: spaceAurora.observed });
+  return gone.length;
+}
+
+const auroraMeta = {
+  observed: spaceAurora.observed,
+  forecast: spaceAurora.forecast,
+  powerNorth: spaceAurora.powerNorth,
+  powerSouth: spaceAurora.powerSouth,
+};
+
+/** Frames observed since `since`, oldest first, without their grids. */
+export function auroraFrames(db: Db, since: Date): Promise<AuroraFrameMeta[]> {
+  return db
+    .select(auroraMeta)
+    .from(spaceAurora)
+    .where(gte(spaceAurora.observed, since))
+    .orderBy(asc(spaceAurora.observed));
+}
+
+export async function auroraFrame(db: Db, observed: Date): Promise<AuroraFrame | null> {
+  const rows = await db.select().from(spaceAurora).where(eq(spaceAurora.observed, observed));
+  return rows[0] ?? null;
+}
+
+export async function latestAuroraFrame(db: Db): Promise<AuroraFrame | null> {
+  const rows = await db.select().from(spaceAurora).orderBy(desc(spaceAurora.observed)).limit(1);
+  return rows[0] ?? null;
 }

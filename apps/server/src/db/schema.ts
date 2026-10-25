@@ -3,6 +3,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  customType,
   date,
   doublePrecision,
   index,
@@ -262,6 +263,22 @@ export const spaceScales = pgTable(
   ],
 );
 
+/** Postgres `bytea` as bytes; node-postgres reads and writes a Buffer. */
+const bytes = customType<{ data: Uint8Array; driverData: Buffer }>({
+  dataType: () => "bytea",
+  toDriver: (value) => Buffer.from(value.buffer, value.byteOffset, value.byteLength),
+  fromDriver: (value) => value,
+});
+
+/** One OVATION Prime aurora frame: the 65 160-byte probability grid with its times and power. */
+export const spaceAurora = pgTable("space_aurora", {
+  observed: timestamp("observed", tz).primaryKey(),
+  forecast: timestamp("forecast", tz).notNull(),
+  powerNorth: real("power_north"),
+  powerSouth: real("power_south"),
+  grid: bytes("grid").notNull(),
+});
+
 export type EventRow = typeof events.$inferSelect;
 export type EventInsert = typeof events.$inferInsert;
 export type MechanismRow = typeof mechanisms.$inferSelect;
@@ -277,3 +294,4 @@ export type SpaceSampleRow = typeof spaceSamples.$inferSelect;
 export type SpaceFlareRow = typeof spaceFlares.$inferSelect;
 export type SpaceAlertRow = typeof spaceAlerts.$inferSelect;
 export type SpaceScalesRow = typeof spaceScales.$inferSelect;
+export type SpaceAuroraRow = typeof spaceAurora.$inferSelect;
