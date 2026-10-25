@@ -212,3 +212,11 @@ export interface FieldsFile {
   generated: string;
   rasters: FieldRaster[];
 }
+
+/** Elevations sampled along a section line by `GET /api/relief`. */
+export interface ApiRelief {
+  /** Spacing of the samples along the line, km. */
+  stepKm: number;
+  /** Elevation at each sample, metres above sea level (negative below). */
+  metres: number[];
+}

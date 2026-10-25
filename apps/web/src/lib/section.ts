@@ -1,4 +1,4 @@
-import type { ApiEvent, Volcano } from "@tectonic/shared";
+import { distanceKm, slerp, type ApiEvent, type Volcano } from "@tectonic/shared";
 
 /** A section line from A to A′ with the half-width of the corridor whose events it collects. */
 export interface Section {
@@ -60,11 +60,7 @@ export const sectionQuery = (s: Section): string =>
   );
 
 /** Great-circle length, km. */
-export function lengthKm(s: Section): number {
-  const a = toVec(s.a[0], s.a[1]);
-  const b = toVec(s.b[0], s.b[1]);
-  return Math.acos(clamp1(dot(a, b))) * EARTH_RADIUS_KM;
-}
+export const lengthKm = (s: Section): number => distanceKm(s.a, s.b);
 
 /** Initial bearing at A, degrees clockwise from north in [0, 360). */
 export function azimuth(s: Section): number {
@@ -161,14 +157,7 @@ export function surfacePointsOf(s: Section, volcanoes: Volcano[]): SurfacePoint[
 }
 
 /** The lon/lat `t` of the way from A to A′ along the great circle. */
-export function pointAlong(s: Section, t: number): [number, number] {
-  const a = toVec(s.a[0], s.a[1]);
-  const b = toVec(s.b[0], s.b[1]);
-  const ω = Math.acos(clamp1(dot(a, b)));
-  const sinω = Math.sin(ω);
-  const u = add(scale(a, Math.sin((1 - t) * ω) / sinω), scale(b, Math.sin(t * ω) / sinω));
-  return toLonLat(norm(u));
-}
+export const pointAlong = (s: Section, t: number): [number, number] => slerp(s.a, s.b, t);
 
 /** The corridor as a closed lon/lat ring: the left edge from A to A′, the right edge back. */
 export function corridorRing(s: Section): [number, number][] {
