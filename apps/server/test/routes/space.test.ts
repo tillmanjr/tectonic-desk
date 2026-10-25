@@ -1,10 +1,18 @@
-import type { ApiError, ApiSpaceNow, ApiSpaceWindow } from "@tectonic/shared";
+import {
+  AURORA_CELLS,
+  auroraIndex,
+  type ApiAuroraFrame,
+  type ApiAuroraIndex,
+  type ApiError,
+  type ApiSpaceNow,
+  type ApiSpaceWindow,
+} from "@tectonic/shared";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../../src/app.js";
 import { bucketFor } from "../../src/api/schemas.js";
 import { syncSpaceEvents, syncSpaceFast, syncSpaceSlow } from "../../src/ingest/space.js";
-import { upsertSamples } from "../../src/repositories/space.js";
+import { insertAuroraFrame, upsertSamples } from "../../src/repositories/space.js";
 import { utcDay } from "../../src/routes/space.js";
 import { recordingLogger } from "../support/fixtures.js";
 import { stubSpace } from "../support/space-stub.js";
@@ -153,6 +161,60 @@ describe.skipIf(!docker)("space routes", () => {
     expect(body.samples.bt).toHaveLength(5);
     expect(body.samples.bt[0]?.[1]).toBeCloseTo(7.5, 6);
     expect(body.samples.bt.every((p, i, a) => i === 0 || p[0] > (a[i - 1]?.[0] ?? 0))).toBe(true);
+  });
+
+  it("lists the stored aurora frames and serves one with its grid", async () => {
+    expect((await inject("/api/space/aurora")).json<ApiAuroraIndex>()).toEqual({
+      generatedAt: "2026-10-25T04:00:00.000Z",
+      frames: [],
+    });
+    const grid = new Uint8Array(AURORA_CELLS);
+    grid[auroraIndex(180, 67)] = 42;
+    const base = {
+      forecast: new Date("2026-10-25T04:30:00Z"),
+      powerNorth: 19.5,
+      powerSouth: null,
+      grid,
+    };
+    await insertAuroraFrame(t.db, { ...base, observed: new Date("2026-10-25T03:50:00Z") });
+    await insertAuroraFrame(t.db, { ...base, observed: new Date("2026-10-25T03:45:00Z") });
+    // past the 72-hour retention: stored but not listed
+    await insertAuroraFrame(t.db, { ...base, observed: new Date("2026-10-21T03:50:00Z") });
+
+    const index = await inject("/api/space/aurora");
+    expect(index.headers["cache-control"]).toBe("public, max-age=60");
+    expect(index.json<ApiAuroraIndex>().frames).toEqual([
+      {
+        observed: "2026-10-25T03:45:00.000Z",
+        forecast: "2026-10-25T04:30:00.000Z",
+        powerNorth: 19.5,
+        powerSouth: null,
+      },
+      {
+        observed: "2026-10-25T03:50:00.000Z",
+        forecast: "2026-10-25T04:30:00.000Z",
+        powerNorth: 19.5,
+        powerSouth: null,
+      },
+    ]);
+
+    const res = await inject("/api/space/aurora/2026-10-25T03:50:00.000Z");
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["cache-control"]).toBe("public, max-age=3600");
+    const frame = res.json<ApiAuroraFrame>();
+    expect(frame).toMatchObject({ observed: "2026-10-25T03:50:00.000Z", powerNorth: 19.5 });
+    const bytes = Buffer.from(frame.grid, "base64");
+    expect(bytes).toHaveLength(AURORA_CELLS);
+    expect(bytes[auroraIndex(180, 67)]).toBe(42);
+    expect(bytes[auroraIndex(0, 0)]).toBe(0);
+    expect((await inject("/api/space/aurora/2026-10-25T03:50:00Z")).statusCode).toBe(200);
+
+    const missing = await inject("/api/space/aurora/2026-10-25T03:51:00Z");
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json<ApiError>().error).toBe("aurora frame not found");
+    const bad = await inject("/api/space/aurora/yesterday");
+    expect(bad.statusCode).toBe(400);
+    expect(bad.json<ApiError>().issues?.[0]?.path).toBe("observed");
   });
 
   it("rejects a missing or malformed from, a reversed range, a span over 93 days and unknown keys", async () => {
