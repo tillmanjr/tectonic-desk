@@ -31,9 +31,11 @@ import {
   MARKS,
   MARKS_NAV,
   NOTICE,
+  SECTION,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
+  SET_SECTION,
   SET_VOLCANO_FILTER,
   SETTINGS,
   STATUS,
@@ -46,6 +48,7 @@ import {
 import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
+import { parseSection, sectionQuery, type Section } from "../lib/section.js";
 import { createSettings } from "../lib/settings.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
@@ -197,6 +200,14 @@ function setFilter(f: EventFilter): void {
 function setVolcanoFilter(f: VolcanoFilter): void {
   void router.replace({ query: { ...route.query, ...volcanoFilterQuery(f) } });
 }
+const routeSection = computed(() => parseSection(route.query.section));
+provide(SECTION, routeSection);
+function setSection(s: Section | null): void {
+  void router.replace({
+    query: { ...route.query, section: s === null ? undefined : sectionQuery(s) },
+  });
+}
+provide(SET_SECTION, setSection);
 function toggleZone(): void {
   const query = { ...route.query };
   if (zone.value === "utc") query.tz = "local";

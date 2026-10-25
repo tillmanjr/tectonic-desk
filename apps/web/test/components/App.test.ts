@@ -4,7 +4,17 @@ import { defineComponent, h, onMounted, provide } from "vue";
 import { createMemoryHistory, RouterView } from "vue-router";
 import type { ApiClient } from "../../src/lib/api.js";
 import { createClock } from "../../src/lib/clock.js";
-import { API, CLOCK, MARKS, SELECT, SETTINGS, THEME, useInjected } from "../../src/lib/keys.js";
+import {
+  API,
+  CLOCK,
+  MARKS,
+  SECTION,
+  SELECT,
+  SET_SECTION,
+  SETTINGS,
+  THEME,
+  useInjected,
+} from "../../src/lib/keys.js";
 import { createMarks } from "../../src/lib/marks.js";
 import { createSettings } from "../../src/lib/settings.js";
 import { createAppRouter } from "../../src/router.js";
@@ -425,6 +435,46 @@ describe("App", () => {
     await flushPromises();
     expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?tz=local&event=us1");
     expect(wrapper.find(".notice").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("parses the section from the route and writes it back through SET_SECTION", async () => {
+    stubCanvas();
+    const seen: unknown[] = [];
+    const Probe = defineComponent({
+      setup() {
+        const section = useInjected(SECTION);
+        const setSection = useInjected(SET_SECTION);
+        onMounted(() => {
+          seen.push(section.value);
+          setSection({ a: [0, 0], b: [10, 0], halfKm: 80 });
+        });
+        return () => h("div");
+      },
+    });
+    stubWorld();
+    const router = createAppRouter(createMemoryHistory());
+    await router.push("/earthquakes/wc?section=-122.42,37.77,-118.24,34.05,50");
+    const Root = defineComponent({
+      setup() {
+        provide(API, fakeApi());
+        provide(MARKS, createMarks(null));
+        provide(
+          CLOCK,
+          createClock(1e9, () => NOW),
+        );
+        provide(THEME, fakeTheme());
+        provide(SETTINGS, createSettings(null));
+        return () => h(RouterView);
+      },
+    });
+    const wrapper = mount(Root, {
+      global: { plugins: [router], stubs: { StatusLine: Probe } },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    expect(seen).toEqual([{ a: [-122.42, 37.77], b: [-118.24, 34.05], halfKm: 50 }]);
+    expect(router.currentRoute.value.query.section).toBe("0,0,10,0,80");
     wrapper.unmount();
   });
 });
