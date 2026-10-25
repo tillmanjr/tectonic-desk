@@ -227,6 +227,9 @@ h1 small {
   border-radius: 8px;
   padding: 3px;
 }
+.tabs.ghost {
+  visibility: hidden;
+}
 .tabs button {
   display: inline-flex;
   align-items: center;
@@ -1530,6 +1533,10 @@ a {
 @media (max-width: 1000px) {
   .tools {
     justify-content: flex-start;
+  }
+  /* once the groups may wrap, the hidden tabs would only hold an empty row */
+  .tabs.ghost {
+    display: none;
   }
 }
 @media (max-width: 560px) {

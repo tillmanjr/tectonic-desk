@@ -341,7 +341,12 @@ onUnmounted(() => {
             </nav>
           </div>
           <div class="grp">
-            <RegionTabs v-if="page !== 'space'" @pick="pickRegion" />
+            <!-- The Space page has no region; the tabs stay in the layout, unseen, so the page switch does not shift. -->
+            <RegionTabs
+              :class="{ ghost: page === 'space' }"
+              :aria-hidden="page === 'space' ? 'true' : undefined"
+              @pick="pickRegion"
+            />
             <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
           </div>
         </nav>
