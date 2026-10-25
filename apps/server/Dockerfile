@@ -8,7 +8,9 @@ COPY apps/server/package.json apps/server/
 RUN pnpm install --frozen-lockfile --filter @tectonic/server...
 COPY packages/shared packages/shared
 COPY apps/server apps/server
-RUN pnpm --filter @tectonic/shared build && pnpm --filter @tectonic/server build
+# The relief grid for the section profile: SRTM15+ tiles fetched and decoded here, about 30 MB in, 52 MB out.
+RUN pnpm --filter @tectonic/shared build && pnpm --filter @tectonic/server geo:relief
+RUN pnpm --filter @tectonic/server build
 RUN pnpm --filter @tectonic/server deploy --prod --legacy /out
 
 FROM node:24-alpine
