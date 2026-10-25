@@ -13,14 +13,30 @@ export interface TestDb {
   stop: () => Promise<void>;
 }
 
-/** True when the Docker daemon answers; integration suites skip otherwise. */
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * True when the Docker daemon answers, so the integration suites can run. On a developer
+ * machine without Docker they skip. In CI (GitHub sets `CI=true`) Docker is required: the daemon
+ * is given a few tries to come up, and if it never answers this throws, because suites that
+ * skip silently leave the coverage gate to fail with no useful message.
+ */
 export async function dockerAvailable(): Promise<boolean> {
-  try {
-    await exec("docker", ["info"], { timeout: 10_000 });
-    return true;
-  } catch {
-    return false;
+  const ci = process.env.CI !== undefined && process.env.CI !== "";
+  const attempts = ci ? 6 : 1;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      await exec("docker", ["info"], { timeout: 20_000 });
+      return true;
+    } catch {
+      if (i < attempts - 1) await sleep(5_000);
+    }
   }
+  if (ci) throw new Error("Docker did not answer; the server integration suites need it in CI");
+  return false;
 }
 
 export async function startPostgres(): Promise<TestDb> {
