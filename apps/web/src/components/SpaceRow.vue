@@ -8,9 +8,11 @@ defineProps<{ row: RowData; left: number; right: number }>();
 <template>
   <g class="srow" :class="row.id">
     <line class="rowbase" :x1="left" :x2="right" :y1="row.bottom" :y2="row.bottom" />
-    <text class="rowlabel" :x="left + 4" :y="row.top + 9">{{ row.label }}</text>
-    <text v-if="row.unit !== ''" class="rowunit" :x="right - 4" :y="row.top + 9" text-anchor="end">
-      {{ row.unit }}{{ row.rightUnit === null ? "" : ` · ${row.rightUnit}` }}
+    <text class="rowlabel" :x="left + 4" :y="row.top + 9">
+      {{ row.label
+      }}<tspan v-if="row.unit !== ''" class="rowunit">
+        · {{ row.unit }}{{ row.rightUnit === null ? "" : ` · ${row.rightUnit}` }}</tspan
+      >
     </text>
     <g class="axis">
       <g v-for="t in row.yTicks" :key="t.pos">

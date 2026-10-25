@@ -34,7 +34,7 @@ describe("SpaceStack", () => {
     const wind = rows[3];
     expect(wind?.find(".rightaxis").exists()).toBe(true);
     expect(wind?.find(".sline.density").exists()).toBe(true);
-    expect(wind?.find(".rowunit").text()).toBe("km/s · /cm³");
+    expect(wind?.find(".rowlabel").text()).toBe("Speed · density · km/s · /cm³");
     const xray = rows[4];
     expect(xray?.findAll(".axis text").map((t) => t.text())).toEqual(["B", "C", "M", "X"]);
     expect(xray?.findAll(".refs text").map((t) => t.text())).toEqual(["M1 · R1", "X1 · R3"]);
@@ -49,6 +49,7 @@ describe("SpaceStack", () => {
     ]);
     expect(rows[5]?.findAll(".refs text").map((t) => t.text())).toEqual(["S1", "S2", "S3"]);
     expect(rows[0]?.find(".rowunit").exists()).toBe(false);
+    expect(rows[0]?.find(".rowlabel").text()).toBe("Kp");
     const ticks = w.findAll(".alertticks path");
     expect(ticks).toHaveLength(2);
     expect(ticks[0]?.find("title").text()).toBe(

@@ -2383,8 +2383,9 @@ table.matrix {
   letter-spacing: 0.05em;
 }
 .srow .rowunit {
-  fill: var(--muted);
   font: 10px var(--f-data);
+  text-transform: none;
+  letter-spacing: 0;
 }
 .srow .refs line {
   stroke: var(--border);
