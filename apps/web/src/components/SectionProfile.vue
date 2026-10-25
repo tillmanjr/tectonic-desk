@@ -40,7 +40,8 @@ const selectVolcano = useInjected(SELECT_VOLCANO);
 const tool = useSectionTool(section, setSection);
 
 const W = 900;
-const M = { l: 44, r: 16, t: 18, b: 26 };
+/** The top margin leaves room for two rows of volcano names above the surface. */
+const M = { l: 44, r: 16, t: 40, b: 26 };
 /** The tallest plot allowed; deeper events are counted rather than squashed. */
 const MAX_PLOT = 480 - M.t - M.b;
 const MIN_PLOT = 140 - M.t - M.b;
@@ -59,6 +60,8 @@ interface Mark {
 interface Surface {
   s: SurfacePoint;
   x: number;
+  /** Name row: neighbours alternate so close volcanoes do not overprint. */
+  row: 0 | 1;
 }
 interface Data {
   title: string;
@@ -107,8 +110,12 @@ const data = computed<Data | null>(() => {
       title: `M${fmtMag(e.mag)} · ${placeOf(e)} · ${String(Math.round(p.depthKm))} km`,
     });
   }
-  const surface = props.volcanoes
-    ? surfacePointsOf(s, store.inRegion.value).map((sp) => ({ s: sp, x: x(sp.alongKm) }))
+  const surface: Surface[] = props.volcanoes
+    ? surfacePointsOf(s, store.inRegion.value).map((sp, i) => ({
+        s: sp,
+        x: x(sp.alongKm),
+        row: i % 2 === 0 ? 0 : 1,
+      }))
     : [];
   const yScale = scaleLinear([0, axisKm], [M.t, M.t + plotH]);
   const notes = [
@@ -192,8 +199,8 @@ const selectedId = catalog.selectedId;
         :margin="M"
       />
       <line class="surfaceline" :x1="M.l" :x2="W - M.r" :y1="M.t" :y2="M.t" />
-      <text class="endlabel" :x="M.l + 2" :y="M.t - 6">A</text>
-      <text class="endlabel" :x="W - M.r - 2" :y="M.t - 6" text-anchor="end">A′</text>
+      <text class="endlabel" :x="M.l + 2" :y="M.t - 26">A</text>
+      <text class="endlabel" :x="W - M.r - 2" :y="M.t - 26" text-anchor="end">A′</text>
       <g
         v-for="v in data.surface"
         :key="v.s.number"
@@ -207,7 +214,7 @@ const selectedId = catalog.selectedId;
         <path
           :d="`M${String(v.x)},${String(M.t - 9)}L${String(v.x + 5)},${String(M.t)}L${String(v.x - 5)},${String(M.t)}Z`"
         />
-        <text :x="v.x" :y="M.t - 12" text-anchor="middle">{{ v.s.name }}</text>
+        <text :x="v.x" :y="M.t - 12 - v.row * 11" text-anchor="middle">{{ v.s.name }}</text>
       </g>
       <g
         v-for="m in data.marks"
