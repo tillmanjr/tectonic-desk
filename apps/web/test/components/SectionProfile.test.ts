@@ -125,13 +125,19 @@ describe("SectionProfile", () => {
     await nextTick();
     const volcs = w.findAll(".volc");
     expect(volcs.map((v) => v.find("text").text())).toEqual(["Ridge Cone"]);
-    expect(volcs[0]?.find("text").attributes("y")).toBe("28");
+    // The fake relief is a flat sea floor 3 km down (2.27 px), so the triangle sits there.
+    const floorY = 40 + 3 / (1111.95 / 840);
+    expect(Number(volcs[0]?.find("text").attributes("y"))).toBeCloseTo(floorY - 12, 1);
+    expect(volcs[0]?.find("path").attributes("d")).toMatch(/,42\.3Z$/);
     ctx.volcanoes.volcanoes.value = [
       ...ctx.volcanoes.volcanoes.value,
       volcano({ number: 778, name: "Twin Cone", lon: 3.2, lat: 0.1 }),
     ];
     await nextTick();
-    expect(w.findAll(".volc text").map((t) => t.attributes("y"))).toEqual(["28", "17"]);
+    expect(w.findAll(".volc text").map((t) => Number(t.attributes("y")))).toEqual([
+      expect.closeTo(floorY - 12, 1),
+      expect.closeTo(floorY - 23, 1),
+    ]);
     await volcs[0]?.trigger("click");
     expect(ctx.selectVolcano).toHaveBeenCalledWith(777);
     await volcs[0]?.trigger("keydown", { key: "Enter" });
@@ -165,6 +171,27 @@ describe("SectionProfile", () => {
     const sea = Number(w.find(".surfaceline").attributes("y1"));
     expect(sea).toBeCloseTo(40 + 1 / (1111.95 / 840), 1);
     expect(w.find(".land").attributes("d")).toContain(`M44.0,${sea.toFixed(1)}`);
+    // A volcano in the middle sits on the ridge, 1 km above sea level; one past the last sample clamps.
+    const withVolc = await makeContext({
+      api: fakeApi({
+        relief: vi.fn().mockResolvedValue(reliefOf(3, 555.97, (i) => (i === 1 ? 1000 : -3000))),
+      }),
+      volcanoes: true,
+    });
+    withVolc.volcanoes.volcanoes.value = [
+      ...withVolc.volcanoes.volcanoes.value,
+      volcano({ number: 801, name: "Ridge", lon: 5, lat: 0 }),
+      volcano({ number: 802, name: "End", lon: 9.99, lat: 0 }),
+    ];
+    withVolc.section.value = eq;
+    const v = mountWith(SectionProfile, withVolc, { volcanoes: true });
+    await flushPromises();
+    const ys = v
+      .findAll(".volc path")
+      .map((p) => Number(p.attributes("d")?.split(",").pop()?.replace("Z", "")));
+    expect(ys[0]).toBeCloseTo(40, 0);
+    expect(ys[1]).toBeCloseTo(sea + 3 / (1111.95 / 840), 0);
+    v.unmount();
     expect(w.find(".cap").text()).toContain(
       "Relief: SRTM15+ v2.7 (Tozer et al. 2019) via GMT, 3′ grid.",
     );

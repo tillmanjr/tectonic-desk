@@ -377,7 +377,11 @@ onUnmounted(() => {
         <a href="https://doi.org/10.1029/2019GC008515" rel="noopener" target="_blank"
           >doi:10.1029/2019GC008515</a
         >), rendered here into the map projections with equalised or clipped colour ramps as each
-        legend states.
+        legend states. Topography and bathymetry along a cross-section from SRTM15+ v2.7 (Tozer et
+        al. 2019,
+        <a href="https://doi.org/10.1029/2019EA000658" rel="noopener" target="_blank"
+          >doi:10.1029/2019EA000658</a
+        >), the 3-arc-minute tiles from the same server.
       </p>
       <p class="byline">
         Built for Barbara by

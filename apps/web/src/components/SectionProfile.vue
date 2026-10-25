@@ -95,6 +95,8 @@ interface Mark {
 interface Surface {
   s: SurfacePoint;
   x: number;
+  /** The y of the ground at the volcano: the relief there, else sea level. */
+  y: number;
   /** Name row: neighbours alternate so close volcanoes do not overprint. */
   row: 0 | 1;
 }
@@ -155,14 +157,23 @@ const data = computed<Data | null>(() => {
       title: `M${fmtMag(e.mag)} · ${placeOf(e)} · ${String(Math.round(p.depthKm))} km`,
     });
   }
+  const step = relief.value?.stepKm ?? 0;
+  /** The surface elevation at a distance along the line, interpolated between relief samples. */
+  const groundY = (alongKm: number): number => {
+    if (metres.length < 2) return sea;
+    const pos = Math.min(Math.max(alongKm / step, 0), metres.length - 1);
+    const i = Math.min(Math.floor(pos), metres.length - 2);
+    const m = Number(metres[i]) + (Number(metres[i + 1]) - Number(metres[i])) * (pos - i);
+    return y(-m / 1000);
+  };
   const surface: Surface[] = props.volcanoes
     ? surfacePointsOf(s, store.inRegion.value).map((sp, i) => ({
         s: sp,
         x: x(sp.alongKm),
+        y: groundY(sp.alongKm),
         row: i % 2 === 0 ? 0 : 1,
       }))
     : [];
-  const step = relief.value?.stepKm ?? 0;
   const reliefPts = metres.map((m, i) => ({ x: x(i * step), y: y(-m / 1000) }));
   const reliefLine =
     reliefPts.length === 0 ? "" : `M${reliefPts.map((p) => pt(p.x, p.y)).join("L")}`;
@@ -280,10 +291,8 @@ const selectedId = catalog.selectedId;
         @click="selectVolcano(v.s.number)"
         @keydown.enter="selectVolcano(v.s.number)"
       >
-        <path
-          :d="`M${String(v.x)},${String(M.t - 9)}L${String(v.x + 5)},${String(M.t)}L${String(v.x - 5)},${String(M.t)}Z`"
-        />
-        <text :x="v.x" :y="M.t - 12 - v.row * 11" text-anchor="middle">{{ v.s.name }}</text>
+        <path :d="`M${pt(v.x, v.y - 9)}L${pt(v.x + 5, v.y)}L${pt(v.x - 5, v.y)}Z`" />
+        <text :x="v.x" :y="v.y - 12 - v.row * 11" text-anchor="middle">{{ v.s.name }}</text>
       </g>
       <g
         v-for="m in data.marks"
