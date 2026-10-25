@@ -167,12 +167,13 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
 - **Space weather.** The `Space` page (`/space`, no region) reads the store above: six tiles (Kp
   with the 3-hour value, the NOAA G, R and S scales with tomorrow in words, Bz and Bt, speed and
   density, the GOES X-ray class, protons at and above 10 MeV) over sparklines of the window; then
-  every series on one time axis (Kp bars coloured by G level under the 1-minute estimate, Dst,
+  the SWPC alerts, warnings, watches and summaries of the window as a row of cards under the
+  tiles, newest on the left, edged red, orange, yellow or green by kind and opening to the full
+  message; then every series on one time axis (Kp bars coloured by G level under the 1-minute estimate, Dst,
   Bz and Bt, speed and density, X-ray on a log axis with class letters and flares shaded,
   protons with the S thresholds), SWPC alerts as ticks along the top and a pointer readout of
   every row at one instant. The rail carries the three-day forecast (R and S as probabilities,
-  G as a level, Kp maximum), the flares (hover lights the band, click frames the flare) and the
-  alerts (click for the full message). The window (`?window=6h|24h|3d|7d|30d`, default 24 h)
+  G as a level, Kp maximum) and the flares (hover lights the band, click frames the flare). The window (`?window=6h|24h|3d|7d|30d`, default 24 h)
   or a fixed range (`?from=&to=`) is in the URL; a window refreshes every minute, a range is
   read once.
 - **Aurora oval.** Under the stack on the Space page: north and south polar maps (equal-area about

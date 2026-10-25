@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  alertKind,
   alertTitle,
   fmtKp,
   fmtValue,
@@ -57,6 +58,13 @@ describe("space formatting", () => {
     expect(alertTitle("Just one line")).toBe("Just one line");
     expect(alertTitle("Header only\r\n\r\n")).toBe("Header only");
     expect(alertTitle("")).toBe("");
+    expect(alertKind("WARNING: Geomagnetic K-index of 5 expected")).toBe("warning");
+    expect(alertKind("EXTENDED WARNING: Geomagnetic K-index of 4 expected")).toBe("warning");
+    expect(alertKind("ALERT: Electron 2MeV Integral Flux exceeded 1000pfu")).toBe("alert");
+    expect(alertKind("CONTINUED ALERT: Proton Event 10MeV Integral Flux")).toBe("alert");
+    expect(alertKind("WATCH: Geomagnetic Storm Category G3 Predicted")).toBe("watch");
+    expect(alertKind("SUMMARY: Geomagnetic Sudden Impulse")).toBe("summary");
+    expect(alertKind("Space Weather Message Code: WARK05")).toBe("other");
   });
 
   it("round-trips datetime-local values in UTC and in the browser zone", () => {

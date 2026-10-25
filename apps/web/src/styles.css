@@ -2344,42 +2344,21 @@ table.matrix {
   font-size: 12.5px;
   padding: 2px 8px;
 }
-.alertlist {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.mcard.alert {
+  grid-template-columns: auto 1fr;
+  align-items: start;
 }
-.alertlist li {
-  border-bottom: 1px solid var(--line);
-}
-.alerthead {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: 0;
-  padding: 5px 2px;
-  font: 13px var(--f-ui);
-  color: var(--ink);
-  cursor: pointer;
-}
-.alerthead .atime,
-.alerthead .acode {
+.mcard.alert .acode {
+  font: 600 13px var(--f-data);
   color: var(--muted);
-  font-size: 12px;
-}
-.alerthead .acode {
   border: 1px solid var(--line);
   border-radius: 3px;
-  padding: 0 4px;
+  padding: 1px 5px;
+  margin-top: 2px;
 }
-.alertlist li.open .alerthead {
-  font-weight: 600;
-}
-.amsg {
-  margin: 0 0 8px;
+.mcard.alert .amsg {
+  display: block;
+  margin-top: 6px;
   padding: 8px;
   background: var(--bg);
   border-radius: 6px;
