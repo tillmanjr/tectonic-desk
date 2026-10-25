@@ -19,7 +19,9 @@ import {
   SET_FILTER,
   SET_SECTION,
   SET_VOLCANO_FILTER,
+  SET_SPACE_RANGE,
   SETTINGS,
+  SPACE,
   STATUS,
   THEME,
   VOLCANOES,
@@ -31,6 +33,7 @@ import { createMarks, type MarksStore } from "../../src/lib/marks.js";
 import { createNotice, type NoticeStore } from "../../src/lib/notice.js";
 import type { Section } from "../../src/lib/section.js";
 import { createSettings, type SettingsStore } from "../../src/lib/settings.js";
+import { createSpaceStore, type SpaceRange, type SpaceStore } from "../../src/lib/space.js";
 import { createStatusPoll, type StatusPoll } from "../../src/lib/status.js";
 import { createTheme, type Theme } from "../../src/lib/theme.js";
 import {
@@ -56,6 +59,8 @@ export interface Context {
   notice: NoticeStore;
   section: Ref<Section | null>;
   setSection: Mock<(s: Section | null) => void>;
+  space: SpaceStore;
+  setSpaceRange: Mock<(r: SpaceRange) => void>;
   /** Spies for every nav action; `overlay` is the writable ref behind `nav.overlay`. */
   nav: MarksNav;
   overlay: Ref<{ group: string; mode: MarksMode } | null>;
@@ -90,6 +95,8 @@ export async function makeContext(
     regionId?: string;
     volcanoes?: boolean;
     range?: Range;
+    /** Also load the space weather store. */
+    space?: boolean;
   } = {},
 ): Promise<Context> {
   const api = over.api ?? fakeApi();
@@ -112,6 +119,8 @@ export async function makeContext(
   const volcanoes = createVolcanoStore(api, () => now);
   volcanoes.setRegion(catalog.region.value);
   if (over.volcanoes === true) await volcanoes.load();
+  const space = createSpaceStore(api, () => now, { intervalMs: 1e9, doc: noDoc });
+  if (over.space === true) await space.load();
   const overlay = ref<{ group: string; mode: MarksMode } | null>(null);
   return {
     api,
@@ -129,6 +138,8 @@ export async function makeContext(
     notice: createNotice(),
     section: ref<Section | null>(null),
     setSection: vi.fn(),
+    space,
+    setSpaceRange: vi.fn(),
     nav: {
       viewUrl: ref("/wc?event=us1"),
       overlay,
@@ -170,6 +181,8 @@ export function mountWith(
       provide(NOTICE, ctx.notice);
       provide(SECTION, ctx.section);
       provide(SET_SECTION, ctx.setSection);
+      provide(SPACE, ctx.space);
+      provide(SET_SPACE_RANGE, ctx.setSpaceRange);
       provide(ZONE, ctx.zone);
       return () => h(component, props);
     },

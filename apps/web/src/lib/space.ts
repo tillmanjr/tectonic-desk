@@ -1,0 +1,176 @@
+import type { ApiSpaceNow, ApiSpaceWindow } from "@tectonic/shared";
+import { ref, shallowRef, type Ref, type ShallowRef } from "vue";
+import { errorMessage, type ApiClient } from "./api.js";
+import type { DocLike } from "./status.js";
+
+/**
+ * The Space page's state: the latest readings and one window of series, refreshed every
+ * minute while the window ends at now. The range lives in the route (`?window=` or
+ * `?from=&to=`); `App.vue` reads it with `parseSpaceRange` and hands it to `setRange`.
+ */
+
+export const WINDOWS = [
+  { id: "6h", label: "6 hours", ms: 6 * 3_600_000 },
+  { id: "24h", label: "24 hours", ms: 24 * 3_600_000 },
+  { id: "3d", label: "3 days", ms: 3 * 86_400_000 },
+  { id: "7d", label: "7 days", ms: 7 * 86_400_000 },
+  { id: "30d", label: "30 days", ms: 30 * 86_400_000 },
+] as const;
+export type WindowId = (typeof WINDOWS)[number]["id"];
+export const DEFAULT_WINDOW: WindowId = "24h";
+/** The longest fixed range the server serves. */
+export const MAX_RANGE_MS = 93 * 86_400_000;
+
+export type SpaceRange = { kind: "window"; id: WindowId } | { kind: "fixed"; from: Date; to: Date };
+
+export const isWindowId = (v: unknown): v is WindowId => WINDOWS.some((w) => w.id === v);
+
+/** An instant from a query value: a finite date, else null. */
+function instantOf(v: unknown): Date | null {
+  if (typeof v !== "string" || v === "") return null;
+  const ms = Date.parse(v);
+  return Number.isNaN(ms) ? null : new Date(ms);
+}
+
+/** `from` and `to` win when both parse and bound a span up to the cap; else `window`; else the default. */
+export function parseSpaceRange(query: Record<string, unknown>): SpaceRange {
+  const from = instantOf(query.from);
+  const to = instantOf(query.to);
+  if (from !== null && to !== null) {
+    const span = to.getTime() - from.getTime();
+    if (span > 0 && span <= MAX_RANGE_MS) return { kind: "fixed", from, to };
+  }
+  const id = query.window;
+  return { kind: "window", id: isWindowId(id) ? id : DEFAULT_WINDOW };
+}
+
+/** An instant for the route, to the minute: `2026-10-23T21:35Z`. */
+export const routeInstant = (d: Date): string => `${d.toISOString().slice(0, 16)}Z`;
+
+/** The query keys for a range; the default window writes nothing. */
+export function spaceRangeQuery(r: SpaceRange): {
+  window: string | undefined;
+  from: string | undefined;
+  to: string | undefined;
+} {
+  if (r.kind === "fixed") {
+    return { window: undefined, from: routeInstant(r.from), to: routeInstant(r.to) };
+  }
+  return { window: r.id === DEFAULT_WINDOW ? undefined : r.id, from: undefined, to: undefined };
+}
+
+export function windowMs(id: WindowId): number {
+  return WINDOWS.find((w) => w.id === id)?.ms ?? WINDOWS[1].ms;
+}
+
+/** The instants a range covers: a window ends at now. */
+export function rangeBounds(r: SpaceRange, now: Date): { from: Date; to: Date } {
+  if (r.kind === "fixed") return { from: r.from, to: r.to };
+  return { from: new Date(now.getTime() - windowMs(r.id)), to: now };
+}
+
+export interface SpaceStoreOptions {
+  intervalMs?: number;
+  doc?: DocLike;
+}
+
+export interface SpaceStore {
+  now: ShallowRef<ApiSpaceNow | null>;
+  window: ShallowRef<ApiSpaceWindow | null>;
+  range: Ref<SpaceRange>;
+  error: Ref<string | null>;
+  loading: Ref<boolean>;
+  /** Replaces the range and reloads when started. */
+  setRange: (r: SpaceRange) => void;
+  /** Fetches the latest readings and the window for the range in force. */
+  load: () => Promise<void>;
+  start: () => void;
+  stop: () => void;
+}
+
+export function createSpaceStore(
+  api: ApiClient,
+  readNow: () => Date,
+  opts: SpaceStoreOptions = {},
+): SpaceStore {
+  const intervalMs = opts.intervalMs ?? 60_000;
+  const doc: DocLike = opts.doc ?? document;
+  const now = shallowRef<ApiSpaceNow | null>(null);
+  const window = shallowRef<ApiSpaceWindow | null>(null);
+  const range = ref<SpaceRange>({ kind: "window", id: DEFAULT_WINDOW });
+  const error = ref<string | null>(null);
+  const loading = ref(false);
+  let started = false;
+  let timer: ReturnType<typeof setInterval> | null = null;
+  let seq = 0;
+
+  async function load(): Promise<void> {
+    const mine = ++seq;
+    loading.value = true;
+    const { from, to } = rangeBounds(range.value, readNow());
+    try {
+      const [n, w] = await Promise.all([
+        api.spaceNow(),
+        api.spaceWindow(from.toISOString(), to.toISOString()),
+      ]);
+      if (mine !== seq) return;
+      now.value = n;
+      window.value = w;
+      error.value = null;
+    } catch (e) {
+      if (mine !== seq) return;
+      error.value = errorMessage(e);
+    } finally {
+      if (mine === seq) loading.value = false;
+    }
+  }
+
+  /** A fixed range never changes, so only a window is polled. */
+  function tick(): void {
+    if (range.value.kind === "window") void load();
+  }
+  function startTimer(): void {
+    stopTimer();
+    timer = setInterval(tick, intervalMs);
+  }
+  function stopTimer(): void {
+    if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+  function onVisibility(): void {
+    if (doc.hidden) {
+      stopTimer();
+    } else {
+      tick();
+      startTimer();
+    }
+  }
+
+  return {
+    now,
+    window,
+    range,
+    error,
+    loading,
+    setRange(r) {
+      range.value = r;
+      if (started) void load();
+    },
+    load,
+    start() {
+      if (started) return;
+      started = true;
+      void load();
+      startTimer();
+      doc.addEventListener("visibilitychange", onVisibility);
+    },
+    stop() {
+      if (!started) return;
+      started = false;
+      stopTimer();
+      doc.removeEventListener("visibilitychange", onVisibility);
+    },
+  };
+}
