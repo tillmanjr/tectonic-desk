@@ -440,7 +440,10 @@ onUnmounted(() => {
         <a href="https://wdc.kugi.kyoto-u.ac.jp/" rel="noopener" target="_blank"
           >World Data Center for Geomagnetism, Kyoto</a
         >, relayed by SWPC. The solar wind comes from whichever spacecraft at L1 SWPC marks active
-        (SOLAR-1, ACE or IMAP), named on the page.
+        (SOLAR-1, ACE or IMAP), named on the page. The aurora oval is SWPC's OVATION Prime (2013)
+        model: the probability of aurora over each 1° cell at the forecast time, 30 to 90 minutes
+        after the solar wind observation, with the hemispheric power of the same run; three days of
+        frames are kept here.
       </p>
       <p class="byline">
         Built for Barbara by

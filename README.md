@@ -61,6 +61,8 @@ wind (the spacecraft SWPC marks active) and the GOES X-ray and proton fluxes eve
 `SPACE_EVENTS_INTERVAL_MS` (5 min), the 3-hour Kp and Kyoto Dst every `SPACE_SLOW_INTERVAL_MS`
 (1 h). SWPC keeps six hours to seven days of each file; the store keeps everything, thinning
 1-minute rows older than 30 days to 5-minute means every `SPACE_PRUNE_INTERVAL_MS` (6 h).
+The aurora oval (OVATION Prime's 1° probability grid, 65,160 bytes a frame, with the
+hemispheric power from the same run) joins the fast job and is kept 72 hours in `space_aurora`.
 `SPACE_ENABLED=false` leaves these jobs out. The files are small on the wire (SWPC gzips them;
 the solar wind costs about 100 MB a day) and the jobs never write `ingest_runs`.
 
@@ -76,21 +78,23 @@ All routes return JSON. Bad input is 400 `{ error, issues: [{ path, message }] }
 id or path is 404 `{ error }`, anything else is 500 `{ error }`. Successful responses carry a
 short `Cache-Control`.
 
-| Route                       | Returns                                                                                                                                                                                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/health`           | `{ status, db }`, 503 when the database does not answer                                                                                                                                                                                     |
-| `GET /api/regions`          | the view presets: id, name, subtitle, minMag, days, bbox                                                                                                                                                                                    |
-| `GET /api/events`           | `{ events, count, truncated, query }`; each event carries its preferred mechanism per kind                                                                                                                                                  |
-| `GET /api/events/:id`       | the event with every mechanism product and the raw USGS properties as `usgs`                                                                                                                                                                |
-| `GET /api/status`           | catalog totals, latest ingest run per kind, last successful feed time                                                                                                                                                                       |
-| `GET /api/runs`             | ingest run history, `?kind=feed_day\|feed_week\|backfill\|details&limit=N`                                                                                                                                                                  |
-| `GET /api/events/count`     | `{ count, query }` under the list filters                                                                                                                                                                                                   |
-| `GET /api/events/summary`   | `{ by, bins, query }`: per day, month or year (`by=`, default by span) with the largest magnitude and magnitude-class counts                                                                                                                |
-| `GET /api/events/grid`      | `{ cell, cells, query }`: counts per `cell`-degree square (0.25, 0.5, 1, 2 or 5)                                                                                                                                                            |
-| `GET /api/catalog/coverage` | `{ spans }`: contiguous frozen backfill windows per magnitude floor and bbox                                                                                                                                                                |
-| `GET /api/geo/:name`        | `plates`, `wc-land`, `wc-states` from `apps/server/data/geo`, with an ETag                                                                                                                                                                  |
-| `GET /api/space/now`        | the latest reading per space weather series with its source, the NOAA scales from yesterday to D+3, the newest flare and alert                                                                                                              |
-| `GET /api/space/window`     | `?from=&to=` (ISO instants, `to` defaults to now, 93 days at most): `samples` per series as `[ms, value]` pairs, raw up to 25 hours and otherwise thinned to one shared bucket (`bucketSeconds`), with the flares, alerts and scales inside |
+| Route                             | Returns                                                                                                                                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/health`                 | `{ status, db }`, 503 when the database does not answer                                                                                                                                                                                     |
+| `GET /api/regions`                | the view presets: id, name, subtitle, minMag, days, bbox                                                                                                                                                                                    |
+| `GET /api/events`                 | `{ events, count, truncated, query }`; each event carries its preferred mechanism per kind                                                                                                                                                  |
+| `GET /api/events/:id`             | the event with every mechanism product and the raw USGS properties as `usgs`                                                                                                                                                                |
+| `GET /api/status`                 | catalog totals, latest ingest run per kind, last successful feed time                                                                                                                                                                       |
+| `GET /api/runs`                   | ingest run history, `?kind=feed_day\|feed_week\|backfill\|details&limit=N`                                                                                                                                                                  |
+| `GET /api/events/count`           | `{ count, query }` under the list filters                                                                                                                                                                                                   |
+| `GET /api/events/summary`         | `{ by, bins, query }`: per day, month or year (`by=`, default by span) with the largest magnitude and magnitude-class counts                                                                                                                |
+| `GET /api/events/grid`            | `{ cell, cells, query }`: counts per `cell`-degree square (0.25, 0.5, 1, 2 or 5)                                                                                                                                                            |
+| `GET /api/catalog/coverage`       | `{ spans }`: contiguous frozen backfill windows per magnitude floor and bbox                                                                                                                                                                |
+| `GET /api/geo/:name`              | `plates`, `wc-land`, `wc-states` from `apps/server/data/geo`, with an ETag                                                                                                                                                                  |
+| `GET /api/space/now`              | the latest reading per space weather series with its source, the NOAA scales from yesterday to D+3, the newest flare and alert                                                                                                              |
+| `GET /api/space/window`           | `?from=&to=` (ISO instants, `to` defaults to now, 93 days at most): `samples` per series as `[ms, value]` pairs, raw up to 25 hours and otherwise thinned to one shared bucket (`bucketSeconds`), with the flares, alerts and scales inside |
+| `GET /api/space/aurora`           | the aurora frames of the last 72 hours, newest last, without grids (observation and forecast times, hemispheric power)                                                                                                                      |
+| `GET /api/space/aurora/:observed` | one frame by its observation time with `grid`, the 65,160-byte OVATION probability grid (longitude-major, 0..100) as base64; cached an hour                                                                                                 |
 
 `GET /api/events` filters: `since` and `until` (ISO 8601 date-time or `YYYY-MM-DD`; `since`
 defaults to seven days ago), `minMag`, `bbox=minLon,minLat,maxLon,maxLat` (minLon > maxLon
@@ -171,6 +175,11 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   alerts (click for the full message). The window (`?window=6h|24h|3d|7d|30d`, default 24 h)
   or a fixed range (`?from=&to=`) is in the URL; a window refreshes every minute, a range is
   read once.
+- **Aurora oval.** Under the stack on the Space page: north and south polar maps (equal-area about
+  each pole down to 40°, noon at the top, the night side shaded at the forecast time) of OVATION
+  Prime's probability bands at 10, 30, 50, 70 and 90 %, drawn from the stored grid with
+  d3-contour; the caption gives the observation and forecast times and the hemispheric power,
+  and a scrub runs over the last three days of frames (`Latest` follows the newest again).
 - **Field overlays.** `Field` in the map toolbar draws a gravity or magnetic anomaly raster under
   the line work, on every map page, off by default. Gravity is the Scripps free-air anomaly on
   the global view (EGM2008 over land, clipped at ±120 mGal) and the USGS DDS-9 isostatic residual
@@ -396,3 +405,4 @@ step when a source is added.
 | Magnetic anomaly                | EMAG2v3 (Meyer, Chulliat and Saltus 2017, doi:10.7289/V5H70CVX), 4 km upward-continued, via GMT `earth_mag4km_06m`                                    | US government work; cite Meyer et al. (2017) and GMT                               |
 | Space weather                   | NOAA Space Weather Prediction Center (services.swpc.noaa.gov): Kp, NOAA scales, solar wind (SOLAR-1, ACE, IMAP), GOES X-rays, protons, flares, alerts | US public domain; poll no faster than the files refresh (one minute)               |
 | Dst                             | World Data Center for Geomagnetism, Kyoto (provisional hourly Dst), relayed by SWPC                                                                   | Acknowledge WDC Kyoto                                                              |
+| Aurora oval                     | NOAA SWPC OVATION Prime (2013) aurora probability grid and hemispheric power (services.swpc.noaa.gov)                                                 | US public domain; show the observation and forecast times                          |
