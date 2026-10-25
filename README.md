@@ -140,6 +140,12 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   list downloads every mark and group as a JSON file (`tectonic-marks-<date>.json`); `Import`
   reads one back and offers `Merge` (add what is missing, delete nothing) or `Replace`. Each mark
   carries a small schematic of the world or the West Coast with a star at the event.
+- **Cross-section.** `Section` in the map toolbar arms a line tool: click two points on the map
+  and a corridor appears, with end handles A and A′ you can drag. A profile panel under the map
+  plots the corridor's hypocentres by depth against distance along the line, at true scale by
+  default (×2 and ×4 on offer), coloured by depth class and sized by magnitude; a click selects the
+  event, and on Active Earth the corridor's volcanoes sit at the surface. The corridor half-width
+  and the line live in the URL (`?section=lon1,lat1,lon2,lat2,halfKm`), so a mark keeps them.
 - **Field overlays.** `Field` in the map toolbar draws a gravity or magnetic anomaly raster under
   the line work, on every map page, off by default. Gravity is the Scripps free-air anomaly on
   the global view (EGM2008 over land, clipped at ±120 mGal) and the USGS DDS-9 isostatic residual
