@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import type { ApiRelief } from "@tectonic/shared";
 import { scaleLinear } from "d3-scale";
-import { computed, ref } from "vue";
+import { computed, ref, shallowRef, watch } from "vue";
 import ChartAxes from "./ChartAxes.vue";
 import { ticksOf, type Tick } from "../lib/charts.js";
 import { depthColor } from "../lib/depth.js";
 import { fmtMag, placeOf } from "../lib/format.js";
 import {
+  API,
   CATALOG,
   SECTION,
   SELECT,
@@ -28,9 +30,11 @@ import { useSectionTool } from "../lib/section-tool.js";
 
 /**
  * Depth against distance along the section line, at a chosen vertical exaggeration, for the
- * corridor's events; on Active Earth also the corridor's volcanoes at the surface.
+ * corridor's events, under the topography and bathymetry the server samples along the line;
+ * on Active Earth also the corridor's volcanoes at the surface.
  */
 const props = withDefaults(defineProps<{ volcanoes?: boolean }>(), { volcanoes: false });
+const api = useInjected(API);
 const catalog = useInjected(CATALOG);
 const store = useInjected(VOLCANOES);
 const section = useInjected(SECTION);
@@ -49,6 +53,37 @@ const VE_CHOICES = [1, 2, 4] as const;
 type Ve = (typeof VE_CHOICES)[number];
 const ve = ref<Ve>(1);
 const isVe = (n: number): n is Ve => VE_CHOICES.some((v) => v === n);
+/** Samples of relief along the line. */
+const RELIEF_SAMPLES = 256;
+
+/** The relief for the current ends; the half-width does not change it. */
+const relief = shallowRef<ApiRelief | null>(null);
+const reliefFailed = ref(false);
+let reliefSeq = 0;
+const ends = computed(() => {
+  const s = section.value;
+  return s === null
+    ? null
+    : `${String(s.a[0])},${String(s.a[1])},${String(s.b[0])},${String(s.b[1])}`;
+});
+watch(
+  ends,
+  (key) => {
+    const seq = ++reliefSeq;
+    relief.value = null;
+    reliefFailed.value = false;
+    if (key === null) return;
+    api
+      .relief(key, RELIEF_SAMPLES)
+      .then((r) => {
+        if (seq === reliefSeq) relief.value = r;
+      })
+      .catch(() => {
+        if (seq === reliefSeq) reliefFailed.value = true;
+      });
+  },
+  { immediate: true },
+);
 
 interface Mark {
   p: ProfilePoint;
@@ -66,8 +101,14 @@ interface Surface {
 interface Data {
   title: string;
   H: number;
+  /** The y of sea level (depth 0). */
+  sea: number;
   marks: Mark[];
   surface: Surface[];
+  /** The relief line, and the land and water fills closed along sea level. */
+  reliefLine: string;
+  land: string;
+  water: string;
   xTicks: Tick[];
   yTicks: Tick[];
   caption: string;
@@ -78,6 +119,7 @@ const plural = (n: number, one: string, many: string): string =>
   `${String(n)} ${n === 1 ? one : many}`;
 /** Deepest value rounded up to a 10 km step, at least 20 km. */
 const axisFor = (deepest: number): number => Math.max(20, Math.ceil(deepest / 10) * 10);
+const pt = (x: number, y: number): string => `${x.toFixed(1)},${y.toFixed(1)}`;
 
 const data = computed<Data | null>(() => {
   const s = section.value;
@@ -86,13 +128,16 @@ const data = computed<Data | null>(() => {
   const profile = profileOf(s, catalog.filtered.value);
   const plotW = W - M.l - M.r;
   const kmPerPx = length / plotW;
+  const metres = relief.value?.metres ?? [];
+  const aboveKm = Math.max(0, ...metres) / 1000;
   const deepest = profile.points.reduce((m, p) => Math.max(m, p.depthKm), 0);
-  const fits = (MAX_PLOT * kmPerPx) / ve.value;
-  const axisKm = Math.min(axisFor(deepest), fits);
-  const plotH = Math.max(MIN_PLOT, (axisKm / kmPerPx) * ve.value);
+  const fits = (MAX_PLOT * kmPerPx) / ve.value - aboveKm;
+  const axisKm = Math.max(0, Math.min(axisFor(deepest), fits));
+  const plotH = Math.max(MIN_PLOT, ((aboveKm + axisKm) / kmPerPx) * ve.value);
   const H = Math.round(plotH + M.t + M.b);
   const x = scaleLinear([0, length], [M.l, W - M.r]);
-  const y = (depth: number): number => M.t + (depth / kmPerPx) * ve.value;
+  const y = (depth: number): number => M.t + ((aboveKm + depth) / kmPerPx) * ve.value;
+  const sea = y(0);
   const floor = catalog.floor.value;
   const marks: Mark[] = [];
   let tooDeep = 0;
@@ -117,7 +162,19 @@ const data = computed<Data | null>(() => {
         row: i % 2 === 0 ? 0 : 1,
       }))
     : [];
-  const yScale = scaleLinear([0, axisKm], [M.t, M.t + plotH]);
+  const step = relief.value?.stepKm ?? 0;
+  const reliefPts = metres.map((m, i) => ({ x: x(i * step), y: y(-m / 1000) }));
+  const reliefLine =
+    reliefPts.length === 0 ? "" : `M${reliefPts.map((p) => pt(p.x, p.y)).join("L")}`;
+  // Each fill walks the surface clamped to its side of sea level and closes along sea level,
+  // so the stretches on the other side collapse to a flat line and need no clipping.
+  const fill = (side: (yv: number) => number): string =>
+    reliefPts.length === 0
+      ? ""
+      : `M${pt(M.l, sea)}L${reliefPts.map((p) => pt(p.x, side(p.y))).join("L")}L${pt(W - M.r, sea)}Z`;
+  const land = fill((yv) => Math.min(yv, sea));
+  const water = fill((yv) => Math.max(yv, sea));
+  const yScale = scaleLinear([-aboveKm, axisKm], [M.t, M.t + plotH]);
   const notes = [
     `Depth against distance along A–A′ at ×${String(ve.value)}${ve.value === 1 ? " (true scale)" : ""}; events within ±${String(s.halfKm)} km of the line, projected onto it; colour by depth class, size by magnitude.`,
   ];
@@ -127,12 +184,21 @@ const data = computed<Data | null>(() => {
   if (profile.noDepth > 0) {
     notes.push(`${String(profile.noDepth)} without a reported depth not shown.`);
   }
+  if (relief.value !== null) {
+    notes.push("Relief: SRTM15+ v2.7 (Tozer et al. 2019) via GMT, 3′ grid.");
+  } else if (reliefFailed.value) {
+    notes.push("Relief unavailable.");
+  }
   const empty = profile.points.length === 0;
   return {
     title: `Section A–A′ · ${azimuthText(azimuth(s))} · ${String(Math.round(length))} km · ${plural(profile.points.length, "event", "events")}`,
     H,
+    sea,
     marks,
     surface,
+    reliefLine,
+    land,
+    water,
     xTicks: ticksOf(x, 6),
     yTicks: ticksOf(yScale, 5),
     caption: empty
@@ -198,7 +264,10 @@ const selectedId = catalog.selectedId;
         :height="data.H"
         :margin="M"
       />
-      <line class="surfaceline" :x1="M.l" :x2="W - M.r" :y1="M.t" :y2="M.t" />
+      <path v-if="data.water !== ''" class="water" :d="data.water" />
+      <path v-if="data.land !== ''" class="land" :d="data.land" />
+      <line class="surfaceline" :x1="M.l" :x2="W - M.r" :y1="data.sea" :y2="data.sea" />
+      <path v-if="data.reliefLine !== ''" class="surface" :d="data.reliefLine" />
       <text class="endlabel" :x="M.l + 2" :y="M.t - 26">A</text>
       <text class="endlabel" :x="W - M.r - 2" :y="M.t - 26" text-anchor="end">A′</text>
       <g

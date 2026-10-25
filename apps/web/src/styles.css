@@ -451,6 +451,19 @@ a:focus-visible,
   height: auto;
   display: block;
 }
+.sectionsvg .land {
+  fill: #b9a58a;
+  opacity: 0.55;
+}
+.sectionsvg .water {
+  fill: var(--accent);
+  opacity: 0.18;
+}
+.sectionsvg .surface {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+}
 .sectionsvg .surfaceline {
   stroke: var(--muted);
   stroke-dasharray: 2 3;

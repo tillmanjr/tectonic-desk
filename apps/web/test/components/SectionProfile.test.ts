@@ -6,6 +6,7 @@ import type { Section } from "../../src/lib/section.js";
 import { fakeApi } from "../support/api.js";
 import { event } from "../support/events.js";
 import { makeContext, mountWith } from "../support/mount.js";
+import { reliefOf } from "../support/relief.js";
 import { volcano } from "../support/volcanoes.js";
 
 /** A 10° equatorial line, about 1112 km. */
@@ -138,6 +139,108 @@ describe("SectionProfile", () => {
     const plain = await profile(eq, false);
     expect(plain.w.findAll(".volc")).toHaveLength(0);
     plain.w.unmount();
+    w.unmount();
+  });
+
+  it("draws the relief as land and water fills, lifts the axis above sea level, and credits it", async () => {
+    // A ridge: 1000 m above sea level at the middle, −3000 m at the ends, over 1112 km in 3 samples.
+    const api = fakeApi({
+      events: vi.fn().mockResolvedValue({
+        events: corridor,
+        count: corridor.length,
+        truncated: false,
+        query: {},
+      }),
+      relief: vi.fn().mockResolvedValue(reliefOf(3, 555.97, (i) => (i === 1 ? 1000 : -3000))),
+    });
+    const ctx = await makeContext({ api });
+    ctx.section.value = eq;
+    const w = mountWith(SectionProfile, ctx);
+    await flushPromises();
+    expect(api.relief).toHaveBeenCalledWith("0,0,10,0", 256);
+    expect(w.find(".land").exists()).toBe(true);
+    expect(w.find(".water").exists()).toBe(true);
+    expect(w.find(".surface").attributes("d")).toMatch(/^M44\.0,/);
+    // Sea level sits 1 km (0.76 px) below the top of the plot; the land fill closes along it.
+    const sea = Number(w.find(".surfaceline").attributes("y1"));
+    expect(sea).toBeCloseTo(40 + 1 / (1111.95 / 840), 1);
+    expect(w.find(".land").attributes("d")).toContain(`M44.0,${sea.toFixed(1)}`);
+    expect(w.find(".cap").text()).toContain(
+      "Relief: SRTM15+ v2.7 (Tozer et al. 2019) via GMT, 3′ grid.",
+    );
+    // A width change keeps the relief; a new end refetches, and the latest answer wins.
+    ctx.section.value = { ...eq, halfKm: 90 };
+    await flushPromises();
+    expect(api.relief).toHaveBeenCalledTimes(1);
+    ctx.section.value = { ...eq, b: [12, 0] };
+    await flushPromises();
+    expect(api.relief).toHaveBeenCalledTimes(2);
+    expect(api.relief).toHaveBeenLastCalledWith("0,0,12,0", 256);
+    w.unmount();
+  });
+
+  it("says when the relief is unavailable and keeps the flat surface", async () => {
+    const api = fakeApi({
+      events: vi.fn().mockResolvedValue({
+        events: corridor,
+        count: corridor.length,
+        truncated: false,
+        query: {},
+      }),
+      relief: vi.fn().mockRejectedValue(new Error("no grid")),
+    });
+    const ctx = await makeContext({ api });
+    ctx.section.value = eq;
+    const w = mountWith(SectionProfile, ctx);
+    await flushPromises();
+    expect(w.find(".land").exists()).toBe(false);
+    expect(w.find(".surface").exists()).toBe(false);
+    expect(Number(w.find(".surfaceline").attributes("y1"))).toBe(40);
+    expect(w.find(".cap").text()).toContain("Relief unavailable.");
+    ctx.section.value = null;
+    await flushPromises();
+    expect(w.find(".sectionpanel").exists()).toBe(false);
+    w.unmount();
+  });
+
+  it("ignores a relief answer or failure that arrives for an earlier line", async () => {
+    const pending: { resolve: (r: ReturnType<typeof reliefOf>) => void; reject: () => void }[] = [];
+    const api = fakeApi({
+      events: vi.fn().mockResolvedValue({
+        events: corridor,
+        count: corridor.length,
+        truncated: false,
+        query: {},
+      }),
+      relief: vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve, reject) => {
+            pending.push({
+              resolve,
+              reject: () => {
+                reject(new Error("late"));
+              },
+            });
+          }),
+      ),
+    });
+    const ctx = await makeContext({ api });
+    ctx.section.value = eq;
+    const w = mountWith(SectionProfile, ctx);
+    await flushPromises();
+    ctx.section.value = { ...eq, b: [12, 0] };
+    await flushPromises();
+    ctx.section.value = { ...eq, b: [14, 0] };
+    await flushPromises();
+    expect(pending).toHaveLength(3);
+    pending[0]?.resolve(reliefOf(3, 500, () => 500));
+    pending[1]?.reject();
+    await flushPromises();
+    expect(w.find(".land").exists()).toBe(false);
+    expect(w.find(".cap").text()).not.toContain("Relief unavailable.");
+    pending[2]?.resolve(reliefOf(3, 500, () => 500));
+    await flushPromises();
+    expect(w.find(".land").exists()).toBe(true);
     w.unmount();
   });
 });
