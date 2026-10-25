@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, type Router, type RouterHistory } from "vue-router";
 import App from "./components/App.vue";
 
-export type Page = "earthquakes" | "volcanoes" | "active";
+export type Page = "earthquakes" | "volcanoes" | "active" | "space";
 
 /**
  * The shell renders every route; the page comes from the route's meta, the region from its param.
@@ -15,6 +15,7 @@ export function createAppRouter(history: RouterHistory = createWebHistory()): Ro
       { path: "/active/:region?", component: App, meta: { page: "active" } },
       { path: "/volcanoes/:region?", component: App, meta: { page: "volcanoes" } },
       { path: "/earthquakes/:region?", component: App, meta: { page: "earthquakes" } },
+      { path: "/space", component: App, meta: { page: "space" } },
       { path: "/", redirect: "/active" },
       {
         path: "/:region",
@@ -30,10 +31,11 @@ export const pageBase = (page: Page): string => `/${page}`;
 
 /** The page a route's `meta.page` names; anything else is the earthquakes page. */
 export const pageOf = (meta: unknown): Page =>
-  meta === "volcanoes" || meta === "active" ? meta : "earthquakes";
+  meta === "volcanoes" || meta === "active" || meta === "space" ? meta : "earthquakes";
 
 /** Pages that show the volcano dataset and therefore load its store. */
-export const hasVolcanoes = (page: Page): boolean => page !== "earthquakes";
+export const hasVolcanoes = (page: Page): boolean => page === "volcanoes" || page === "active";
 
+/** The Space page has no region, so its path never carries one. */
 export const pagePath = (page: Page, region: string): string =>
-  region === "global" ? pageBase(page) : `${pageBase(page)}/${region}`;
+  page === "space" || region === "global" ? pageBase(page) : `${pageBase(page)}/${region}`;

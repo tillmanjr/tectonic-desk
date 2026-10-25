@@ -1,0 +1,44 @@
+[
+  {
+    "time_tag": "2026-10-24T04:11:00Z",
+    "begin_time": "2026-10-24T04:11:00Z",
+    "begin_class": "B5.3",
+    "max_time": "2026-10-24T04:18:00Z",
+    "max_class": "B7.5",
+    "max_xrlong": 7.594919111397758e-07,
+    "max_ratio": 0.24502649667524096,
+    "max_ratio_time": "2026-10-24T04:11:02Z",
+    "current_int_xrlong": 0.0004447713145054877,
+    "end_time": "2026-10-24T04:21:00Z",
+    "end_class": "B6.0",
+    "satellite": 18
+  },
+  {
+    "time_tag": "2026-10-24T06:33:00Z",
+    "begin_time": "2026-10-24T06:33:00Z",
+    "begin_class": "B6.3",
+    "max_time": "2026-10-24T06:44:00Z",
+    "max_class": "C1.0",
+    "max_xrlong": 1.0290955287928227e-06,
+    "max_ratio": 0.17142816388945123,
+    "max_ratio_time": "2026-10-24T06:41:07Z",
+    "current_int_xrlong": 0.0012613098369911313,
+    "end_time": "2026-10-24T06:55:00Z",
+    "end_class": "B8.2",
+    "satellite": 18
+  },
+  {
+    "time_tag": "2026-10-24T21:38:00Z",
+    "begin_time": "2026-10-24T21:38:00Z",
+    "begin_class": "B3.8",
+    "max_time": "2026-10-24T21:44:00Z",
+    "max_class": "B5.2",
+    "max_xrlong": 5.237350819697895e-07,
+    "max_ratio": 0.2025993162002111,
+    "max_ratio_time": "2026-10-24T21:43:43Z",
+    "current_int_xrlong": 0.0009522635955363512,
+    "end_time": null,
+    "end_class": null,
+    "satellite": 18
+  }
+]

@@ -19,6 +19,11 @@ describe("loadConfig", () => {
       USGS_USER_AGENT: "tectonic-desk/0.0 (+local)",
       VOLCANO_STATUS_INTERVAL_MS: 900_000,
       VOLCANO_REPORTS_INTERVAL_MS: 21_600_000,
+      SPACE_ENABLED: true,
+      SPACE_FAST_INTERVAL_MS: 300_000,
+      SPACE_EVENTS_INTERVAL_MS: 300_000,
+      SPACE_SLOW_INTERVAL_MS: 3_600_000,
+      SPACE_PRUNE_INTERVAL_MS: 21_600_000,
       RATE_LIMIT_MAX: 120,
       RATE_LIMIT_WINDOW_MS: 60_000,
       TRUST_PROXY: false,
@@ -92,5 +97,22 @@ describe("loadConfig", () => {
     process.env.DATABASE_URL = valid.DATABASE_URL;
     expect(loadConfig().DATABASE_URL).toBe(valid.DATABASE_URL);
     delete process.env.DATABASE_URL;
+  });
+
+  it("parses space weather settings", () => {
+    const c = loadConfig({
+      ...valid,
+      SPACE_ENABLED: "false",
+      SPACE_FAST_INTERVAL_MS: "60000",
+      SPACE_EVENTS_INTERVAL_MS: "120000",
+      SPACE_SLOW_INTERVAL_MS: "300000",
+      SPACE_PRUNE_INTERVAL_MS: "600000",
+    });
+    expect(c.SPACE_ENABLED).toBe(false);
+    expect(c.SPACE_FAST_INTERVAL_MS).toBe(60000);
+    expect(c.SPACE_EVENTS_INTERVAL_MS).toBe(120000);
+    expect(c.SPACE_SLOW_INTERVAL_MS).toBe(300000);
+    expect(c.SPACE_PRUNE_INTERVAL_MS).toBe(600000);
+    expect(() => loadConfig({ ...valid, SPACE_FAST_INTERVAL_MS: "1000" })).toThrow(ConfigError);
   });
 });

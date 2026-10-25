@@ -11,7 +11,12 @@ describe("PageSwitch", () => {
   it("marks the current page and emits picks", async () => {
     const w = mount(PageSwitch, { props: { page: "volcanoes" } });
     const buttons = w.findAll("button");
-    expect(buttons.map((b) => b.text())).toEqual(["Active Earth", "Earthquakes", "Volcanoes"]);
+    expect(buttons.map((b) => b.text())).toEqual([
+      "Active Earth",
+      "Earthquakes",
+      "Volcanoes",
+      "Space",
+    ]);
     expect(buttons[2]?.attributes("aria-current")).toBe("page");
     expect(buttons[0]?.attributes("aria-current")).toBeUndefined();
     await buttons[1]?.trigger("click");

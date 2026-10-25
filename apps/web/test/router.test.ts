@@ -34,5 +34,11 @@ describe("createAppRouter", () => {
     expect(hasVolcanoes("earthquakes")).toBe(false);
     expect(hasVolcanoes("volcanoes")).toBe(true);
     expect(hasVolcanoes("active")).toBe(true);
+    expect(hasVolcanoes("space")).toBe(false);
+    await router.push("/space");
+    expect(router.currentRoute.value.meta.page).toBe("space");
+    expect(pageOf("space")).toBe("space");
+    expect(pagePath("space", "wc")).toBe("/space");
+    expect(pagePath("space", "global")).toBe("/space");
   });
 });

@@ -5,6 +5,7 @@ import type {
   StoredVolcanoReport,
   StoredVolcanoStatus,
 } from "./index.js";
+import type { SpaceAlert, SpaceFlare, SpaceScales, SpaceSeries } from "./space.js";
 
 /** The wire form of a domain object: Date becomes an ISO 8601 UTC string. */
 export type Json<T> = {
@@ -219,4 +220,37 @@ export interface ApiRelief {
   stepKm: number;
   /** Elevation at each sample, metres above sea level (negative below). */
   metres: number[];
+}
+
+/** The newest value of one space weather series and where it came from. */
+export interface ApiSpaceReading {
+  time: string;
+  value: number;
+  source: string;
+}
+export type ApiSpaceFlare = Json<SpaceFlare>;
+export type ApiSpaceAlert = Json<SpaceAlert>;
+export type ApiSpaceScales = Json<SpaceScales>;
+
+/** `GET /api/space/now`: the latest reading per series, the scales rows around today and the newest events. */
+export interface ApiSpaceNow {
+  generatedAt: string;
+  latest: Record<SpaceSeries, ApiSpaceReading | null>;
+  /** Yesterday and today observed, then the three predicted days, by day. */
+  scales: ApiSpaceScales[];
+  latestFlare: ApiSpaceFlare | null;
+  latestAlert: ApiSpaceAlert | null;
+}
+
+/** `GET /api/space/window?from=&to=`: samples thinned to one shared bucket, with the events inside. */
+export interface ApiSpaceWindow {
+  from: string;
+  to: string;
+  /** Seconds per bucket when thinned; null when the rows came back raw. */
+  bucketSeconds: number | null;
+  /** Per series, `[epoch ms, value]` ascending. */
+  samples: Record<SpaceSeries, [number, number][]>;
+  flares: ApiSpaceFlare[];
+  alerts: ApiSpaceAlert[];
+  scales: ApiSpaceScales[];
 }

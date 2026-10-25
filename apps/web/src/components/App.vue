@@ -8,6 +8,8 @@ import MarksOverlay from "./MarksOverlay.vue";
 import PageSwitch from "./PageSwitch.vue";
 import RegionTabs from "./RegionTabs.vue";
 import SettingsMenu from "./SettingsMenu.vue";
+import SpacePage from "./SpacePage.vue";
+import SpaceStatus from "./SpaceStatus.vue";
 import StatusLine from "./StatusLine.vue";
 import VolcanoDetail from "./VolcanoDetail.vue";
 import VolcanoesPage from "./VolcanoesPage.vue";
@@ -36,8 +38,10 @@ import {
   SELECT_VOLCANO,
   SET_FILTER,
   SET_SECTION,
+  SET_SPACE_RANGE,
   SET_VOLCANO_FILTER,
   SETTINGS,
+  SPACE,
   STATUS,
   THEME,
   VOLCANOES,
@@ -50,6 +54,12 @@ import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
 import { parseSection, sectionQuery, type Section } from "../lib/section.js";
 import { createSettings } from "../lib/settings.js";
+import {
+  createSpaceStore,
+  parseSpaceRange,
+  spaceRangeQuery,
+  type SpaceRange,
+} from "../lib/space.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
 import {
@@ -69,6 +79,7 @@ const notice = createNotice();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
+const space = createSpaceStore(api, now);
 const status = createStatusPoll(api, now, () => {
   void catalog.refetch();
   if (hasVolcanoes(page.value)) void volcanoes.refreshLive();
@@ -83,6 +94,7 @@ provide(NOTICE, notice);
 provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);
+provide(SPACE, space);
 provide(SELECT, select);
 provide(SET_FILTER, setFilter);
 provide(SELECT_VOLCANO, selectVolcano);
@@ -165,6 +177,9 @@ const routeRange = computed(() =>
   rangeInstants(resolveDates(routeFilter.value, clock.now.value, zone.value), zone.value),
 );
 const routeVolcanoFilter = computed(() => parseVolcanoFilter(route.query));
+const routeSpaceRange = computed(() => parseSpaceRange(route.query));
+/** The range as its route keys, so a watch fires only when the range itself changes. */
+const routeSpaceKey = computed(() => JSON.stringify(spaceRangeQuery(routeSpaceRange.value)));
 
 async function applyRegion(id: string): Promise<void> {
   const ok = await catalog.setRegion(id);
@@ -183,6 +198,11 @@ async function boot(): Promise<void> {
   volcanoes.select(routeVolcano.value);
   if (hasVolcanoes(page.value)) await volcanoes.load();
 }
+/** The space store runs only while its page is open; it reads nothing the other pages need. */
+function syncSpace(p: Page): void {
+  if (p === "space") space.start();
+  else space.stop();
+}
 /** Query keys that belong to one page's selection; dropped when moving between pages or regions. */
 const SELECTION_KEYS = ["event", "volcano"];
 const withoutSelection = () =>
@@ -200,6 +220,10 @@ function setFilter(f: EventFilter): void {
 function setVolcanoFilter(f: VolcanoFilter): void {
   void router.replace({ query: { ...route.query, ...volcanoFilterQuery(f) } });
 }
+function setSpaceRange(r: SpaceRange): void {
+  void router.replace({ query: { ...route.query, ...spaceRangeQuery(r) } });
+}
+provide(SET_SPACE_RANGE, setSpaceRange);
 const routeSection = computed(() => parseSection(route.query.section));
 provide(SECTION, routeSection);
 function setSection(s: Section | null): void {
@@ -260,6 +284,10 @@ watch(routeRange, (r) => {
 });
 watch(page, (p) => {
   if (hasVolcanoes(p)) void volcanoes.load();
+  syncSpace(p);
+});
+watch(routeSpaceKey, () => {
+  space.setRange(routeSpaceRange.value);
 });
 watch(theme.resolved, () => {
   clearBeachballCache();
@@ -267,11 +295,14 @@ watch(theme.resolved, () => {
 onMounted(() => {
   clock.start();
   status.start();
+  space.setRange(routeSpaceRange.value);
+  syncSpace(page.value);
   void boot();
 });
 onUnmounted(() => {
   clock.stop();
   status.stop();
+  space.stop();
 });
 </script>
 
@@ -280,7 +311,7 @@ onUnmounted(() => {
     <div class="topbar">
       <header>
         <div class="hdr-left">
-          <h1>Tectonic Desk<small>Earthquakes · volcanoes · plate boundaries</small></h1>
+          <h1>Tectonic Desk<small>Earthquakes · volcanoes · space weather</small></h1>
         </div>
         <nav class="tools" aria-label="Controls">
           <div class="grp">
@@ -300,12 +331,13 @@ onUnmounted(() => {
             </nav>
           </div>
           <div class="grp">
-            <RegionTabs @pick="pickRegion" />
+            <RegionTabs v-if="page !== 'space'" @pick="pickRegion" />
             <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
           </div>
         </nav>
       </header>
-      <StatusLine />
+      <SpaceStatus v-if="page === 'space'" />
+      <StatusLine v-else />
     </div>
     <div v-if="error !== null" class="banner error" role="alert">
       <span>{{ error }}</span>
@@ -315,7 +347,8 @@ onUnmounted(() => {
       Showing the newest {{ EVENT_LIMIT }} events; the window holds more. Narrow the window or raise
       the limit.
     </div>
-    <template v-if="region !== null">
+    <SpacePage v-if="page === 'space'" />
+    <template v-else-if="region !== null">
       <EarthquakesPage v-if="page === 'earthquakes'" />
       <VolcanoesPage v-else-if="page === 'volcanoes'" />
       <ActiveEarthPage v-else />
@@ -382,6 +415,22 @@ onUnmounted(() => {
         <a href="https://doi.org/10.1029/2019EA000658" rel="noopener" target="_blank"
           >doi:10.1029/2019EA000658</a
         >), the 3-arc-minute tiles from the same server.
+      </p>
+      <p>
+        <b>Space weather.</b> Solar wind, planetary K index, NOAA scales, GOES X-ray and proton
+        fluxes, flares and alerts from NOAA's
+        <a href="https://www.spaceweather.gov/" rel="noopener" target="_blank"
+          >Space Weather Prediction Center</a
+        >
+        (public domain), read from its data server every five minutes and kept in this site's own
+        store, so the series reach back further than the hours and days SWPC itself retains. Kp here
+        is SWPC's estimate from eight stations and revises until each three-hour window closes; the
+        definitive index is published later by GFZ Potsdam. Dst is the provisional hourly index of
+        the
+        <a href="https://wdc.kugi.kyoto-u.ac.jp/" rel="noopener" target="_blank"
+          >World Data Center for Geomagnetism, Kyoto</a
+        >, relayed by SWPC. The solar wind comes from whichever spacecraft at L1 SWPC marks active
+        (SOLAR-1, ACE or IMAP), named on the page.
       </p>
       <p class="byline">
         Built for Barbara by

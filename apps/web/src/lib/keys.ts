@@ -8,6 +8,7 @@ import type { Mark, MarksStore } from "./marks.js";
 import type { NoticeStore } from "./notice.js";
 import type { Section } from "./section.js";
 import type { SettingsStore } from "./settings.js";
+import type { SpaceRange, SpaceStore } from "./space.js";
 import type { StatusPoll } from "./status.js";
 import type { Theme } from "./theme.js";
 import type { VolcanoFilter, VolcanoStore } from "./volcanoes.js";
@@ -30,6 +31,10 @@ export const NOTICE: InjectionKey<NoticeStore> = Symbol("notice");
 export const SECTION: InjectionKey<Readonly<Ref<Section | null>>> = Symbol("section");
 /** Writes or clears the section in the route. */
 export const SET_SECTION: InjectionKey<(s: Section | null) => void> = Symbol("setSection");
+/** The Space page's readings and window. */
+export const SPACE: InjectionKey<SpaceStore> = Symbol("space");
+/** Replace the space weather range (written to the URL by App). */
+export const SET_SPACE_RANGE: InjectionKey<(r: SpaceRange) => void> = Symbol("setSpaceRange");
 /** Select a GVP volcano number (opens the volcano panel) or null (closes it). */
 export const SELECT_VOLCANO: InjectionKey<(number: number | null) => void> =
   Symbol("selectVolcano");

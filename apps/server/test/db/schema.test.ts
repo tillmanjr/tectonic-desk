@@ -1,6 +1,14 @@
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { catalogWindows, events, ingestRuns, mechanisms } from "../../src/db/schema.js";
+import {
+  catalogWindows,
+  events,
+  ingestRuns,
+  mechanisms,
+  spaceAlerts,
+  spaceSamples,
+  spaceScales,
+} from "../../src/db/schema.js";
 
 describe("schema", () => {
   it("mechanisms.event_id references events.id with cascade delete", () => {
@@ -34,5 +42,16 @@ describe("schema", () => {
     expect(uq?.nullsNotDistinct).toBe(true);
     expect(cfg.foreignKeys[0]?.reference().foreignTable).toBe(ingestRuns);
     expect(cfg.indexes.map((i) => i.config.name)).toContain("catalog_windows_from_idx");
+  });
+
+  it("space tables key samples by series, time and source, alerts by product and issue, scales by day and kind", () => {
+    const pk = (t: typeof spaceSamples | typeof spaceAlerts | typeof spaceScales) =>
+      getTableConfig(t).primaryKeys[0]?.columns.map((c) => c.name);
+    expect(pk(spaceSamples)).toEqual(["series", "time", "source"]);
+    expect(pk(spaceAlerts)).toEqual(["product_id", "issue_time"]);
+    expect(pk(spaceScales)).toEqual(["day", "kind"]);
+    expect(getTableConfig(spaceSamples).indexes.map((i) => i.config.name)).toEqual([
+      "space_samples_series_time_idx",
+    ]);
   });
 });

@@ -10,6 +10,8 @@ import type {
   ApiVolcanoDetail,
   ApiVolcanoReportList,
   ApiRelief,
+  ApiSpaceNow,
+  ApiSpaceWindow,
   ApiVolcanoStatusList,
   FieldsFile,
 } from "@tectonic/shared";
@@ -47,6 +49,10 @@ export interface ApiClient {
   fields: () => Promise<FieldsFile>;
   /** Elevations along a section line (`lon1,lat1,lon2,lat2`), `n` samples. */
   relief: (section: string, n: number) => Promise<ApiRelief>;
+  /** The latest space weather readings, scales and events. */
+  spaceNow: () => Promise<ApiSpaceNow>;
+  /** Space weather series and events between two ISO instants. */
+  spaceWindow: (from: string, to: string) => Promise<ApiSpaceWindow>;
 }
 
 export class ApiRequestError extends Error {
@@ -106,5 +112,8 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     volcano: (number) => get(`/volcanoes/${String(number)}`),
     fields: () => getUrl("/fields/fields.json"),
     relief: (section, n) => get(`/relief?section=${encodeURIComponent(section)}&n=${String(n)}`),
+    spaceNow: () => get("/space/now"),
+    spaceWindow: (from, to) =>
+      get(`/space/window?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
   };
 }
