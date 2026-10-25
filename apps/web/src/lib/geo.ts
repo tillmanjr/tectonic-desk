@@ -277,3 +277,12 @@ export function invertPoint(
   }
   return [ll[0], ll[1]];
 }
+
+/** A projected point, or NaNs when the projection has no answer, so callers can filter rather than branch. */
+export function projectPoint(
+  projection: GeoProjection,
+  lonLat: [number, number],
+): [number, number] {
+  const p = projection(lonLat);
+  return p === null ? [NaN, NaN] : [p[0], p[1]];
+}

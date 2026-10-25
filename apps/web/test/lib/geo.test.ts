@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   frameFor,
   invertPoint,
+  projectPoint,
   graticuleFor,
   loadWorld,
   pathOf,
@@ -156,15 +157,45 @@ describe("basemaps", () => {
     const back = invertPoint(frame.projection, centre);
     expect(back?.[0]).toBeCloseTo(-150, 5);
     expect(back?.[1]).toBeCloseTo(0, 5);
-    const noInvert: GeoProjection = Object.assign(() => null, {
-      invert: undefined,
-    }) as unknown as GeoProjection;
-    expect(invertPoint(noInvert, [1, 1])).toBeNull();
-    const nullInvert = { invert: () => null } as unknown as GeoProjection;
-    expect(invertPoint(nullInvert, [1, 1])).toBeNull();
-    const nanInvert = { invert: () => [NaN, 0] } as unknown as GeoProjection;
-    expect(invertPoint(nanInvert, [1, 1])).toBeNull();
-    const nanLat = { invert: () => [0, NaN] } as unknown as GeoProjection;
-    expect(invertPoint(nanLat, [1, 1])).toBeNull();
+    // Off the globe's outline the inverse still answers; the round trip exposes it.
+    expect(invertPoint(frame.projection, [2, 2])).toBeNull();
+    const stub = (invert: unknown, forward: object = () => null): GeoProjection =>
+      Object.assign(forward, { invert }) as unknown as GeoProjection;
+    expect(invertPoint(stub(undefined), [1, 1])).toBeNull();
+    expect(
+      invertPoint(
+        stub(() => null),
+        [1, 1],
+      ),
+    ).toBeNull();
+    expect(
+      invertPoint(
+        stub(() => [NaN, 0]),
+        [1, 1],
+      ),
+    ).toBeNull();
+    expect(
+      invertPoint(
+        stub(() => [0, NaN]),
+        [1, 1],
+      ),
+    ).toBeNull();
+    expect(
+      invertPoint(
+        stub(() => [0, 0]),
+        [1, 1],
+      ),
+    ).toBeNull();
+    expect(
+      invertPoint(
+        stub(
+          () => [0, 0],
+          () => [1, 1],
+        ),
+        [1, 1],
+      ),
+    ).toEqual([0, 0]);
+    expect(projectPoint(frame.projection, [-150, 0])).toEqual(centre);
+    expect(projectPoint(stub(undefined), [1, 1])).toEqual([NaN, NaN]);
   });
 });

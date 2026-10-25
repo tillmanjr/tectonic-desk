@@ -6,6 +6,7 @@ import FrequencyMagnitudeChart from "./FrequencyMagnitudeChart.vue";
 import MagnitudeTimeChart from "./MagnitudeTimeChart.vue";
 import MajorEvents from "./MajorEvents.vue";
 import QuakeMap from "./QuakeMap.vue";
+import SectionProfile from "./SectionProfile.vue";
 import StatsStrip from "./StatsStrip.vue";
 import { SETTINGS, useInjected } from "../lib/keys.js";
 
@@ -17,6 +18,7 @@ const settings = useInjected(SETTINGS);
   <MajorEvents :rows="settings.current.value.cardRows.alone" />
   <FilterBar />
   <QuakeMap />
+  <SectionProfile />
   <section class="grid2">
     <CatalogTable />
     <div class="charts">

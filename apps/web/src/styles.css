@@ -399,6 +399,84 @@ a:focus-visible,
   font-size: 10.5px;
   color: var(--muted);
 }
+/* Section profile: full width under the map; the title holds the facts and the controls. */
+.sectionpanel {
+  margin-bottom: 14px;
+}
+.sectionpanel h2 .stitle {
+  flex: 1;
+  margin-left: 0;
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 16px;
+}
+.sectionpanel .sctl {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font: 12.5px var(--f-ui);
+  color: var(--muted);
+}
+.sectionpanel .sctl label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sectionpanel .sctl input,
+.sectionpanel .sctl select {
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 12px var(--f-data);
+}
+.sectionpanel .sctl input {
+  width: 64px;
+}
+.sectionpanel .sclear {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--muted);
+  font: 12px var(--f-ui);
+  cursor: pointer;
+}
+.sectionsvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.sectionsvg .surfaceline {
+  stroke: var(--muted);
+  stroke-dasharray: 2 3;
+}
+.sectionsvg .endlabel {
+  fill: var(--accent);
+  font: 600 12px var(--f-ui);
+}
+.sectionsvg .hypo circle {
+  stroke: var(--panel);
+  stroke-width: 0.6;
+  cursor: pointer;
+}
+.sectionsvg .hypo .ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.sectionsvg .volc path {
+  fill: var(--volcano, #ff9f43);
+  cursor: pointer;
+}
+.sectionsvg .volc text {
+  fill: var(--muted);
+  font: 10px var(--f-ui);
+}
 /* Section tool: the armed button, the line and corridor on the map, the end handles. */
 .sectionbtn {
   height: 28px;

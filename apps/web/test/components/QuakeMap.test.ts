@@ -517,11 +517,15 @@ describe("QuakeMap", () => {
       b: [number, number];
     } | null;
     expect(draft?.b[0]).not.toBe(-150);
+    await b.trigger("pointermove", { pointerId: 1, clientX: 2, clientY: 2 });
     await b.trigger("pointerup", { pointerId: 1 });
     expect(ctx.setSection).toHaveBeenCalledTimes(1);
     const moved = ctx.setSection.mock.calls[0]?.[0];
     expect(moved?.a).toEqual([-170, -10]);
     expect(moved?.b[0]).not.toBe(-150);
+    await b.trigger("pointerdown", { pointerId: 2, clientX: 500, clientY: 260 });
+    await b.trigger("pointercancel", { pointerId: 2 });
+    expect(ctx.setSection).toHaveBeenCalledTimes(2);
     w.unmount();
   });
 });

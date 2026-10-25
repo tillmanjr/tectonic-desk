@@ -16,6 +16,7 @@ import {
   useInjected,
 } from "../../src/lib/keys.js";
 import { createMarks } from "../../src/lib/marks.js";
+import type { Section } from "../../src/lib/section.js";
 import { createSettings } from "../../src/lib/settings.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, status } from "../support/api.js";
@@ -441,12 +442,14 @@ describe("App", () => {
   it("parses the section from the route and writes it back through SET_SECTION", async () => {
     stubCanvas();
     const seen: unknown[] = [];
+    const setter: { fn: ((s: Section | null) => void) | null } = { fn: null };
     const Probe = defineComponent({
       setup() {
         const section = useInjected(SECTION);
         const setSection = useInjected(SET_SECTION);
         onMounted(() => {
           seen.push(section.value);
+          setter.fn = setSection;
           setSection({ a: [0, 0], b: [10, 0], halfKm: 80 });
         });
         return () => h("div");
@@ -475,6 +478,9 @@ describe("App", () => {
     await flushPromises();
     expect(seen).toEqual([{ a: [-122.42, 37.77], b: [-118.24, 34.05], halfKm: 50 }]);
     expect(router.currentRoute.value.query.section).toBe("0,0,10,0,80");
+    setter.fn?.(null);
+    await flushPromises();
+    expect(router.currentRoute.value.query.section).toBeUndefined();
     wrapper.unmount();
   });
 });

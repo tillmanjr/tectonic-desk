@@ -2,7 +2,7 @@
 import type { GeoPath } from "d3-geo";
 import { computed } from "vue";
 import { capturePointer } from "../lib/dom.js";
-import { pathOf, type MapFrame } from "../lib/geo.js";
+import { pathOf, projectPoint, type MapFrame } from "../lib/geo.js";
 import { corridorRing, linePoints, type Section } from "../lib/section.js";
 
 /**
@@ -47,25 +47,22 @@ interface Handle {
 }
 const handles = computed<Handle[]>(() => {
   const s = props.section;
-  const ends: { end: "a" | "b"; label: string; at: [number, number] }[] =
-    s === null
-      ? props.pending === null
-        ? []
-        : [{ end: "a", label: "A", at: props.pending }]
-      : [
-          { end: "a", label: "A", at: s.a },
-          { end: "b", label: "A′", at: s.b },
-        ];
-  const out: Handle[] = [];
-  for (const h of ends) {
-    const p = props.frame.projection(h.at);
-    if (p !== null) out.push({ end: h.end, label: h.label, x: p[0], y: p[1] });
+  const ends: { end: "a" | "b"; label: string; at: [number, number] }[] = [];
+  if (s !== null) {
+    ends.push({ end: "a", label: "A", at: s.a }, { end: "b", label: "A′", at: s.b });
+  } else if (props.pending !== null) {
+    ends.push({ end: "a", label: "A", at: props.pending });
   }
-  return out;
+  return ends
+    .map((h) => {
+      const [x, y] = projectPoint(props.frame.projection, h.at);
+      return { end: h.end, label: h.label, x, y };
+    })
+    .filter((h) => Number.isFinite(h.x) && Number.isFinite(h.y));
 });
 
+/** A press on a handle starts a drag; the tool ignores it while only the first point is placed. */
 function down(ev: PointerEvent, end: "a" | "b"): void {
-  if (props.section === null) return;
   capturePointer(ev);
   emit("dragStart", end);
 }
