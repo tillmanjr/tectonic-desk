@@ -12,6 +12,7 @@ import {
   ROWS,
   spanAtLeast,
   spanWithZero,
+  viewX,
   xrayTickLabel,
 } from "../../src/lib/space-chart.js";
 import { flare } from "../support/space.js";
@@ -35,6 +36,9 @@ describe("domains and ticks", () => {
     expect(byId.dst?.domain([-35])).toEqual([-55, 20]);
     expect(byId.mag?.domain([-6.2, 9.8])).toEqual([-9.8, 9.8]);
     expect(ROWS.map((r) => r.id)).toEqual(["kp", "dst", "mag", "wind", "xray", "protons"]);
+    expect(byId.xray?.ticks?.(1e-9, 1e-3)).toEqual([1e-7, 1e-6, 1e-5, 1e-4]);
+    expect(byId.protons?.ticks?.(1e-2, 1600)).toEqual([1, 10, 100, 1000]);
+    expect(ROWS.filter((r) => r.scale === "linear").every((r) => r.ticks === null)).toBe(true);
   });
 
   it("labels decades, with GOES letters on the X-ray axis", () => {
@@ -68,6 +72,27 @@ describe("lines, bars and bands", () => {
     expect(gapMs("kp_1m", 420)).toBe(3 * 420_000);
     expect(gapMs("kp_3h", 420)).toBe(9 * 3_600_000);
     expect(Object.keys(CADENCE_MS)).toHaveLength(11);
+  });
+
+  it("maps a pointer to viewBox units against its element, or null without one", () => {
+    const rect = (left: number, width: number): DOMRect =>
+      ({
+        left,
+        width,
+        top: 0,
+        height: 0,
+        right: left + width,
+        bottom: 0,
+        x: left,
+        y: 0,
+      }) as DOMRect;
+    const el = document.createElement("div");
+    el.getBoundingClientRect = () => rect(100, 450);
+    expect(viewX({ clientX: 325, currentTarget: el }, 900)).toBe(450);
+    expect(viewX({ clientX: 325, currentTarget: null }, 900)).toBeNull();
+    const flat = document.createElement("div");
+    flat.getBoundingClientRect = () => rect(0, 0);
+    expect(viewX({ clientX: 3, currentTarget: flat }, 900)).toBe(2700);
   });
 
   it("finds the nearest point by time", () => {

@@ -74,5 +74,7 @@ describe("space formatting", () => {
     expect(fmtValue(7)).toBe("7");
     expect(fmtValue(7.123)).toBe("7.1");
     expect(fmtValue(7.126, 2)).toBe("7.13");
+    expect(fmtValue(0.1, 2)).toBe("0.1");
+    expect(fmtValue(-6.2)).toBe("-6.2");
   });
 });

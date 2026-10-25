@@ -83,7 +83,7 @@ export function fromInputValue(text: string, zone: Zone): Date | null {
 export const minutesBetween = (a: Date, b: Date): number =>
   Math.round(Math.abs(b.getTime() - a.getTime()) / 60_000);
 
-/** A compact value for a tile: integers as such, else up to `digits` decimals. */
+/** A compact value for a tile: up to `digits` decimals, trailing zeros dropped. */
 export function fmtValue(v: number, digits = 1): string {
-  return Number.isInteger(v) ? String(v) : v.toFixed(digits);
+  return String(Number(v.toFixed(digits)));
 }

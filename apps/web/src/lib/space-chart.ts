@@ -1,4 +1,5 @@
 import type { ApiSpaceFlare, SpaceSeries } from "@tectonic/shared";
+import type { Tick } from "./charts.js";
 import { gLevel } from "./space-format.js";
 
 /** `[epoch ms, value]` pairs, ascending, as the window read returns them. */
@@ -28,7 +29,8 @@ export interface RowSpec {
   scale: "linear" | "log";
   domain: (values: number[]) => [number, number];
   refs: RefLine[];
-  /** Tick labels for a log axis; linear rows use the scale's own. */
+  /** Tick values and labels for a log axis; linear rows use the scale's own. */
+  ticks: ((lo: number, hi: number) => number[]) | null;
   tickLabel: ((value: number) => string) | null;
 }
 
@@ -96,6 +98,7 @@ export const ROWS: RowSpec[] = [
     scale: "linear",
     domain: () => [0, 9],
     refs: [{ value: 5, label: "G1" }],
+    ticks: null,
     tickLabel: null,
   },
   {
@@ -107,6 +110,7 @@ export const ROWS: RowSpec[] = [
     scale: "linear",
     domain: (v) => spanWithZero(v, 20),
     refs: [{ value: 0, label: "" }],
+    ticks: null,
     tickLabel: null,
   },
   {
@@ -118,6 +122,7 @@ export const ROWS: RowSpec[] = [
     scale: "linear",
     domain: (v) => aroundZero(v, 5),
     refs: [{ value: 0, label: "" }],
+    ticks: null,
     tickLabel: null,
   },
   {
@@ -129,6 +134,7 @@ export const ROWS: RowSpec[] = [
     scale: "linear",
     domain: (v) => spanAtLeast(v, 300, 500),
     refs: [],
+    ticks: null,
     tickLabel: null,
   },
   {
@@ -143,6 +149,7 @@ export const ROWS: RowSpec[] = [
       { value: 1e-5, label: "M1 · R1" },
       { value: 1e-4, label: "X1 · R3" },
     ],
+    ticks: () => [1e-7, 1e-6, 1e-5, 1e-4],
     tickLabel: xrayTickLabel,
   },
   {
@@ -158,6 +165,7 @@ export const ROWS: RowSpec[] = [
       { value: 100, label: "S2" },
       { value: 1000, label: "S3" },
     ],
+    ticks: (_lo, hi) => decadeTicks(1, hi),
     tickLabel: fmtDecade,
   },
 ];
@@ -279,4 +287,51 @@ export function kpBars(
       level: gLevel(v),
     };
   });
+}
+
+/**
+ * The viewBox x of a pointer event over an element drawn `width` units wide, or null when the
+ * event has no element to measure against.
+ */
+export function viewX(
+  ev: { clientX: number; currentTarget: EventTarget | null },
+  width: number,
+): number | null {
+  const el = ev.currentTarget;
+  if (!(el instanceof Element)) return null;
+  const rect = el.getBoundingClientRect();
+  return ((ev.clientX - rect.left) / Math.max(rect.width, 1)) * width;
+}
+
+/** One drawn series of a row. */
+export interface RowLine {
+  series: SpaceSeries;
+  d: string;
+}
+
+/** A flare shaded across a row. */
+export interface RowBand {
+  key: string;
+  x: number;
+  w: number;
+  label: string;
+  hl: boolean;
+}
+
+/** Everything `SpaceRow` draws, computed by `SpaceStack` from the window. */
+export interface RowData {
+  id: RowId;
+  label: string;
+  unit: string;
+  rightUnit: string | null;
+  top: number;
+  bottom: number;
+  yTicks: Tick[];
+  yRight: Tick[];
+  refs: { y: number; label: string }[];
+  lines: RowLine[];
+  bars: KpBar[];
+  bands: RowBand[];
+  /** Every series the row shows, for the pointer readout. */
+  read: SpaceSeries[];
 }

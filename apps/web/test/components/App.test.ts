@@ -381,13 +381,51 @@ describe("App", () => {
         .find(".tools nav.pages")
         .findAll("button")
         .map((b) => b.text()),
-    ).toEqual(["Active Earth", "Earthquakes", "Volcanoes"]);
+    ).toEqual(["Active Earth", "Earthquakes", "Volcanoes", "Space"]);
     expect(wrapper.find(".pages button[aria-current=page]").text()).toBe("Active Earth");
     expect(wrapper.find(".topbar header").exists()).toBe(true);
     expect(wrapper.find(".topbar .status").exists()).toBe(true);
     await router.push("/wc?event=us1&tz=local");
     await flushPromises();
     expect(router.currentRoute.value.fullPath).toBe("/earthquakes/wc?event=us1&tz=local");
+    wrapper.unmount();
+  });
+
+  it("serves the Space page without region tabs, polls its store, and writes the range to the route", async () => {
+    stubCanvas();
+    const { wrapper, router, api } = await mountApp("/space?window=7d");
+    expect(wrapper.find(".pages button[aria-current=page]").text()).toBe("Space");
+    expect(wrapper.find("[role=tablist]").exists()).toBe(false);
+    expect(wrapper.find(".topbar .status").text()).toContain("NOAA SWPC");
+    expect(wrapper.findAll(".stats.space .stat")).toHaveLength(6);
+    expect(wrapper.find(".sectionlabel").exists()).toBe(false);
+    expect(api.spaceWindow).toHaveBeenLastCalledWith(
+      "2026-10-06T12:00:00.000Z",
+      "2026-10-13T12:00:00.000Z",
+    );
+    const select = wrapper.find(".spacebar select");
+    await select.setValue("6h");
+    await flushPromises();
+    expect(router.currentRoute.value.query.window).toBe("6h");
+    expect(api.spaceWindow).toHaveBeenLastCalledWith(
+      "2026-10-13T06:00:00.000Z",
+      "2026-10-13T12:00:00.000Z",
+    );
+    await router.push("/space?from=2026-10-01T00:00Z&to=2026-10-01T06:00Z");
+    await flushPromises();
+    expect(api.spaceWindow).toHaveBeenLastCalledWith(
+      "2026-10-01T00:00:00.000Z",
+      "2026-10-01T06:00:00.000Z",
+    );
+    const calls = vi.mocked(api.spaceWindow).mock.calls.length;
+    await wrapper.findAll(".pages button")[1]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/earthquakes");
+    expect(wrapper.find("[role=tablist]").exists()).toBe(true);
+    await wrapper.findAll(".pages button")[3]?.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/space");
+    expect(vi.mocked(api.spaceWindow).mock.calls.length).toBeGreaterThan(calls);
     wrapper.unmount();
   });
 

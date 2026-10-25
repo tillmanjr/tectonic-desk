@@ -59,9 +59,14 @@ export function spaceRangeQuery(r: SpaceRange): {
   return { window: r.id === DEFAULT_WINDOW ? undefined : r.id, from: undefined, to: undefined };
 }
 
-export function windowMs(id: WindowId): number {
-  return WINDOWS.find((w) => w.id === id)?.ms ?? WINDOWS[1].ms;
-}
+const WINDOW_MS: Record<WindowId, number> = {
+  "6h": WINDOWS[0].ms,
+  "24h": WINDOWS[1].ms,
+  "3d": WINDOWS[2].ms,
+  "7d": WINDOWS[3].ms,
+  "30d": WINDOWS[4].ms,
+};
+export const windowMs = (id: WindowId): number => WINDOW_MS[id];
 
 /** The instants a range covers: a window ends at now. */
 export function rangeBounds(r: SpaceRange, now: Date): { from: Date; to: Date } {
