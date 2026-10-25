@@ -58,6 +58,7 @@ describe("SpaceRefine", () => {
       to: new Date("2026-10-08T00:00:00Z"),
     };
     ctx.space.window.value = spaceWindow({ bucketSeconds: 420 });
+    ctx.space.lastWindow.value = "7d";
     const w = mountWith(SpaceRefine, ctx);
     expect(w.find("select").element.value).toBe("");
     expect(w.findAll("input")[0]?.element.value).toBe("2026-10-01T00:00");
@@ -65,7 +66,7 @@ describe("SpaceRefine", () => {
     const live = w.find("button");
     expect(live.attributes("disabled")).toBeUndefined();
     await live.trigger("click");
-    expect(ctx.setSpaceRange).toHaveBeenLastCalledWith({ kind: "window", id: "24h" });
+    expect(ctx.setSpaceRange).toHaveBeenLastCalledWith({ kind: "window", id: "7d" });
     ctx.zone.value = "local";
     await nextTick();
     expect(w.find(".fto").text()).toBe("from (local)");

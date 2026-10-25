@@ -8,6 +8,7 @@ import {
   rangeBounds,
   routeInstant,
   spaceRangeQuery,
+  windowLabel,
   windowMs,
   WINDOWS,
 } from "../../src/lib/space.js";
@@ -73,6 +74,7 @@ describe("space range", () => {
       to: NOW,
     });
     for (const w of WINDOWS) expect(windowMs(w.id)).toBe(w.ms);
+    for (const w of WINDOWS) expect(windowLabel(w.id)).toBe(w.label);
   });
 });
 
@@ -112,7 +114,9 @@ describe("createSpaceStore", () => {
       "2026-10-13T12:00:00.000Z",
     );
     // not started: a new range is remembered but not fetched
+    expect(store.lastWindow.value).toBe("24h");
     store.setRange({ kind: "window", id: "6h" });
+    expect(store.lastWindow.value).toBe("6h");
     expect(api.spaceWindow).toHaveBeenCalledTimes(1);
     store.start();
     store.start();
@@ -127,6 +131,7 @@ describe("createSpaceStore", () => {
     store.setRange({ kind: "fixed", from, to });
     await Promise.resolve();
     expect(api.spaceWindow).toHaveBeenLastCalledWith(from.toISOString(), to.toISOString());
+    expect(store.lastWindow.value).toBe("6h");
     store.stop();
     store.stop();
   });

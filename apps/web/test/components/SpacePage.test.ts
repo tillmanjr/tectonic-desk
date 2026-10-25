@@ -64,6 +64,7 @@ describe("SpacePage", () => {
     });
     await flares[0]?.trigger("keydown.enter");
     expect(ctx.setSpaceRange).toHaveBeenCalledTimes(2);
+    expect(w.find(".flares .backbtn").exists()).toBe(false);
 
     const alerts = w.findAll(".alertlist li");
     expect(alerts).toHaveLength(2);
@@ -214,7 +215,17 @@ describe("SpaceFlares", () => {
         flare({ beginTime: "2026-10-13T11:00:00.000Z", endTime: null }),
       ],
     });
+    ctx.space.range.value = {
+      kind: "fixed",
+      from: new Date("2026-10-13T08:00:00Z"),
+      to: new Date("2026-10-13T12:00:00Z"),
+    };
+    ctx.space.lastWindow.value = "3d";
     const w = mountWith(SpaceFlares, ctx, { highlight: "2026-10-13T11:00:00.000Z" });
+    const back = w.find(".backbtn");
+    expect(back.text()).toBe("Back to 3 days");
+    await back.trigger("click");
+    expect(ctx.setSpaceRange).toHaveBeenLastCalledWith({ kind: "window", id: "3d" });
     const rows = w.findAll("tbody tr");
     expect(rows.map((r) => r.text())).toEqual([
       "10-13 10:52M1.3in progress",

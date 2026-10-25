@@ -2327,6 +2327,11 @@ table.matrix {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
+.flares .backbtn {
+  margin-left: 6px;
+  font-size: 12.5px;
+  padding: 2px 8px;
+}
 .alertlist {
   list-style: none;
   margin: 0;
