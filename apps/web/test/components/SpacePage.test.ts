@@ -1,5 +1,5 @@
 import { seriesRecord } from "@tectonic/shared";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import SpacePage from "../../src/components/SpacePage.vue";
 import SpaceForecast from "../../src/components/SpaceForecast.vue";
@@ -8,8 +8,16 @@ import SpaceFlares from "../../src/components/SpaceFlares.vue";
 import { fakeApi } from "../support/api.js";
 import { makeContext, mountWith } from "../support/mount.js";
 import { flare, scalesRow, spaceNow, spaceWindow } from "../support/space.js";
+import { stubWorld } from "../support/world.js";
 
 describe("SpacePage", () => {
+  beforeEach(() => {
+    stubWorld();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("renders the tiles, forecast, flares and alerts from the store", async () => {
     const ctx = await makeContext({ space: true });
     const w = mountWith(SpacePage, ctx);
@@ -65,6 +73,9 @@ describe("SpacePage", () => {
     await flares[0]?.trigger("keydown.enter");
     expect(ctx.setSpaceRange).toHaveBeenCalledTimes(2);
     expect(w.find(".flares .backbtn").exists()).toBe(false);
+
+    expect(w.find(".aurora h2").text()).toContain("Aurora oval");
+    expect(w.findAll(".aurora svg.polar")).toHaveLength(2);
 
     const alerts = w.findAll(".alertlist li");
     expect(alerts).toHaveLength(2);

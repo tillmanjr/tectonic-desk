@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import SpaceAlerts from "./SpaceAlerts.vue";
+import SpaceAurora from "./SpaceAurora.vue";
 import SpaceFlares from "./SpaceFlares.vue";
 import SpaceForecast from "./SpaceForecast.vue";
 import SpaceRefine from "./SpaceRefine.vue";
@@ -8,7 +9,7 @@ import SpaceStack from "./SpaceStack.vue";
 import SpaceTiles from "./SpaceTiles.vue";
 import { SPACE, useInjected } from "../lib/keys.js";
 
-/** The Space page: window controls, six tiles, the series stack and the rail of forecast, flares and alerts. */
+/** The Space page: window controls, six tiles, the series stack with its rail, and the aurora pair. */
 const store = useInjected(SPACE);
 /** The flare the rail is pointing at, lit in the X-ray row. */
 const highlight = ref<string | null>(null);
@@ -29,4 +30,5 @@ const highlight = ref<string | null>(null);
       <SpaceAlerts />
     </div>
   </section>
+  <SpaceAurora />
 </template>

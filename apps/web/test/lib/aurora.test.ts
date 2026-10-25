@@ -54,8 +54,10 @@ describe("createAuroraStore", () => {
     const { api, frames } = framedApi(3);
     const store = createAuroraStore(api, { intervalMs: 1e9, doc: doc() });
     expect(store.frame.value).toBeNull();
+    expect(store.bands.value).toEqual([]);
     await store.load();
     expect(store.frames.value).toHaveLength(3);
+    expect(store.bands.value.map((b) => b.level)).toEqual([10, 30, 50, 70, 90]);
     expect(store.frame.value?.observed).toBe(frames[2]?.observed);
     expect(store.frame.value?.grid[cellIndex(0, 0)]).toBe(2);
     expect(store.loading.value).toBe(false);
@@ -192,8 +194,9 @@ describe("createAuroraStore", () => {
     expect(store.frame.value?.observed).toBe(auroraMeta(5).observed);
   });
 
-  it("drops a grid that a newer selection has superseded", async () => {
+  it("drops a grid, or a failure, that a newer selection has superseded", async () => {
     const late: { resolve?: (v: ReturnType<typeof auroraFrame>) => void } = {};
+    const lost: { reject?: (e: Error) => void } = {};
     const api = fakeApi({
       auroraFrame: vi
         .fn()
@@ -204,18 +207,28 @@ describe("createAuroraStore", () => {
               late.resolve = resolve;
             }),
         )
+        .mockImplementationOnce(
+          () =>
+            new Promise((_resolve, reject) => {
+              lost.reject = reject;
+            }),
+        )
         .mockResolvedValueOnce(auroraFrame(20)),
     });
     const store = createAuroraStore(api, { intervalMs: 1e9, doc: doc() });
     await store.load();
     store.select(auroraMeta(15).observed);
     store.select(auroraMeta(20).observed);
+    store.select(auroraMeta(10).observed);
     await vi.waitFor(() => {
-      expect(store.frame.value?.observed).toBe(auroraMeta(20).observed);
+      expect(store.frame.value?.observed).toBe(auroraMeta(10).observed);
     });
     late.resolve?.(auroraFrame(15));
+    lost.reject?.(new Error("lost"));
     await Promise.resolve();
-    expect(store.frame.value?.observed).toBe(auroraMeta(20).observed);
+    await Promise.resolve();
+    expect(store.frame.value?.observed).toBe(auroraMeta(10).observed);
+    expect(store.error.value).toBeNull();
     expect(store.loading.value).toBe(false);
   });
 });

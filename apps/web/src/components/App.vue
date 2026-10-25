@@ -28,6 +28,7 @@ import {
 import type { Zone } from "../lib/format.js";
 import {
   API,
+  AURORA,
   CATALOG,
   CLOCK,
   MARKS,
@@ -49,6 +50,7 @@ import {
   type MarksMode,
   type MarksNav,
 } from "../lib/keys.js";
+import { createAuroraStore } from "../lib/aurora.js";
 import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
@@ -80,6 +82,7 @@ const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
 const space = createSpaceStore(api, now);
+const aurora = createAuroraStore(api);
 const status = createStatusPoll(api, now, () => {
   void catalog.refetch();
   if (hasVolcanoes(page.value)) void volcanoes.refreshLive();
@@ -95,6 +98,7 @@ provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);
 provide(SPACE, space);
+provide(AURORA, aurora);
 provide(SELECT, select);
 provide(SET_FILTER, setFilter);
 provide(SELECT_VOLCANO, selectVolcano);
@@ -198,10 +202,15 @@ async function boot(): Promise<void> {
   volcanoes.select(routeVolcano.value);
   if (hasVolcanoes(page.value)) await volcanoes.load();
 }
-/** The space store runs only while its page is open; it reads nothing the other pages need. */
+/** The space stores run only while their page is open; they read nothing the other pages need. */
 function syncSpace(p: Page): void {
-  if (p === "space") space.start();
-  else space.stop();
+  if (p === "space") {
+    space.start();
+    aurora.start();
+  } else {
+    space.stop();
+    aurora.stop();
+  }
 }
 /** Query keys that belong to one page's selection; dropped when moving between pages or regions. */
 const SELECTION_KEYS = ["event", "volcano"];
@@ -303,6 +312,7 @@ onUnmounted(() => {
   clock.stop();
   status.stop();
   space.stop();
+  aurora.stop();
 });
 </script>
 

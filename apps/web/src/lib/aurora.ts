@@ -1,6 +1,7 @@
 import { AURORA_CELLS, type ApiAuroraFrameMeta } from "@tectonic/shared";
-import { ref, shallowRef, type Ref, type ShallowRef } from "vue";
+import { computed, ref, shallowRef, type ComputedRef, type Ref, type ShallowRef } from "vue";
 import { errorMessage, type ApiClient } from "./api.js";
+import { auroraBands, type AuroraBand } from "./aurora-bands.js";
 import type { DocLike } from "./status.js";
 
 /**
@@ -24,6 +25,8 @@ export interface AuroraStore {
   /** The observation time on show, or null to follow the newest frame. */
   selected: Ref<string | null>;
   frame: ShallowRef<DecodedFrame | null>;
+  /** The frame on show as probability bands; empty without a frame. */
+  bands: ComputedRef<AuroraBand[]>;
   error: Ref<string | null>;
   loading: Ref<boolean>;
   /** Shows a frame by observation time, or follows the newest with null. */
@@ -54,6 +57,7 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
   const frames = shallowRef<ApiAuroraFrameMeta[]>([]);
   const selected = ref<string | null>(null);
   const frame = shallowRef<DecodedFrame | null>(null);
+  const bands = computed(() => (frame.value === null ? [] : auroraBands(frame.value.grid)));
   const error = ref<string | null>(null);
   const loading = ref(false);
   const cache = new Map<string, Uint8Array>();
@@ -144,6 +148,7 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
     frames,
     selected,
     frame,
+    bands,
     error,
     loading,
     select(observed) {

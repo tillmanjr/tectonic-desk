@@ -398,6 +398,8 @@ describe("App", () => {
     expect(wrapper.find("[role=tablist]").exists()).toBe(false);
     expect(wrapper.find(".topbar .status").text()).toContain("NOAA SWPC");
     expect(wrapper.findAll(".stats.space .stat")).toHaveLength(6);
+    expect(api.auroraIndex).toHaveBeenCalled();
+    expect(wrapper.findAll(".aurora svg.polar")).toHaveLength(2);
     expect(wrapper.find(".sectionlabel").exists()).toBe(false);
     expect(api.spaceWindow).toHaveBeenLastCalledWith(
       "2026-10-06T12:00:00.000Z",
