@@ -52,20 +52,27 @@ interface Part {
  * when every part did, which the scheduler then logs.
  */
 async function runParts(ctx: SpaceContext, job: string, parts: Part[]): Promise<SpaceRunResult> {
-  const settled = await Promise.allSettled(parts.map((p) => p.run()));
+  const outcomes = await Promise.all(
+    parts.map(async (p) => {
+      try {
+        return { name: p.name, written: await p.run(), err: null };
+      } catch (err: unknown) {
+        return { name: p.name, written: null, err };
+      }
+    }),
+  );
   const written: Record<string, number> = {};
   const failed: string[] = [];
   const reasons: string[] = [];
-  settled.forEach((s, i) => {
-    const name = parts[i]?.name ?? "";
-    if (s.status === "fulfilled") {
-      written[name] = s.value;
+  for (const o of outcomes) {
+    if (o.written !== null) {
+      written[o.name] = o.written;
     } else {
-      failed.push(name);
-      reasons.push(`${name}: ${errorMessage(s.reason)}`);
-      ctx.log.warn({ job, file: name, err: s.reason }, "space weather file failed");
+      failed.push(o.name);
+      reasons.push(`${o.name}: ${errorMessage(o.err)}`);
+      ctx.log.warn({ job, file: o.name, err: o.err }, "space weather file failed");
     }
-  });
+  }
   if (failed.length === parts.length) throw new Error(reasons.join("; "));
   ctx.log.info({ job, written, failed }, "space weather sync complete");
   return { written, failed };

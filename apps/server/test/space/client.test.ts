@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createSpaceClient,
   SpaceHttpError,
@@ -14,6 +14,18 @@ const jsonResponse = (body: unknown, status = 200): Response =>
   });
 
 describe("createSpaceClient", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("uses the global fetch and the SWPC base by default", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(kp1m));
+    vi.stubGlobal("fetch", fetchFn);
+    const client = createSpaceClient({ userAgent: "test/1" });
+    expect(await client.fetchKp1m()).toHaveLength(6);
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`${SWPC_BASE}/json/planetary_k_index_1m.json`);
+  });
+
   it("fetches each file under the base with the agent and parses it", async () => {
     const fetchFn = vi.fn<typeof fetch>().mockImplementation((input) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;

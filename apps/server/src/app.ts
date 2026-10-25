@@ -11,6 +11,7 @@ import { healthRoutes } from "./routes/health.js";
 import { regionRoutes } from "./routes/regions.js";
 import { reliefRoutes } from "./routes/relief.js";
 import { runRoutes } from "./routes/runs.js";
+import { spaceRoutes } from "./routes/space.js";
 import { statusRoutes } from "./routes/status.js";
 import { volcanoRoutes } from "./routes/volcanoes.js";
 
@@ -85,6 +86,7 @@ export function buildApp({
   void app.register(geoRoutes);
   void app.register(reliefRoutes);
   void app.register(volcanoRoutes);
+  void app.register(spaceRoutes);
   void app.register(catalogRoutes);
   return app;
 }

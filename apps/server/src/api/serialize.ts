@@ -4,13 +4,25 @@ import type {
   ApiEventFilter,
   ApiMechanism,
   ApiRun,
+  ApiSpaceAlert,
+  ApiSpaceFlare,
+  ApiSpaceReading,
+  ApiSpaceScales,
   ApiVolcanoReport,
   ApiVolcanoStatus,
   EventWithMechanisms,
   StoredEvent,
   StoredMechanism,
 } from "@tectonic/shared";
-import type { IngestRunRow, VolcanoReportRow, VolcanoStatusRow } from "../db/schema.js";
+import type {
+  IngestRunRow,
+  SpaceAlertRow,
+  SpaceFlareRow,
+  SpaceSampleRow,
+  SpaceScalesRow,
+  VolcanoReportRow,
+  VolcanoStatusRow,
+} from "../db/schema.js";
 import type { EventsFilter } from "./schemas.js";
 
 export const iso = (d: Date): string => d.toISOString();
@@ -134,5 +146,41 @@ export function toApiRun(r: IngestRunRow): ApiRun {
     mechanismsUpserted: r.mechanismsUpserted,
     error: r.error,
     detail: r.detail,
+  };
+}
+
+export function toApiSpaceReading(r: SpaceSampleRow): ApiSpaceReading {
+  return { time: iso(r.time), value: r.value, source: r.source };
+}
+
+export function toApiSpaceFlare(r: SpaceFlareRow): ApiSpaceFlare {
+  return {
+    beginTime: iso(r.beginTime),
+    maxTime: isoOrNull(r.maxTime),
+    endTime: isoOrNull(r.endTime),
+    beginClass: r.beginClass,
+    maxClass: r.maxClass,
+    endClass: r.endClass,
+    maxXrlong: r.maxXrlong,
+    satellite: r.satellite,
+  };
+}
+
+export function toApiSpaceAlert(r: SpaceAlertRow): ApiSpaceAlert {
+  return { productId: r.productId, issueTime: iso(r.issueTime), message: r.message };
+}
+
+export function toApiSpaceScales(r: SpaceScalesRow): ApiSpaceScales {
+  return {
+    day: iso(r.day),
+    kind: r.kind,
+    issued: iso(r.issued),
+    r: r.r,
+    s: r.s,
+    g: r.g,
+    rMinorProb: r.rMinorProb,
+    rMajorProb: r.rMajorProb,
+    sProb: r.sProb,
+    kpMax: r.kpMax,
   };
 }

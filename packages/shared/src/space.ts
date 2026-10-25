@@ -30,8 +30,32 @@ export const SPACE_SERIES = [
 ] as const;
 export type SpaceSeries = (typeof SPACE_SERIES)[number];
 
-export const isSpaceSeries = (s: string): s is SpaceSeries =>
-  SPACE_SERIES.some((id) => id === s);
+export const isSpaceSeries = (s: string): s is SpaceSeries => SPACE_SERIES.some((id) => id === s);
+
+/** A record with one entry per series, filled by a function of the series id. */
+export function seriesRecord<T>(fill: (s: SpaceSeries) => T): Record<SpaceSeries, T> {
+  return {
+    kp_1m: fill("kp_1m"),
+    kp_3h: fill("kp_3h"),
+    dst: fill("dst"),
+    bz_gsm: fill("bz_gsm"),
+    bt: fill("bt"),
+    speed: fill("speed"),
+    density: fill("density"),
+    xray_long: fill("xray_long"),
+    xray_short: fill("xray_short"),
+    p10: fill("p10"),
+    p100: fill("p100"),
+  };
+}
+
+/** Maps every entry of a series record. */
+export function mapSeries<A, B>(
+  rec: Record<SpaceSeries, A>,
+  f: (value: A, series: SpaceSeries) => B,
+): Record<SpaceSeries, B> {
+  return seriesRecord((s) => f(rec[s], s));
+}
 
 /** One measurement of one series from one instrument or agency. */
 export interface SpaceSample {

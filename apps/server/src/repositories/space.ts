@@ -1,9 +1,10 @@
-import type {
-  SpaceAlert,
-  SpaceFlare,
-  SpaceSample,
-  SpaceScales,
-  SpaceSeries,
+import {
+  seriesRecord,
+  type SpaceAlert,
+  type SpaceFlare,
+  type SpaceSample,
+  type SpaceScales,
+  type SpaceSeries,
 } from "@tectonic/shared";
 import { and, asc, desc, gte, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
@@ -24,20 +25,6 @@ const CHUNK = 1000;
 export type Readings = Record<SpaceSeries, SpaceSampleRow | null>;
 /** Per series, `[epoch ms, value]` ascending. */
 export type SeriesPoints = Record<SpaceSeries, [number, number][]>;
-
-const emptyRecord = <T>(fill: () => T): Record<SpaceSeries, T> => ({
-  kp_1m: fill(),
-  kp_3h: fill(),
-  dst: fill(),
-  bz_gsm: fill(),
-  bt: fill(),
-  speed: fill(),
-  density: fill(),
-  xray_long: fill(),
-  xray_short: fill(),
-  p10: fill(),
-  p100: fill(),
-});
 
 /**
  * Writes samples, replacing the value of an existing (series, time, source) row, so SWPC's
@@ -130,7 +117,7 @@ export async function latestReadings(db: Db): Promise<Readings> {
     .selectDistinctOn([spaceSamples.series])
     .from(spaceSamples)
     .orderBy(spaceSamples.series, desc(spaceSamples.time), spaceSamples.source);
-  const out = emptyRecord<SpaceSampleRow | null>(() => null);
+  const out = seriesRecord<SpaceSampleRow | null>(() => null);
   for (const row of rows) out[row.series] = row;
   return out;
 }
@@ -146,7 +133,7 @@ export async function samplesBetween(
   to: Date,
   bucketSeconds: number | null,
 ): Promise<SeriesPoints> {
-  const out = emptyRecord<[number, number][]>(() => []);
+  const out = seriesRecord<[number, number][]>(() => []);
   const within = and(gte(spaceSamples.time, from), lte(spaceSamples.time, to));
   if (bucketSeconds === null) {
     const rows = await db
