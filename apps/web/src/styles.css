@@ -173,11 +173,14 @@ body {
   gap: 12px;
 }
 header {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px 20px;
+  /* room for the Settings pill, pinned to the top right outside the flow */
+  padding-right: 42px;
 }
 /* Every header control is a 34 px pill: the page switch, Marks, the region switch and Settings. */
 .tools {
@@ -1508,8 +1511,11 @@ a {
   min-width: 7.2em;
   text-align: center;
 }
+/* Settings stays at the top right of the header at every width, level with the title, instead of wrapping with the tools. */
 .settings {
-  position: relative;
+  position: absolute;
+  top: 8px;
+  right: 0;
 }
 .settings-btn {
   display: inline-flex;
