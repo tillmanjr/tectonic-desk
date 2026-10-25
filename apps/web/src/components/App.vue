@@ -416,6 +416,22 @@ onUnmounted(() => {
           >doi:10.1029/2019EA000658</a
         >), the 3-arc-minute tiles from the same server.
       </p>
+      <p>
+        <b>Space weather.</b> Solar wind, planetary K index, NOAA scales, GOES X-ray and proton
+        fluxes, flares and alerts from NOAA's
+        <a href="https://www.spaceweather.gov/" rel="noopener" target="_blank"
+          >Space Weather Prediction Center</a
+        >
+        (public domain), read from its data server every five minutes and kept in this site's own
+        store, so the series reach back further than the hours and days SWPC itself retains. Kp here
+        is SWPC's estimate from eight stations and revises until each three-hour window closes; the
+        definitive index is published later by GFZ Potsdam. Dst is the provisional hourly index of
+        the
+        <a href="https://wdc.kugi.kyoto-u.ac.jp/" rel="noopener" target="_blank"
+          >World Data Center for Geomagnetism, Kyoto</a
+        >, relayed by SWPC. The solar wind comes from whichever spacecraft at L1 SWPC marks active
+        (SOLAR-1, ACE or IMAP), named on the page.
+      </p>
       <p class="byline">
         Built for Barbara by
         <a href="https://github.com/tillmanjr" rel="author noopener" target="_blank">Tillman</a>

@@ -55,6 +55,15 @@ Volcano status (USGS HANS and GeoNet) is polled every `VOLCANO_STATUS_INTERVAL_M
 15 min) and the GVP weekly report every `VOLCANO_REPORTS_INTERVAL_MS` (default 6 h), under the
 same `INGEST_ENABLED` flag.
 
+Space weather is polled from NOAA SWPC under the same flag: the 1-minute Kp estimate, the solar
+wind (the spacecraft SWPC marks active) and the GOES X-ray and proton fluxes every
+`SPACE_FAST_INTERVAL_MS` (default 5 min), flares, alerts and the NOAA scales every
+`SPACE_EVENTS_INTERVAL_MS` (5 min), the 3-hour Kp and Kyoto Dst every `SPACE_SLOW_INTERVAL_MS`
+(1 h). SWPC keeps six hours to seven days of each file; the store keeps everything, thinning
+1-minute rows older than 30 days to 5-minute means every `SPACE_PRUNE_INTERVAL_MS` (6 h).
+`SPACE_ENABLED=false` leaves these jobs out. The files are small on the wire (SWPC gzips them;
+the solar wind costs about 100 MB a day) and the jobs never write `ingest_runs`.
+
 The API rate-limits each client address to `RATE_LIMIT_MAX` requests per `RATE_LIMIT_WINDOW_MS`
 (default 120 a minute; 0 turns it off) and answers `429 { error }` with `Retry-After` and
 `X-RateLimit-*` headers. Behind nginx set `TRUST_PROXY=true` so the limit applies to the forwarded
@@ -67,19 +76,21 @@ All routes return JSON. Bad input is 400 `{ error, issues: [{ path, message }] }
 id or path is 404 `{ error }`, anything else is 500 `{ error }`. Successful responses carry a
 short `Cache-Control`.
 
-| Route                       | Returns                                                                                                                      |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api/health`           | `{ status, db }`, 503 when the database does not answer                                                                      |
-| `GET /api/regions`          | the view presets: id, name, subtitle, minMag, days, bbox                                                                     |
-| `GET /api/events`           | `{ events, count, truncated, query }`; each event carries its preferred mechanism per kind                                   |
-| `GET /api/events/:id`       | the event with every mechanism product and the raw USGS properties as `usgs`                                                 |
-| `GET /api/status`           | catalog totals, latest ingest run per kind, last successful feed time                                                        |
-| `GET /api/runs`             | ingest run history, `?kind=feed_day\|feed_week\|backfill\|details&limit=N`                                                   |
-| `GET /api/events/count`     | `{ count, query }` under the list filters                                                                                    |
-| `GET /api/events/summary`   | `{ by, bins, query }`: per day, month or year (`by=`, default by span) with the largest magnitude and magnitude-class counts |
-| `GET /api/events/grid`      | `{ cell, cells, query }`: counts per `cell`-degree square (0.25, 0.5, 1, 2 or 5)                                             |
-| `GET /api/catalog/coverage` | `{ spans }`: contiguous frozen backfill windows per magnitude floor and bbox                                                 |
-| `GET /api/geo/:name`        | `plates`, `wc-land`, `wc-states` from `apps/server/data/geo`, with an ETag                                                   |
+| Route                       | Returns                                                                                                                                                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/health`           | `{ status, db }`, 503 when the database does not answer                                                                                                                                                                                     |
+| `GET /api/regions`          | the view presets: id, name, subtitle, minMag, days, bbox                                                                                                                                                                                    |
+| `GET /api/events`           | `{ events, count, truncated, query }`; each event carries its preferred mechanism per kind                                                                                                                                                  |
+| `GET /api/events/:id`       | the event with every mechanism product and the raw USGS properties as `usgs`                                                                                                                                                                |
+| `GET /api/status`           | catalog totals, latest ingest run per kind, last successful feed time                                                                                                                                                                       |
+| `GET /api/runs`             | ingest run history, `?kind=feed_day\|feed_week\|backfill\|details&limit=N`                                                                                                                                                                  |
+| `GET /api/events/count`     | `{ count, query }` under the list filters                                                                                                                                                                                                   |
+| `GET /api/events/summary`   | `{ by, bins, query }`: per day, month or year (`by=`, default by span) with the largest magnitude and magnitude-class counts                                                                                                                |
+| `GET /api/events/grid`      | `{ cell, cells, query }`: counts per `cell`-degree square (0.25, 0.5, 1, 2 or 5)                                                                                                                                                            |
+| `GET /api/catalog/coverage` | `{ spans }`: contiguous frozen backfill windows per magnitude floor and bbox                                                                                                                                                                |
+| `GET /api/geo/:name`        | `plates`, `wc-land`, `wc-states` from `apps/server/data/geo`, with an ETag                                                                                                                                                                  |
+| `GET /api/space/now`        | the latest reading per space weather series with its source, the NOAA scales from yesterday to D+3, the newest flare and alert                                                                                                              |
+| `GET /api/space/window`     | `?from=&to=` (ISO instants, `to` defaults to now, 93 days at most): `samples` per series as `[ms, value]` pairs, raw up to 25 hours and otherwise thinned to one shared bucket (`bucketSeconds`), with the flares, alerts and scales inside |
 
 `GET /api/events` filters: `since` and `until` (ISO 8601 date-time or `YYYY-MM-DD`; `since`
 defaults to seven days ago), `minMag`, `bbox=minLon,minLat,maxLon,maxLat` (minLon > maxLon
@@ -149,6 +160,17 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   from GMT's 3′ tiles (`pnpm --filter @tectonic/server geo:relief`, about 30 MB fetched, a 52 MB
   raw file, gitignored); without the file the profile has no relief. The corridor half-width and
   the line live in the URL (`?section=lon1,lat1,lon2,lat2,halfKm`), so a mark keeps them.
+- **Space weather.** The `Space` page (`/space`, no region) reads the store above: six tiles (Kp
+  with the 3-hour value, the NOAA G, R and S scales with tomorrow in words, Bz and Bt, speed and
+  density, the GOES X-ray class, protons at and above 10 MeV) over sparklines of the window; then
+  every series on one time axis (Kp bars coloured by G level under the 1-minute estimate, Dst,
+  Bz and Bt, speed and density, X-ray on a log axis with class letters and flares shaded,
+  protons with the S thresholds), SWPC alerts as ticks along the top and a pointer readout of
+  every row at one instant. The rail carries the three-day forecast (R and S as probabilities,
+  G as a level, Kp maximum), the flares (hover lights the band, click frames the flare) and the
+  alerts (click for the full message). The window (`?window=6h|24h|3d|7d|30d`, default 24 h)
+  or a fixed range (`?from=&to=`) is in the URL; a window refreshes every minute, a range is
+  read once.
 - **Field overlays.** `Field` in the map toolbar draws a gravity or magnetic anomaly raster under
   the line work, on every map page, off by default. Gravity is the Scripps free-air anomaly on
   the global view (EGM2008 over land, clipped at ±120 mGal) and the USGS DDS-9 isostatic residual
@@ -360,15 +382,17 @@ trusts Cloudflare's ranges, nginx takes the client from `X-Forwarded-For`, and t
 Every dataset the desk shows is also credited in the site footer. Please keep both lists in
 step when a source is added.
 
-| Layer                           | Source                                                                                                                               | Terms / citation                                                                   |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| Earthquakes, mechanisms         | USGS ANSS Comprehensive Catalog (ComCat) and its product feeds; ISC-GEM and Centennial compilations before 1973 as carried by ComCat | US public domain                                                                   |
-| Plate boundaries                | Bird (2003), _An updated digital model of plate boundaries_, G³ 4(3), 1027 (PB2002), via the fraxen/tectonicplates repository        | Cite Bird (2003)                                                                   |
-| Basemap                         | Natural Earth via world-atlas and us-atlas                                                                                           | Public domain                                                                      |
-| Quaternary faults               | USGS Quaternary Fault and Fold Database of the United States                                                                         | US public domain                                                                   |
-| Volcanoes, eruptions            | Smithsonian Institution Global Volcanism Program, Volcanoes of the World database                                                    | Non-commercial use, with thanks; cite GVP                                          |
-| Volcano alert levels            | USGS Volcano Hazards Program (HANS), GeoNet; weekly activity from the GVP/USGS Weekly Volcanic Activity Report                       | Agency scales shown as published                                                   |
-| Free-air gravity (global)       | Scripps marine gravity v33 (Sandwell et al. 2019, doi:10.1016/j.asr.2019.09.011), EGM2008 over land, via GMT `earth_faa_06m`         | Cite Sandwell et al. (2019) and GMT (Wessel et al. 2019, doi:10.1029/2019GC008515) |
-| Isostatic residual gravity (WC) | USGS Digital Data Series DDS-9 (Kucks 1999; isostatic reduction by Simpson, Jachens and Blakely), `isograv.gxf`                      | US public domain                                                                   |
-| Relief along a section          | SRTM15+ v2.7 (Tozer et al. 2019, doi:10.1029/2019EA000658) via GMT `earth_relief_03m`                                                | Cite Tozer et al. (2019) and GMT                                                   |
-| Magnetic anomaly                | EMAG2v3 (Meyer, Chulliat and Saltus 2017, doi:10.7289/V5H70CVX), 4 km upward-continued, via GMT `earth_mag4km_06m`                   | US government work; cite Meyer et al. (2017) and GMT                               |
+| Layer                           | Source                                                                                                                                                | Terms / citation                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Earthquakes, mechanisms         | USGS ANSS Comprehensive Catalog (ComCat) and its product feeds; ISC-GEM and Centennial compilations before 1973 as carried by ComCat                  | US public domain                                                                   |
+| Plate boundaries                | Bird (2003), _An updated digital model of plate boundaries_, G³ 4(3), 1027 (PB2002), via the fraxen/tectonicplates repository                         | Cite Bird (2003)                                                                   |
+| Basemap                         | Natural Earth via world-atlas and us-atlas                                                                                                            | Public domain                                                                      |
+| Quaternary faults               | USGS Quaternary Fault and Fold Database of the United States                                                                                          | US public domain                                                                   |
+| Volcanoes, eruptions            | Smithsonian Institution Global Volcanism Program, Volcanoes of the World database                                                                     | Non-commercial use, with thanks; cite GVP                                          |
+| Volcano alert levels            | USGS Volcano Hazards Program (HANS), GeoNet; weekly activity from the GVP/USGS Weekly Volcanic Activity Report                                        | Agency scales shown as published                                                   |
+| Free-air gravity (global)       | Scripps marine gravity v33 (Sandwell et al. 2019, doi:10.1016/j.asr.2019.09.011), EGM2008 over land, via GMT `earth_faa_06m`                          | Cite Sandwell et al. (2019) and GMT (Wessel et al. 2019, doi:10.1029/2019GC008515) |
+| Isostatic residual gravity (WC) | USGS Digital Data Series DDS-9 (Kucks 1999; isostatic reduction by Simpson, Jachens and Blakely), `isograv.gxf`                                       | US public domain                                                                   |
+| Relief along a section          | SRTM15+ v2.7 (Tozer et al. 2019, doi:10.1029/2019EA000658) via GMT `earth_relief_03m`                                                                 | Cite Tozer et al. (2019) and GMT                                                   |
+| Magnetic anomaly                | EMAG2v3 (Meyer, Chulliat and Saltus 2017, doi:10.7289/V5H70CVX), 4 km upward-continued, via GMT `earth_mag4km_06m`                                    | US government work; cite Meyer et al. (2017) and GMT                               |
+| Space weather                   | NOAA Space Weather Prediction Center (services.swpc.noaa.gov): Kp, NOAA scales, solar wind (SOLAR-1, ACE, IMAP), GOES X-rays, protons, flares, alerts | US public domain; poll no faster than the files refresh (one minute)               |
+| Dst                             | World Data Center for Geomagnetism, Kyoto (provisional hourly Dst), relayed by SWPC                                                                   | Acknowledge WDC Kyoto                                                              |
