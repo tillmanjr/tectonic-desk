@@ -27,6 +27,10 @@ export const SPACE_SERIES = [
   "p10",
   /** GOES integral proton flux at or above 100 MeV, pfu. */
   "p100",
+  /** OVATION Prime's hemispheric power, GW, stored at the forecast time it applies to: north. */
+  "hp_north",
+  /** The same for the south. */
+  "hp_south",
 ] as const;
 export type SpaceSeries = (typeof SPACE_SERIES)[number];
 
@@ -46,6 +50,8 @@ export function seriesRecord<T>(fill: (s: SpaceSeries) => T): Record<SpaceSeries
     xray_short: fill("xray_short"),
     p10: fill("p10"),
     p100: fill("p100"),
+    hp_north: fill("hp_north"),
+    hp_south: fill("hp_south"),
   };
 }
 

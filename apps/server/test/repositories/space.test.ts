@@ -212,6 +212,12 @@ describe.skipIf(!docker)("space repository and jobs", () => {
     const latest = await latestReadings(t.db);
     expect(latest.xray_long?.source).toBe("GOES-18");
     expect(latest.speed?.value).toBeCloseTo(347.1, 3);
+    expect(latest.hp_north).toMatchObject({
+      time: new Date("2026-10-25T13:30:00Z"),
+      source: "ovation",
+      value: 20,
+    });
+    expect(latest.hp_south?.value).toBe(19);
     expect(log.entries.filter((e) => e.level === "info")).toHaveLength(3);
 
     const partial = {

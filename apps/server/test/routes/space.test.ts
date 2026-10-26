@@ -72,6 +72,11 @@ describe.skipIf(!docker)("space routes", () => {
       value: 7,
       source: "kyoto",
     });
+    expect(body.latest.hp_north).toEqual({
+      time: "2026-10-25T13:30:00.000Z",
+      value: 20,
+      source: "ovation",
+    });
     expect(body.scales.map((s) => [s.day.slice(0, 10), s.kind])).toEqual([
       ["2026-10-24", "observed"],
       ["2026-10-25", "observed"],
