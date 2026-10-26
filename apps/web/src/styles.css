@@ -2550,10 +2550,12 @@ table.matrix {
   stroke: var(--line);
   stroke-width: 0.5;
 }
-.polar .night {
+.polar .night,
+.aurora .night {
   fill: var(--au-night);
 }
-.polar .band {
+.polar .band,
+.aurora .band {
   fill-opacity: 0.82;
   stroke: none;
 }
