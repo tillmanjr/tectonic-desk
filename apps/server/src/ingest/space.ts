@@ -1,7 +1,10 @@
+import { AURORA_RETENTION_HOURS } from "@tectonic/shared";
 import type { Db } from "../db/client.js";
 import {
   downsampleBefore,
   insertAlerts,
+  insertAuroraFrame,
+  pruneAurora,
   upsertFlares,
   upsertSamples,
   upsertScales,
@@ -11,15 +14,19 @@ import type { SpaceClient } from "../space/client.js";
 import {
   kpMaxByDay,
   parseAlerts,
+  parseAuroraFrame,
   parseDst,
   parseFlares,
   parseKp1m,
+  parseHemiPower,
   parseKp3h,
   parseMag,
   parseProtons,
   parseScales,
   parseWind,
   parseXrays,
+  withPower,
+  type HemiPowerRow,
 } from "../space/parse.js";
 import type { IngestLogger } from "./context.js";
 import { errorMessage } from "./feed.js";
@@ -40,6 +47,7 @@ export interface SpaceRunResult {
 /** One-minute rows are kept this long before the prune thins them to 5-minute means. */
 export const FINE_RETENTION_DAYS = 30;
 const DAY_MS = 86_400_000;
+const HOUR_MS = 3_600_000;
 
 interface Part {
   name: string;
@@ -78,10 +86,28 @@ async function runParts(ctx: SpaceContext, job: string, parts: Part[]): Promise<
   return { written, failed };
 }
 
-/** Kp 1-minute, solar wind and GOES fluxes: the five-minute job. */
+/**
+ * The newest OVATION frame with its hemispheric power, then the frames past their retention
+ * go. A power file that fails leaves the pair null rather than losing the frame.
+ */
+async function syncAurora(ctx: SpaceContext): Promise<number> {
+  const frame = parseAuroraFrame(await ctx.space.fetchAurora());
+  let power: HemiPowerRow[] = [];
+  try {
+    power = parseHemiPower(await ctx.space.fetchHemiPower());
+  } catch (err: unknown) {
+    ctx.log.warn({ job: "space_fast", file: "hemi_power", err }, "hemispheric power unavailable");
+  }
+  const inserted = await insertAuroraFrame(ctx.db, withPower(frame, power));
+  await pruneAurora(ctx.db, new Date(ctx.now().getTime() - AURORA_RETENTION_HOURS * HOUR_MS));
+  return inserted;
+}
+
+/** Kp 1-minute, solar wind, GOES fluxes and the aurora frame: the five-minute job. */
 export function syncSpaceFast(ctx: SpaceContext): Promise<SpaceRunResult> {
   const { db, space } = ctx;
   return runParts(ctx, "space_fast", [
+    { name: "aurora", run: () => syncAurora(ctx) },
     { name: "kp_1m", run: async () => upsertSamples(db, parseKp1m(await space.fetchKp1m())) },
     { name: "mag", run: async () => upsertSamples(db, parseMag(await space.fetchMag())) },
     { name: "wind", run: async () => upsertSamples(db, parseWind(await space.fetchWind())) },

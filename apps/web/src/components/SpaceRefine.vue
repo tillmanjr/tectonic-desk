@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { CLOCK, SET_SPACE_RANGE, SPACE, useInjected, ZONE } from "../lib/keys.js";
-import {
-  DEFAULT_WINDOW,
-  isWindowId,
-  MAX_RANGE_MS,
-  rangeBounds,
-  WINDOWS,
-  type SpaceRange,
-} from "../lib/space.js";
+import { isWindowId, MAX_RANGE_MS, rangeBounds, WINDOWS, type SpaceRange } from "../lib/space.js";
 import { fromInputValue, toInputValue } from "../lib/space-format.js";
 
 /**
@@ -55,8 +48,9 @@ function changeEnd(which: "from" | "to"): void {
   setRange(next);
 }
 
+/** Back to the window the reader had before fixing the range. */
 function live(): void {
-  setRange({ kind: "window", id: DEFAULT_WINDOW });
+  setRange({ kind: "window", id: store.lastWindow.value });
 }
 </script>
 

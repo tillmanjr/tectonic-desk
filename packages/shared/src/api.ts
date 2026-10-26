@@ -5,7 +5,7 @@ import type {
   StoredVolcanoReport,
   StoredVolcanoStatus,
 } from "./index.js";
-import type { SpaceAlert, SpaceFlare, SpaceScales, SpaceSeries } from "./space.js";
+import type { AuroraFrameMeta, SpaceAlert, SpaceFlare, SpaceScales, SpaceSeries } from "./space.js";
 
 /** The wire form of a domain object: Date becomes an ISO 8601 UTC string. */
 export type Json<T> = {
@@ -253,4 +253,17 @@ export interface ApiSpaceWindow {
   flares: ApiSpaceFlare[];
   alerts: ApiSpaceAlert[];
   scales: ApiSpaceScales[];
+}
+
+export type ApiAuroraFrameMeta = Json<AuroraFrameMeta>;
+
+/** One frame with its grid: the base64 encoding of the `AURORA_CELLS` bytes, longitude-major. */
+export interface ApiAuroraFrame extends ApiAuroraFrameMeta {
+  grid: string;
+}
+
+/** The frames in store, newest last, without their grids. */
+export interface ApiAuroraIndex {
+  generatedAt: string;
+  frames: ApiAuroraFrameMeta[];
 }

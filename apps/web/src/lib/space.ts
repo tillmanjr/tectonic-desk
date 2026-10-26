@@ -68,6 +68,15 @@ const WINDOW_MS: Record<WindowId, number> = {
 };
 export const windowMs = (id: WindowId): number => WINDOW_MS[id];
 
+const WINDOW_LABEL: Record<WindowId, string> = {
+  "6h": WINDOWS[0].label,
+  "24h": WINDOWS[1].label,
+  "3d": WINDOWS[2].label,
+  "7d": WINDOWS[3].label,
+  "30d": WINDOWS[4].label,
+};
+export const windowLabel = (id: WindowId): string => WINDOW_LABEL[id];
+
 /** The instants a range covers: a window ends at now. */
 export function rangeBounds(r: SpaceRange, now: Date): { from: Date; to: Date } {
   if (r.kind === "fixed") return { from: r.from, to: r.to };
@@ -83,6 +92,8 @@ export interface SpaceStore {
   now: ShallowRef<ApiSpaceNow | null>;
   window: ShallowRef<ApiSpaceWindow | null>;
   range: Ref<SpaceRange>;
+  /** The window last in force, which a fixed range (a framed flare) returns to. */
+  lastWindow: Ref<WindowId>;
   error: Ref<string | null>;
   loading: Ref<boolean>;
   /** Replaces the range and reloads when started. */
@@ -103,6 +114,7 @@ export function createSpaceStore(
   const now = shallowRef<ApiSpaceNow | null>(null);
   const window = shallowRef<ApiSpaceWindow | null>(null);
   const range = ref<SpaceRange>({ kind: "window", id: DEFAULT_WINDOW });
+  const lastWindow = ref<WindowId>(DEFAULT_WINDOW);
   const error = ref<string | null>(null);
   const loading = ref(false);
   let started = false;
@@ -157,10 +169,12 @@ export function createSpaceStore(
     now,
     window,
     range,
+    lastWindow,
     error,
     loading,
     setRange(r) {
       range.value = r;
+      if (r.kind === "window") lastWindow.value = r.id;
       if (started) void load();
     },
     load,

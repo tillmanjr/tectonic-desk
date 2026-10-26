@@ -181,6 +181,9 @@ export function bucketFor(from: Date, to: Date): number | null {
   return Math.ceil(span / 1000 / SPACE_POINTS / 60) * 60;
 }
 
+/** `GET /api/space/aurora/:observed`: the frame's observation time as the index printed it. */
+export const auroraParamsSchema = z.strictObject({ observed: isoInstant });
+
 export interface SpaceWindowQuery {
   from: Date;
   to: Date;

@@ -1,15 +1,24 @@
 import { seriesRecord } from "@tectonic/shared";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import SpacePage from "../../src/components/SpacePage.vue";
 import SpaceForecast from "../../src/components/SpaceForecast.vue";
 import SpaceTiles from "../../src/components/SpaceTiles.vue";
+import SpaceAlerts from "../../src/components/SpaceAlerts.vue";
 import SpaceFlares from "../../src/components/SpaceFlares.vue";
 import { fakeApi } from "../support/api.js";
 import { makeContext, mountWith } from "../support/mount.js";
 import { flare, scalesRow, spaceNow, spaceWindow } from "../support/space.js";
+import { stubWorld } from "../support/world.js";
 
 describe("SpacePage", () => {
+  beforeEach(() => {
+    stubWorld();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("renders the tiles, forecast, flares and alerts from the store", async () => {
     const ctx = await makeContext({ space: true });
     const w = mountWith(SpacePage, ctx);
@@ -64,21 +73,36 @@ describe("SpacePage", () => {
     });
     await flares[0]?.trigger("keydown.enter");
     expect(ctx.setSpaceRange).toHaveBeenCalledTimes(2);
+    expect(w.find(".flares .backbtn").exists()).toBe(false);
 
-    const alerts = w.findAll(".alertlist li");
+    expect(w.find(".aurora h2").text()).toContain("Aurora oval");
+    expect(w.findAll(".aurora svg.polar")).toHaveLength(2);
+
+    // alerts are a card row under the tiles, newest on the left
+    expect(w.find(".sectionlabel").text()).toBe("Alerts · SWPC messages");
+    const alerts = w.findAll(".mcard.alert");
     expect(alerts).toHaveLength(2);
-    const head = alerts[0]?.find(".alerthead");
-    expect(head?.text()).toContain("K05W");
-    expect(head?.text()).toContain("10-13 11:02");
-    expect(head?.text()).toContain("WARNING: Geomagnetic K-index of 5 expected");
-    expect(alerts[0]?.find("pre").exists()).toBe(false);
-    await head?.trigger("click");
-    expect(alerts[0]?.find("pre").text()).toContain("Valid From: 2026 Oct 13 1100 UTC");
-    expect(alerts[0]?.find("pre").text()).not.toContain("\r");
-    expect(head?.attributes("aria-expanded")).toBe("true");
-    await head?.trigger("click");
-    expect(alerts[0]?.find("pre").exists()).toBe(false);
+    const first = alerts[0];
+    expect(first?.find(".acode").text()).toBe("K05W");
+    expect(first?.find(".t").text()).toBe("WARNING: Geomagnetic K-index of 5 expected");
+    expect(first?.find(".m").text()).toBe("2026-10-13 11:02 UTC · 58 min ago · warning");
+    expect(first?.attributes("style")).toContain("--sevc: var(--sev-orange)");
+    expect(alerts[1]?.find(".acode").text()).toBe("K04A");
+    expect(first?.find(".amsg").exists()).toBe(false);
+    await first?.trigger("click");
+    expect(first?.find(".amsg").text()).toContain("Valid From: 2026 Oct 13 1100 UTC");
+    expect(first?.find(".amsg").text()).not.toContain("\r");
+    expect(first?.attributes("aria-expanded")).toBe("true");
+    await first?.trigger("click");
+    expect(first?.find(".amsg").exists()).toBe(false);
+    expect(w.find(".spacerail .mcard").exists()).toBe(false);
     w.unmount();
+
+    // on its own, without a row cap, the row shows every alert
+    const a = mountWith(SpaceAlerts, ctx);
+    expect(a.findAll(".mcard.alert")).toHaveLength(2);
+    expect(a.find(".more").exists()).toBe(false);
+    a.unmount();
   });
 
   it("shows the empty states, the error banner and a retry", async () => {
@@ -112,7 +136,7 @@ describe("SpacePage", () => {
     expect(w.findAll("svg.spark")).toHaveLength(0);
     expect(w.find(".forecast .note").text()).toBe("No forecast yet.");
     expect(w.find(".flares .note").text()).toBe("No flares in this window.");
-    expect(w.find(".alerts .note").text()).toBe("No alerts in this window.");
+    expect(w.find(".major .note").text()).toBe("No alerts in this window.");
     expect(w.find(".spacestack .note").text()).toBe("No samples yet.");
     expect(w.find(".banner.error").exists()).toBe(false);
     ctx.space.error.value = "boom";
@@ -138,7 +162,7 @@ describe("SpacePage", () => {
     ]);
     expect(w.find(".forecast .note").exists()).toBe(true);
     expect(w.find(".flares .note").exists()).toBe(true);
-    expect(w.find(".alerts .note").exists()).toBe(true);
+    expect(w.find(".major .note").exists()).toBe(true);
     w.unmount();
   });
 });
@@ -214,7 +238,17 @@ describe("SpaceFlares", () => {
         flare({ beginTime: "2026-10-13T11:00:00.000Z", endTime: null }),
       ],
     });
+    ctx.space.range.value = {
+      kind: "fixed",
+      from: new Date("2026-10-13T08:00:00Z"),
+      to: new Date("2026-10-13T12:00:00Z"),
+    };
+    ctx.space.lastWindow.value = "3d";
     const w = mountWith(SpaceFlares, ctx, { highlight: "2026-10-13T11:00:00.000Z" });
+    const back = w.find(".backbtn");
+    expect(back.text()).toBe("Back to 3 days");
+    await back.trigger("click");
+    expect(ctx.setSpaceRange).toHaveBeenLastCalledWith({ kind: "window", id: "3d" });
     const rows = w.findAll("tbody tr");
     expect(rows.map((r) => r.text())).toEqual([
       "10-13 10:52M1.3in progress",

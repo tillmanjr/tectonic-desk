@@ -395,10 +395,15 @@ describe("App", () => {
     stubCanvas();
     const { wrapper, router, api } = await mountApp("/space?window=7d");
     expect(wrapper.find(".pages button[aria-current=page]").text()).toBe("Space");
-    expect(wrapper.find("[role=tablist]").exists()).toBe(false);
+    // the region tabs stay in the layout, hidden, so the page switch keeps its place
+    const ghost = wrapper.find("[role=tablist]");
+    expect(ghost.classes()).toContain("ghost");
+    expect(ghost.attributes("aria-hidden")).toBe("true");
     expect(wrapper.find(".topbar .status").text()).toContain("NOAA SWPC");
     expect(wrapper.findAll(".stats.space .stat")).toHaveLength(6);
-    expect(wrapper.find(".sectionlabel").exists()).toBe(false);
+    expect(api.auroraIndex).toHaveBeenCalled();
+    expect(wrapper.findAll(".aurora svg.polar")).toHaveLength(2);
+    expect(wrapper.find(".sectionlabel").text()).toBe("Alerts · SWPC messages");
     expect(api.spaceWindow).toHaveBeenLastCalledWith(
       "2026-10-06T12:00:00.000Z",
       "2026-10-13T12:00:00.000Z",
@@ -421,7 +426,8 @@ describe("App", () => {
     await wrapper.findAll(".pages button")[1]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/earthquakes");
-    expect(wrapper.find("[role=tablist]").exists()).toBe(true);
+    expect(wrapper.find("[role=tablist]").classes()).not.toContain("ghost");
+    expect(wrapper.find("[role=tablist]").attributes("aria-hidden")).toBeUndefined();
     await wrapper.findAll(".pages button")[3]?.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/space");

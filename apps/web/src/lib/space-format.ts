@@ -59,6 +59,18 @@ export function alertTitle(message: string): string {
   return headline ?? "";
 }
 
+export type AlertKind = "alert" | "warning" | "watch" | "summary" | "other";
+
+/** What kind of message a headline announces: `WARNING`, `ALERT` (also continued), `WATCH`, `SUMMARY`, else other. */
+export function alertKind(headline: string): AlertKind {
+  const head = headline.toUpperCase();
+  if (head.includes("WARNING")) return "warning";
+  if (head.includes("ALERT")) return "alert";
+  if (head.includes("WATCH")) return "watch";
+  if (head.includes("SUMMARY")) return "summary";
+  return "other";
+}
+
 const two = (n: number): string => String(n).padStart(2, "0");
 
 /** The `YYYY-MM-DDTHH:mm` a `datetime-local` input shows for an instant in a zone. */

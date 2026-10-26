@@ -1,10 +1,13 @@
+import { AURORA_CELLS, auroraIndex } from "@tectonic/shared";
 import { describe, expect, it } from "vitest";
 import {
   dayKey,
   kpMaxByDay,
   parseAlerts,
+  parseAuroraFrame,
   parseDst,
   parseFlares,
+  parseHemiPower,
   parseKp1m,
   parseKp3h,
   parseMag,
@@ -14,10 +17,13 @@ import {
   parseWind,
   parseXrays,
   scaleNumber,
+  withPower,
 } from "../../src/space/parse.js";
 import {
   alerts,
+  aurora,
   dst,
+  hemiPower,
   flares,
   kp1m,
   kp3h,
@@ -194,6 +200,55 @@ describe("record parsers", () => {
       ["2026-11-01", "predicted", null],
     ]);
     expect(parseScales({ "0": { ...today, TimeStamp: "noon" } }, new Map())).toEqual([]);
+  });
+
+  it("lays the aurora frame out as a byte grid, clamping and skipping off-grid triples", () => {
+    const frame = parseAuroraFrame(aurora);
+    expect(frame.observed).toEqual(new Date("2026-10-25T12:12:00Z"));
+    expect(frame.forecast).toEqual(new Date("2026-10-25T13:30:00Z"));
+    expect(frame.powerNorth).toBeNull();
+    expect(frame.grid).toHaveLength(AURORA_CELLS);
+    expect(frame.grid[auroraIndex(180, 69)]).toBe(17);
+    expect(frame.grid[auroraIndex(0, -90)]).toBe(4);
+    expect(frame.grid[auroraIndex(359, 67)]).toBe(12);
+    expect(frame.grid[auroraIndex(200, 70)]).toBe(100);
+    expect(frame.grid[auroraIndex(201, 70)]).toBe(3);
+    expect(frame.grid[auroraIndex(10, 90)]).toBe(0);
+    expect(frame.grid[auroraIndex(0, 0)]).toBe(0);
+    let sum = 0;
+    for (const v of frame.grid) sum += v;
+    expect(sum).toBe(
+      aurora.coordinates
+        .filter(([lon, lat]) => lon >= 0 && lon <= 359 && lat >= -90 && lat <= 90)
+        .reduce((acc, [, , v]) => acc + Math.min(100, Math.round(v)), 0),
+    );
+    expect(() => parseAuroraFrame({ ...aurora, "Observation Time": "soon" })).toThrow(
+      "aurora frame times unreadable",
+    );
+    expect(() => parseAuroraFrame({ ...aurora, "Forecast Time": "later" })).toThrow();
+  });
+
+  it("reads the hemispheric power table and matches it to a frame", () => {
+    const rows = parseHemiPower(hemiPower);
+    expect(rows).toEqual([
+      {
+        observed: new Date("2026-10-25T12:02:00Z"),
+        forecast: new Date("2026-10-25T13:20:00Z"),
+        north: 18,
+        south: 17,
+      },
+      {
+        observed: new Date("2026-10-25T12:12:00Z"),
+        forecast: new Date("2026-10-25T13:30:00Z"),
+        north: 20,
+        south: 19,
+      },
+    ]);
+    expect(parseHemiPower("")).toEqual([]);
+    const frame = parseAuroraFrame(aurora);
+    expect(withPower(frame, rows)).toMatchObject({ powerNorth: 20, powerSouth: 19 });
+    expect(withPower(frame, rows.slice(0, 1))).toBe(frame);
+    expect(frame.powerNorth).toBeNull();
   });
 
   it("reads scale text as numbers", () => {

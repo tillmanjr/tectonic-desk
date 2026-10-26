@@ -1,1 +1,91 @@
-{"type":"FeatureCollection","features":[{"type":"Feature","id":"Smithsonian_VOTW_Holocene_Volcanoes.fid-5949073e_1a1481c08a6_-7956","geometry":{"type":"Point","coordinates":[14.999,37.748]},"geometry_name":"GeoLocation","properties":{"Volcano_Number":211060,"Volcano_Name":"Etna","Volcanic_Landform":"Composite","Primary_Volcano_Type":"Stratovolcano(es)","Last_Eruption_Year":2026,"Country":"Italy","Region":"European Volcanic Regions","Subregion":"Sicily Volcanic Province","Geological_Summary":"Mount Etna, on the island of Sicily, has one of the world's longest documented records of volcanism, dating back to 1500 BCE. Basaltic lava flows cover much of the surface of this massive volcano, whose edifice is the highest and most voluminous in Italy. The Mongibello stratovolcano, truncated by several small calderas, was constructed during the late Pleistocene and Holocene over an older shield volcano. The most prominent morphological feature of Etna is the Valle del Bove, a 5 x 10 km caldera open to the east. Two styles of eruptive activity typically occur, sometimes simultaneously. Persistent explosive eruptions, sometimes with minor lava emissions, take place from one or more summit craters. Flank vents, typically with higher effusion rates, are less frequently active and originate from fissures that open progressively downward from near the summit (usually accompanied by Strombolian eruptions at the upper end). Cinder cones are commonly constructed over the vents of lower-flank lava flows. Lava flows extend down the flanks in all directions and have reached the sea over a broad area on the SE side.","Latitude":37.748,"Longitude":14.999,"Elevation":3357,"Tectonic_Setting":"Subduction zone / Continental crust (> 25 km)","Geologic_Epoch":"Holocene","Evidence_Category":"Eruption Observed","Primary_Photo_Link":"https://volcano.si.edu/gallery/photos/GVP-01552.jpg","Primary_Photo_Caption":"Etna is Europe's highest volcano, towering above the city of Taormina on its NE flank. One of the world's longest documented historical records continues, dating back to the 2nd millennium BCE. Historical lava flows cover much of the surface of this 40 x 60 km wide basaltic stratovolcano and extend to the sea. Eruptions occur both from persistently active summit craters and intermittently from flank fissures and cones.","Primary_Photo_Credit":"Photo by Jean-Claude Tanguy, 1991 (University of Paris).","Major_Rock_Type":"Trachybasalt / Tephrite Basanite"}},{"type":"Feature","id":"Smithsonian_VOTW_Holocene_Volcanoes.fid-5949073e_1a1481c08a6_-7955","geometry":{"type":"Point","coordinates":[177.18,-37.52]},"geometry_name":"GeoLocation","properties":{"Volcano_Number":241040,"Volcano_Name":"Whakaari/White Island","Volcanic_Landform":"Composite","Primary_Volcano_Type":"Stratovolcano(es)","Last_Eruption_Year":2026,"Country":"New Zealand","Region":"Tonga-Kermadec Volcanic Regions","Subregion":"Taupo Volcanic Arc","Geological_Summary":"The uninhabited Whakaari/White Island is the 2 x 2.4 km emergent summit of a 16 x 18 km submarine volcano in the Bay of Plenty about 50 km offshore of North Island. The island consists of two overlapping andesitic-to-dacitic stratovolcanoes. The SE side of the crater is open at sea level, with the recent activity centered about 1 km from the shore close to the rear crater wall. Volckner Rocks, sea stacks that are remnants of a lava dome, lie 5 km NW. Descriptions of volcanism since 1826 have included intermittent moderate phreatic, phreatomagmatic, and Strombolian eruptions; activity there also forms a prominent part of Maori legends. The formation of many new vents during the 19th and 20th centuries caused rapid changes in crater floor topography. Collapse of the crater wall in 1914 produced a debris avalanche that buried buildings and workers at a sulfur-mining project. Explosive activity in December 2019 took place while tourists were present, resulting in many fatalities. The official government name Whakaari/White Island is a combination of the full Maori name of Te Puia o Whakaari (\"The Dramatic Volcano\") and White Island (referencing the constant steam plume) given by Captain James Cook in 1769.","Latitude":-37.52,"Longitude":177.18,"Elevation":294,"Tectonic_Setting":"Subduction zone / Continental crust (> 25 km)","Geologic_Epoch":"Holocene","Evidence_Category":"Eruption Observed","Primary_Photo_Link":"https://volcano.si.edu/gallery/photos/GVP-01614.jpg","Primary_Photo_Caption":"Steam rises from the crater of White Island (also called Whakaari), one of the most active volcanoes of New Zealand. The small, uninhabited 2 x 2.4-km-wide island lies 50 km NE of the North Island. Frequent small-to-moderate explosive eruptions have been recorded since 1826, and Maori legends record earlier eruptions. This view from the SE shows the two overlapping 0.4 x 1.2 km wide craters at the summit of the largely submerged volcano.","Primary_Photo_Credit":"Copyrighted photo by Stephen O'Meara.","Major_Rock_Type":"Andesite / Basaltic Andesite"}},{"type":"Feature","id":"Smithsonian_VOTW_Holocene_Volcanoes.fid-5949073e_1a1481c08a6_-7954","geometry":{"type":"Point","coordinates":[-122.18,46.2]},"geometry_name":"GeoLocation","properties":{"Volcano_Number":321050,"Volcano_Name":"St. Helens","Volcanic_Landform":"Composite","Primary_Volcano_Type":"Stratovolcano","Last_Eruption_Year":2008,"Country":"United States","Region":"North America Volcanic Regions","Subregion":"High Cascades Volcanic Arc","Geological_Summary":"Prior to 1980, Mount St. Helens was a conical volcano sometimes known as the Fujisan of America. During the 1980 eruption the upper 400 m of the summit was removed by slope failure, leaving a 2 x 3.5 km breached crater now partially filled by a lava dome. There have been nine major eruptive periods beginning about 40-50,000 years ago, and it has been the most active volcano in the Cascade Range during the Holocene. Prior to 2,200 years ago, tephra, lava domes, and pyroclastic flows were erupted, forming the older edifice, but few lava flows extended beyond the base of the volcano. The modern edifice consists of basaltic as well as andesitic and dacitic products from summit and flank vents. Eruptions in the 19th century originated from the Goat Rocks area on the N flank, and were witnessed by early settlers.","Latitude":46.2,"Longitude":-122.18,"Elevation":2549,"Tectonic_Setting":"Subduction zone / Continental crust (> 25 km)","Geologic_Epoch":"Holocene","Evidence_Category":"Eruption Observed","Primary_Photo_Link":"https://volcano.si.edu/gallery/photos/GVP-05491.jpg","Primary_Photo_Caption":"The 1980 eruption of Mount St. Helens dramatically altered the conical profile of the volcano. The eruption left a 2 x 3.5 km wide horseshoe-shaped crater, seen here from the NNE beyond Spirit Lake (center). The landslide of 18 May lowered the summit by 400 m and produced a highly mobile debris avalanche that swept into Spirit Lake and traveled down the North Fork Toutle River. The associated northward-directed lateral blast devastated about 600 km2.","Primary_Photo_Credit":"Photo by Lyn Topinka, 1981 (Cascades Volcano Observatory, U.S. Geological Survey).","Major_Rock_Type":"Dacite"}}],"totalFeatures":3,"numberMatched":3,"numberReturned":3,"timeStamp":"2026-10-17T04:26:08.426Z","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:EPSG::4326"}}}
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "Smithsonian_VOTW_Holocene_Volcanoes.fid-5949073e_1a1481c08a6_-7956",
+      "geometry": { "type": "Point", "coordinates": [14.999, 37.748] },
+      "geometry_name": "GeoLocation",
+      "properties": {
+        "Volcano_Number": 211060,
+        "Volcano_Name": "Etna",
+        "Volcanic_Landform": "Composite",
+        "Primary_Volcano_Type": "Stratovolcano(es)",
+        "Last_Eruption_Year": 2026,
+        "Country": "Italy",
+        "Region": "European Volcanic Regions",
+        "Subregion": "Sicily Volcanic Province",
+        "Geological_Summary": "Mount Etna, on the island of Sicily, has one of the world's longest documented records of volcanism, dating back to 1500 BCE. Basaltic lava flows cover much of the surface of this massive volcano, whose edifice is the highest and most voluminous in Italy. The Mongibello stratovolcano, truncated by several small calderas, was constructed during the late Pleistocene and Holocene over an older shield volcano. The most prominent morphological feature of Etna is the Valle del Bove, a 5 x 10 km caldera open to the east. Two styles of eruptive activity typically occur, sometimes simultaneously. Persistent explosive eruptions, sometimes with minor lava emissions, take place from one or more summit craters. Flank vents, typically with higher effusion rates, are less frequently active and originate from fissures that open progressively downward from near the summit (usually accompanied by Strombolian eruptions at the upper end). Cinder cones are commonly constructed over the vents of lower-flank lava flows. Lava flows extend down the flanks in all directions and have reached the sea over a broad area on the SE side.",
+        "Latitude": 37.748,
+        "Longitude": 14.999,
+        "Elevation": 3357,
+        "Tectonic_Setting": "Subduction zone / Continental crust (> 25 km)",
+        "Geologic_Epoch": "Holocene",
+        "Evidence_Category": "Eruption Observed",
+        "Primary_Photo_Link": "https://volcano.si.edu/gallery/photos/GVP-01552.jpg",
+        "Primary_Photo_Caption": "Etna is Europe's highest volcano, towering above the city of Taormina on its NE flank. One of the world's longest documented historical records continues, dating back to the 2nd millennium BCE. Historical lava flows cover much of the surface of this 40 x 60 km wide basaltic stratovolcano and extend to the sea. Eruptions occur both from persistently active summit craters and intermittently from flank fissures and cones.",
+        "Primary_Photo_Credit": "Photo by Jean-Claude Tanguy, 1991 (University of Paris).",
+        "Major_Rock_Type": "Trachybasalt / Tephrite Basanite"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "Smithsonian_VOTW_Holocene_Volcanoes.fid-5949073e_1a1481c08a6_-7955",
+      "geometry": { "type": "Point", "coordinates": [177.18, -37.52] },
+      "geometry_name": "GeoLocation",
+      "properties": {
+        "Volcano_Number": 241040,
+        "Volcano_Name": "Whakaari/White Island",
+        "Volcanic_Landform": "Composite",
+        "Primary_Volcano_Type": "Stratovolcano(es)",
+        "Last_Eruption_Year": 2026,
+        "Country": "New Zealand",
+        "Region": "Tonga-Kermadec Volcanic Regions",
+        "Subregion": "Taupo Volcanic Arc",
+        "Geological_Summary": "The uninhabited Whakaari/White Island is the 2 x 2.4 km emergent summit of a 16 x 18 km submarine volcano in the Bay of Plenty about 50 km offshore of North Island. The island consists of two overlapping andesitic-to-dacitic stratovolcanoes. The SE side of the crater is open at sea level, with the recent activity centered about 1 km from the shore close to the rear crater wall. Volckner Rocks, sea stacks that are remnants of a lava dome, lie 5 km NW. Descriptions of volcanism since 1826 have included intermittent moderate phreatic, phreatomagmatic, and Strombolian eruptions; activity there also forms a prominent part of Maori legends. The formation of many new vents during the 19th and 20th centuries caused rapid changes in crater floor topography. Collapse of the crater wall in 1914 produced a debris avalanche that buried buildings and workers at a sulfur-mining project. Explosive activity in December 2019 took place while tourists were present, resulting in many fatalities. The official government name Whakaari/White Island is a combination of the full Maori name of Te Puia o Whakaari (\"The Dramatic Volcano\") and White Island (referencing the constant steam plume) given by Captain James Cook in 1769.",
+        "Latitude": -37.52,
+        "Longitude": 177.18,
+        "Elevation": 294,
+        "Tectonic_Setting": "Subduction zone / Continental crust (> 25 km)",
+        "Geologic_Epoch": "Holocene",
+        "Evidence_Category": "Eruption Observed",
+        "Primary_Photo_Link": "https://volcano.si.edu/gallery/photos/GVP-01614.jpg",
+        "Primary_Photo_Caption": "Steam rises from the crater of White Island (also called Whakaari), one of the most active volcanoes of New Zealand. The small, uninhabited 2 x 2.4-km-wide island lies 50 km NE of the North Island. Frequent small-to-moderate explosive eruptions have been recorded since 1826, and Maori legends record earlier eruptions. This view from the SE shows the two overlapping 0.4 x 1.2 km wide craters at the summit of the largely submerged volcano.",
+        "Primary_Photo_Credit": "Copyrighted photo by Stephen O'Meara.",
+        "Major_Rock_Type": "Andesite / Basaltic Andesite"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "Smithsonian_VOTW_Holocene_Volcanoes.fid-5949073e_1a1481c08a6_-7954",
+      "geometry": { "type": "Point", "coordinates": [-122.18, 46.2] },
+      "geometry_name": "GeoLocation",
+      "properties": {
+        "Volcano_Number": 321050,
+        "Volcano_Name": "St. Helens",
+        "Volcanic_Landform": "Composite",
+        "Primary_Volcano_Type": "Stratovolcano",
+        "Last_Eruption_Year": 2008,
+        "Country": "United States",
+        "Region": "North America Volcanic Regions",
+        "Subregion": "High Cascades Volcanic Arc",
+        "Geological_Summary": "Prior to 1980, Mount St. Helens was a conical volcano sometimes known as the Fujisan of America. During the 1980 eruption the upper 400 m of the summit was removed by slope failure, leaving a 2 x 3.5 km breached crater now partially filled by a lava dome. There have been nine major eruptive periods beginning about 40-50,000 years ago, and it has been the most active volcano in the Cascade Range during the Holocene. Prior to 2,200 years ago, tephra, lava domes, and pyroclastic flows were erupted, forming the older edifice, but few lava flows extended beyond the base of the volcano. The modern edifice consists of basaltic as well as andesitic and dacitic products from summit and flank vents. Eruptions in the 19th century originated from the Goat Rocks area on the N flank, and were witnessed by early settlers.",
+        "Latitude": 46.2,
+        "Longitude": -122.18,
+        "Elevation": 2549,
+        "Tectonic_Setting": "Subduction zone / Continental crust (> 25 km)",
+        "Geologic_Epoch": "Holocene",
+        "Evidence_Category": "Eruption Observed",
+        "Primary_Photo_Link": "https://volcano.si.edu/gallery/photos/GVP-05491.jpg",
+        "Primary_Photo_Caption": "The 1980 eruption of Mount St. Helens dramatically altered the conical profile of the volcano. The eruption left a 2 x 3.5 km wide horseshoe-shaped crater, seen here from the NNE beyond Spirit Lake (center). The landslide of 18 May lowered the summit by 400 m and produced a highly mobile debris avalanche that swept into Spirit Lake and traveled down the North Fork Toutle River. The associated northward-directed lateral blast devastated about 600 km2.",
+        "Primary_Photo_Credit": "Photo by Lyn Topinka, 1981 (Cascades Volcano Observatory, U.S. Geological Survey).",
+        "Major_Rock_Type": "Dacite"
+      }
+    }
+  ],
+  "totalFeatures": 3,
+  "numberMatched": 3,
+  "numberReturned": 3,
+  "timeStamp": "2026-10-17T04:26:08.426Z",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
+}

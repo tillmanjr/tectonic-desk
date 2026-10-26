@@ -19,6 +19,7 @@ import {
 } from "./volcanoes.js";
 import { fieldsFile } from "./fields.js";
 import { FLAT_RELIEF } from "./relief.js";
+import { auroraFrame, auroraIndex } from "./aurora.js";
 import { spaceNow, spaceWindow } from "./space.js";
 
 export function status(over: Partial<ApiStatus> = {}): ApiStatus {
@@ -126,6 +127,8 @@ export function fakeApi(over: Partial<ApiClient> = {}): ApiClient {
     relief: vi.fn().mockResolvedValue(FLAT_RELIEF),
     spaceNow: vi.fn().mockResolvedValue(spaceNow()),
     spaceWindow: vi.fn().mockResolvedValue(spaceWindow()),
+    auroraIndex: vi.fn().mockResolvedValue(auroraIndex()),
+    auroraFrame: vi.fn().mockResolvedValue(auroraFrame()),
     ...over,
   };
 }
