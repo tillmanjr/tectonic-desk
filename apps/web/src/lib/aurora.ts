@@ -29,16 +29,28 @@ export interface AuroraStore {
   bands: ComputedRef<AuroraBand[]>;
   error: Ref<string | null>;
   loading: Ref<boolean>;
-  /** Shows a frame by observation time, or follows the newest with null. */
+  /** True while `play` is stepping through the frames. */
+  playing: Ref<boolean>;
+  /** Shows a frame by observation time, or follows the newest with null; pauses a run. */
   select: (observed: string | null) => void;
+  /**
+   * Steps from the frame on show (from the oldest when following live) to the newest,
+   * `PLAY_STRIDE` frames at a time, `PLAY_STEP_MS` after each grid arrives, then follows live.
+   */
+  play: () => void;
+  pause: () => void;
   /** Fetches the index, then the grid of the frame on show. */
   load: () => Promise<void>;
   start: () => void;
   stop: () => void;
 }
 
-/** How many grids the cache holds: a frame every five minutes is four hours of scrubbing. */
-export const GRID_CACHE = 48;
+/** How many grids the cache holds: enough for a replay of the three-day history at the stride. */
+export const GRID_CACHE = 160;
+/** Playback moves six frames, half an hour, a step. */
+export const PLAY_STRIDE = 6;
+/** How long a frame stays up once its grid has arrived. */
+export const PLAY_STEP_MS = 200;
 
 /** The base64 grid as bytes; the length is checked so a bad answer fails loudly. */
 export function decodeGrid(b64: string): Uint8Array {
@@ -60,9 +72,11 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
   const bands = computed(() => (frame.value === null ? [] : auroraBands(frame.value.grid)));
   const error = ref<string | null>(null);
   const loading = ref(false);
+  const playing = ref(false);
   const cache = new Map<string, Uint8Array>();
   let started = false;
   let timer: ReturnType<typeof setInterval> | null = null;
+  let stepTimer: ReturnType<typeof setTimeout> | null = null;
   let seq = 0;
 
   /** The frame on show: the selection when the index knows it, else the newest. */
@@ -122,6 +136,44 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
     });
   }
 
+  function pause(): void {
+    playing.value = false;
+    if (stepTimer !== null) {
+      clearTimeout(stepTimer);
+      stepTimer = null;
+    }
+  }
+
+  /** Warms the cache with a frame not yet on show; a failure surfaces when it is shown. */
+  function prefetch(meta: ApiAuroraFrameMeta | undefined): void {
+    if (meta !== undefined) void gridOf(meta).then(undefined, () => undefined);
+  }
+
+  /**
+   * Shows frame `i`, warms the one a stride on, and books the next step once the grid is up.
+   * A step books nothing when the run has paused or another frame has been chosen meanwhile.
+   */
+  function step(i: number): void {
+    const list = frames.value;
+    const meta = list[i];
+    if (meta === undefined || i >= list.length - 1) {
+      // the newest frame, or the list changed under the run: follow live again
+      playing.value = false;
+      selected.value = null;
+      void run((mine) => show(mine));
+      return;
+    }
+    selected.value = meta.observed;
+    void run((mine) => show(mine)).then(() => {
+      if (playing.value && selected.value === meta.observed) {
+        stepTimer = setTimeout(() => {
+          step(i + PLAY_STRIDE);
+        }, PLAY_STEP_MS);
+      }
+    });
+    prefetch(list[i + PLAY_STRIDE]);
+  }
+
   function tick(): void {
     void load();
   }
@@ -137,6 +189,7 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
   }
   function onVisibility(): void {
     if (doc.hidden) {
+      pause();
       stopTimer();
     } else {
       tick();
@@ -151,10 +204,22 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
     bands,
     error,
     loading,
+    playing,
     select(observed) {
+      pause();
       selected.value = observed;
       void run((mine) => show(mine));
     },
+    play() {
+      const list = frames.value;
+      if (list.length < 2) return;
+      pause();
+      playing.value = true;
+      const cur = showing();
+      const from = selected.value === null ? 0 : list.findIndex((f) => f === cur) + PLAY_STRIDE;
+      step(from);
+    },
+    pause,
     load,
     start() {
       if (started) return;
@@ -166,6 +231,7 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
     stop() {
       if (!started) return;
       started = false;
+      pause();
       stopTimer();
       doc.removeEventListener("visibilitychange", onVisibility);
     },

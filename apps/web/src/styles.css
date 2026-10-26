@@ -2614,7 +2614,7 @@ table.matrix {
 }
 .scrub {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 6px 10px;
   align-items: center;
   margin-bottom: 8px;
