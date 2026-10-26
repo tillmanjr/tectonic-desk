@@ -33,6 +33,11 @@ import {
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
+/**
+ * Frame reads get their own, looser limit: a replay of the three-day history asks for about
+ * 150 small, hour-cached frames in half a minute, more than the global limit allows a client.
+ */
+export const AURORA_FRAME_RATE_MAX = 600;
 
 /** Midnight UTC of the day holding `d`. */
 export const utcDay = (d: Date): Date =>
@@ -93,13 +98,17 @@ export const spaceRoutes: FastifyPluginCallback = (app, _opts, done) => {
   });
 
   // A stored frame never changes, so it may be cached for an hour.
-  app.get("/api/space/aurora/:observed", async (request, reply): Promise<ApiAuroraFrame> => {
-    const { observed } = parseOrThrow(auroraParamsSchema, request.params);
-    const frame = await auroraFrame(app.db, observed);
-    if (frame === null) throw notFound("aurora frame not found");
-    cacheFor(reply, 3600);
-    return toApiAuroraFrame(frame);
-  });
+  app.get(
+    "/api/space/aurora/:observed",
+    { config: { rateLimit: { max: AURORA_FRAME_RATE_MAX } } },
+    async (request, reply): Promise<ApiAuroraFrame> => {
+      const { observed } = parseOrThrow(auroraParamsSchema, request.params);
+      const frame = await auroraFrame(app.db, observed);
+      if (frame === null) throw notFound("aurora frame not found");
+      cacheFor(reply, 3600);
+      return toApiAuroraFrame(frame);
+    },
+  );
 
   done();
 };

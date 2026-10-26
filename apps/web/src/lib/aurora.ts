@@ -51,6 +51,11 @@ export const GRID_CACHE = 160;
 export const PLAY_STRIDE = 6;
 /** How long a frame stays up once its grid has arrived. */
 export const PLAY_STEP_MS = 200;
+/**
+ * A scrub fetches a grid it does not hold only once the slider has rested this long, so a drag
+ * across the history asks for the frame it stops on, not every frame it crossed.
+ */
+export const SCRUB_SETTLE_MS = 150;
 
 /** The base64 grid as bytes; the length is checked so a bad answer fails loudly. */
 export function decodeGrid(b64: string): Uint8Array {
@@ -77,6 +82,7 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
   let started = false;
   let timer: ReturnType<typeof setInterval> | null = null;
   let stepTimer: ReturnType<typeof setTimeout> | null = null;
+  let settleTimer: ReturnType<typeof setTimeout> | null = null;
   let seq = 0;
 
   /** The frame on show: the selection when the index knows it, else the newest. */
@@ -134,6 +140,13 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
       frames.value = index.frames;
       await show(mine);
     });
+  }
+
+  function clearSettle(): void {
+    if (settleTimer !== null) {
+      clearTimeout(settleTimer);
+      settleTimer = null;
+    }
   }
 
   function pause(): void {
@@ -207,8 +220,17 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
     playing,
     select(observed) {
       pause();
+      clearSettle();
       selected.value = observed;
-      void run((mine) => show(mine));
+      const meta = showing();
+      if (meta === null || cache.has(meta.observed)) {
+        void run((mine) => show(mine));
+      } else {
+        settleTimer = setTimeout(() => {
+          settleTimer = null;
+          void run((mine) => show(mine));
+        }, SCRUB_SETTLE_MS);
+      }
     },
     play() {
       const list = frames.value;
@@ -232,6 +254,7 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
       if (!started) return;
       started = false;
       pause();
+      clearSettle();
       stopTimer();
       doc.removeEventListener("visibilitychange", onVisibility);
     },
