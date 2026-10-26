@@ -90,6 +90,8 @@ export interface MapView {
   basemap: ShallowRef<Basemap | null>;
   showPlates: Ref<boolean>;
   showTeeth: Ref<boolean>;
+  /** The aurora store's frame as bands over the night side; `MapShell` runs the store for it. */
+  showAurora: Ref<boolean>;
   /** The anomaly raster to draw under the layers: none, gravity or magnetic. */
   field: Ref<FieldChoice>;
   /** The raster for the choice and the current frame; null while none, loading, failed or missing. */
@@ -155,6 +157,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   const transform = shallowRef<ZoomTransform>(zoomIdentity);
   const showPlates = ref(true);
   const showTeeth = ref(true);
+  const showAurora = ref(false);
   const field = ref<FieldChoice>("none");
   const fields = shallowRef<FieldsFile | null>(null);
   const fieldError = ref(false);
@@ -435,6 +438,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     basemap,
     showPlates,
     showTeeth,
+    showAurora,
     field,
     fieldRaster,
     fieldError,

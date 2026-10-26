@@ -32,6 +32,29 @@ describe("MapLegend", () => {
     expect(v.text()).not.toContain("shaded = compressional");
     expect(v.text()).toContain("Subduction");
   });
+  it("adds the aurora row with its time, while loading, or with an error", () => {
+    const at = (aurora: { time: string | null; error: string | null }) =>
+      mount(MapLegend, { props: { frame: frameFor(GLOBAL), minMag: 4.5, aurora } });
+    const w = at({ time: "13:05 UTC", error: null });
+    const row = w.find(".aurorarow");
+    expect(row.findAll("i").map((i) => i.classes()[0])).toEqual([
+      "au-10",
+      "au-30",
+      "au-50",
+      "au-70",
+      "au-90",
+    ]);
+    expect(row.text()).toContain("90%");
+    expect(row.text()).toContain("chance of aurora at 13:05 UTC");
+    expect(at({ time: null, error: null }).find(".aurorarow").text()).toContain(
+      "chance of aurora · loading",
+    );
+    expect(at({ time: null, error: "HTTP 503" }).find(".aurorarow").text()).toContain(
+      "chance of aurora · HTTP 503",
+    );
+    const none = mount(MapLegend, { props: { frame: frameFor(GLOBAL), minMag: 4.5 } });
+    expect(none.find(".aurorarow").exists()).toBe(false);
+  });
   it("adds a density row when given one", () => {
     const w = mount(MapLegend, {
       props: { frame: frameFor(GLOBAL), minMag: 4.5, density: { cell: 2, floor: 4.5, max: 5000 } },

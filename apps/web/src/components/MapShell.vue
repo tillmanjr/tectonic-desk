@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, onBeforeUnmount, watch } from "vue";
+import MapAurora from "./MapAurora.vue";
 import MapBasemap from "./MapBasemap.vue";
 import MapFaults from "./MapFaults.vue";
 import MapField from "./MapField.vue";
@@ -7,9 +9,12 @@ import MapPlates from "./MapPlates.vue";
 import MapSection from "./MapSection.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
+import type { AuroraLegend } from "../lib/aurora-map.js";
 import type { DensityLegend } from "../lib/density.js";
 import { AGE_CODES, FAULT_AGES } from "../lib/faults.js";
 import { FIELD_CHOICES } from "../lib/fields.js";
+import { fmtClock } from "../lib/format.js";
+import { AURORA, useInjected, ZONE } from "../lib/keys.js";
 import type { MapView } from "../lib/mapview.js";
 
 /**
@@ -36,6 +41,28 @@ const props = withDefaults(
   { quakes: true, density: null, floor: null, sectionTool: true },
 );
 const { mv } = props;
+const aurora = useInjected(AURORA);
+const zone = useInjected(ZONE);
+
+// The aurora layer holds the shared store running while its toggle is on.
+watch(
+  () => mv.showAurora.value,
+  (on) => {
+    if (on) {
+      aurora.start();
+    } else {
+      aurora.stop();
+    }
+  },
+);
+onBeforeUnmount(() => {
+  if (mv.showAurora.value) aurora.stop();
+});
+const auroraLegend = computed<AuroraLegend | null>(() => {
+  if (!mv.showAurora.value) return null;
+  const f = aurora.frame.value;
+  return { time: f === null ? null : fmtClock(f.forecast, zone.value), error: aurora.error.value };
+});
 </script>
 
 <template>
@@ -44,6 +71,7 @@ const { mv } = props;
       <slot name="tools"></slot>
       <label><input v-model="mv.showPlates.value" type="checkbox" /> Plate boundaries</label>
       <label><input v-model="mv.showTeeth.value" type="checkbox" /> Subduction teeth</label>
+      <label><input v-model="mv.showAurora.value" type="checkbox" /> Aurora</label>
       <div v-if="mv.hasFaults.value" class="layerpick">
         <label
           ><input
@@ -176,6 +204,12 @@ const { mv } = props;
             :raster="mv.fieldRaster.value"
             :frame="mv.view.value.frame"
           />
+          <MapAurora
+            v-if="mv.showAurora.value && aurora.frame.value !== null"
+            :path="mv.view.value.path"
+            :bands="aurora.bands.value"
+            :forecast="aurora.frame.value.forecast"
+          />
           <MapFaults
             v-if="mv.faultsOn.value"
             :path="mv.view.value.path"
@@ -230,6 +264,7 @@ const { mv } = props;
       :quakes="quakes"
       :density="density"
       :field="mv.fieldRaster.value"
+      :aurora="auroraLegend"
     >
       <slot name="legend"></slot>
     </MapLegend>

@@ -317,6 +317,9 @@ describe("createAuroraStore", () => {
     d.fire();
     await vi.advanceTimersByTimeAsync(1000);
     expect(api.auroraIndex).toHaveBeenCalledTimes(5);
+    // two holders: the first stop leaves it running for the second
+    store.stop();
+    expect(d.listeners.size).toBe(1);
     store.stop();
     store.stop();
     expect(d.listeners.size).toBe(0);
