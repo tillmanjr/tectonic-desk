@@ -1,8 +1,9 @@
-import { seriesRecord } from "@tectonic/shared";
+import { AURORA_CELLS, seriesRecord } from "@tectonic/shared";
 import { describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import SpaceStack from "../../src/components/SpaceStack.vue";
 import { makeContext, mountWith } from "../support/mount.js";
+import { auroraMeta } from "../support/aurora.js";
 import { alert, spaceWindow } from "../support/space.js";
 
 const NOW_MS = Date.parse("2026-10-13T12:00:00Z");
@@ -177,6 +178,42 @@ describe("SpaceStack", () => {
     ctx.zone.value = "local";
     await nextTick();
     expect(w.findAll(".srow")).toHaveLength(7);
+    w.unmount();
+  });
+
+  it("marks the aurora frame on show while a past one inside the window is chosen", async () => {
+    const ctx = await makeContext({ space: true });
+    const w = mountWith(SpaceStack, ctx, { highlight: null });
+    expect(w.find(".aumark").exists()).toBe(false);
+    const grid = new Uint8Array(AURORA_CELLS);
+    // observed two hours ago, so forecast 45 minutes ago: inside the 24-hour window
+    const meta = auroraMeta(120);
+    ctx.aurora.selected.value = meta.observed;
+    ctx.aurora.frame.value = { ...meta, grid };
+    await nextTick();
+    const line = w.find(".aumark");
+    expect(line.exists()).toBe(true);
+    // 796 units span the day, so 45 minutes short of the right edge at 848
+    expect(Number(line.attributes("x1"))).toBeCloseTo(848 - (45 / 1440) * 796, 6);
+    expect(line.attributes("y1")).toBe("16");
+    // following live draws nothing, nor does a frame forecast after the window or before it
+    ctx.aurora.selected.value = null;
+    await nextTick();
+    expect(w.find(".aumark").exists()).toBe(false);
+    ctx.aurora.selected.value = meta.observed;
+    ctx.aurora.frame.value = { ...auroraMeta(10), grid };
+    await nextTick();
+    expect(w.find(".aumark").exists()).toBe(false);
+    ctx.aurora.frame.value = { ...auroraMeta(26 * 60), grid };
+    await nextTick();
+    expect(w.find(".aumark").exists()).toBe(false);
+    ctx.aurora.frame.value = null;
+    await nextTick();
+    expect(w.find(".aumark").exists()).toBe(false);
+    ctx.aurora.frame.value = { ...meta, grid };
+    ctx.space.window.value = null;
+    await nextTick();
+    expect(w.find(".aumark").exists()).toBe(false);
     w.unmount();
   });
 

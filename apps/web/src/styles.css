@@ -2492,6 +2492,13 @@ table.matrix {
   stroke-width: 3px;
   pointer-events: none;
 }
+/* The aurora frame on show, while a past one is chosen. */
+.aumark {
+  stroke: var(--au-70);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
 @media (max-width: 900px) {
   .spacegrid {
     grid-template-columns: minmax(0, 1fr);

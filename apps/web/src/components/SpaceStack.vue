@@ -6,7 +6,7 @@ import ChartAxes from "./ChartAxes.vue";
 import SpaceRow from "./SpaceRow.vue";
 import { ticksOf, type Tick } from "../lib/charts.js";
 import { fmtClock, fmtStamp } from "../lib/format.js";
-import { SPACE, useInjected, ZONE } from "../lib/keys.js";
+import { AURORA, SPACE, useInjected, ZONE } from "../lib/keys.js";
 import {
   flareBands,
   gapMs,
@@ -29,6 +29,7 @@ import { alertTitle, fmtKp, fmtValue, xrayClass } from "../lib/space-format.js";
  */
 const props = defineProps<{ highlight: string | null }>();
 const store = useInjected(SPACE);
+const aurora = useInjected(AURORA);
 const zone = useInjected(ZONE);
 
 const W = 900;
@@ -172,6 +173,18 @@ const data = computed<Stack | null>(() => {
   return { rows, xTicks, alerts, x, samples: w.samples, bucketSeconds: w.bucketSeconds };
 });
 
+/**
+ * Where the aurora frame on show falls on the axis, while a past frame is chosen (a scrub or a
+ * replay) and its forecast time lies inside the window; nothing while following live.
+ */
+const marker = computed<number | null>(() => {
+  const d = data.value;
+  const f = aurora.frame.value;
+  if (d === null || f === null || aurora.selected.value === null) return null;
+  const x = d.x(Date.parse(f.forecast));
+  return x < M.l || x > W - M.r ? null : x;
+});
+
 const caption = computed(() => {
   const d = data.value;
   if (d === null) return "No samples yet.";
@@ -245,6 +258,14 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
         </path>
       </g>
       <SpaceRow v-for="row in data.rows" :key="row.id" :row="row" :left="M.l" :right="W - M.r" />
+      <line
+        v-if="marker !== null"
+        class="aumark"
+        :x1="marker"
+        :x2="marker"
+        :y1="M.t"
+        :y2="H - M.b"
+      />
       <g v-if="cross !== null" class="cross">
         <line :x1="cross.x" :x2="cross.x" :y1="M.t" :y2="H - M.b" />
         <text :x="cross.x" :y="M.t - 4" :text-anchor="cross.x > W / 2 ? 'end' : 'start'">
