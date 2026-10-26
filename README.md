@@ -184,7 +184,10 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   Prime's probability bands at 10, 30, 50, 70 and 90 %, drawn from the stored grid with
   d3-contour; the caption gives the observation and forecast times and the hemispheric power,
   a scrub runs over the last three days of frames (`Latest` follows the newest again) and
-  `Play` steps through them half an hour at a time, about 30 seconds for the three days.
+  `Play` steps through them half an hour at a time, about 30 seconds for the three days. An
+  `Aurora` checkbox on every map toolbar draws the same frame on the world map, the night side
+  shaded at its forecast time under the bands, with a swatch row and the time in the legend; a
+  frame chosen on the Space page is the one the maps show.
 - **Field overlays.** `Field` in the map toolbar draws a gravity or magnetic anomaly raster under
   the line work, on every map page, off by default. Gravity is the Scripps free-air anomaly on
   the global view (EGM2008 over land, clipped at ±120 mGal) and the USGS DDS-9 isostatic residual

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { FieldRaster } from "@tectonic/shared";
+import { AURORA_THRESHOLDS, type FieldRaster } from "@tectonic/shared";
 import { computed } from "vue";
+import type { AuroraLegend } from "../lib/aurora-map.js";
 import { DENSITY_RAMP, type DensityLegend } from "../lib/density.js";
 import { FAULT_AGES, type AgeCode } from "../lib/faults.js";
 import { fmtFloor, fmtInt } from "../lib/format.js";
@@ -18,8 +19,10 @@ const props = withDefaults(
     density?: DensityLegend | null;
     /** The gravity or magnetic raster under the map, for its ramp row; null when none is drawn. */
     field?: FieldRaster | null;
+    /** The aurora layer in force, for its swatch row; null while the toggle is off. */
+    aurora?: AuroraLegend | null;
   }>(),
-  { faults: () => [], quakes: true, density: null, field: null },
+  { faults: () => [], quakes: true, density: null, field: null, aurora: null },
 );
 /** A gradient id unique to the raster, so two legends on one page do not share one. */
 const gradId = (f: FieldRaster): string => `fieldgrad-${f.field}-${f.view}`;
@@ -89,6 +92,16 @@ const plates = Object.values(PLATE_CLASSES);
       <span class="fieldcap"
         >{{ field.units }} · {{ field.caption
         }}<template v-if="field.equalised"> · equalised ramp</template></span
+      >
+    </span>
+    <span v-if="aurora !== null" class="sw aurorarow">
+      <span v-for="t in AURORA_THRESHOLDS" :key="t" class="sw">
+        <i :class="`au-${String(t)}`"></i>{{ t }}%
+      </span>
+      <span
+        >chance of aurora<template v-if="aurora.error !== null"> · {{ aurora.error }}</template
+        ><template v-else-if="aurora.time === null"> · loading</template
+        ><template v-else> at {{ aurora.time }}</template></span
       >
     </span>
     <span v-for="p in plates" :key="p.name" class="sw">

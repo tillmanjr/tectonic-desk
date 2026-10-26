@@ -43,6 +43,43 @@ describe("QuakeMap", () => {
     expect(w.findComponent({ name: "MapTeeth" }).exists()).toBe(false);
   });
 
+  it("draws the aurora layer and its legend row while the toggle holds the store", async () => {
+    stubWorld();
+    stubCanvas();
+    const ctx = await makeContext();
+    const w = mountWith(QuakeMap, ctx, { animate: false });
+    await flushPromises();
+    const toggle = w.findAll(".maptools label").find((l) => l.text().includes("Aurora"));
+    expect(ctx.api.auroraIndex).not.toHaveBeenCalled();
+    expect(w.find(".aurorarow").exists()).toBe(false);
+    await toggle?.find("input").setValue(true);
+    expect(ctx.api.auroraIndex).toHaveBeenCalledTimes(1);
+    await flushPromises();
+    expect(w.find("g.aurora").exists()).toBe(true);
+    expect(w.findAll("g.aurora path.band")).toHaveLength(5);
+    expect(w.find("g.aurora path.night").attributes("d")).toMatch(/^M/);
+    // the fixture's newest frame is forecast 75 minutes after 11:50
+    expect(w.find(".aurorarow").text()).toContain("chance of aurora at 13:05 UTC");
+    await toggle?.find("input").setValue(false);
+    expect(w.find("g.aurora").exists()).toBe(false);
+    expect(w.find(".aurorarow").exists()).toBe(false);
+    // the row while the first frame loads, and after a failed read
+    await toggle?.find("input").setValue(true);
+    await flushPromises();
+    ctx.aurora.frame.value = null;
+    ctx.aurora.error.value = "HTTP 503";
+    await nextTick();
+    expect(w.find("g.aurora").exists()).toBe(false);
+    expect(w.find(".aurorarow").text()).toContain("· HTTP 503");
+    ctx.aurora.error.value = null;
+    await nextTick();
+    expect(w.find(".aurorarow").text()).toContain("· loading");
+    // leaving the page with the toggle on releases the store
+    const stop = vi.spyOn(ctx.aurora, "stop");
+    w.unmount();
+    expect(stop).toHaveBeenCalledTimes(1);
+  });
+
   it("zooms to the selected event and shows a tooltip on hover", async () => {
     stubWorld();
     stubCanvas();

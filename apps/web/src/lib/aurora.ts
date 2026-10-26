@@ -41,6 +41,10 @@ export interface AuroraStore {
   pause: () => void;
   /** Fetches the index, then the grid of the frame on show. */
   load: () => Promise<void>;
+  /**
+   * Holds the store running: the index polls and the page listener live from the first
+   * `start` to the matching `stop`, so a map layer and the Space page can share it.
+   */
   start: () => void;
   stop: () => void;
 }
@@ -79,7 +83,8 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
   const loading = ref(false);
   const playing = ref(false);
   const cache = new Map<string, Uint8Array>();
-  let started = false;
+  /** How many callers hold the store running. */
+  let holds = 0;
   let timer: ReturnType<typeof setInterval> | null = null;
   let stepTimer: ReturnType<typeof setTimeout> | null = null;
   let settleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -244,15 +249,16 @@ export function createAuroraStore(api: ApiClient, opts: AuroraStoreOptions = {})
     pause,
     load,
     start() {
-      if (started) return;
-      started = true;
+      holds += 1;
+      if (holds > 1) return;
       void load();
       startTimer();
       doc.addEventListener("visibilitychange", onVisibility);
     },
     stop() {
-      if (!started) return;
-      started = false;
+      if (holds === 0) return;
+      holds -= 1;
+      if (holds > 0) return;
       pause();
       clearSettle();
       stopTimer();
