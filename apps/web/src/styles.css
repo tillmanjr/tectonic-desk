@@ -426,7 +426,8 @@ a:focus-visible,
   background: var(--panel);
   color: var(--ink);
 }
-.legend .fieldrow {
+.legend .fieldrow,
+.legend .aurorarow {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;

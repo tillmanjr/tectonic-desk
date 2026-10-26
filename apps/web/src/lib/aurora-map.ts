@@ -27,6 +27,13 @@ export function polarProjection(
     .fitSize([size, size], { type: "Sphere" });
 }
 
+/** What a map legend says about the aurora layer in force. */
+export interface AuroraLegend {
+  /** The frame's forecast time as a clock in the zone in force; null while the first frame loads. */
+  time: string | null;
+  error: string | null;
+}
+
 /** The half of the sphere in darkness: a 90° circle about the antisolar point. */
 export function nightRing([lon, lat]: [number, number]): Polygon {
   return geoCircle()
