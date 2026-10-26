@@ -5,7 +5,7 @@ import { computed } from "vue";
 import ChartAxes from "./ChartAxes.vue";
 import { ticksOf } from "../lib/charts.js";
 import { depthColor } from "../lib/depth.js";
-import { eraStart, erasWithin, type Era } from "../lib/eras.js";
+import { eraLabels, eraStart, erasWithin, type EraLabel } from "../lib/eras.js";
 import { fmtFloor, fmtInt, fmtMag, placeOf } from "../lib/format.js";
 import { CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { sequenceOf } from "../lib/sequence.js";
@@ -21,10 +21,6 @@ const SHORT_DAYS = 120;
 const SPARSE_DAYS = 60;
 
 type Dated = ApiEvent & { mag: number };
-interface EraMark {
-  era: Era;
-  x: number;
-}
 
 const catalog = useInjected(CATALOG);
 const clock = useInjected(CLOCK);
@@ -55,10 +51,12 @@ function xTicks(x: ScaleTime<number, number>, count: number) {
     days <= SHORT_DAYS ? "%b %-d" : undefined,
   );
 }
-function eraMarks(x: (d: Date) => number): EraMark[] {
-  return erasWithin(domain.value[0], domain.value[1]).map((era) => ({ era, x: x(eraStart(era)) }));
+function eraMarks(x: (d: Date) => number): EraLabel[] {
+  return eraLabels(
+    erasWithin(domain.value[0], domain.value[1]).map((era) => ({ era, x: x(eraStart(era)) })),
+  );
 }
-function erasSentence(marks: EraMark[]): string {
+function erasSentence(marks: EraLabel[]): string {
   if (marks.length === 0) return "";
   const list = marks.map((m) => `${String(m.era.year)} (${m.era.note})`).join("; ");
   return ` Dashed lines mark changes in the record, not in the Earth: ${list}.`;
@@ -196,7 +194,11 @@ const caption = computed(
             style="stroke: var(--muted)"
             stroke-dasharray="3 3"
           />
-          <text :x="m.x + 3" :y="M.t + 9" style="fill: var(--muted); font: 10px var(--f-data)">
+          <text
+            :x="m.x + 3"
+            :y="M.t + 9 + m.tier * 11"
+            style="fill: var(--muted); font: 10px var(--f-data)"
+          >
             {{ m.era.label }}
           </text>
         </g>
@@ -229,7 +231,11 @@ const caption = computed(
             style="stroke: var(--muted)"
             stroke-dasharray="3 3"
           />
-          <text :x="m.x + 3" :y="M.t + 9" style="fill: var(--muted); font: 10px var(--f-data)">
+          <text
+            :x="m.x + 3"
+            :y="M.t + 9 + m.tier * 11"
+            style="fill: var(--muted); font: 10px var(--f-data)"
+          >
             {{ m.era.label }}
           </text>
         </g>
