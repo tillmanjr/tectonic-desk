@@ -8,13 +8,14 @@ import { alert, spaceWindow } from "../support/space.js";
 const NOW_MS = Date.parse("2026-10-13T12:00:00Z");
 
 describe("SpaceStack", () => {
-  it("draws six rows on one axis with bars, bands, references, ticks and alert marks", async () => {
+  it("draws seven rows on one axis with bars, bands, references, ticks and alert marks", async () => {
     const ctx = await makeContext({ space: true });
     const w = mountWith(SpaceStack, ctx, { highlight: null });
     const rows = w.findAll(".srow");
     expect(rows.map((r) => r.classes()[1])).toEqual([
       "kp",
       "dst",
+      "power",
       "mag",
       "wind",
       "xray",
@@ -29,25 +30,30 @@ describe("SpaceStack", () => {
     expect(kp?.find(".refs text").text()).toBe("G1");
     expect(rows[1]?.find(".refs line").exists()).toBe(true);
     expect(rows[1]?.find(".refs text").exists()).toBe(false);
-    expect(rows[2]?.find(".sline.bz_gsm").exists()).toBe(true);
-    expect(rows[2]?.find(".sline.bt").exists()).toBe(true);
-    const wind = rows[3];
+    const power = rows[2];
+    expect(power?.find(".rowlabel").text()).toBe("Hemispheric power N · S · GW");
+    expect(power?.find(".sline.hp_north").attributes("d")).toMatch(/^M/);
+    expect(power?.find(".sline.hp_south").attributes("d")).toMatch(/^M/);
+    expect(power?.find(".refs line").exists()).toBe(false);
+    expect(rows[3]?.find(".sline.bz_gsm").exists()).toBe(true);
+    expect(rows[3]?.find(".sline.bt").exists()).toBe(true);
+    const wind = rows[4];
     expect(wind?.find(".rightaxis").exists()).toBe(true);
     expect(wind?.find(".sline.density").exists()).toBe(true);
     expect(wind?.find(".rowlabel").text()).toBe("Speed · density · km/s · /cm³");
-    const xray = rows[4];
+    const xray = rows[5];
     expect(xray?.findAll(".axis text").map((t) => t.text())).toEqual(["B", "C", "M", "X"]);
     expect(xray?.findAll(".refs text").map((t) => t.text())).toEqual(["M1 · R1", "X1 · R3"]);
     expect(xray?.findAll(".flareband")).toHaveLength(1);
     expect(xray?.find(".flareband").classes()).not.toContain("hl");
     expect(xray?.find(".flareband title").text()).toBe("M1.3");
-    expect(rows[5]?.findAll(".axis text").map((t) => t.text())).toEqual([
+    expect(rows[6]?.findAll(".axis text").map((t) => t.text())).toEqual([
       "10⁰",
       "10¹",
       "10²",
       "10³",
     ]);
-    expect(rows[5]?.findAll(".refs text").map((t) => t.text())).toEqual(["S1", "S2", "S3"]);
+    expect(rows[6]?.findAll(".refs text").map((t) => t.text())).toEqual(["S1", "S2", "S3"]);
     expect(rows[0]?.find(".rowunit").exists()).toBe(false);
     expect(rows[0]?.find(".rowlabel").text()).toBe("Kp");
     const ticks = w.findAll(".alertticks path");
@@ -91,6 +97,7 @@ describe("SpaceStack", () => {
     ).toEqual([
       "Kp 3.67 · 3-h 4",
       "Dst -35",
+      "N 19.5 · S 18.1",
       "Bz -6.2 · Bt 9.8",
       "612 · 7.1",
       "long C4.2 · short B2.0",
@@ -104,7 +111,7 @@ describe("SpaceStack", () => {
         .findAll(".cross text")
         .slice(1)
         .map((t) => t.text()),
-    ).toEqual(["3-h 2", "", "", "", "", ""]);
+    ).toEqual(["3-h 2", "", "", "", "", "", ""]);
     await svg.trigger("pointermove", { clientX: 100 + 5 });
     expect(w.find(".cross").exists()).toBe(false);
     await svg.trigger("pointermove", { clientX: 100 + 449 });
@@ -169,7 +176,7 @@ describe("SpaceStack", () => {
     expect(xray.match(/L/g)).toBeNull();
     ctx.zone.value = "local";
     await nextTick();
-    expect(w.findAll(".srow")).toHaveLength(6);
+    expect(w.findAll(".srow")).toHaveLength(7);
     w.unmount();
   });
 

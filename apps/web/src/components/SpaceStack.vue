@@ -63,6 +63,8 @@ const SHORT: Record<SpaceSeries, string> = {
   xray_short: "short",
   p10: "≥10",
   p100: "≥100",
+  hp_north: "N",
+  hp_south: "S",
 };
 
 /** A value in the row's own words: Kp in thirds, flux as a class, the rest to a decimal or two. */
