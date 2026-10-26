@@ -1,6 +1,12 @@
 import { AURORA_CELLS, auroraIndex as cellIndex } from "@tectonic/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createAuroraStore, decodeGrid, GRID_CACHE } from "../../src/lib/aurora.js";
+import {
+  createAuroraStore,
+  decodeGrid,
+  GRID_CACHE,
+  PLAY_STEP_MS,
+  PLAY_STRIDE,
+} from "../../src/lib/aurora.js";
 import { fakeApi } from "../support/api.js";
 import { auroraFrame, auroraIndex, auroraMeta, encodeGrid } from "../support/aurora.js";
 
@@ -105,11 +111,11 @@ describe("createAuroraStore", () => {
     const { api, frames } = framedApi(GRID_CACHE + 2);
     const store = createAuroraStore(api, { intervalMs: 1e9, doc: doc() });
     await store.load();
+    const settle = () => new Promise((r) => setTimeout(r, 0));
     for (const f of frames) {
       store.select(f.observed);
-      await vi.waitFor(() => {
-        expect(store.frame.value?.observed).toBe(f.observed);
-      });
+      await settle();
+      expect(store.frame.value?.observed).toBe(f.observed);
     }
     // the newest was fetched by the load, pushed out by the scrub, and fetched again at its end
     expect(api.auroraFrame).toHaveBeenCalledTimes(GRID_CACHE + 3);
@@ -124,6 +130,130 @@ describe("createAuroraStore", () => {
       expect(store.frame.value?.observed).toBe(frames[GRID_CACHE + 1]?.observed);
     });
     expect(api.auroraFrame).toHaveBeenCalledTimes(GRID_CACHE + 4);
+  });
+
+  it("plays from live through every sixth frame and follows live again at the end", async () => {
+    vi.useFakeTimers();
+    const { api, frames } = framedApi(20);
+    const store = createAuroraStore(api, { intervalMs: 1e9, doc: doc() });
+    await store.load();
+    const observedAt = (i: number) => frames[i]?.observed;
+    const calls = () =>
+      vi
+        .mocked(api.auroraFrame)
+        .mock.calls.map((c) => frames.findIndex((f) => f.observed === c[0]));
+    expect(calls()).toEqual([19]);
+
+    store.play();
+    expect(store.playing.value).toBe(true);
+    expect(store.selected.value).toBe(observedAt(0));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.frame.value?.observed).toBe(observedAt(0));
+    // the frame on show was fetched first, then the one a stride on was warmed
+    expect(calls()).toEqual([19, 0, PLAY_STRIDE]);
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS - 1);
+    expect(store.selected.value).toBe(observedAt(0));
+    await vi.advanceTimersByTimeAsync(1);
+    expect(store.selected.value).toBe(observedAt(6));
+    expect(store.frame.value?.observed).toBe(observedAt(6));
+    expect(calls()).toEqual([19, 0, 6, 12]);
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(store.selected.value).toBe(observedAt(12));
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(store.selected.value).toBe(observedAt(18));
+    expect(calls()).toEqual([19, 0, 6, 12, 18]);
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    // past the newest: following live, from the cache
+    expect(store.playing.value).toBe(false);
+    expect(store.selected.value).toBeNull();
+    expect(store.frame.value?.observed).toBe(observedAt(19));
+    expect(calls()).toEqual([19, 0, 6, 12, 18]);
+
+    // from a selected frame the run resumes a stride on, and the exact last frame ends it
+    const nineteen = framedApi(19);
+    const again = createAuroraStore(nineteen.api, { intervalMs: 1e9, doc: doc() });
+    await again.load();
+    again.select(nineteen.frames[10]?.observed ?? "");
+    await vi.advanceTimersByTimeAsync(0);
+    again.play();
+    expect(again.selected.value).toBe(nineteen.frames[16]?.observed);
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(again.playing.value).toBe(false);
+    expect(again.selected.value).toBeNull();
+    expect(again.frame.value?.observed).toBe(nineteen.frames[18]?.observed);
+    vi.useRealTimers();
+  });
+
+  it("pauses on a scrub, a stop or a hidden page, survives a lost grid, and ends when the frames go", async () => {
+    vi.useFakeTimers();
+    const { api, frames } = framedApi(20);
+    const lost = frames[PLAY_STRIDE]?.observed ?? "";
+    const answer = vi.mocked(api.auroraFrame).getMockImplementation();
+    vi.mocked(api.auroraFrame).mockImplementation((observed: string) =>
+      observed === lost
+        ? Promise.reject(new Error("lost"))
+        : (answer?.(observed) ?? Promise.reject(new Error("none"))),
+    );
+    const d = doc();
+    const store = createAuroraStore(api, { intervalMs: 1e9, doc: d });
+    store.start();
+    await vi.advanceTimersByTimeAsync(0);
+
+    // one frame: nothing to play
+    const one = framedApi(1);
+    const single = createAuroraStore(one.api, { intervalMs: 1e9, doc: doc() });
+    await single.load();
+    single.play();
+    expect(single.playing.value).toBe(false);
+
+    // a grid that fails to load reports the error and the run moves on after its step
+    store.play();
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(store.selected.value).toBe(lost);
+    expect(store.error.value).toBe("lost");
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(store.selected.value).toBe(frames[12]?.observed);
+    expect(store.error.value).toBeNull();
+
+    // a scrub pauses
+    store.select(frames[3]?.observed ?? "");
+    expect(store.playing.value).toBe(false);
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS * 2);
+    expect(store.selected.value).toBe(frames[3]?.observed);
+
+    // a second play before the first frame is up supersedes it: the first books no step
+    store.select(frames[0]?.observed ?? "");
+    store.play();
+    store.play();
+    expect(store.selected.value).toBe(frames[12]?.observed);
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(store.selected.value).toBe(frames[18]?.observed);
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(store.playing.value).toBe(false);
+
+    // the page hidden pauses, and so does stopping the store
+    d.hidden = true;
+    d.fire();
+    expect(store.playing.value).toBe(false);
+    d.hidden = false;
+    d.fire();
+    await vi.advanceTimersByTimeAsync(0);
+    store.play();
+    expect(store.playing.value).toBe(true);
+    store.stop();
+    expect(store.playing.value).toBe(false);
+
+    // the index emptying under a run ends it
+    store.start();
+    await vi.advanceTimersByTimeAsync(0);
+    store.select(null);
+    store.play();
+    store.frames.value = [];
+    await vi.advanceTimersByTimeAsync(PLAY_STEP_MS);
+    expect(store.playing.value).toBe(false);
+    expect(store.frame.value).toBeNull();
+    store.stop();
+    vi.useRealTimers();
   });
 
   it("polls every interval while visible and stops with the page", async () => {

@@ -35,6 +35,8 @@
   --space: #4a4a9a;
   --sw-bz: #c62828;
   --sw-bt: #8e9ba6;
+  --sw-hp: #2e7d32;
+  --sw-hp-south: #7cb342;
   --sw-speed: #0a6a85;
   --sw-density: #8e9ba6;
   --sw-xray: #e06a00;
@@ -86,6 +88,8 @@
     --space: #8f8fe0;
     --sw-bz: #ff6b6b;
     --sw-bt: #8e9ba6;
+    --sw-hp: #81c784;
+    --sw-hp-south: #aed581;
     --sw-speed: #55b6d1;
     --sw-density: #8e9ba6;
     --sw-xray: #ff9a3c;
@@ -2435,6 +2439,13 @@ table.matrix {
 .srow .sline.dst {
   stroke: var(--ink);
 }
+.srow .sline.hp_north {
+  stroke: var(--sw-hp);
+}
+.srow .sline.hp_south {
+  stroke: var(--sw-hp-south);
+  stroke-width: 1;
+}
 .srow .sline.bz_gsm {
   stroke: var(--sw-bz);
 }
@@ -2479,6 +2490,13 @@ table.matrix {
   paint-order: stroke;
   stroke: var(--panel);
   stroke-width: 3px;
+  pointer-events: none;
+}
+/* The aurora frame on show, while a past one is chosen. */
+.aumark {
+  stroke: var(--au-70);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
   pointer-events: none;
 }
 @media (max-width: 900px) {
@@ -2603,7 +2621,7 @@ table.matrix {
 }
 .scrub {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 6px 10px;
   align-items: center;
   margin-bottom: 8px;

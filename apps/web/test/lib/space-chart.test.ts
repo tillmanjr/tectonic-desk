@@ -35,7 +35,9 @@ describe("domains and ticks", () => {
     expect(density[1]).toBeCloseTo(12.6, 9);
     expect(byId.dst?.domain([-35])).toEqual([-55, 20]);
     expect(byId.mag?.domain([-6.2, 9.8])).toEqual([-9.8, 9.8]);
-    expect(ROWS.map((r) => r.id)).toEqual(["kp", "dst", "mag", "wind", "xray", "protons"]);
+    expect(byId.power?.domain([12, 21])).toEqual([-2, 42]);
+    expect(byId.power?.domain([30, 95])).toEqual([-4.75, 99.75]);
+    expect(ROWS.map((r) => r.id)).toEqual(["kp", "dst", "power", "mag", "wind", "xray", "protons"]);
     expect(byId.xray?.ticks?.(1e-9, 1e-3)).toEqual([1e-7, 1e-6, 1e-5, 1e-4]);
     expect(byId.protons?.ticks?.(1e-2, 1600)).toEqual([1, 10, 100, 1000]);
     expect(ROWS.filter((r) => r.scale === "linear").every((r) => r.ticks === null)).toBe(true);
@@ -71,7 +73,7 @@ describe("lines, bars and bands", () => {
     expect(gapMs("kp_1m", null)).toBe(3 * 60_000);
     expect(gapMs("kp_1m", 420)).toBe(3 * 420_000);
     expect(gapMs("kp_3h", 420)).toBe(9 * 3_600_000);
-    expect(Object.keys(CADENCE_MS)).toHaveLength(11);
+    expect(Object.keys(CADENCE_MS)).toHaveLength(13);
   });
 
   it("maps a pointer to viewBox units against its element, or null without one", () => {

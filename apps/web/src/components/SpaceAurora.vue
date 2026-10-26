@@ -93,12 +93,21 @@ const power = (gw: number | null): string =>
             @input="scrub"
           />
           <span class="cap">{{ fmtStamp(frame.observed, zone, { date: "monthday" }) }}</span>
+          <button
+            type="button"
+            :disabled="last < 1"
+            :aria-pressed="store.playing.value"
+            @click="store.playing.value ? store.pause() : store.play()"
+          >
+            {{ store.playing.value ? "Pause" : "Play" }}
+          </button>
           <button type="button" :disabled="following" @click="store.select(null)">Latest</button>
         </div>
         <p class="cap">
           OVATION Prime (SWPC): the probability of aurora over a point at the forecast time, 30 to
           90 minutes after the solar wind observation at L1. Noon is at the top of each map and the
-          night side is shaded; the scrub runs over the last three days of frames.
+          night side is shaded; the scrub runs over the last three days of frames, and Play steps
+          through them half an hour at a time.
         </p>
       </div>
     </div>
