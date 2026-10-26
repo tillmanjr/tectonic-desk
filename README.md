@@ -62,7 +62,9 @@ wind (the spacecraft SWPC marks active) and the GOES X-ray and proton fluxes eve
 (1 h). SWPC keeps six hours to seven days of each file; the store keeps everything, thinning
 1-minute rows older than 30 days to 5-minute means every `SPACE_PRUNE_INTERVAL_MS` (6 h).
 The aurora oval (OVATION Prime's 1° probability grid, 65,160 bytes a frame, with the
-hemispheric power from the same run) joins the fast job and is kept 72 hours in `space_aurora`.
+hemispheric power from the same run) joins the fast job and is kept 72 hours in `space_aurora`;
+the hemispheric power rows also land in the samples table as the series `hp_north` and
+`hp_south`, stored at the forecast time they apply to.
 `SPACE_ENABLED=false` leaves these jobs out. The files are small on the wire (SWPC gzips them;
 the solar wind costs about 100 MB a day) and the jobs never write `ingest_runs`.
 
@@ -170,9 +172,10 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   the SWPC alerts, warnings, watches and summaries of the window as a row of cards under the
   tiles, newest on the left, edged red, orange, yellow or green by kind and opening to the full
   message; then every series on one time axis (Kp bars coloured by G level under the 1-minute estimate, Dst,
-  Bz and Bt, speed and density, X-ray on a log axis with class letters and flares shaded,
-  protons with the S thresholds), SWPC alerts as ticks along the top and a pointer readout of
-  every row at one instant. The rail carries the three-day forecast (R and S as probabilities,
+  the north and south hemispheric power in GW, Bz and Bt, speed and density, X-ray on a log axis
+  with class letters and flares shaded, protons with the S thresholds), SWPC alerts as ticks
+  along the top, a pointer readout of every row at one instant, and a dashed marker at the
+  aurora frame on show while a past one is chosen. The rail carries the three-day forecast (R and S as probabilities,
   G as a level, Kp maximum) and the flares (hover lights the band, click frames the flare). The window (`?window=6h|24h|3d|7d|30d`, default 24 h)
   or a fixed range (`?from=&to=`) is in the URL; a window refreshes every minute, a range is
   read once.
@@ -180,7 +183,8 @@ the page is at http://localhost:5173 and `/api` is proxied to port 3000.
   each pole down to 40°, noon at the top, the night side shaded at the forecast time) of OVATION
   Prime's probability bands at 10, 30, 50, 70 and 90 %, drawn from the stored grid with
   d3-contour; the caption gives the observation and forecast times and the hemispheric power,
-  and a scrub runs over the last three days of frames (`Latest` follows the newest again).
+  a scrub runs over the last three days of frames (`Latest` follows the newest again) and
+  `Play` steps through them half an hour at a time, about 30 seconds for the three days.
 - **Field overlays.** `Field` in the map toolbar draws a gravity or magnetic anomaly raster under
   the line work, on every map page, off by default. Gravity is the Scripps free-air anomaly on
   the global view (EGM2008 over land, clipped at ±120 mGal) and the USGS DDS-9 isostatic residual

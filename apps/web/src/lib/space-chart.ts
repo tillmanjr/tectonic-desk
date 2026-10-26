@@ -17,7 +17,7 @@ export interface RightAxis {
   domain: (values: number[]) => [number, number];
 }
 
-export type RowId = "kp" | "dst" | "mag" | "wind" | "xray" | "protons";
+export type RowId = "kp" | "dst" | "power" | "mag" | "wind" | "xray" | "protons";
 
 export interface RowSpec {
   id: RowId;
@@ -114,6 +114,18 @@ export const ROWS: RowSpec[] = [
     tickLabel: null,
   },
   {
+    id: "power",
+    label: "Hemispheric power N · S",
+    unit: "GW",
+    series: ["hp_north", "hp_south"],
+    right: null,
+    scale: "linear",
+    domain: (v) => spanAtLeast(v, 0, 40),
+    refs: [],
+    ticks: null,
+    tickLabel: null,
+  },
+  {
     id: "mag",
     label: "Bz · Bt",
     unit: "nT",
@@ -192,6 +204,8 @@ export const CADENCE_MS: Record<SpaceSeries, number> = {
   xray_short: 60_000,
   p10: 300_000,
   p100: 300_000,
+  hp_north: 300_000,
+  hp_south: 300_000,
 };
 
 /** A line breaks where consecutive points lie more than three steps apart. */

@@ -16,6 +16,7 @@ import {
   parseAlerts,
   parseAuroraFrame,
   parseDst,
+  hemiPowerSamples,
   parseFlares,
   parseKp1m,
   parseHemiPower,
@@ -88,7 +89,8 @@ async function runParts(ctx: SpaceContext, job: string, parts: Part[]): Promise<
 
 /**
  * The newest OVATION frame with its hemispheric power, then the frames past their retention
- * go. A power file that fails leaves the pair null rather than losing the frame.
+ * go. A power file that fails leaves the pair null rather than losing the frame. The power
+ * rows also land in the samples table as two series at their forecast times.
  */
 async function syncAurora(ctx: SpaceContext): Promise<number> {
   const frame = parseAuroraFrame(await ctx.space.fetchAurora());
@@ -99,6 +101,7 @@ async function syncAurora(ctx: SpaceContext): Promise<number> {
     ctx.log.warn({ job: "space_fast", file: "hemi_power", err }, "hemispheric power unavailable");
   }
   const inserted = await insertAuroraFrame(ctx.db, withPower(frame, power));
+  await upsertSamples(ctx.db, hemiPowerSamples(power));
   await pruneAurora(ctx.db, new Date(ctx.now().getTime() - AURORA_RETENTION_HOURS * HOUR_MS));
   return inserted;
 }

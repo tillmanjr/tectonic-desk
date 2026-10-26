@@ -7,6 +7,7 @@ import {
   parseAuroraFrame,
   parseDst,
   parseFlares,
+  hemiPowerSamples,
   parseHemiPower,
   parseKp1m,
   parseKp3h,
@@ -249,6 +250,13 @@ describe("record parsers", () => {
     expect(withPower(frame, rows)).toMatchObject({ powerNorth: 20, powerSouth: 19 });
     expect(withPower(frame, rows.slice(0, 1))).toBe(frame);
     expect(frame.powerNorth).toBeNull();
+    expect(hemiPowerSamples(rows)).toEqual([
+      { series: "hp_north", time: new Date("2026-10-25T13:20:00Z"), source: "ovation", value: 18 },
+      { series: "hp_south", time: new Date("2026-10-25T13:20:00Z"), source: "ovation", value: 17 },
+      { series: "hp_north", time: new Date("2026-10-25T13:30:00Z"), source: "ovation", value: 20 },
+      { series: "hp_south", time: new Date("2026-10-25T13:30:00Z"), source: "ovation", value: 19 },
+    ]);
+    expect(hemiPowerSamples([])).toEqual([]);
   });
 
   it("reads scale text as numbers", () => {

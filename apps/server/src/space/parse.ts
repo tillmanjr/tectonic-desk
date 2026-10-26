@@ -262,6 +262,14 @@ export function parseHemiPower(text: string): HemiPowerRow[] {
   return out;
 }
 
+/** Two samples per row at the forecast time, so the power reads beside Kp and Dst. */
+export function hemiPowerSamples(rows: HemiPowerRow[]): SpaceSample[] {
+  return rows.flatMap((r) => [
+    { series: "hp_north", time: r.forecast, source: "ovation", value: r.north },
+    { series: "hp_south", time: r.forecast, source: "ovation", value: r.south },
+  ]);
+}
+
 /** The frame with the power pair of the row forecast for the same instant, if there is one. */
 export function withPower(frame: AuroraFrame, rows: HemiPowerRow[]): AuroraFrame {
   const at = frame.forecast.getTime();

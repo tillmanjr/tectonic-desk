@@ -42,8 +42,10 @@ describe("SpaceAurora", () => {
     expect(slider.attributes("max")).toBe("2");
     expect(slider.element.value).toBe("2");
     expect(w.find(".scrub .cap").text()).toBe("10-13 11:50 UTC");
-    const latest = w.find(".scrub button");
-    expect(latest.attributes("disabled")).toBeDefined();
+    const [play, latest] = w.findAll(".scrub button");
+    expect(play?.text()).toBe("Play");
+    expect(play?.attributes("disabled")).toBeUndefined();
+    expect(latest?.attributes("disabled")).toBeDefined();
 
     await slider.setValue("0");
     expect(ctx.aurora.selected.value).toBe(auroraMeta(20).observed);
@@ -52,14 +54,25 @@ describe("SpaceAurora", () => {
     });
     expect(ctx.api.auroraFrame).toHaveBeenLastCalledWith(auroraMeta(20).observed);
     expect(w.find("input").element.value).toBe("0");
-    expect(latest.attributes("disabled")).toBeUndefined();
+    expect(latest?.attributes("disabled")).toBeUndefined();
 
     // the right-hand end means following the newest again, as does Latest
     await slider.setValue("2");
     expect(ctx.aurora.selected.value).toBeNull();
     await slider.setValue("1");
     expect(ctx.aurora.selected.value).toBe(auroraMeta(15).observed);
-    await latest.trigger("click");
+    await latest?.trigger("click");
+    expect(ctx.aurora.selected.value).toBeNull();
+
+    // Play reads Pause while the store runs, and a click pauses it
+    await play?.trigger("click");
+    expect(ctx.aurora.playing.value).toBe(true);
+    expect(play?.text()).toBe("Pause");
+    expect(play?.attributes("aria-pressed")).toBe("true");
+    await play?.trigger("click");
+    expect(ctx.aurora.playing.value).toBe(false);
+    expect(play?.text()).toBe("Play");
+    await latest?.trigger("click");
     expect(ctx.aurora.selected.value).toBeNull();
     await vi.waitFor(() => {
       expect(w.find(".times").text()).toBe("Observed 11:50 UTC · forecast for 13:05 UTC");
@@ -97,6 +110,7 @@ describe("SpaceAurora", () => {
     expect(w.find(".power").text()).toBe("Hemispheric power N — · S —");
     expect(w.find(".bad").text()).toBe("HTTP 503");
     expect(w.find("input").attributes("max")).toBe("0");
+    expect(w.find(".scrub button").attributes("disabled")).toBeDefined();
     w.unmount();
   });
 });
