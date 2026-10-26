@@ -6,14 +6,14 @@ forecast time, over the basemap, under the plates and markers.
 
 ## Decisions
 
-| Question       | Decision                                                                                                                                              |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Which frame    | The frame the aurora store has on show: the newest unless the Space page scrubbed or paused a replay, so the two views agree.                         |
-| Night side     | Shaded with the layer, at the frame's forecast time, under the bands. Not a separate toggle.                                                          |
-| Which maps     | Every `MapShell`: Active Earth, Earthquakes, Volcanoes; global and West Coast frames.                                                                 |
-| Data           | Nothing new: the store's `bands`, `nightRing` and `subsolarPoint` from the aurora work.                                                               |
-| Store lifetime | The map starts the aurora store while its toggle is on and stops it when the toggle goes off or the map unmounts; the Space page keeps its own start. |
-| Credits        | Unchanged: OVATION Prime is already credited.                                                                                                         |
+| Question       | Decision                                                                                                                                                                                                                                                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Which frame    | The frame the aurora store has on show: the newest unless the Space page scrubbed or paused a replay, so the two views agree.                                                                                                                                                                               |
+| Night side     | Shaded with the layer, at the frame's forecast time, under the bands. Not a separate toggle.                                                                                                                                                                                                                |
+| Which maps     | Every `MapShell`: Active Earth, Earthquakes, Volcanoes; global and West Coast frames.                                                                                                                                                                                                                       |
+| Data           | Nothing new: the store's `bands`, `nightRing` and `subsolarPoint` from the aurora work.                                                                                                                                                                                                                     |
+| Store lifetime | The map starts the aurora store while its toggle is on and stops it when the toggle goes off or the map unmounts; the Space page keeps its own start. The store counts its holders, because a page switch from a map with the layer on to the Space page starts the second holder before the first lets go. |
+| Credits        | Unchanged: OVATION Prime is already credited.                                                                                                                                                                                                                                                               |
 
 ## 1. `useMapView`
 
@@ -52,17 +52,13 @@ The legend gets a new prop `aurora: AuroraLegend | null` (null when the toggle i
 
 ```ts
 export interface AuroraLegend {
-  /** The frame's forecast time as shown, or null while the first frame loads. */
-  forecast: string | null;
+  /** The frame's forecast time as a clock in the zone in force; null while the first frame loads. */
+  time: string | null;
   error: string | null;
 }
 ```
 
-`MapLegend` renders, when `aurora !== null`, one `.sw.aurorarow`: the five `au-NN` swatches with
-their percentages and "chance of aurora", then "at HH:MM UTC" (`fmtClock` in the zone), or
-"loading" while `forecast` is null, or the error text when `error` is set. `MapShell` builds
-it from the store: `forecast` is `aurora.frame.value?.forecast ?? null`, `error` is
-`aurora.error.value`.
+`MapLegend` renders, when `aurora !== null`, one `.sw.aurorarow`: the five `au-NN` swatches with their percentages and "chance of aurora", then "at HH:MM UTC", or "loading" while `time` is null, or the error text when `error` is set. `MapShell` builds it from the store with `fmtClock` in the zone in force, so the legend stays free of injected state.
 
 ## 4. Tests
 
