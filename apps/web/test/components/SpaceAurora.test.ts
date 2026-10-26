@@ -97,6 +97,11 @@ describe("SpaceAurora", () => {
     expect(w.find(".note").text()).toBe("No aurora frames yet.");
     expect(w.findAll("svg.polar")).toHaveLength(0);
     expect(err).toHaveBeenCalledWith("basemap failed to load", expect.any(Error));
+    // without a frame the error stands where the maps would be
+    ctx.aurora.error.value = "HTTP 503";
+    await nextTick();
+    expect(w.find(".bad").text()).toBe("HTTP 503");
+    expect(w.find(".aurorainfo").exists()).toBe(false);
 
     ctx.aurora.frames.value = [auroraMeta(10, { powerNorth: null, powerSouth: null })];
     ctx.aurora.frame.value = {
@@ -108,7 +113,9 @@ describe("SpaceAurora", () => {
     expect(w.findAll("svg.polar")).toHaveLength(2);
     expect(w.findAll("svg.polar .land")).toHaveLength(0);
     expect(w.find(".power").text()).toBe("Hemispheric power N — · S —");
-    expect(w.find(".bad").text()).toBe("HTTP 503");
+    // with the maps up, the error sits in the caption column so the maps do not move
+    expect(w.findAll(".bad")).toHaveLength(1);
+    expect(w.find(".aurorainfo .bad").text()).toBe("HTTP 503");
     expect(w.find("input").attributes("max")).toBe("0");
     expect(w.find(".scrub button").attributes("disabled")).toBeDefined();
     w.unmount();

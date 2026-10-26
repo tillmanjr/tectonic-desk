@@ -53,7 +53,9 @@ const power = (gw: number | null): string =>
 <template>
   <section class="panel aurora">
     <h2>Aurora oval<span>OVATION Prime</span></h2>
-    <p v-if="store.error.value !== null" class="cap bad">{{ store.error.value }}</p>
+    <p v-if="frame === null && store.error.value !== null" class="cap bad">
+      {{ store.error.value }}
+    </p>
     <p v-if="frame === null" class="cap note">No aurora frames yet.</p>
     <div v-else class="auroragrid">
       <AuroraMap
@@ -69,6 +71,7 @@ const power = (gw: number | null): string =>
         :land="land"
       />
       <div class="aurorainfo">
+        <p v-if="store.error.value !== null" class="cap bad">{{ store.error.value }}</p>
         <p class="times">
           Observed {{ fmtClock(frame.observed, zone) }} · forecast for
           {{ fmtClock(frame.forecast, zone) }}
