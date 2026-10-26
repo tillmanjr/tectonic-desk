@@ -6,6 +6,7 @@ import {
   GRID_CACHE,
   PLAY_STEP_MS,
   PLAY_STRIDE,
+  SCRUB_SETTLE_MS,
 } from "../../src/lib/aurora.js";
 import { fakeApi } from "../support/api.js";
 import { auroraFrame, auroraIndex, auroraMeta, encodeGrid } from "../support/aurora.js";
@@ -86,7 +87,8 @@ describe("createAuroraStore", () => {
     const store = createAuroraStore(api, { intervalMs: 1e9, doc: doc() });
     await store.load();
     store.select(frames[0]?.observed ?? "");
-    expect(store.loading.value).toBe(true);
+    // the fetch waits for the slider to rest
+    expect(store.loading.value).toBe(false);
     await vi.waitFor(() => {
       expect(store.frame.value?.grid[cellIndex(0, 0)]).toBe(0);
     });
@@ -108,13 +110,13 @@ describe("createAuroraStore", () => {
   });
 
   it("keeps the most recent grids and refetches one that fell out", async () => {
+    vi.useFakeTimers();
     const { api, frames } = framedApi(GRID_CACHE + 2);
     const store = createAuroraStore(api, { intervalMs: 1e9, doc: doc() });
     await store.load();
-    const settle = () => new Promise((r) => setTimeout(r, 0));
     for (const f of frames) {
       store.select(f.observed);
-      await settle();
+      await vi.advanceTimersByTimeAsync(SCRUB_SETTLE_MS);
       expect(store.frame.value?.observed).toBe(f.observed);
     }
     // the newest was fetched by the load, pushed out by the scrub, and fetched again at its end
@@ -130,6 +132,46 @@ describe("createAuroraStore", () => {
       expect(store.frame.value?.observed).toBe(frames[GRID_CACHE + 1]?.observed);
     });
     expect(api.auroraFrame).toHaveBeenCalledTimes(GRID_CACHE + 4);
+  });
+
+  it("fetches a scrubbed frame once the slider rests, and a cached one at once", async () => {
+    vi.useFakeTimers();
+    const { api, frames } = framedApi(12);
+    const store = createAuroraStore(api, { intervalMs: 1e9, doc: doc() });
+    await store.load();
+    expect(api.auroraFrame).toHaveBeenCalledTimes(1);
+    // a drag across three frames asks for none of them until it rests
+    store.select(frames[2]?.observed ?? "");
+    await vi.advanceTimersByTimeAsync(SCRUB_SETTLE_MS - 10);
+    store.select(frames[5]?.observed ?? "");
+    await vi.advanceTimersByTimeAsync(SCRUB_SETTLE_MS - 10);
+    store.select(frames[8]?.observed ?? "");
+    expect(api.auroraFrame).toHaveBeenCalledTimes(1);
+    expect(store.frame.value?.observed).toBe(frames[11]?.observed);
+    await vi.advanceTimersByTimeAsync(SCRUB_SETTLE_MS);
+    expect(api.auroraFrame).toHaveBeenCalledTimes(2);
+    expect(api.auroraFrame).toHaveBeenLastCalledWith(frames[8]?.observed);
+    expect(store.frame.value?.observed).toBe(frames[8]?.observed);
+    // a frame in the cache shows without waiting, and so does the newest
+    store.select(frames[11]?.observed ?? "");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.frame.value?.observed).toBe(frames[11]?.observed);
+    store.select(frames[8]?.observed ?? "");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.frame.value?.observed).toBe(frames[8]?.observed);
+    expect(api.auroraFrame).toHaveBeenCalledTimes(2);
+    // a settle still pending when the store stops is dropped
+    store.start();
+    await vi.advanceTimersByTimeAsync(0);
+    store.select(frames[3]?.observed ?? "");
+    store.stop();
+    await vi.advanceTimersByTimeAsync(SCRUB_SETTLE_MS);
+    expect(api.auroraFrame).toHaveBeenCalledTimes(2);
+    // with no frames at all there is nothing to wait for
+    store.frames.value = [];
+    store.select(frames[3]?.observed ?? "");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(store.frame.value).toBeNull();
   });
 
   it("plays from live through every sixth frame and follows live again at the end", async () => {

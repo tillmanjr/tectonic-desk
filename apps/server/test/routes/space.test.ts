@@ -220,6 +220,16 @@ describe.skipIf(!docker)("space routes", () => {
     const bad = await inject("/api/space/aurora/yesterday");
     expect(bad.statusCode).toBe(400);
     expect(bad.json<ApiError>().issues?.[0]?.path).toBe("observed");
+
+    // frame reads have a looser limit than the rest of the API, so a replay is not cut short
+    const tight = buildApp({ db: t.db, now: () => NOW, rateLimit: { max: 1, windowMs: 60_000 } });
+    const read = (url: string) => tight.inject({ method: "GET", url });
+    for (let i = 0; i < 3; i++) {
+      expect((await read("/api/space/aurora/2026-10-25T03:50:00Z")).statusCode).toBe(200);
+    }
+    expect((await read("/api/space/aurora")).statusCode).toBe(200);
+    expect((await read("/api/space/aurora")).statusCode).toBe(429);
+    await tight.close();
   });
 
   it("rejects a missing or malformed from, a reversed range, a span over 93 days and unknown keys", async () => {
