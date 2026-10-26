@@ -6,6 +6,7 @@ import {
   ingestRuns,
   mechanisms,
   spaceAlerts,
+  spaceAurora,
   spaceSamples,
   spaceScales,
 } from "../../src/db/schema.js";
@@ -53,5 +54,8 @@ describe("schema", () => {
     expect(getTableConfig(spaceSamples).indexes.map((i) => i.config.name)).toEqual([
       "space_samples_series_time_idx",
     ]);
+    const grid = getTableConfig(spaceAurora).columns.find((c) => c.name === "grid");
+    expect(grid?.getSQLType()).toBe("bytea");
+    expect(grid?.notNull).toBe(true);
   });
 });

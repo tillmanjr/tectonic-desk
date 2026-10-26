@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import {
   alertsSchema,
+  auroraSchema,
   dstSchema,
   flaresSchema,
   goesFluxSchema,
@@ -11,6 +12,7 @@ import {
   scalesSchema,
   windSchema,
   type AlertRow,
+  type AuroraDoc,
   type DstRow,
   type FlareRow,
   type GoesFluxRow,
@@ -38,6 +40,8 @@ export const SWPC_FILES = {
   fetchFlares: "/json/goes/primary/xray-flares-7-day.json",
   fetchAlerts: "/products/alerts.json",
   fetchScales: "/products/noaa-scales.json",
+  fetchAurora: "/json/ovation_aurora_latest.json",
+  fetchHemiPower: "/text/aurora-nowcast-hemi-power.txt",
 } as const;
 export type SpaceFile = keyof typeof SWPC_FILES;
 
@@ -60,6 +64,10 @@ export interface SpaceClient {
   fetchFlares: () => Promise<FlareRow[]>;
   fetchAlerts: () => Promise<AlertRow[]>;
   fetchScales: () => Promise<ScalesDoc>;
+  /** The newest OVATION Prime frame, about 140 KB gzipped on the wire. */
+  fetchAurora: () => Promise<AuroraDoc>;
+  /** The day's hemispheric power table, as text. */
+  fetchHemiPower: () => Promise<string>;
 }
 
 export class SpaceHttpError extends Error {
@@ -77,7 +85,11 @@ export function createSpaceClient(opts: SpaceClientOptions): SpaceClient {
   const timeoutMs = opts.timeoutMs ?? 30_000;
   const base = (opts.base ?? SWPC_BASE).replace(/\/$/, "");
 
-  async function getJson<T>(file: SpaceFile, schema: z.ZodType<T>): Promise<T> {
+  async function get<T>(
+    file: SpaceFile,
+    accept: string,
+    read: (res: Response) => Promise<T>,
+  ): Promise<T> {
     const url = base + SWPC_FILES[file];
     const controller = new AbortController();
     const timer = setTimeout(() => {
@@ -85,16 +97,20 @@ export function createSpaceClient(opts: SpaceClientOptions): SpaceClient {
     }, timeoutMs);
     try {
       const res = await doFetch(url, {
-        headers: { "user-agent": opts.userAgent, accept: "application/json" },
+        headers: { "user-agent": opts.userAgent, accept },
         signal: controller.signal,
       });
       if (!res.ok) throw new SpaceHttpError(res.status, url);
-      const body: unknown = await res.json();
-      return schema.parse(body);
+      return await read(res);
     } finally {
       clearTimeout(timer);
     }
   }
+
+  const getJson = <T>(file: SpaceFile, schema: z.ZodType<T>): Promise<T> =>
+    get(file, "application/json", async (res) => schema.parse(await res.json()));
+  const getText = (file: SpaceFile): Promise<string> =>
+    get(file, "text/plain", (res) => res.text());
 
   return {
     fetchKp1m: () => getJson("fetchKp1m", kp1mSchema),
@@ -108,5 +124,7 @@ export function createSpaceClient(opts: SpaceClientOptions): SpaceClient {
     fetchFlares: () => getJson("fetchFlares", flaresSchema),
     fetchAlerts: () => getJson("fetchAlerts", alertsSchema),
     fetchScales: () => getJson("fetchScales", scalesSchema),
+    fetchAurora: () => getJson("fetchAurora", auroraSchema),
+    fetchHemiPower: () => getText("fetchHemiPower"),
   };
 }

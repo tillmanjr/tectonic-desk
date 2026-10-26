@@ -1,4 +1,4 @@
-import type { SpaceSample } from "@tectonic/shared";
+import { AURORA_CELLS, auroraIndex, type AuroraFrame, type SpaceSample } from "@tectonic/shared";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   FINE_RETENTION_DAYS,
@@ -9,12 +9,17 @@ import {
 } from "../../src/ingest/space.js";
 import {
   alertsBetween,
+  auroraFrame,
+  auroraFrames,
   downsampleBefore,
   flaresBetween,
   insertAlerts,
+  insertAuroraFrame,
   latestAlert,
+  latestAuroraFrame,
   latestFlare,
   latestReadings,
+  pruneAurora,
   samplesBetween,
   scalesBetween,
   upsertFlares,
@@ -23,7 +28,7 @@ import {
 } from "../../src/repositories/space.js";
 import { kpMaxByDay, parseFlares, parseScales } from "../../src/space/parse.js";
 import { recordingLogger } from "../support/fixtures.js";
-import { flares, kpForecast, scales, stubSpace } from "../support/space-stub.js";
+import { aurora, flares, kpForecast, scales, stubSpace } from "../support/space-stub.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
 const docker = await dockerAvailable();
@@ -198,7 +203,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
     const ctx = { db: t.db, space: stubSpace(), log, now: () => NOW };
     const fast = await syncSpaceFast(ctx);
     expect(fast.failed).toEqual([]);
-    expect(fast.written).toEqual({ kp_1m: 6, mag: 6, wind: 6, xrays: 6, protons: 4 });
+    expect(fast.written).toEqual({ aurora: 1, kp_1m: 6, mag: 6, wind: 6, xrays: 6, protons: 4 });
     const events = await syncSpaceEvents(ctx);
     expect(events.written).toEqual({ flares: 3, alerts: 4, scales: 5 });
     const slow = await syncSpaceSlow(ctx);
@@ -216,7 +221,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
     };
     const result = await syncSpaceFast(partial);
     expect(result.failed).toEqual(["mag"]);
-    expect(result.written).toEqual({ kp_1m: 0, wind: 6, xrays: 6, protons: 4 });
+    expect(result.written).toEqual({ aurora: 0, kp_1m: 0, wind: 6, xrays: 6, protons: 4 });
     expect(partial.log.entries[0]).toMatchObject({
       level: "warn",
       obj: { job: "space_fast", file: "mag" },
@@ -235,5 +240,95 @@ describe.skipIf(!docker)("space repository and jobs", () => {
       job: "space_prune",
       cutoff: new Date(NOW.getTime() - FINE_RETENTION_DAYS * 86_400_000),
     });
+  });
+
+  it("stores aurora frames once, lists and reads them, and prunes by observation time", async () => {
+    const grid = new Uint8Array(AURORA_CELLS);
+    grid[auroraIndex(180, 67)] = 42;
+    grid[auroraIndex(359, -66)] = 7;
+    const frameAt = (iso: string, over: Partial<AuroraFrame> = {}): AuroraFrame => ({
+      observed: at(iso),
+      forecast: at(iso.replace("T0", "T1")),
+      powerNorth: 19.9,
+      powerSouth: 19.2,
+      grid,
+      ...over,
+    });
+    expect(await insertAuroraFrame(t.db, frameAt("2026-10-25T03:50:00Z"))).toBe(1);
+    expect(await insertAuroraFrame(t.db, frameAt("2026-10-25T03:50:00Z"))).toBe(0);
+    expect(
+      await insertAuroraFrame(
+        t.db,
+        frameAt("2026-10-25T03:55:00Z", { powerNorth: null, powerSouth: null }),
+      ),
+    ).toBe(1);
+    expect(await insertAuroraFrame(t.db, frameAt("2026-10-21T03:55:00Z"))).toBe(1);
+
+    const list = await auroraFrames(t.db, at("2026-10-22T04:00:00Z"));
+    expect(list).toEqual([
+      {
+        observed: at("2026-10-25T03:50:00Z"),
+        forecast: at("2026-10-25T13:50:00Z"),
+        powerNorth: expect.closeTo(19.9, 4),
+        powerSouth: expect.closeTo(19.2, 4),
+      },
+      {
+        observed: at("2026-10-25T03:55:00Z"),
+        forecast: at("2026-10-25T13:55:00Z"),
+        powerNorth: null,
+        powerSouth: null,
+      },
+    ]);
+    const stored = await auroraFrame(t.db, at("2026-10-25T03:50:00Z"));
+    expect(stored?.grid).toHaveLength(AURORA_CELLS);
+    expect(stored?.grid[auroraIndex(180, 67)]).toBe(42);
+    expect(stored?.grid[auroraIndex(359, -66)]).toBe(7);
+    expect(stored?.grid[auroraIndex(0, 0)]).toBe(0);
+    expect(await auroraFrame(t.db, at("2026-10-25T03:51:00Z"))).toBeNull();
+    expect((await latestAuroraFrame(t.db))?.observed).toEqual(at("2026-10-25T03:55:00Z"));
+
+    expect(await pruneAurora(t.db, at("2026-10-22T04:00:00Z"))).toBe(1);
+    expect(await pruneAurora(t.db, at("2026-10-22T04:00:00Z"))).toBe(0);
+    expect(await auroraFrames(t.db, at("2026-10-01T00:00:00Z"))).toHaveLength(2);
+  });
+
+  it("the aurora part stores the stub frame with its power, surviving a lost power file", async () => {
+    const ctx = { db: t.db, space: stubSpace(), log: recordingLogger(), now: () => NOW };
+    await syncSpaceFast(ctx);
+    const stored = await latestAuroraFrame(t.db);
+    expect(stored).toMatchObject({
+      observed: at("2026-10-25T12:12:00Z"),
+      forecast: at("2026-10-25T13:30:00Z"),
+      powerNorth: 20,
+      powerSouth: 19,
+    });
+    expect(stored?.grid[auroraIndex(180, 69)]).toBe(17);
+
+    await t.truncate();
+    const old = { ...aurora, "Observation Time": "2026-10-25T03:00:00Z" };
+    const noPower = {
+      ...ctx,
+      space: stubSpace({ fetchAurora: old, fetchHemiPower: new Error("power down") }),
+      log: recordingLogger(),
+    };
+    const result = await syncSpaceFast(noPower);
+    expect(result.written.aurora).toBe(1);
+    expect(result.failed).toEqual([]);
+    expect(noPower.log.entries[0]).toMatchObject({
+      level: "warn",
+      obj: { job: "space_fast", file: "hemi_power" },
+    });
+    expect(await latestAuroraFrame(t.db)).toMatchObject({ powerNorth: null, powerSouth: null });
+
+    // a later run prunes the frames past the 72-hour retention
+    const late = { ...ctx, now: () => at("2026-10-28T03:30:00Z") };
+    await syncSpaceFast(late);
+    const left = await auroraFrames(t.db, at("2026-10-01T00:00:00Z"));
+    expect(left.map((f) => f.observed)).toEqual([at("2026-10-25T12:12:00Z")]);
+  });
+
+  it("empty store answers empty aurora reads", async () => {
+    expect(await auroraFrames(t.db, at("2026-10-01T00:00:00Z"))).toEqual([]);
+    expect(await latestAuroraFrame(t.db)).toBeNull();
   });
 });

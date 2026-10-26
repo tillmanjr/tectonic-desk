@@ -28,6 +28,7 @@ import {
 import type { Zone } from "../lib/format.js";
 import {
   API,
+  AURORA,
   CATALOG,
   CLOCK,
   MARKS,
@@ -49,6 +50,7 @@ import {
   type MarksMode,
   type MarksNav,
 } from "../lib/keys.js";
+import { createAuroraStore } from "../lib/aurora.js";
 import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
@@ -80,6 +82,7 @@ const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
 const volcanoes = createVolcanoStore(api, now);
 const space = createSpaceStore(api, now);
+const aurora = createAuroraStore(api);
 const status = createStatusPoll(api, now, () => {
   void catalog.refetch();
   if (hasVolcanoes(page.value)) void volcanoes.refreshLive();
@@ -95,6 +98,7 @@ provide(CATALOG, catalog);
 provide(STATUS, status);
 provide(VOLCANOES, volcanoes);
 provide(SPACE, space);
+provide(AURORA, aurora);
 provide(SELECT, select);
 provide(SET_FILTER, setFilter);
 provide(SELECT_VOLCANO, selectVolcano);
@@ -198,10 +202,15 @@ async function boot(): Promise<void> {
   volcanoes.select(routeVolcano.value);
   if (hasVolcanoes(page.value)) await volcanoes.load();
 }
-/** The space store runs only while its page is open; it reads nothing the other pages need. */
+/** The space stores run only while their page is open; they read nothing the other pages need. */
 function syncSpace(p: Page): void {
-  if (p === "space") space.start();
-  else space.stop();
+  if (p === "space") {
+    space.start();
+    aurora.start();
+  } else {
+    space.stop();
+    aurora.stop();
+  }
 }
 /** Query keys that belong to one page's selection; dropped when moving between pages or regions. */
 const SELECTION_KEYS = ["event", "volcano"];
@@ -303,6 +312,7 @@ onUnmounted(() => {
   clock.stop();
   status.stop();
   space.stop();
+  aurora.stop();
 });
 </script>
 
@@ -331,7 +341,12 @@ onUnmounted(() => {
             </nav>
           </div>
           <div class="grp">
-            <RegionTabs v-if="page !== 'space'" @pick="pickRegion" />
+            <!-- The Space page has no region; the tabs stay in the layout, unseen, so the page switch does not shift. -->
+            <RegionTabs
+              :class="{ ghost: page === 'space' }"
+              :aria-hidden="page === 'space' ? 'true' : undefined"
+              @pick="pickRegion"
+            />
             <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
           </div>
         </nav>
@@ -430,7 +445,10 @@ onUnmounted(() => {
         <a href="https://wdc.kugi.kyoto-u.ac.jp/" rel="noopener" target="_blank"
           >World Data Center for Geomagnetism, Kyoto</a
         >, relayed by SWPC. The solar wind comes from whichever spacecraft at L1 SWPC marks active
-        (SOLAR-1, ACE or IMAP), named on the page.
+        (SOLAR-1, ACE or IMAP), named on the page. The aurora oval is SWPC's OVATION Prime (2013)
+        model: the probability of aurora over each 1° cell at the forecast time, 30 to 90 minutes
+        after the solar wind observation, with the hemispheric power of the same run; three days of
+        frames are kept here.
       </p>
       <p class="byline">
         Built for Barbara by

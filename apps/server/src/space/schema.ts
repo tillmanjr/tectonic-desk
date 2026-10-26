@@ -93,4 +93,12 @@ const scalesEntrySchema = z.looseObject({
 /** Keys `-1` (yesterday), `0` (today) observed; `1`..`3` predicted. */
 export const scalesSchema = z.record(z.string(), scalesEntrySchema);
 export type ScalesDoc = z.infer<typeof scalesSchema>;
+
+/** `json/ovation_aurora_latest.json`: 65 160 `[lon 0..359, lat -90..90, percent]` triples. */
+export const auroraSchema = z.looseObject({
+  "Observation Time": z.string(),
+  "Forecast Time": z.string(),
+  coordinates: z.array(z.tuple([z.number(), z.number(), z.number()])),
+});
+export type AuroraDoc = z.infer<typeof auroraSchema>;
 export type ScalesEntry = z.infer<typeof scalesEntrySchema>;

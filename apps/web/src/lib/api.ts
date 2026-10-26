@@ -10,6 +10,8 @@ import type {
   ApiVolcanoDetail,
   ApiVolcanoReportList,
   ApiRelief,
+  ApiAuroraFrame,
+  ApiAuroraIndex,
   ApiSpaceNow,
   ApiSpaceWindow,
   ApiVolcanoStatusList,
@@ -53,6 +55,10 @@ export interface ApiClient {
   spaceNow: () => Promise<ApiSpaceNow>;
   /** Space weather series and events between two ISO instants. */
   spaceWindow: (from: string, to: string) => Promise<ApiSpaceWindow>;
+  /** The aurora frames in store, newest last, without grids. */
+  auroraIndex: () => Promise<ApiAuroraIndex>;
+  /** One aurora frame by observation time, grid as base64. */
+  auroraFrame: (observed: string) => Promise<ApiAuroraFrame>;
 }
 
 export class ApiRequestError extends Error {
@@ -115,5 +121,7 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     spaceNow: () => get("/space/now"),
     spaceWindow: (from, to) =>
       get(`/space/window?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+    auroraIndex: () => get("/space/aurora"),
+    auroraFrame: (observed) => get(`/space/aurora/${encodeURIComponent(observed)}`),
   };
 }

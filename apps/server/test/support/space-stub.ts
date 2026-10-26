@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { SpaceClient, SpaceFile } from "../../src/space/client.js";
 import {
   alertsSchema,
+  auroraSchema,
   dstSchema,
   flaresSchema,
   goesFluxSchema,
@@ -31,6 +32,11 @@ export const protons = fixture("integral-protons-6-hour.json", goesFluxSchema);
 export const flares = fixture("xray-flares-7-day.json", flaresSchema);
 export const alerts = fixture("alerts.json", alertsSchema);
 export const scales = fixture("noaa-scales.json", scalesSchema);
+export const aurora = fixture("ovation.json", auroraSchema);
+export const hemiPower = readFileSync(
+  new URL("../fixtures/swpc/hemi-power.txt", import.meta.url),
+  "utf8",
+);
 
 type Answers = { [K in SpaceFile]: Awaited<ReturnType<SpaceClient[K]>> };
 const answers: Answers = {
@@ -45,6 +51,8 @@ const answers: Answers = {
   fetchFlares: flares,
   fetchAlerts: alerts,
   fetchScales: scales,
+  fetchAurora: aurora,
+  fetchHemiPower: hemiPower,
 };
 
 /** Per method, a replacement answer or an error to reject with. */
@@ -77,5 +85,7 @@ export function stubSpace(opts: SpaceStubOptions = {}): StubSpace {
     fetchFlares: method("fetchFlares", answers.fetchFlares, opts.fetchFlares),
     fetchAlerts: method("fetchAlerts", answers.fetchAlerts, opts.fetchAlerts),
     fetchScales: method("fetchScales", answers.fetchScales, opts.fetchScales),
+    fetchAurora: method("fetchAurora", answers.fetchAurora, opts.fetchAurora),
+    fetchHemiPower: method("fetchHemiPower", answers.fetchHemiPower, opts.fetchHemiPower),
   };
 }

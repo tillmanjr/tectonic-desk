@@ -1,4 +1,6 @@
 import type {
+  ApiAuroraFrame,
+  ApiAuroraFrameMeta,
   ApiEvent,
   ApiEventDetail,
   ApiEventFilter,
@@ -10,6 +12,8 @@ import type {
   ApiSpaceScales,
   ApiVolcanoReport,
   ApiVolcanoStatus,
+  AuroraFrame,
+  AuroraFrameMeta,
   EventWithMechanisms,
   StoredEvent,
   StoredMechanism,
@@ -183,4 +187,18 @@ export function toApiSpaceScales(r: SpaceScalesRow): ApiSpaceScales {
     sProb: r.sProb,
     kpMax: r.kpMax,
   };
+}
+
+export function toApiAuroraFrameMeta(f: AuroraFrameMeta): ApiAuroraFrameMeta {
+  return {
+    observed: iso(f.observed),
+    forecast: iso(f.forecast),
+    powerNorth: f.powerNorth,
+    powerSouth: f.powerSouth,
+  };
+}
+
+/** The grid travels as base64: 65 160 bytes become about 87 KB of text. */
+export function toApiAuroraFrame(f: AuroraFrame): ApiAuroraFrame {
+  return { ...toApiAuroraFrameMeta(f), grid: Buffer.from(f.grid).toString("base64") };
 }

@@ -1,13 +1,19 @@
-import type {
-  ScalesKind,
-  SpaceAlert,
-  SpaceFlare,
-  SpaceSample,
-  SpaceScales,
-  SpaceSeries,
+import {
+  AURORA_CELLS,
+  AURORA_HEIGHT,
+  AURORA_WIDTH,
+  auroraIndex,
+  type AuroraFrame,
+  type ScalesKind,
+  type SpaceAlert,
+  type SpaceFlare,
+  type SpaceSample,
+  type SpaceScales,
+  type SpaceSeries,
 } from "@tectonic/shared";
 import type {
   AlertRow,
+  AuroraDoc,
   DstRow,
   FlareRow,
   GoesFluxRow,
@@ -197,4 +203,68 @@ export function parseScales(doc: ScalesDoc, kpMax: Map<string, number>): SpaceSc
     });
   }
   return out;
+}
+
+/**
+ * The OVATION frame as a byte grid in the feed's own order. A triple whose cell is off the
+ * grid is skipped; a value is rounded and clamped to 0..100; a cell never named stays 0. The
+ * power pair is null until `withPower` fills it.
+ */
+export function parseAuroraFrame(doc: AuroraDoc): AuroraFrame {
+  const observed = parseTime(doc["Observation Time"]);
+  const forecast = parseTime(doc["Forecast Time"]);
+  if (observed === null || forecast === null) throw new Error("aurora frame times unreadable");
+  const grid = new Uint8Array(AURORA_CELLS);
+  for (const [lon, lat, value] of doc.coordinates) {
+    const onGrid =
+      Number.isInteger(lon) &&
+      Number.isInteger(lat) &&
+      lon >= 0 &&
+      lon < AURORA_WIDTH &&
+      lat >= -90 &&
+      lat < AURORA_HEIGHT - 90;
+    if (onGrid) grid[auroraIndex(lon, lat)] = Math.min(100, Math.max(0, Math.round(value)));
+  }
+  return { observed, forecast, powerNorth: null, powerSouth: null, grid };
+}
+
+export interface HemiPowerRow {
+  observed: Date;
+  forecast: Date;
+  north: number;
+  south: number;
+}
+
+/**
+ * `text/aurora-nowcast-hemi-power.txt`: `#` comments, then rows of observation time, forecast
+ * time, north and south GW at `YYYY-MM-DD_HH:MM`. Rows that do not parse are skipped. The
+ * observation column is the run time, which is not the frame's; the forecast column is shared.
+ */
+export function parseHemiPower(text: string): HemiPowerRow[] {
+  const out: HemiPowerRow[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (line.startsWith("#")) continue;
+    const fields = line.trim().split(/\s+/);
+    if (fields.length < 4) continue;
+    const observed = parseTime(fields[0]?.replace("_", "T"));
+    const forecast = parseTime(fields[1]?.replace("_", "T"));
+    const north = Number(fields[2]);
+    const south = Number(fields[3]);
+    if (
+      observed !== null &&
+      forecast !== null &&
+      Number.isFinite(north) &&
+      Number.isFinite(south)
+    ) {
+      out.push({ observed, forecast, north, south });
+    }
+  }
+  return out;
+}
+
+/** The frame with the power pair of the row forecast for the same instant, if there is one. */
+export function withPower(frame: AuroraFrame, rows: HemiPowerRow[]): AuroraFrame {
+  const at = frame.forecast.getTime();
+  const row = rows.find((r) => r.forecast.getTime() === at);
+  return row === undefined ? frame : { ...frame, powerNorth: row.north, powerSouth: row.south };
 }

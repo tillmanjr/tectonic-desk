@@ -104,3 +104,28 @@ export interface SpaceScales {
   /** The day's largest 3-hour Kp, observed or predicted. */
   kpMax: number | null;
 }
+
+/** OVATION Prime grid: longitudes 0..359 by latitudes -90..90, one percent per cell. */
+export const AURORA_WIDTH = 360;
+export const AURORA_HEIGHT = 181;
+export const AURORA_CELLS = AURORA_WIDTH * AURORA_HEIGHT;
+/** Frames are kept this long: the solar wind takes one to three days to arrive. */
+export const AURORA_RETENTION_HOURS = 72;
+/** Probability bands the web draws, percent. */
+export const AURORA_THRESHOLDS = [10, 30, 50, 70, 90] as const;
+
+/** Index of a cell in the grid, in the feed's own order (longitude-major). */
+export const auroraIndex = (lon: number, lat: number): number => lon * AURORA_HEIGHT + (lat + 90);
+
+/** One OVATION Prime frame: a probability (0..100) per 1° cell. */
+export interface AuroraFrame {
+  /** The solar wind observation the run was driven by. */
+  observed: Date;
+  /** The instant the probabilities are for, 30 to 90 minutes after `observed`. */
+  forecast: Date;
+  /** Hemispheric power, GW; null when the tabular file has no row for `observed`. */
+  powerNorth: number | null;
+  powerSouth: number | null;
+  grid: Uint8Array;
+}
+export type AuroraFrameMeta = Omit<AuroraFrame, "grid">;
