@@ -213,6 +213,21 @@ describe("createSpaceStore", () => {
     store.stop();
   });
 
+  it("loads the Sun frames with each load and keeps them through a failed refresh", async () => {
+    const api = fakeApi();
+    const store = createSpaceStore(api, () => NOW, { intervalMs: 1e9, doc: doc() });
+    expect(store.sun.value).toBeNull();
+    await store.load();
+    expect(store.sun.value?.frames).toHaveLength(7);
+    expect(store.sun.value?.frames[6]).toEqual({ key: "c3", time: null, bytes: 45_000 });
+    vi.mocked(api.sunFrames).mockRejectedValueOnce(new Error("sun down"));
+    await store.load();
+    await Promise.resolve();
+    expect(store.error.value).toBeNull();
+    expect(store.sun.value?.frames).toHaveLength(7);
+    expect(api.sunFrames).toHaveBeenCalledTimes(2);
+  });
+
   it("records an error, keeps the last data, and drops a stale answer", async () => {
     const slow1: { resolve?: (v: ReturnType<typeof spaceWindow>) => void } = {};
     const api = fakeApi({

@@ -1,10 +1,12 @@
-import type {
-  ApiSpaceAlert,
-  ApiSpaceFlare,
-  ApiSpaceNow,
-  ApiSpaceReading,
-  ApiSpaceScales,
-  ApiSpaceWindow,
+import {
+  SUN_FRAMES,
+  type ApiSpaceAlert,
+  type ApiSpaceFlare,
+  type ApiSpaceNow,
+  type ApiSpaceReading,
+  type ApiSpaceScales,
+  type ApiSpaceWindow,
+  type ApiSunFrames,
 } from "@tectonic/shared";
 
 /** The web tests' "now": the same instant `makeContext` uses. */
@@ -120,6 +122,19 @@ export function spaceNow(over: Partial<ApiSpaceNow> = {}): ApiSpaceNow {
     scales: SCALES,
     latestFlare: flare(),
     latestAlert: alert(),
+    ...over,
+  };
+}
+
+/** The seven Sun frames, taken a quarter of an hour before now; LASCO C3 without a time. */
+export function sunFrames(over: Partial<ApiSunFrames> = {}): ApiSunFrames {
+  return {
+    generatedAt: SPACE_NOW,
+    frames: SUN_FRAMES.map((f) => ({
+      key: f.key,
+      time: f.key === "c3" ? null : new Date(NOW_MS - 15 * 60_000).toISOString(),
+      bytes: 45_000,
+    })),
     ...over,
   };
 }

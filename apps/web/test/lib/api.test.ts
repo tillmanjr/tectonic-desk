@@ -31,6 +31,11 @@ describe("createApiClient", () => {
     await api.spaceWindow("2026-10-12T12:00:00.000Z", "2026-10-13T12:00:00.000Z");
     await api.auroraIndex();
     await api.auroraFrame("2026-10-13T11:50:00.000Z");
+    await api.sunFrames();
+    expect(api.sunImageUrl("aia193", 512, "2026-10-13T11:45:00.000Z")).toBe(
+      "/api/space/sun/aia193/512.jpg?t=2026-10-13T11%3A45%3A00.000Z",
+    );
+    expect(api.sunImageUrl("c3", 1024, null)).toBe("/api/space/sun/c3/1024.jpg?t=0");
     expect(fetchFn.mock.calls.map((c: unknown[]) => c[0])).toEqual([
       "/api/regions",
       "/api/events?since=2026-10-06T00%3A00%3A00.000Z&minMag=4.5&limit=2000",
@@ -50,6 +55,7 @@ describe("createApiClient", () => {
       "/api/space/window?from=2026-10-12T12%3A00%3A00.000Z&to=2026-10-13T12%3A00%3A00.000Z",
       "/api/space/aurora",
       "/api/space/aurora/2026-10-13T11%3A50%3A00.000Z",
+      "/api/space/sun",
     ]);
   });
   it("throws ApiRequestError with the body's error message", async () => {
