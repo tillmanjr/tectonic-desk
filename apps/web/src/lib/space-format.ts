@@ -42,6 +42,17 @@ export function fmtKp(kp: number): string {
   return String(base);
 }
 
+/** A Kp difference in thirds: `+⅓`, `-1⅔`, `+1`, `0`. */
+export function fmtThirds(diff: number): string {
+  const thirds = Math.round(diff * 3);
+  if (thirds === 0) return "0";
+  const sign = thirds < 0 ? "-" : "+";
+  const whole = Math.floor(Math.abs(thirds) / 3);
+  const rem = Math.abs(thirds) % 3;
+  const frac = rem === 1 ? "⅓" : rem === 2 ? "⅔" : "";
+  return `${sign}${whole > 0 ? String(whole) : ""}${frac}`;
+}
+
 /** A CSS class for a NOAA scale level, `lv0` to `lv5`; unknown levels are `lv0`. */
 export const scaleClass = (level: number | null): string =>
   level === null || level < 0 ? "lv0" : `lv${String(Math.min(5, Math.floor(level)))}`;

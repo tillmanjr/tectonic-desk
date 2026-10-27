@@ -28,6 +28,10 @@ describe("SpaceStack", () => {
     expect(kp?.findAll(".kpbar.lv0")).toHaveLength(6);
     expect(kp?.find(".sline.kp_1m").attributes("d")).toMatch(/^M/);
     expect(kp?.find(".sline.kp_3h").exists()).toBe(false);
+    // GFZ's Kp as a step over the bars, all of it definitive here
+    expect(kp?.find(".sline.kp_gfz").attributes("d")).toMatch(/^M[\d.]+,[\d.]+H/);
+    expect(kp?.find(".sline.kp_gfz.pre").exists()).toBe(false);
+    expect(w.findAll(".cyclemark")).toHaveLength(0);
     expect(kp?.find(".refs text").text()).toBe("G1");
     expect(rows[1]?.find(".refs line").exists()).toBe(true);
     expect(rows[1]?.find(".refs text").exists()).toBe(false);
@@ -96,7 +100,7 @@ describe("SpaceStack", () => {
         .slice(1)
         .map((t) => t.text()),
     ).toEqual([
-      "Kp 3.67 · 3-h 4",
+      "Kp 3.67 · 3-h 4 · GFZ 4+ · Δ +⅓",
       "Dst -35",
       "N 19.5 · S 18.1",
       "Bz -6.2 · Bt 9.8",
@@ -112,7 +116,7 @@ describe("SpaceStack", () => {
         .findAll(".cross text")
         .slice(1)
         .map((t) => t.text()),
-    ).toEqual(["3-h 2", "", "", "", "", "", ""]);
+    ).toEqual(["3-h 2 · GFZ 2 · Δ 0", "", "", "", "", "", ""]);
     await svg.trigger("pointermove", { clientX: 100 + 5 });
     expect(w.find(".cross").exists()).toBe(false);
     await svg.trigger("pointermove", { clientX: 100 + 449 });
@@ -180,6 +184,114 @@ describe("SpaceStack", () => {
     ctx.zone.value = "local";
     await nextTick();
     expect(w.findAll(".srow")).toHaveLength(7);
+    w.unmount();
+  });
+
+  it("dashes GFZ's Kp from the preliminary instant and says so in the readout", async () => {
+    const ctx = await makeContext({ space: true });
+    const w = mountWith(SpaceStack, ctx, { highlight: null });
+    const h = 3_600_000;
+    ctx.space.window.value = spaceWindow({
+      preliminaryKpFrom: new Date(NOW_MS - 6 * h).toISOString(),
+    });
+    await nextTick();
+    const kp = w.find(".srow.kp");
+    const solid = kp.find(".sline.kp_gfz:not(.pre)").attributes("d") ?? "";
+    const pre = kp.find(".sline.kp_gfz.pre").attributes("d") ?? "";
+    // five points before the instant, three from it on
+    expect(solid.match(/H/g)).toHaveLength(5);
+    expect(pre.match(/H/g)).toHaveLength(3);
+    const rect = {
+      left: 0,
+      top: 0,
+      width: 900,
+      height: 200,
+      right: 900,
+      bottom: 200,
+      x: 0,
+      y: 0,
+      toJSON: () => "",
+    };
+    const svg = w.find("svg.stacksvg");
+    vi.spyOn(svg.element, "getBoundingClientRect").mockReturnValue(rect);
+    await svg.trigger("pointermove", { clientX: 848 });
+    expect(w.findAll(".cross text")[1]?.text()).toBe("Kp 3.67 · 3-h 4 · GFZ 4+ (prelim.) · Δ +⅓");
+    // every GFZ point preliminary: no solid step at all
+    ctx.space.window.value = spaceWindow({
+      preliminaryKpFrom: new Date(NOW_MS - 48 * h).toISOString(),
+    });
+    await nextTick();
+    expect(w.find(".sline.kp_gfz:not(.pre)").exists()).toBe(false);
+    expect(w.find(".sline.kp_gfz.pre").exists()).toBe(true);
+    // without GFZ points the readout has no difference to give
+    ctx.space.window.value = spaceWindow({ samples: { ...spaceWindow().samples, kp_gfz: [] } });
+    await nextTick();
+    const again = w.find("svg.stacksvg");
+    vi.spyOn(again.element, "getBoundingClientRect").mockReturnValue(rect);
+    await again.trigger("pointermove", { clientX: 848 });
+    expect(w.findAll(".cross text")[1]?.text()).toBe("Kp 3.67 · 3-h 4");
+    expect(w.find(".sline.kp_gfz").exists()).toBe(false);
+    w.unmount();
+  });
+
+  it("shows the long record past 93 days: GFZ bars, Dst, the Sun row and the cycle minima", async () => {
+    const ctx = await makeContext({ space: true });
+    const w = mountWith(SpaceStack, ctx, { highlight: null });
+    const day = 86_400_000;
+    const from = Date.parse("2008-01-01T00:00:00Z");
+    const daily = (values: number[]): [number, number][] =>
+      values.map((v, i) => [from + i * 365 * day, v]);
+    ctx.space.window.value = spaceWindow({
+      from: new Date(from).toISOString(),
+      bucketSeconds: 7 * 86_400,
+      samples: {
+        ...seriesRecord<[number, number][]>(() => []),
+        kp_gfz: daily([3, 5.67, 7.33, 2]),
+        dst: daily([-20, -150, -60, -10]),
+        ssn: daily([5, 80, 120, 10]),
+        f107: daily([70, 150, 160, 75]),
+      },
+      preliminaryKpFrom: null,
+    });
+    await nextTick();
+    const rows = w.findAll(".srow");
+    expect(rows.map((r) => r.classes()[1])).toEqual(["kp", "dst", "sun"]);
+    const kp = rows[0];
+    expect(kp?.findAll(".kpbar")).toHaveLength(4);
+    // 5.67 rounds to 6 (G2), 7.33 to 7 (G3)
+    expect(kp?.findAll(".kpbar.lv2")).toHaveLength(1);
+    expect(kp?.findAll(".kpbar.lv3")).toHaveLength(1);
+    expect(kp?.find(".sline").exists()).toBe(false);
+    expect(rows[2]?.find(".rowlabel").text()).toBe("Sunspots · F10.7 · sfu");
+    expect(rows[2]?.find(".sline.ssn").exists()).toBe(true);
+    expect(rows[2]?.find(".sline.f107").exists()).toBe(true);
+    expect(w.findAll(".alertticks path")).toHaveLength(0);
+    const cycles = w.findAll(".cyclemark");
+    expect(cycles.map((c) => c.find("text").text())).toEqual(["Cycle 24", "Cycle 25"]);
+    expect(w.find("svg.stacksvg").attributes("viewBox")).toBe("0 0 900 240");
+    const cap = w.find(".cap").text();
+    expect(cap).toContain("Points are 7-day maxima (Kp, fluxes), minima (Dst, Bz) and means.");
+    expect(cap).toContain("GFZ's definitive 3-hour index");
+    expect(cap).toContain(
+      "Cycle 24 (Minimum Dec 2008, maximum Apr 2014); Cycle 25 (Minimum Dec 2019).",
+    );
+    expect(w.findAll(".axis text").some((t) => /^\d{4}$/.test(t.text()))).toBe(true);
+    const svg = w.find("svg.stacksvg");
+    vi.spyOn(svg.element, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 900,
+      height: 240,
+      right: 900,
+      bottom: 240,
+      x: 0,
+      y: 0,
+      toJSON: () => "",
+    });
+    await svg.trigger("pointermove", { clientX: 52 });
+    const texts = w.findAll(".cross text").map((t) => t.text());
+    expect(texts[0]).toBe("2008-01-01 00:00 UTC");
+    expect(texts.slice(1)).toEqual(["GFZ 3", "Dst -20", "SSN 5 · F10.7 70"]);
     w.unmount();
   });
 

@@ -2493,6 +2493,31 @@ table.matrix {
   stroke-width: 3px;
   pointer-events: none;
 }
+.srow .sline.kp_gfz {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.srow .sline.kp_gfz.pre {
+  stroke-dasharray: 3 2;
+}
+.srow .sline.ssn {
+  stroke: var(--space);
+}
+.srow .sline.f107 {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+/* Solar-cycle minima along a long window. */
+.cyclemark line {
+  stroke: var(--muted);
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+.cyclemark text {
+  fill: var(--muted);
+  font: 10px var(--f-data);
+  pointer-events: none;
+}
 /* The aurora frame on show, while a past one is chosen. */
 .aumark {
   stroke: var(--au-70);

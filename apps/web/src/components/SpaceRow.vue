@@ -10,8 +10,8 @@ defineProps<{ row: RowData; left: number; right: number }>();
     <line class="rowbase" :x1="left" :x2="right" :y1="row.bottom" :y2="row.bottom" />
     <text class="rowlabel" :x="left + 4" :y="row.top + 9">
       {{ row.label
-      }}<tspan v-if="row.unit !== ''" class="rowunit">
-        · {{ row.unit }}{{ row.rightUnit === null ? "" : ` · ${row.rightUnit}` }}</tspan
+      }}<tspan v-if="row.unit !== '' || row.rightUnit !== null" class="rowunit">
+        · {{ [row.unit, row.rightUnit ?? ""].filter((u) => u !== "").join(" · ") }}</tspan
       >
     </text>
     <g class="axis">
@@ -56,6 +56,12 @@ defineProps<{ row: RowData; left: number; right: number }>();
       :width="bar.w"
       :height="bar.h"
     />
-    <path v-for="l in row.lines" :key="l.series" class="sline" :class="l.series" :d="l.d" />
+    <path
+      v-for="l in row.lines"
+      :key="l.series + (l.cls ?? '')"
+      class="sline"
+      :class="[l.series, l.cls]"
+      :d="l.d"
+    />
   </g>
 </template>
