@@ -8,6 +8,8 @@ import { ticksOf, type Tick } from "../lib/charts.js";
 import { fmtClock, fmtStamp } from "../lib/format.js";
 import { AURORA, SPACE, useInjected, ZONE } from "../lib/keys.js";
 import {
+  AGGREGATE_WORDS,
+  bucketWords,
   flareBands,
   gapMs,
   kpBars,
@@ -195,7 +197,7 @@ const caption = computed(() => {
   const points =
     d.bucketSeconds === null
       ? "Stored samples"
-      : `Points are ${String(Math.round(d.bucketSeconds / 60))}-minute means`;
+      : `Points are ${bucketWords(d.bucketSeconds)} ${AGGREGATE_WORDS}`;
   return `${points}. Kp bars are the 3-hour values coloured by G level under the 1-minute estimate; the X-ray row shades flares; triangles along the top are SWPC alerts and warnings. Hover for the values at one instant.`;
 });
 

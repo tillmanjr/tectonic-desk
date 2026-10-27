@@ -167,7 +167,9 @@ describe("SpaceStack", () => {
     });
     await nextTick();
     expect(w.findAll(".alertticks path")).toHaveLength(1);
-    expect(w.find(".cap").text()).toContain("Points are 7-minute means.");
+    expect(w.find(".cap").text()).toContain(
+      "Points are 7-minute maxima (Kp, fluxes), minima (Dst, Bz) and means.",
+    );
     expect(w.findAll(".axis text").some((t) => /^Oct \d+$/.test(t.text()))).toBe(true);
     const speed = w.find(".sline.speed").attributes("d") ?? "";
     expect(speed.match(/M/g)).toHaveLength(2);

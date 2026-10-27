@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  aggregateNote,
   aroundZero,
+  bucketWords,
   CADENCE_MS,
   decadeTicks,
   flareBands,
@@ -74,6 +76,15 @@ describe("lines, bars and bands", () => {
     expect(gapMs("kp_1m", 420)).toBe(3 * 420_000);
     expect(gapMs("kp_3h", 420)).toBe(9 * 3_600_000);
     expect(Object.keys(CADENCE_MS)).toHaveLength(17);
+    expect(bucketWords(420)).toBe("7-minute");
+    expect(bucketWords(7200)).toBe("2-hour");
+    expect(bucketWords(10_800)).toBe("3-hour");
+    expect(bucketWords(172_800)).toBe("2-day");
+    expect(bucketWords(1_996_320)).toBe("23-day");
+    expect(aggregateNote(null)).toBe("");
+    expect(aggregateNote(1_996_320)).toBe(
+      "Points are 23-day maxima (Kp, fluxes), minima (Dst, Bz) and means over this window.",
+    );
   });
 
   it("maps a pointer to viewBox units against its element, or null without one", () => {

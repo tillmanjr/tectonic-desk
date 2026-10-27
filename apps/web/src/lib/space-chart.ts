@@ -212,6 +212,20 @@ export const CADENCE_MS: Record<SpaceSeries, number> = {
   f107: 86_400_000,
 };
 
+/** The bucket in the unit that reads best: `7-minute`, `3-hour`, `23-day`. */
+export function bucketWords(bucketSeconds: number): string {
+  if (bucketSeconds < 7200) return `${String(Math.round(bucketSeconds / 60))}-minute`;
+  if (bucketSeconds < 2 * 86_400) return `${String(Math.round(bucketSeconds / 3600))}-hour`;
+  return `${String(Math.round(bucketSeconds / 86_400))}-day`;
+}
+
+/** How thinned points were made, for the captions; "" for raw rows. */
+export const AGGREGATE_WORDS = "maxima (Kp, fluxes), minima (Dst, Bz) and means";
+export const aggregateNote = (bucketSeconds: number | null): string =>
+  bucketSeconds === null
+    ? ""
+    : `Points are ${bucketWords(bucketSeconds)} ${AGGREGATE_WORDS} over this window.`;
+
 /** A line breaks where consecutive points lie more than three steps apart. */
 export function gapMs(series: SpaceSeries, bucketSeconds: number | null): number {
   const step = bucketSeconds === null ? 0 : bucketSeconds * 1000;
