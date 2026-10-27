@@ -65,6 +65,13 @@ The aurora oval (OVATION Prime's 1° probability grid, 65,160 bytes a frame, wit
 hemispheric power from the same run) joins the fast job and is kept 72 hours in `space_aurora`;
 the hemispheric power rows also land in the samples table as the series `hp_north` and
 `hp_south`, stored at the forecast time they apply to.
+The long record comes from two archives: GFZ Potsdam's Kp service (definitive and preliminary
+3-hour Kp, daily Ap, sunspot number and observed F10.7 since 1932, CC BY 4.0) and the WDC Kyoto
+HAPI server (hourly Dst since 1957, best available of final, provisional and real-time). The
+`space_history` job rewrites the last 60 days from both every `SPACE_HISTORY_INTERVAL_MS`
+(default 24 h), so preliminary Kp becomes definitive and real-time Dst provisional in place;
+`pnpm --filter @tectonic/server space:history [--from DATE] [--to DATE]` loads the archives
+once, ten years a request, about 1.1 million rows in a few minutes.
 `SPACE_ENABLED=false` leaves these jobs out. The files are small on the wire (SWPC gzips them;
 the solar wind costs about 100 MB a day) and the jobs never write `ingest_runs`.
 

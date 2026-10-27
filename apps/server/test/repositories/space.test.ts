@@ -30,6 +30,7 @@ import {
 } from "../../src/repositories/space.js";
 import { kpMaxByDay, parseFlares, parseScales } from "../../src/space/parse.js";
 import { recordingLogger } from "../support/fixtures.js";
+import { stubHistory } from "../support/history-stub.js";
 import { aurora, flares, kpForecast, scales, stubSpace } from "../support/space-stub.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
@@ -265,7 +266,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
 
   it("runs the jobs from the stub, skipping a failed file and failing only when every file fails", async () => {
     const log = recordingLogger();
-    const ctx = { db: t.db, space: stubSpace(), log, now: () => NOW };
+    const ctx = { db: t.db, history: stubHistory(), space: stubSpace(), log, now: () => NOW };
     const fast = await syncSpaceFast(ctx);
     expect(fast.failed).toEqual([]);
     expect(fast.written).toEqual({ aurora: 1, kp_1m: 6, mag: 6, wind: 6, xrays: 6, protons: 4 });
@@ -287,6 +288,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
 
     const partial = {
       ...ctx,
+      history: stubHistory(),
       space: stubSpace({ fetchMag: new Error("mag down"), fetchKp1m: [] }),
       log: recordingLogger(),
     };
@@ -300,6 +302,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
 
     const dead = {
       ...ctx,
+      history: stubHistory(),
       space: stubSpace({ fetchKp3h: new Error("kp down"), fetchDst: new Error("dst down") }),
       log: recordingLogger(),
     };
@@ -364,7 +367,13 @@ describe.skipIf(!docker)("space repository and jobs", () => {
   });
 
   it("the aurora part stores the stub frame with its power, surviving a lost power file", async () => {
-    const ctx = { db: t.db, space: stubSpace(), log: recordingLogger(), now: () => NOW };
+    const ctx = {
+      db: t.db,
+      history: stubHistory(),
+      space: stubSpace(),
+      log: recordingLogger(),
+      now: () => NOW,
+    };
     await syncSpaceFast(ctx);
     const stored = await latestAuroraFrame(t.db);
     expect(stored).toMatchObject({
@@ -379,6 +388,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
     const old = { ...aurora, "Observation Time": "2026-10-25T03:00:00Z" };
     const noPower = {
       ...ctx,
+      history: stubHistory(),
       space: stubSpace({ fetchAurora: old, fetchHemiPower: new Error("power down") }),
       log: recordingLogger(),
     };

@@ -4,6 +4,7 @@
  * aborted after `timeoutMs` and tried again, with the pause doubling from `baseMs`.
  */
 import type { IngestLogger } from "../ingest/context.js";
+import { sleep } from "../ingest/sleep.js";
 
 export interface TileFetchOptions {
   fetch?: typeof fetch;
@@ -31,14 +32,9 @@ export class TileHttpError extends Error {
 export const retryableTileError = (err: unknown): boolean =>
   !(err instanceof TileHttpError) || err.status === 429 || err.status >= 500;
 
-const realSleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-
 export async function fetchTileBytes(url: string, opts: TileFetchOptions = {}): Promise<Buffer> {
   const doFetch = opts.fetch ?? fetch;
-  const sleep = opts.sleep ?? realSleep;
+  const pause = opts.sleep ?? sleep;
   const attempts = opts.attempts ?? 5;
   const baseMs = opts.baseMs ?? 10_000;
   const timeoutMs = opts.timeoutMs ?? 120_000;
@@ -51,7 +47,7 @@ export async function fetchTileBytes(url: string, opts: TileFetchOptions = {}): 
       if (attempt >= attempts || !retryableTileError(err)) throw err;
       const delayMs = baseMs * 2 ** (attempt - 1);
       opts.log?.warn({ url, attempt, delayMs, err }, "relief tile fetch failed; retrying");
-      await sleep(delayMs);
+      await pause(delayMs);
     }
   }
 }

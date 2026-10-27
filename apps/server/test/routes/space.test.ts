@@ -15,6 +15,7 @@ import { syncSpaceEvents, syncSpaceFast, syncSpaceSlow } from "../../src/ingest/
 import { insertAuroraFrame, upsertSamples } from "../../src/repositories/space.js";
 import { utcDay } from "../../src/routes/space.js";
 import { recordingLogger } from "../support/fixtures.js";
+import { stubHistory } from "../support/history-stub.js";
 import { stubSpace } from "../support/space-stub.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
@@ -49,7 +50,13 @@ describe.skipIf(!docker)("space routes", () => {
 
   const inject = (url: string) => app.inject({ method: "GET", url });
   const seed = async (): Promise<void> => {
-    const ctx = { db: t.db, space: stubSpace(), log: recordingLogger(), now: () => NOW };
+    const ctx = {
+      db: t.db,
+      history: stubHistory(),
+      space: stubSpace(),
+      log: recordingLogger(),
+      now: () => NOW,
+    };
     await Promise.all([syncSpaceFast(ctx), syncSpaceEvents(ctx), syncSpaceSlow(ctx)]);
   };
 

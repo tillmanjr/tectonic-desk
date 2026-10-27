@@ -18,6 +18,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=../../.env --import tsx src/db/migrate-cli.ts",
     "ingest": "node --env-file-if-exists=../../.env --import tsx src/ingest-cli.ts",
+    "space:history": "node --env-file-if-exists=../../.env --import tsx src/space-history-cli.ts",
     "geo:qfaults": "node --import tsx src/qfaults-cli.ts",
     "geo:volcanoes": "node --import tsx src/gvp-cli.ts",
     "geo:relief": "node --import tsx src/relief-cli.ts"
