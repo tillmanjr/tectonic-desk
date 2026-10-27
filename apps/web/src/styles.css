@@ -1030,10 +1030,24 @@ a {
 .foot {
   font-size: 12.5px;
   color: var(--muted);
-  max-width: 90ch;
+}
+/* The credits flow in two columns on a wide screen, each paragraph kept whole. */
+.foot .credits {
+  column-count: 2;
+  column-gap: 36px;
+  max-width: 180ch;
+}
+.foot .credits p {
+  break-inside: avoid;
 }
 .foot p {
   margin: 4px 0;
+}
+@media (max-width: 900px) {
+  .foot .credits {
+    column-count: 1;
+    max-width: 90ch;
+  }
 }
 .foot .byline {
   margin-top: 12px;
@@ -2517,6 +2531,21 @@ table.matrix {
   fill: var(--muted);
   font: 10px var(--f-data);
   pointer-events: none;
+}
+/* The flares list past its first six rows. */
+.flares .cap .more {
+  font: 600 11px var(--f-ui);
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 1px dotted var(--muted);
+  padding: 0;
+  cursor: pointer;
+}
+.flares .cap .more:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 /* The Sun strip under the tiles and its overlay. */
 .sunstrip {

@@ -117,6 +117,38 @@ describe("SpacePage", () => {
     a.unmount();
   });
 
+  it("shows six flares and opens the rest out on request", async () => {
+    const ctx = await makeContext({ space: true });
+    const w = mountWith(SpacePage, ctx);
+    const base = Date.parse("2026-10-13T00:00:00Z");
+    const eight = Array.from({ length: 8 }, (_, i) =>
+      flare({
+        beginTime: new Date(base + i * 3_600_000).toISOString(),
+        maxTime: new Date(base + i * 3_600_000 + 600_000).toISOString(),
+        endTime: new Date(base + i * 3_600_000 + 1_200_000).toISOString(),
+        maxClass: `C${String(i + 1)}.0`,
+      }),
+    );
+    ctx.space.window.value = spaceWindow({ flares: eight });
+    await nextTick();
+    expect(w.findAll(".flares tbody tr")).toHaveLength(6);
+    expect(w.findAll(".flares tbody tr")[0]?.text()).toContain("C8.0");
+    const more = w.find(".flares .morerow .more");
+    expect(more.text()).toBe("… 2 more");
+    expect(more.attributes("aria-expanded")).toBe("false");
+    await more.trigger("click");
+    expect(w.findAll(".flares tbody tr")).toHaveLength(8);
+    expect(w.find(".flares .morerow .more").text()).toBe("show fewer");
+    await w.find(".flares .morerow .more").trigger("click");
+    expect(w.findAll(".flares tbody tr")).toHaveLength(6);
+    // six or fewer: no toggle at all
+    ctx.space.window.value = spaceWindow({ flares: eight.slice(0, 6) });
+    await nextTick();
+    expect(w.findAll(".flares tbody tr")).toHaveLength(6);
+    expect(w.find(".flares .morerow").exists()).toBe(false);
+    w.unmount();
+  });
+
   it("drops the alerts and flares for a long window and says why", async () => {
     const ctx = await makeContext({ space: true });
     const w = mountWith(SpacePage, ctx);
