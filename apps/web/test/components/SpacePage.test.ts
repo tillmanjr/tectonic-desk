@@ -79,7 +79,10 @@ describe("SpacePage", () => {
     expect(w.findAll(".aurora svg.polar")).toHaveLength(2);
 
     // alerts are a card row under the tiles, newest on the left
-    expect(w.find(".sectionlabel").text()).toBe("Alerts · SWPC messages");
+    expect(w.findAll(".sectionlabel").map((l) => l.text())).toEqual([
+      "The Sun · SDO and SOHO",
+      "Alerts · SWPC messages",
+    ]);
     const alerts = w.findAll(".mcard.alert");
     expect(alerts).toHaveLength(2);
     const first = alerts[0];
@@ -97,6 +100,14 @@ describe("SpacePage", () => {
     expect(first?.find(".amsg").exists()).toBe(false);
     expect(w.find(".spacerail .mcard").exists()).toBe(false);
     expect(w.find(".longnote").exists()).toBe(false);
+
+    // the Sun strip sits under the tiles and opens a frame large
+    expect(w.findAll(".sunthumb")).toHaveLength(7);
+    expect(w.find(".sunoverlay").exists()).toBe(false);
+    await w.findAll(".sunthumb")[4]?.trigger("click");
+    expect(w.find(".sunbox").attributes("aria-label")).toBe("HMI magnetogram");
+    await w.find(".sunclose").trigger("click");
+    expect(w.find(".sunoverlay").exists()).toBe(false);
     w.unmount();
 
     // on its own, without a row cap, the row shows every alert
@@ -121,7 +132,7 @@ describe("SpacePage", () => {
     expect(w.find(".longnote").text()).toBe(
       "Flares, alerts and the minute-scale rows need a window of 93 days or less.",
     );
-    expect(w.find(".sectionlabel").exists()).toBe(false);
+    expect(w.findAll(".sectionlabel").map((l) => l.text())).toEqual(["The Sun · SDO and SOHO"]);
     expect(w.find(".flares").exists()).toBe(false);
     expect(w.find(".forecast").exists()).toBe(true);
     expect(w.findAll(".srow").map((r) => r.classes()[1])).toEqual(["kp", "dst", "sun"]);
