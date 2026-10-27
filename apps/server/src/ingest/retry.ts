@@ -1,4 +1,3 @@
-import { UsgsHttpError } from "../usgs/client.js";
 import type { IngestLogger } from "./context.js";
 
 export interface RetryOptions {
@@ -8,9 +7,15 @@ export interface RetryOptions {
   log: IngestLogger;
 }
 
+/** The HTTP status an error carries (`UsgsHttpError`, `SpaceHttpError`), or null for any other failure. */
+const statusOf = (err: unknown): number | null =>
+  err instanceof Error && "status" in err && typeof err.status === "number" ? err.status : null;
+
 /** Rate limits, server errors, timeouts and network failures deserve another try; a 4xx does not. */
-export const retryable = (err: unknown): boolean =>
-  !(err instanceof UsgsHttpError) || err.status === 429 || err.status >= 500;
+export const retryable = (err: unknown): boolean => {
+  const status = statusOf(err);
+  return status === null || status === 429 || status >= 500;
+};
 
 /** Calls `fn` up to `attempts` times, doubling the pause from `baseMs` after each retryable failure. */
 export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions): Promise<T> {
@@ -22,7 +27,7 @@ export async function withRetry<T>(fn: () => Promise<T>, opts: RetryOptions): Pr
     } catch (err) {
       if (attempt >= attempts || !retryable(err)) throw err;
       const delayMs = baseMs * 2 ** (attempt - 1);
-      opts.log.warn({ err, attempt, delayMs }, "usgs request failed; retrying");
+      opts.log.warn({ err, attempt, delayMs }, "request failed; retrying");
       await opts.sleep(delayMs);
     }
   }
