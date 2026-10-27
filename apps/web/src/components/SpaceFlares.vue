@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import type { ApiSpaceFlare } from "@tectonic/shared";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { fmtStamp } from "../lib/format.js";
 import { SET_SPACE_RANGE, SPACE, useInjected, ZONE } from "../lib/keys.js";
 import { windowLabel } from "../lib/space.js";
 import { minutesBetween } from "../lib/space-format.js";
 
 /**
- * The flares of the window, newest first. Hovering a row lights its band in the X-ray row;
- * clicking one fixes the range around it (an hour before to two hours after).
+ * The flares of the window, newest first, the first four shown and the rest behind a toggle.
+ * Hovering a row lights its band in the X-ray row; clicking one fixes the range around it (an
+ * hour before to two hours after).
  */
 const props = defineProps<{ highlight: string | null }>();
 const emit = defineEmits<{ "update:highlight": [key: string | null] }>();
@@ -17,6 +18,8 @@ const setRange = useInjected(SET_SPACE_RANGE);
 const zone = useInjected(ZONE);
 
 const H = 3_600_000;
+/** Rows shown before the list is opened out; with the forecast above, this fills the rail to the chart's foot. */
+const FLARE_ROWS = 4;
 
 interface Row {
   key: string;
@@ -50,6 +53,10 @@ const rows = computed<Row[]>(() => {
     }));
 });
 
+const expanded = ref(false);
+const shown = computed(() => (expanded.value ? rows.value : rows.value.slice(0, FLARE_ROWS)));
+const hidden = computed(() => Math.max(0, rows.value.length - FLARE_ROWS));
+
 /** True while the range is fixed, as it is after framing a flare. */
 const framed = computed(() => store.range.value.kind === "fixed");
 function back(): void {
@@ -79,7 +86,7 @@ function frame(f: ApiSpaceFlare): void {
       </thead>
       <tbody>
         <tr
-          v-for="r in rows"
+          v-for="r in shown"
           :key="r.key"
           class="flarerow"
           :class="{ hl: r.key === props.highlight }"
@@ -99,6 +106,11 @@ function frame(f: ApiSpaceFlare): void {
         </tr>
       </tbody>
     </table>
+    <p v-if="hidden > 0 || expanded" class="cap morerow">
+      <button type="button" class="more" :aria-expanded="expanded" @click="expanded = !expanded">
+        {{ expanded ? "show fewer" : `… ${String(hidden)} more` }}
+      </button>
+    </p>
     <p class="cap">
       <template v-if="framed"
         >The range is fixed; the list shows the flares inside it.
