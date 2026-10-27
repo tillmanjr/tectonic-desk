@@ -457,7 +457,14 @@ onUnmounted(() => {
         at L1 SWPC marks active (SOLAR-1, ACE or IMAP), named on the page. The aurora oval is SWPC's
         OVATION Prime (2013) model: the probability of aurora over each 1° cell at the forecast
         time, 30 to 90 minutes after the solar wind observation, with the hemispheric power of the
-        same run; three days of frames are kept here.
+        same run; three days of frames are kept here. The pictures of the Sun are the latest frames
+        of NASA's
+        <a href="https://sdo.gsfc.nasa.gov/" rel="noopener" target="_blank"
+          >Solar Dynamics Observatory</a
+        >
+        (courtesy of NASA/SDO and the AIA, EVE, and HMI science teams) and the LASCO coronagraphs on
+        <a href="https://soho.nascom.nasa.gov/" rel="noopener" target="_blank">SOHO</a>
+        (ESA &amp; NASA), relayed by this site and refreshed as the observatories publish them.
       </p>
       <p class="byline">
         Built for Barbara by
