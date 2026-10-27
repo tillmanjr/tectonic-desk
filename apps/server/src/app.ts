@@ -13,7 +13,9 @@ import { reliefRoutes } from "./routes/relief.js";
 import { runRoutes } from "./routes/runs.js";
 import { spaceRoutes } from "./routes/space.js";
 import { statusRoutes } from "./routes/status.js";
+import { sunRoutes } from "./routes/sun.js";
 import { volcanoRoutes } from "./routes/volcanoes.js";
+import { createSunCache, type SunCache } from "./space/sun.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -23,6 +25,8 @@ declare module "fastify" {
     /** The relief grid for the section profile, or null when the image has none. */
     relief: Int16Array | null;
     reliefLayout: ReliefLayout;
+    /** The proxied Sun frames. */
+    sun: SunCache;
   }
 }
 
@@ -49,6 +53,8 @@ export interface AppOptions {
   reliefFile?: string | null;
   /** The grid's layout; tests pass a tiny one. */
   reliefLayout?: ReliefLayout;
+  /** The Sun frame cache; defaults to one over the global fetch with a local user agent. */
+  sun?: SunCache;
 }
 
 /** Builds the Fastify app without listening, so tests can inject requests. */
@@ -61,6 +67,7 @@ export function buildApp({
   reliefLayout = RELIEF,
   rateLimit: limit = DEFAULT_RATE_LIMIT,
   trustProxy = false,
+  sun = createSunCache({ userAgent: "tectonic-desk/0.0 (+local)" }),
 }: AppOptions): FastifyInstance {
   const app = Fastify({ logger, trustProxy });
   app.decorate("db", db);
@@ -68,6 +75,7 @@ export function buildApp({
   app.decorate("geo", loadGeoAssets(geoDir));
   app.decorate("relief", reliefFile === null ? null : loadRelief(reliefFile));
   app.decorate("reliefLayout", reliefLayout);
+  app.decorate("sun", sun);
   registerErrorHandlers(app);
   if (limit.max > 0) {
     void app.register(rateLimit, {
@@ -87,6 +95,7 @@ export function buildApp({
   void app.register(reliefRoutes);
   void app.register(volcanoRoutes);
   void app.register(spaceRoutes);
+  void app.register(sunRoutes);
   void app.register(catalogRoutes);
   return app;
 }
