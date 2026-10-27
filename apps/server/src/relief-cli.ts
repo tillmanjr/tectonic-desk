@@ -10,6 +10,7 @@ import openjpegFactory from "@cornerstonejs/codec-openjpeg/decodewasmjs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fetchTileBytes } from "./geo/relief-fetch.js";
 import {
   DEFAULT_RELIEF_FILE,
   jp2Codestream,
@@ -28,9 +29,13 @@ async function fetchTile(name: string): Promise<Buffer> {
   if (existsSync(path)) return readFileSync(path);
   const url = `${BASE}/${name}.earth_relief_03m_p.jp2`;
   console.log(`fetching ${url}`);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${url}: ${String(res.status)}`);
-  const buf = Buffer.from(await res.arrayBuffer());
+  const buf = await fetchTileBytes(url, {
+    log: {
+      warn: (obj, msg) => {
+        console.warn(msg, obj);
+      },
+    },
+  });
   writeFileSync(path, buf);
   return buf;
 }
