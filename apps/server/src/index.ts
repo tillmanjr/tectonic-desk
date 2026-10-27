@@ -2,10 +2,13 @@ import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDb } from "./db/client.js";
 import { startScheduler, type ScheduledJob } from "./ingest/scheduler.js";
+import { syncSpaceHistory } from "./ingest/space-history.js";
 import { pruneSpace, syncSpaceEvents, syncSpaceFast, syncSpaceSlow } from "./ingest/space.js";
 import { syncVolcanoReports, syncVolcanoStatus } from "./ingest/volcanoes.js";
 import { buildLoggerOptions } from "./logging.js";
 import { createSpaceClient } from "./space/client.js";
+import { createHistoryClient } from "./space/history-client.js";
+import { createSunCache } from "./space/sun.js";
 import { createUsgsClient } from "./usgs/client.js";
 import { createVolcanoClient } from "./volcano/client.js";
 
@@ -14,6 +17,7 @@ const { db, close } = createDb(config.DATABASE_URL);
 const app = buildApp({
   db,
   logger: buildLoggerOptions(config),
+  sun: createSunCache({ userAgent: config.USGS_USER_AGENT }),
   rateLimit: { max: config.RATE_LIMIT_MAX, windowMs: config.RATE_LIMIT_WINDOW_MS },
   trustProxy: config.TRUST_PROXY,
 });
@@ -26,7 +30,8 @@ if (config.INGEST_ENABLED) {
   const volcano = createVolcanoClient({ userAgent: config.USGS_USER_AGENT });
   const volcanoCtx = { db, volcano, log: app.log, now: () => new Date() };
   const space = createSpaceClient({ userAgent: config.USGS_USER_AGENT });
-  const spaceCtx = { db, space, log: app.log, now: () => new Date() };
+  const history = createHistoryClient({ userAgent: config.USGS_USER_AGENT });
+  const spaceCtx = { db, space, history, log: app.log, now: () => new Date() };
   const spaceJobs: ScheduledJob[] = config.SPACE_ENABLED
     ? [
         {
@@ -48,6 +53,11 @@ if (config.INGEST_ENABLED) {
           name: "space_prune",
           everyMs: config.SPACE_PRUNE_INTERVAL_MS,
           run: () => pruneSpace(spaceCtx),
+        },
+        {
+          name: "space_history",
+          everyMs: config.SPACE_HISTORY_INTERVAL_MS,
+          run: () => syncSpaceHistory(spaceCtx),
         },
       ]
     : [];

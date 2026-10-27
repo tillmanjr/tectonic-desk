@@ -11,6 +11,7 @@ import {
   type DownsampleResult,
 } from "../repositories/space.js";
 import type { SpaceClient } from "../space/client.js";
+import type { HistoryClient } from "../space/history-client.js";
 import {
   kpMaxByDay,
   parseAlerts,
@@ -35,6 +36,8 @@ import { errorMessage } from "./feed.js";
 export interface SpaceContext {
   db: Db;
   space: SpaceClient;
+  /** GFZ and Kyoto, for the long record. */
+  history: HistoryClient;
   log: IngestLogger;
   now: () => Date;
 }
@@ -50,7 +53,7 @@ export const FINE_RETENTION_DAYS = 30;
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 
-interface Part {
+export interface Part {
   name: string;
   run: () => Promise<number>;
 }
@@ -60,7 +63,11 @@ interface Part {
  * part that fails is logged and skipped so the others still land; the run itself fails only
  * when every part did, which the scheduler then logs.
  */
-async function runParts(ctx: SpaceContext, job: string, parts: Part[]): Promise<SpaceRunResult> {
+export async function runParts(
+  ctx: SpaceContext,
+  job: string,
+  parts: Part[],
+): Promise<SpaceRunResult> {
   const outcomes = await Promise.all(
     parts.map(async (p) => {
       try {

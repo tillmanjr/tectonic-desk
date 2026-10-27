@@ -1,10 +1,12 @@
-import type {
-  ApiSpaceAlert,
-  ApiSpaceFlare,
-  ApiSpaceNow,
-  ApiSpaceReading,
-  ApiSpaceScales,
-  ApiSpaceWindow,
+import {
+  SUN_FRAMES,
+  type ApiSpaceAlert,
+  type ApiSpaceFlare,
+  type ApiSpaceNow,
+  type ApiSpaceReading,
+  type ApiSpaceScales,
+  type ApiSpaceWindow,
+  type ApiSunFrames,
 } from "@tectonic/shared";
 
 /** The web tests' "now": the same instant `makeContext` uses. */
@@ -112,10 +114,27 @@ export function spaceNow(over: Partial<ApiSpaceNow> = {}): ApiSpaceNow {
       p100: reading(0.1, "GOES-18"),
       hp_north: reading(19.5, "ovation"),
       hp_south: reading(18.1, "ovation"),
+      kp_gfz: reading(4.33, "gfz-pre", "2026-10-13T09:00:00.000Z"),
+      ap: reading(18, "gfz", "2026-10-12T00:00:00.000Z"),
+      ssn: reading(120, "gfz", "2026-10-12T00:00:00.000Z"),
+      f107: reading(165.2, "gfz", "2026-10-12T00:00:00.000Z"),
     },
     scales: SCALES,
     latestFlare: flare(),
     latestAlert: alert(),
+    ...over,
+  };
+}
+
+/** The seven Sun frames, taken a quarter of an hour before now; LASCO C3 without a time. */
+export function sunFrames(over: Partial<ApiSunFrames> = {}): ApiSunFrames {
+  return {
+    generatedAt: SPACE_NOW,
+    frames: SUN_FRAMES.map((f) => ({
+      key: f.key,
+      time: f.key === "c3" ? null : new Date(NOW_MS - 15 * 60_000).toISOString(),
+      bytes: 45_000,
+    })),
     ...over,
   };
 }
@@ -140,7 +159,12 @@ export function spaceWindow(over: Partial<ApiSpaceWindow> = {}): ApiSpaceWindow 
       p100: pointsEnding(300_000, [0.1, 0.1, 0.1, 0.1]),
       hp_north: pointsEnding(300_000, [12, 14, 19, 21, 19.5]),
       hp_south: pointsEnding(300_000, [11, 13, 17, 19, 18.1]),
+      kp_gfz: pointsEnding(3 * H, [2, 2.33, 3.33, 3.67, 4.33, 5.33, 4.67, 4.33]),
+      ap: [],
+      ssn: [],
+      f107: [],
     },
+    preliminaryKpFrom: null,
     flares: [flare()],
     alerts: [alert(), alert({ productId: "K04A", issueTime: "2026-10-13T08:31:00.000Z" })],
     scales: SCALES.slice(0, 2),

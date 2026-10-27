@@ -167,8 +167,10 @@ export const spaceWindowQuerySchema = z.strictObject({
   to: isoInstant.optional(),
 });
 
-/** The longest window the route serves. */
-export const SPACE_WINDOW_MAX_MS = 93 * DAY_MS;
+/** The longest window the route serves: the whole GFZ archive and some. */
+export const SPACE_WINDOW_MAX_MS = 36_525 * DAY_MS;
+/** Flares, alerts and scales are read only for windows up to this long. */
+export const SPACE_DETAIL_MAX_MS = 93 * DAY_MS;
 /** Windows up to this long come back as the stored rows; longer ones are thinned. */
 export const SPACE_RAW_MAX_MS = 25 * 3_600_000;
 /** How many points per series a thinned window carries, at most. */
@@ -188,6 +190,8 @@ export interface SpaceWindowQuery {
   from: Date;
   to: Date;
   bucketSeconds: number | null;
+  /** Whether the window is short enough to carry its flares, alerts and scales. */
+  detail: boolean;
 }
 
 export function parseSpaceWindow(input: unknown, now: Date): SpaceWindowQuery {
@@ -196,8 +200,14 @@ export function parseSpaceWindow(input: unknown, now: Date): SpaceWindowQuery {
   if (to.getTime() < q.from.getTime()) {
     throw badRequest([{ path: "to", message: "to must not precede from" }]);
   }
-  if (to.getTime() - q.from.getTime() > SPACE_WINDOW_MAX_MS) {
-    throw badRequest([{ path: "to", message: "window must not exceed 93 days" }]);
+  const span = to.getTime() - q.from.getTime();
+  if (span > SPACE_WINDOW_MAX_MS) {
+    throw badRequest([{ path: "to", message: "window must not exceed 100 years" }]);
   }
-  return { from: q.from, to, bucketSeconds: bucketFor(q.from, to) };
+  return {
+    from: q.from,
+    to,
+    bucketSeconds: bucketFor(q.from, to),
+    detail: span <= SPACE_DETAIL_MAX_MS,
+  };
 }

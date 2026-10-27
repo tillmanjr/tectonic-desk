@@ -24,6 +24,7 @@ describe("loadConfig", () => {
       SPACE_EVENTS_INTERVAL_MS: 300_000,
       SPACE_SLOW_INTERVAL_MS: 3_600_000,
       SPACE_PRUNE_INTERVAL_MS: 21_600_000,
+      SPACE_HISTORY_INTERVAL_MS: 86_400_000,
       RATE_LIMIT_MAX: 120,
       RATE_LIMIT_WINDOW_MS: 60_000,
       TRUST_PROXY: false,
@@ -107,12 +108,15 @@ describe("loadConfig", () => {
       SPACE_EVENTS_INTERVAL_MS: "120000",
       SPACE_SLOW_INTERVAL_MS: "300000",
       SPACE_PRUNE_INTERVAL_MS: "600000",
+      SPACE_HISTORY_INTERVAL_MS: "3600000",
     });
     expect(c.SPACE_ENABLED).toBe(false);
     expect(c.SPACE_FAST_INTERVAL_MS).toBe(60000);
     expect(c.SPACE_EVENTS_INTERVAL_MS).toBe(120000);
     expect(c.SPACE_SLOW_INTERVAL_MS).toBe(300000);
     expect(c.SPACE_PRUNE_INTERVAL_MS).toBe(600000);
+    expect(c.SPACE_HISTORY_INTERVAL_MS).toBe(3600000);
     expect(() => loadConfig({ ...valid, SPACE_FAST_INTERVAL_MS: "1000" })).toThrow(ConfigError);
+    expect(() => loadConfig({ ...valid, SPACE_HISTORY_INTERVAL_MS: "60000" })).toThrow(ConfigError);
   });
 });

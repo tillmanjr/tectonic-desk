@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { CLOCK, SET_SPACE_RANGE, SPACE, useInjected, ZONE } from "../lib/keys.js";
 import { isWindowId, MAX_RANGE_MS, rangeBounds, WINDOWS, type SpaceRange } from "../lib/space.js";
+import { aggregateNote } from "../lib/space-chart.js";
 import { fromInputValue, toInputValue } from "../lib/space-format.js";
 
 /**
@@ -17,12 +18,7 @@ const range = computed(() => store.range.value);
 const bounds = computed(() => rangeBounds(range.value, clock.now.value));
 const selectValue = computed(() => (range.value.kind === "window" ? range.value.id : ""));
 const zoneName = computed(() => (zone.value === "utc" ? "UTC" : "local"));
-const bucketNote = computed(() => {
-  const b = store.window.value?.bucketSeconds ?? null;
-  return b === null
-    ? ""
-    : `Points are ${String(Math.round(b / 60))}-minute means over this window.`;
-});
+const bucketNote = computed(() => aggregateNote(store.window.value?.bucketSeconds ?? null));
 
 function pickWindow(ev: Event): void {
   const t = ev.target;

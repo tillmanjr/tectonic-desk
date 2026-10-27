@@ -11,6 +11,7 @@ import {
   alertsBetween,
   auroraFrame,
   auroraFrames,
+  deleteSupersededKp,
   downsampleBefore,
   flaresBetween,
   insertAlerts,
@@ -19,6 +20,7 @@ import {
   latestAuroraFrame,
   latestFlare,
   latestReadings,
+  preliminaryKpFrom,
   pruneAurora,
   samplesBetween,
   scalesBetween,
@@ -28,6 +30,7 @@ import {
 } from "../../src/repositories/space.js";
 import { kpMaxByDay, parseFlares, parseScales } from "../../src/space/parse.js";
 import { recordingLogger } from "../support/fixtures.js";
+import { stubHistory } from "../support/history-stub.js";
 import { aurora, flares, kpForecast, scales, stubSpace } from "../support/space-stub.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
@@ -96,6 +99,69 @@ describe.skipIf(!docker)("space repository and jobs", () => {
       null,
     );
     expect(outside.speed).toHaveLength(3);
+  });
+
+  it("keeps a storm in a wide bucket: indices and fluxes by their max, Dst and Bz by their min", async () => {
+    await upsertSamples(t.db, [
+      sample("kp_gfz", "2026-10-20T00:00:00Z", 2, "gfz"),
+      sample("kp_gfz", "2026-10-20T03:00:00Z", 7, "gfz"),
+      sample("kp_gfz", "2026-10-20T06:00:00Z", 3, "gfz"),
+      sample("dst", "2026-10-20T00:00:00Z", -10, "kyoto"),
+      sample("dst", "2026-10-20T01:00:00Z", -80, "kyoto"),
+      sample("dst", "2026-10-20T02:00:00Z", -20, "kyoto"),
+      sample("bz_gsm", "2026-10-20T00:00:00Z", 4, "SOLAR1"),
+      sample("bz_gsm", "2026-10-20T00:01:00Z", -9, "SOLAR1"),
+      sample("xray_long", "2026-10-20T00:00:00Z", 1e-6, "GOES-18"),
+      sample("xray_long", "2026-10-20T00:01:00Z", 5e-5, "GOES-18"),
+      sample("bt", "2026-10-20T00:00:00Z", 4, "SOLAR1"),
+      sample("bt", "2026-10-20T00:01:00Z", 6, "SOLAR1"),
+      sample("f107", "2026-10-20T00:00:00Z", 150, "gfz"),
+      sample("f107", "2026-10-21T00:00:00Z", 170, "gfz"),
+    ]);
+    const day = 86_400;
+    const b = await samplesBetween(
+      t.db,
+      at("2026-10-19T00:00:00Z"),
+      at("2026-10-23T00:00:00Z"),
+      day,
+    );
+    const bucket = at("2026-10-20T00:00:00Z").getTime();
+    expect(b.kp_gfz).toEqual([[bucket, 7]]);
+    expect(b.dst).toEqual([[bucket, -80]]);
+    expect(b.bz_gsm).toEqual([[bucket, -9]]);
+    expect(b.xray_long[0]?.[0]).toBe(bucket);
+    expect(b.xray_long[0]?.[1]).toBeCloseTo(5e-5, 9);
+    expect(b.bt).toEqual([[bucket, 5]]);
+    expect(b.f107).toEqual([
+      [bucket, 150],
+      [at("2026-10-21T00:00:00Z").getTime(), 170],
+    ]);
+  });
+
+  it("finds the first preliminary GFZ Kp and drops those a definitive row has superseded", async () => {
+    expect(await preliminaryKpFrom(t.db)).toBeNull();
+    await upsertSamples(t.db, [
+      sample("kp_gfz", "2026-10-01T00:00:00Z", 1, "gfz-pre"),
+      sample("kp_gfz", "2026-10-01T03:00:00Z", 2, "gfz-pre"),
+      sample("kp_3h", "2026-09-30T21:00:00Z", 3, "swpc"),
+    ]);
+    expect(await preliminaryKpFrom(t.db)).toEqual(at("2026-10-01T00:00:00Z"));
+    expect(await deleteSupersededKp(t.db)).toBe(0);
+    await upsertSamples(t.db, [sample("kp_gfz", "2026-10-01T00:00:00Z", 1.33, "gfz")]);
+    expect(await deleteSupersededKp(t.db)).toBe(1);
+    expect(await preliminaryKpFrom(t.db)).toEqual(at("2026-10-01T03:00:00Z"));
+    const latest = await latestReadings(t.db);
+    expect(latest.kp_gfz).toMatchObject({ time: at("2026-10-01T03:00:00Z"), source: "gfz-pre" });
+    const pts = await samplesBetween(
+      t.db,
+      at("2026-10-01T00:00:00Z"),
+      at("2026-10-01T06:00:00Z"),
+      null,
+    );
+    expect(pts.kp_gfz).toEqual([
+      [at("2026-10-01T00:00:00Z").getTime(), 1.33],
+      [at("2026-10-01T03:00:00Z").getTime(), 2],
+    ]);
   });
 
   it("fills flares as their end arrives, finds those overlapping a window, and the newest", async () => {
@@ -200,7 +266,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
 
   it("runs the jobs from the stub, skipping a failed file and failing only when every file fails", async () => {
     const log = recordingLogger();
-    const ctx = { db: t.db, space: stubSpace(), log, now: () => NOW };
+    const ctx = { db: t.db, history: stubHistory(), space: stubSpace(), log, now: () => NOW };
     const fast = await syncSpaceFast(ctx);
     expect(fast.failed).toEqual([]);
     expect(fast.written).toEqual({ aurora: 1, kp_1m: 6, mag: 6, wind: 6, xrays: 6, protons: 4 });
@@ -222,6 +288,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
 
     const partial = {
       ...ctx,
+      history: stubHistory(),
       space: stubSpace({ fetchMag: new Error("mag down"), fetchKp1m: [] }),
       log: recordingLogger(),
     };
@@ -235,6 +302,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
 
     const dead = {
       ...ctx,
+      history: stubHistory(),
       space: stubSpace({ fetchKp3h: new Error("kp down"), fetchDst: new Error("dst down") }),
       log: recordingLogger(),
     };
@@ -299,7 +367,13 @@ describe.skipIf(!docker)("space repository and jobs", () => {
   });
 
   it("the aurora part stores the stub frame with its power, surviving a lost power file", async () => {
-    const ctx = { db: t.db, space: stubSpace(), log: recordingLogger(), now: () => NOW };
+    const ctx = {
+      db: t.db,
+      history: stubHistory(),
+      space: stubSpace(),
+      log: recordingLogger(),
+      now: () => NOW,
+    };
     await syncSpaceFast(ctx);
     const stored = await latestAuroraFrame(t.db);
     expect(stored).toMatchObject({
@@ -314,6 +388,7 @@ describe.skipIf(!docker)("space repository and jobs", () => {
     const old = { ...aurora, "Observation Time": "2026-10-25T03:00:00Z" };
     const noPower = {
       ...ctx,
+      history: stubHistory(),
       space: stubSpace({ fetchAurora: old, fetchHemiPower: new Error("power down") }),
       log: recordingLogger(),
     };

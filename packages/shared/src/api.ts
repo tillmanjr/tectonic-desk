@@ -6,6 +6,7 @@ import type {
   StoredVolcanoStatus,
 } from "./index.js";
 import type { AuroraFrameMeta, SpaceAlert, SpaceFlare, SpaceScales, SpaceSeries } from "./space.js";
+import type { SunFrameMeta } from "./sun.js";
 
 /** The wire form of a domain object: Date becomes an ISO 8601 UTC string. */
 export type Json<T> = {
@@ -250,6 +251,8 @@ export interface ApiSpaceWindow {
   bucketSeconds: number | null;
   /** Per series, `[epoch ms, value]` ascending. */
   samples: Record<SpaceSeries, [number, number][]>;
+  /** When the earliest GFZ Kp row still marked preliminary begins, or null when none is. */
+  preliminaryKpFrom: string | null;
   flares: ApiSpaceFlare[];
   alerts: ApiSpaceAlert[];
   scales: ApiSpaceScales[];
@@ -266,4 +269,10 @@ export interface ApiAuroraFrame extends ApiAuroraFrameMeta {
 export interface ApiAuroraIndex {
   generatedAt: string;
   frames: ApiAuroraFrameMeta[];
+}
+
+/** The seven Sun frames the server holds, in strip order, with their upstream times. */
+export interface ApiSunFrames {
+  generatedAt: string;
+  frames: Json<SunFrameMeta>[];
 }

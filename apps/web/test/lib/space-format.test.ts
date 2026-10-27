@@ -3,6 +3,7 @@ import {
   alertKind,
   alertTitle,
   fmtKp,
+  fmtThirds,
   fmtValue,
   fromInputValue,
   gLevel,
@@ -84,5 +85,16 @@ describe("space formatting", () => {
     expect(fmtValue(7.126, 2)).toBe("7.13");
     expect(fmtValue(0.1, 2)).toBe("0.1");
     expect(fmtValue(-6.2)).toBe("-6.2");
+  });
+});
+
+describe("fmtThirds", () => {
+  it("writes a Kp difference in thirds with its sign", () => {
+    expect(fmtThirds(0)).toBe("0");
+    expect(fmtThirds(0.33)).toBe("+⅓");
+    expect(fmtThirds(-0.67)).toBe("-⅔");
+    expect(fmtThirds(1)).toBe("+1");
+    expect(fmtThirds(-1.67)).toBe("-1⅔");
+    expect(fmtThirds(2.34)).toBe("+2⅓");
   });
 });

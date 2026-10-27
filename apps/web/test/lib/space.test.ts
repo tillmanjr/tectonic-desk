@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createSpaceStore,
   DEFAULT_WINDOW,
+  HISTORY_START,
+  isLongRange,
   isWindowId,
+  LONG_INTERVAL_MS,
+  LONG_RANGE_MS,
   MAX_RANGE_MS,
   parseSpaceRange,
   rangeBounds,
@@ -37,16 +41,25 @@ describe("space range", () => {
     expect(parseSpaceRange({ from: "2026-10-02T00:00Z", to: "2026-10-02T00:00Z" }).kind).toBe(
       "window",
     );
-    expect(parseSpaceRange({ from: "2026-01-01T00:00Z", to: "2026-06-01T00:00Z" }).kind).toBe(
+    expect(parseSpaceRange({ from: "1900-01-01T00:00Z", to: "2026-06-01T00:00Z" }).kind).toBe(
       "window",
+    );
+    // five years is a fine fixed range now
+    expect(parseSpaceRange({ from: "2020-01-01T00:00Z", to: "2025-01-01T00:00Z" }).kind).toBe(
+      "fixed",
     );
     expect(parseSpaceRange({ from: "2026-10-01T00:00Z" }).kind).toBe("window");
     expect(parseSpaceRange({ from: "", to: "2026-10-02T00:00Z" }).kind).toBe("window");
     expect(parseSpaceRange({ from: "soon", to: "2026-10-02T00:00Z" }).kind).toBe("window");
     expect(parseSpaceRange({ from: ["a"], to: "2026-10-02T00:00Z" }).kind).toBe("window");
     expect(isWindowId("30d")).toBe(true);
+    expect(isWindowId("all")).toBe(true);
     expect(isWindowId(7)).toBe(false);
-    expect(MAX_RANGE_MS).toBe(93 * 86_400_000);
+    expect(MAX_RANGE_MS).toBe(36_525 * 86_400_000);
+    expect(LONG_RANGE_MS).toBe(93 * 86_400_000);
+    // exactly 93 days is still short; a second more is long
+    expect(isLongRange(new Date("2026-07-12T11:59:59Z"), NOW)).toBe(true);
+    expect(isLongRange(new Date("2026-07-12T12:00:00Z"), NOW)).toBe(false);
   });
 
   it("writes the route keys, leaving the default window out, and names the bounds", () => {
@@ -73,8 +86,17 @@ describe("space range", () => {
       from: new Date("2026-10-13T06:00:00Z"),
       to: NOW,
     });
-    for (const w of WINDOWS) expect(windowMs(w.id)).toBe(w.ms);
+    for (const w of WINDOWS) {
+      expect(windowMs(w.id, NOW)).toBe(w.ms ?? NOW.getTime() - HISTORY_START.getTime());
+    }
     for (const w of WINDOWS) expect(windowLabel(w.id)).toBe(w.label);
+    expect(rangeBounds({ kind: "window", id: "all" }, NOW)).toEqual({
+      from: new Date("1932-01-01T00:00:00Z"),
+      to: NOW,
+    });
+    expect(rangeBounds({ kind: "window", id: "1y" }, NOW).from).toEqual(
+      new Date(NOW.getTime() - 365.25 * 86_400_000),
+    );
   });
 });
 
@@ -161,6 +183,49 @@ describe("createSpaceStore", () => {
     expect(d.listeners.size).toBe(0);
     await vi.advanceTimersByTimeAsync(5000);
     expect(api.spaceNow).toHaveBeenCalledTimes(7);
+  });
+
+  it("polls a long range every ten minutes and a short one every minute again", async () => {
+    vi.useFakeTimers();
+    const api = fakeApi();
+    const d = doc();
+    const store = createSpaceStore(api, () => NOW, { intervalMs: 60_000, doc: d });
+    expect(LONG_INTERVAL_MS).toBe(600_000);
+    store.start();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(api.spaceNow).toHaveBeenCalledTimes(2);
+    store.setRange({ kind: "window", id: "11y" });
+    await Promise.resolve();
+    expect(api.spaceNow).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(599_000);
+    expect(api.spaceNow).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(api.spaceNow).toHaveBeenCalledTimes(4);
+    store.setRange({ kind: "window", id: "6h" });
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(api.spaceNow).toHaveBeenCalledTimes(6);
+    // a range change while hidden loads once but starts no timer
+    d.hidden = true;
+    d.fire();
+    store.setRange({ kind: "window", id: "7d" });
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(api.spaceNow).toHaveBeenCalledTimes(7);
+    store.stop();
+  });
+
+  it("loads the Sun frames with each load and keeps them through a failed refresh", async () => {
+    const api = fakeApi();
+    const store = createSpaceStore(api, () => NOW, { intervalMs: 1e9, doc: doc() });
+    expect(store.sun.value).toBeNull();
+    await store.load();
+    expect(store.sun.value?.frames).toHaveLength(7);
+    expect(store.sun.value?.frames[6]).toEqual({ key: "c3", time: null, bytes: 45_000 });
+    vi.mocked(api.sunFrames).mockRejectedValueOnce(new Error("sun down"));
+    await store.load();
+    await Promise.resolve();
+    expect(store.error.value).toBeNull();
+    expect(store.sun.value?.frames).toHaveLength(7);
+    expect(api.sunFrames).toHaveBeenCalledTimes(2);
   });
 
   it("records an error, keeps the last data, and drops a stale answer", async () => {

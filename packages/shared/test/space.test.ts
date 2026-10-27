@@ -4,16 +4,27 @@ import {
   auroraIndex,
   isSpaceSeries,
   mapSeries,
+  SERIES_AGGREGATE,
   seriesRecord,
   SPACE_SERIES,
 } from "../src/index.js";
 
 describe("space series", () => {
-  it("names thirteen series and recognises them", () => {
-    expect(SPACE_SERIES).toHaveLength(13);
+  it("names seventeen series and recognises them", () => {
+    expect(SPACE_SERIES).toHaveLength(17);
     expect(isSpaceSeries("kp_1m")).toBe(true);
     expect(isSpaceSeries("p100")).toBe(true);
-    expect(isSpaceSeries("f107")).toBe(false);
+    expect(isSpaceSeries("f107")).toBe(true);
+    expect(isSpaceSeries("kp")).toBe(false);
+  });
+
+  it("names the aggregate of every series", () => {
+    expect(SERIES_AGGREGATE.kp_gfz).toBe("max");
+    expect(SERIES_AGGREGATE.xray_long).toBe("max");
+    expect(SERIES_AGGREGATE.dst).toBe("min");
+    expect(SERIES_AGGREGATE.bz_gsm).toBe("min");
+    expect(SERIES_AGGREGATE.f107).toBe("mean");
+    expect(Object.keys(SERIES_AGGREGATE)).toEqual([...SPACE_SERIES]);
   });
 
   it("builds and maps a record over every series", () => {

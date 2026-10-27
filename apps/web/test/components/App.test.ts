@@ -403,7 +403,10 @@ describe("App", () => {
     expect(wrapper.findAll(".stats.space .stat")).toHaveLength(6);
     expect(api.auroraIndex).toHaveBeenCalled();
     expect(wrapper.findAll(".aurora svg.polar")).toHaveLength(2);
-    expect(wrapper.find(".sectionlabel").text()).toBe("Alerts · SWPC messages");
+    expect(wrapper.findAll(".sectionlabel").map((l) => l.text())).toEqual([
+      "The Sun · SDO and SOHO",
+      "Alerts · SWPC messages",
+    ]);
     expect(api.spaceWindow).toHaveBeenLastCalledWith(
       "2026-10-06T12:00:00.000Z",
       "2026-10-13T12:00:00.000Z",

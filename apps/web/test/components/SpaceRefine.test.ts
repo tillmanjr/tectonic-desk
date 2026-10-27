@@ -17,6 +17,9 @@ describe("SpaceRefine", () => {
       "3 days",
       "7 days",
       "30 days",
+      "1 year",
+      "11 years",
+      "Since 1932",
     ]);
     const [from, to] = w.findAll("input");
     expect(from?.element.value).toBe("2026-10-12T12:00");
@@ -44,7 +47,7 @@ describe("SpaceRefine", () => {
     });
     // reversed, over the cap or unparseable: ignored
     await to?.setValue("2026-10-12T06:00");
-    await from?.setValue("2026-06-01T00:00");
+    await from?.setValue("1900-01-01T00:00");
     await from?.setValue("yesterday");
     expect(ctx.setSpaceRange).toHaveBeenCalledTimes(3);
     w.unmount();
@@ -62,7 +65,9 @@ describe("SpaceRefine", () => {
     const w = mountWith(SpaceRefine, ctx);
     expect(w.find("select").element.value).toBe("");
     expect(w.findAll("input")[0]?.element.value).toBe("2026-10-01T00:00");
-    expect(w.find(".fnote").text()).toBe("Points are 7-minute means over this window.");
+    expect(w.find(".fnote").text()).toBe(
+      "Points are 7-minute maxima (Kp, fluxes), minima (Dst, Bz) and means over this window.",
+    );
     const live = w.find("button");
     expect(live.attributes("disabled")).toBeUndefined();
     await live.trigger("click");

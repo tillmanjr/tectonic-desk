@@ -1,14 +1,17 @@
 import {
+  SERIES_AGGREGATE,
   seriesRecord,
+  SPACE_SERIES,
   type AuroraFrame,
   type AuroraFrameMeta,
   type SpaceAlert,
   type SpaceFlare,
+  type SeriesAggregate,
   type SpaceSample,
   type SpaceScales,
   type SpaceSeries,
 } from "@tectonic/shared";
-import { and, asc, desc, eq, gte, lt, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, lte, or, sql } from "drizzle-orm";
 import type { Db } from "../db/client.js";
 import {
   spaceAlerts,
@@ -21,6 +24,7 @@ import {
   type SpaceSampleRow,
   type SpaceScalesRow,
 } from "../db/schema.js";
+import { GFZ_PRELIMINARY_SOURCE, GFZ_SOURCE } from "../space/history-parse.js";
 
 const CHUNK = 1000;
 
@@ -149,18 +153,59 @@ export async function samplesBetween(
   }
   // The driver hands raw sql columns back as text, so the bucket comes out as epoch milliseconds.
   const bucket = sql<number>`(extract(epoch from date_bin(${`${String(bucketSeconds)} seconds`}::interval, ${spaceSamples.time}, timestamptz '2000-01-01')) * 1000)::double precision`;
-  const rows = await db
-    .select({
-      series: spaceSamples.series,
-      ms: bucket.as("bucket_ms"),
-      value: sql<number>`avg(${spaceSamples.value})::double precision`.as("mean"),
-    })
-    .from(spaceSamples)
-    .where(within)
-    .groupBy(sql`1`, sql`2`)
-    .orderBy(sql`1`, sql`2`);
-  for (const r of rows) out[r.series].push([r.ms, r.value]);
+  // One query per aggregate, each over the series that summarise that way.
+  const groups = AGGREGATES.map((agg) => ({
+    agg,
+    ids: SPACE_SERIES.filter((s) => SERIES_AGGREGATE[s] === agg),
+  }));
+  const results = await Promise.all(
+    groups.map(({ agg, ids }) =>
+      db
+        .select({
+          series: spaceSamples.series,
+          ms: bucket.as("bucket_ms"),
+          value: sql<number>`${aggregateSql(agg)}::double precision`.as("agg"),
+        })
+        .from(spaceSamples)
+        .where(and(within, inArray(spaceSamples.series, ids)))
+        .groupBy(sql`1`, sql`2`)
+        .orderBy(sql`1`, sql`2`),
+    ),
+  );
+  for (const rows of results) for (const r of rows) out[r.series].push([r.ms, r.value]);
   return out;
+}
+
+const AGGREGATES: SeriesAggregate[] = ["max", "min", "mean"];
+
+function aggregateSql(agg: SeriesAggregate) {
+  if (agg === "max") return sql`max(${spaceSamples.value})`;
+  if (agg === "min") return sql`min(${spaceSamples.value})`;
+  return sql`avg(${spaceSamples.value})`;
+}
+
+/** When the earliest GFZ Kp row still marked preliminary begins, or null when every row is definitive. */
+export async function preliminaryKpFrom(db: Db): Promise<Date | null> {
+  const rows = await db
+    .select({ time: spaceSamples.time })
+    .from(spaceSamples)
+    .where(and(eq(spaceSamples.series, "kp_gfz"), eq(spaceSamples.source, GFZ_PRELIMINARY_SOURCE)))
+    .orderBy(asc(spaceSamples.time))
+    .limit(1);
+  return rows[0]?.time ?? null;
+}
+
+/** Removes preliminary GFZ Kp rows whose hour now has a definitive row; returns how many went. */
+export async function deleteSupersededKp(db: Db): Promise<number> {
+  const result = await db.execute(sql`
+    delete from space_samples p
+    where p.series = 'kp_gfz' and p.source = ${GFZ_PRELIMINARY_SOURCE}
+      and exists (
+        select 1 from space_samples d
+        where d.series = 'kp_gfz' and d.source = ${GFZ_SOURCE} and d.time = p.time
+      )
+  `);
+  return Number(result.rowCount);
 }
 
 /** Flares that overlap the window: begun inside it, or begun before and ended inside (or still open). */
