@@ -9,17 +9,32 @@ import type { DocLike } from "./status.js";
  * `?from=&to=`); `App.vue` reads it with `parseSpaceRange` and hands it to `setRange`.
  */
 
+const DAY = 86_400_000;
+const YEAR = 365.25 * DAY;
+
+/** The lengths on offer; `all` has no length of its own and starts at `HISTORY_START`. */
 export const WINDOWS = [
   { id: "6h", label: "6 hours", ms: 6 * 3_600_000 },
   { id: "24h", label: "24 hours", ms: 24 * 3_600_000 },
-  { id: "3d", label: "3 days", ms: 3 * 86_400_000 },
-  { id: "7d", label: "7 days", ms: 7 * 86_400_000 },
-  { id: "30d", label: "30 days", ms: 30 * 86_400_000 },
+  { id: "3d", label: "3 days", ms: 3 * DAY },
+  { id: "7d", label: "7 days", ms: 7 * DAY },
+  { id: "30d", label: "30 days", ms: 30 * DAY },
+  { id: "1y", label: "1 year", ms: YEAR },
+  { id: "11y", label: "11 years", ms: 11 * YEAR },
+  { id: "all", label: "Since 1932", ms: null },
 ] as const;
 export type WindowId = (typeof WINDOWS)[number]["id"];
 export const DEFAULT_WINDOW: WindowId = "24h";
+/** The first GFZ Kp value; where `Since 1932` begins. */
+export const HISTORY_START = new Date("1932-01-01T00:00:00Z");
 /** The longest fixed range the server serves. */
-export const MAX_RANGE_MS = 93 * 86_400_000;
+export const MAX_RANGE_MS = 36_525 * DAY;
+/** Past this the stack shows the long record: flares, alerts and the minute-scale rows drop out. */
+export const LONG_RANGE_MS = 93 * DAY;
+export const isLongRange = (from: Date, to: Date): boolean =>
+  to.getTime() - from.getTime() > LONG_RANGE_MS;
+/** A long range is polled this often instead of every minute: its points are days wide. */
+export const LONG_INTERVAL_MS = 600_000;
 
 export type SpaceRange = { kind: "window"; id: WindowId } | { kind: "fixed"; from: Date; to: Date };
 
@@ -59,14 +74,19 @@ export function spaceRangeQuery(r: SpaceRange): {
   return { window: r.id === DEFAULT_WINDOW ? undefined : r.id, from: undefined, to: undefined };
 }
 
-const WINDOW_MS: Record<WindowId, number> = {
+const WINDOW_MS: Record<WindowId, number | null> = {
   "6h": WINDOWS[0].ms,
   "24h": WINDOWS[1].ms,
   "3d": WINDOWS[2].ms,
   "7d": WINDOWS[3].ms,
   "30d": WINDOWS[4].ms,
+  "1y": WINDOWS[5].ms,
+  "11y": WINDOWS[6].ms,
+  all: WINDOWS[7].ms,
 };
-export const windowMs = (id: WindowId): number => WINDOW_MS[id];
+/** A window's length ending at `now`; `all` reaches back to `HISTORY_START`. */
+export const windowMs = (id: WindowId, now: Date): number =>
+  WINDOW_MS[id] ?? now.getTime() - HISTORY_START.getTime();
 
 const WINDOW_LABEL: Record<WindowId, string> = {
   "6h": WINDOWS[0].label,
@@ -74,17 +94,22 @@ const WINDOW_LABEL: Record<WindowId, string> = {
   "3d": WINDOWS[2].label,
   "7d": WINDOWS[3].label,
   "30d": WINDOWS[4].label,
+  "1y": WINDOWS[5].label,
+  "11y": WINDOWS[6].label,
+  all: WINDOWS[7].label,
 };
 export const windowLabel = (id: WindowId): string => WINDOW_LABEL[id];
 
 /** The instants a range covers: a window ends at now. */
 export function rangeBounds(r: SpaceRange, now: Date): { from: Date; to: Date } {
   if (r.kind === "fixed") return { from: r.from, to: r.to };
-  return { from: new Date(now.getTime() - windowMs(r.id)), to: now };
+  return { from: new Date(now.getTime() - windowMs(r.id, now)), to: now };
 }
 
 export interface SpaceStoreOptions {
   intervalMs?: number;
+  /** The poll interval while the range is long; default `LONG_INTERVAL_MS`. */
+  longIntervalMs?: number;
   doc?: DocLike;
 }
 
@@ -110,6 +135,7 @@ export function createSpaceStore(
   opts: SpaceStoreOptions = {},
 ): SpaceStore {
   const intervalMs = opts.intervalMs ?? 60_000;
+  const longIntervalMs = opts.longIntervalMs ?? LONG_INTERVAL_MS;
   const doc: DocLike = opts.doc ?? document;
   const now = shallowRef<ApiSpaceNow | null>(null);
   const window = shallowRef<ApiSpaceWindow | null>(null);
@@ -146,9 +172,14 @@ export function createSpaceStore(
   function tick(): void {
     if (range.value.kind === "window") void load();
   }
+  /** The interval for the range in force: a long range changes slowly and costs more to read. */
+  function pollMs(): number {
+    const { from, to } = rangeBounds(range.value, readNow());
+    return isLongRange(from, to) ? longIntervalMs : intervalMs;
+  }
   function startTimer(): void {
     stopTimer();
-    timer = setInterval(tick, intervalMs);
+    timer = setInterval(tick, pollMs());
   }
   function stopTimer(): void {
     if (timer !== null) {
@@ -175,7 +206,10 @@ export function createSpaceStore(
     setRange(r) {
       range.value = r;
       if (r.kind === "window") lastWindow.value = r.id;
-      if (started) void load();
+      if (started) {
+        void load();
+        if (!doc.hidden) startTimer();
+      }
     },
     load,
     start() {

@@ -27,6 +27,7 @@ import {
   latestAlert,
   latestFlare,
   latestReadings,
+  preliminaryKpFrom,
   samplesBetween,
   scalesBetween,
 } from "../repositories/space.js";
@@ -68,12 +69,14 @@ export const spaceRoutes: FastifyPluginCallback = (app, _opts, done) => {
   });
 
   app.get("/api/space/window", async (request, reply): Promise<ApiSpaceWindow> => {
-    const { from, to, bucketSeconds } = parseSpaceWindow(request.query, app.now());
-    const [samples, flares, alerts, scales] = await Promise.all([
+    const { from, to, bucketSeconds, detail } = parseSpaceWindow(request.query, app.now());
+    // A window past the detail limit is a long view of the indices; its events would be thousands.
+    const [samples, preliminary, flares, alerts, scales] = await Promise.all([
       samplesBetween(app.db, from, to, bucketSeconds),
-      flaresBetween(app.db, from, to),
-      alertsBetween(app.db, from, to),
-      scalesBetween(app.db, utcDay(from), utcDay(to)),
+      preliminaryKpFrom(app.db),
+      detail ? flaresBetween(app.db, from, to) : [],
+      detail ? alertsBetween(app.db, from, to) : [],
+      detail ? scalesBetween(app.db, utcDay(from), utcDay(to)) : [],
     ]);
     cacheFor(reply, 60);
     return {
@@ -81,6 +84,7 @@ export const spaceRoutes: FastifyPluginCallback = (app, _opts, done) => {
       to: iso(to),
       bucketSeconds,
       samples,
+      preliminaryKpFrom: preliminary === null ? null : iso(preliminary),
       flares: flares.map(toApiSpaceFlare),
       alerts: alerts.map(toApiSpaceAlert),
       scales: scales.map(toApiSpaceScales),

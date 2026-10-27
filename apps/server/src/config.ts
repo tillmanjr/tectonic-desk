@@ -18,6 +18,7 @@ const schema = z.object({
   SPACE_EVENTS_INTERVAL_MS: z.coerce.number().int().min(60_000).default(300_000),
   SPACE_SLOW_INTERVAL_MS: z.coerce.number().int().min(300_000).default(3_600_000),
   SPACE_PRUNE_INTERVAL_MS: z.coerce.number().int().min(600_000).default(21_600_000),
+  SPACE_HISTORY_INTERVAL_MS: z.coerce.number().int().min(3_600_000).default(86_400_000),
   RATE_LIMIT_MAX: z.coerce.number().int().min(0).default(120),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
   TRUST_PROXY: z.stringbool().default(false),

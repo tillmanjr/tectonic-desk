@@ -17,12 +17,14 @@ export interface RightAxis {
   domain: (values: number[]) => [number, number];
 }
 
-export type RowId = "kp" | "dst" | "power" | "mag" | "wind" | "xray" | "protons";
+export type RowId = "kp" | "dst" | "power" | "mag" | "wind" | "xray" | "protons" | "sun";
 
 export interface RowSpec {
   id: RowId;
   label: string;
   unit: string;
+  /** Drawn at a long range (past 93 days), where only the archived indices have points. */
+  long: boolean;
   /** Series against the left axis, in draw order (the first is the row's main line). */
   series: SpaceSeries[];
   right: RightAxis | null;
@@ -93,7 +95,8 @@ export const ROWS: RowSpec[] = [
     id: "kp",
     label: "Kp",
     unit: "",
-    series: ["kp_1m", "kp_3h"],
+    long: true,
+    series: ["kp_1m", "kp_3h", "kp_gfz"],
     right: null,
     scale: "linear",
     domain: () => [0, 9],
@@ -105,6 +108,7 @@ export const ROWS: RowSpec[] = [
     id: "dst",
     label: "Dst",
     unit: "nT",
+    long: true,
     series: ["dst"],
     right: null,
     scale: "linear",
@@ -117,6 +121,7 @@ export const ROWS: RowSpec[] = [
     id: "power",
     label: "Hemispheric power N · S",
     unit: "GW",
+    long: false,
     series: ["hp_north", "hp_south"],
     right: null,
     scale: "linear",
@@ -129,6 +134,7 @@ export const ROWS: RowSpec[] = [
     id: "mag",
     label: "Bz · Bt",
     unit: "nT",
+    long: false,
     series: ["bz_gsm", "bt"],
     right: null,
     scale: "linear",
@@ -141,6 +147,7 @@ export const ROWS: RowSpec[] = [
     id: "wind",
     label: "Speed · density",
     unit: "km/s",
+    long: false,
     series: ["speed"],
     right: { series: "density", unit: "/cm³", domain: (v) => spanAtLeast(v, 0, 10) },
     scale: "linear",
@@ -153,6 +160,7 @@ export const ROWS: RowSpec[] = [
     id: "xray",
     label: "X-ray",
     unit: "W/m²",
+    long: false,
     series: ["xray_long", "xray_short"],
     right: null,
     scale: "log",
@@ -168,6 +176,7 @@ export const ROWS: RowSpec[] = [
     id: "protons",
     label: "Protons ≥10 · ≥100 MeV",
     unit: "pfu",
+    long: false,
     series: ["p10", "p100"],
     right: null,
     scale: "log",
@@ -180,7 +189,24 @@ export const ROWS: RowSpec[] = [
     ticks: (_lo, hi) => decadeTicks(1, hi),
     tickLabel: fmtDecade,
   },
+  {
+    id: "sun",
+    label: "Sunspots · F10.7",
+    unit: "",
+    long: true,
+    series: ["ssn"],
+    right: { series: "f107", unit: "sfu", domain: (v) => spanAtLeast(v, 50, 150) },
+    scale: "linear",
+    domain: (v) => spanAtLeast(v, 0, 100),
+    refs: [],
+    ticks: null,
+    tickLabel: null,
+  },
 ];
+
+/** The rows for a range: the long set past 93 days, else every row but the daily Sun row. */
+export const rowsFor = (long: boolean): RowSpec[] =>
+  ROWS.filter((r) => (long ? r.long : r.id !== "sun"));
 
 /** Whole decades within a log domain, ascending. */
 export function decadeTicks(lo: number, hi: number): number[] {
@@ -206,7 +232,25 @@ export const CADENCE_MS: Record<SpaceSeries, number> = {
   p100: 300_000,
   hp_north: 300_000,
   hp_south: 300_000,
+  kp_gfz: 3 * 3_600_000,
+  ap: 86_400_000,
+  ssn: 86_400_000,
+  f107: 86_400_000,
 };
+
+/** The bucket in the unit that reads best: `7-minute`, `3-hour`, `23-day`. */
+export function bucketWords(bucketSeconds: number): string {
+  if (bucketSeconds < 7200) return `${String(Math.round(bucketSeconds / 60))}-minute`;
+  if (bucketSeconds < 2 * 86_400) return `${String(Math.round(bucketSeconds / 3600))}-hour`;
+  return `${String(Math.round(bucketSeconds / 86_400))}-day`;
+}
+
+/** How thinned points were made, for the captions; "" for raw rows. */
+export const AGGREGATE_WORDS = "maxima (Kp, fluxes), minima (Dst, Bz) and means";
+export const aggregateNote = (bucketSeconds: number | null): string =>
+  bucketSeconds === null
+    ? ""
+    : `Points are ${bucketWords(bucketSeconds)} ${AGGREGATE_WORDS} over this window.`;
 
 /** A line breaks where consecutive points lie more than three steps apart. */
 export function gapMs(series: SpaceSeries, bucketSeconds: number | null): number {
@@ -239,6 +283,42 @@ export function linePath(
     last = ms;
   }
   return d;
+}
+
+/**
+ * A step per point: horizontal over `widthMs` from each stamp, joined to the previous step
+ * while the points lie within `gap`, the pen lifted over a gap or an unplottable value.
+ */
+export function kpStepPath(
+  points: Points,
+  x: (ms: number) => number,
+  y: (value: number) => number,
+  gap: number,
+  widthMs: number,
+): string {
+  let d = "";
+  let pen = false;
+  let last = Number.NEGATIVE_INFINITY;
+  for (const [ms, value] of points) {
+    const py = y(value);
+    if (!Number.isFinite(py)) {
+      pen = false;
+      continue;
+    }
+    const cmd = pen && ms - last <= gap ? "L" : "M";
+    d += `${cmd}${x(ms).toFixed(1)},${py.toFixed(1)}H${x(ms + widthMs).toFixed(1)}`;
+    pen = true;
+    last = ms;
+  }
+  return d;
+}
+
+/** The points before an instant and those at or after it; a null instant leaves everything before. */
+export function splitAt(points: Points, ms: number | null): { before: Points; after: Points } {
+  if (ms === null) return { before: points, after: [] };
+  const i = points.findIndex((p) => p[0] >= ms);
+  if (i === -1) return { before: points, after: [] };
+  return { before: points.slice(0, i), after: points.slice(i) };
 }
 
 /** The index of the point nearest an instant, or -1 for no points. */
@@ -281,16 +361,17 @@ export interface KpBar {
   level: number;
 }
 
-/** Three-hour Kp as bars from each stamp to the next window's start, coloured by G level. */
+/** Kp as bars from each stamp over `widthMs` (its 3-hour window, or the bucket when wider), coloured by G level. */
 export function kpBars(
   points: Points,
   x: (ms: number) => number,
   y: (value: number) => number,
   bottom: number,
+  widthMs: number,
 ): KpBar[] {
   return points.map(([ms, v]) => {
     const x0 = x(ms);
-    const x1 = x(ms + CADENCE_MS.kp_3h);
+    const x1 = x(ms + widthMs);
     const top = y(v);
     return {
       key: ms,
@@ -317,10 +398,11 @@ export function viewX(
   return ((ev.clientX - rect.left) / Math.max(rect.width, 1)) * width;
 }
 
-/** One drawn series of a row. */
+/** One drawn series of a row; `cls` marks a variant such as GFZ's preliminary stretch. */
 export interface RowLine {
   series: SpaceSeries;
   d: string;
+  cls?: string;
 }
 
 /** A flare shaded across a row. */

@@ -15,6 +15,7 @@ export default defineConfig({
         "src/qfaults-cli.ts",
         "src/gvp-cli.ts",
         "src/relief-cli.ts",
+        "src/space-history-cli.ts",
       ],
       thresholds: { lines: 100, branches: 100, functions: 100, statements: 100 },
     },

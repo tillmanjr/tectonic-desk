@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { retryable, withRetry } from "../../src/ingest/retry.js";
+import { SpaceHttpError } from "../../src/space/client.js";
 import { UsgsHttpError } from "../../src/usgs/client.js";
 import { recordingLogger } from "../support/fixtures.js";
 
@@ -13,6 +14,9 @@ describe("retry", () => {
     expect(retryable(new Error("fetch failed"))).toBe(true);
     expect(retryable(http(400))).toBe(false);
     expect(retryable(http(404))).toBe(false);
+    expect(retryable(new SpaceHttpError(502, "https://x.test/h"))).toBe(true);
+    expect(retryable(new SpaceHttpError(404, "https://x.test/h"))).toBe(false);
+    expect(retryable(Object.assign(new Error("odd"), { status: "503" }))).toBe(true);
   });
 
   it("retries with doubling delays and returns the first success", async () => {

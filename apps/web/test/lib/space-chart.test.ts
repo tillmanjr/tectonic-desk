@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  aggregateNote,
   aroundZero,
+  bucketWords,
   CADENCE_MS,
   decadeTicks,
   flareBands,
@@ -10,7 +12,10 @@ import {
   linePath,
   nearestIndex,
   ROWS,
+  rowsFor,
   spanAtLeast,
+  splitAt,
+  kpStepPath,
   spanWithZero,
   viewX,
   xrayTickLabel,
@@ -37,7 +42,16 @@ describe("domains and ticks", () => {
     expect(byId.mag?.domain([-6.2, 9.8])).toEqual([-9.8, 9.8]);
     expect(byId.power?.domain([12, 21])).toEqual([-2, 42]);
     expect(byId.power?.domain([30, 95])).toEqual([-4.75, 99.75]);
-    expect(ROWS.map((r) => r.id)).toEqual(["kp", "dst", "power", "mag", "wind", "xray", "protons"]);
+    expect(ROWS.map((r) => r.id)).toEqual([
+      "kp",
+      "dst",
+      "power",
+      "mag",
+      "wind",
+      "xray",
+      "protons",
+      "sun",
+    ]);
     expect(byId.xray?.ticks?.(1e-9, 1e-3)).toEqual([1e-7, 1e-6, 1e-5, 1e-4]);
     expect(byId.protons?.ticks?.(1e-2, 1600)).toEqual([1, 10, 100, 1000]);
     expect(ROWS.filter((r) => r.scale === "linear").every((r) => r.ticks === null)).toBe(true);
@@ -73,7 +87,16 @@ describe("lines, bars and bands", () => {
     expect(gapMs("kp_1m", null)).toBe(3 * 60_000);
     expect(gapMs("kp_1m", 420)).toBe(3 * 420_000);
     expect(gapMs("kp_3h", 420)).toBe(9 * 3_600_000);
-    expect(Object.keys(CADENCE_MS)).toHaveLength(13);
+    expect(Object.keys(CADENCE_MS)).toHaveLength(17);
+    expect(bucketWords(420)).toBe("7-minute");
+    expect(bucketWords(7200)).toBe("2-hour");
+    expect(bucketWords(10_800)).toBe("3-hour");
+    expect(bucketWords(172_800)).toBe("2-day");
+    expect(bucketWords(1_996_320)).toBe("23-day");
+    expect(aggregateNote(null)).toBe("");
+    expect(aggregateNote(1_996_320)).toBe(
+      "Points are 23-day maxima (Kp, fluxes), minima (Dst, Bz) and means over this window.",
+    );
   });
 
   it("maps a pointer to viewBox units against its element, or null without one", () => {
@@ -148,6 +171,7 @@ describe("lines, bars and bands", () => {
       (ms) => ms / h,
       (v) => 90 - v * 10,
       90,
+      3 * h,
     );
     expect(bars).toEqual([
       { key: 0, x: 0, w: 2, y: 66.7, h: expect.closeTo(23.3, 6) as number, level: 0 },
@@ -159,7 +183,67 @@ describe("lines, bars and bands", () => {
         () => 5,
         () => 80,
         90,
+        3 * h,
       )[0]?.w,
     ).toBe(1);
+    // a wider bucket widens the bar
+    expect(
+      kpBars(
+        [[0, 1]],
+        (ms) => ms / h,
+        () => 80,
+        90,
+        6 * h,
+      )[0]?.w,
+    ).toBe(5);
+  });
+
+  it("draws steps, splits at an instant and picks the row set for a range", () => {
+    const h = 3_600_000;
+    const x = (ms: number) => ms / h;
+    const y = (v: number) => 90 - v * 10;
+    expect(kpStepPath([], x, y, 9 * h, 3 * h)).toBe("");
+    expect(
+      kpStepPath(
+        [
+          [0, 2],
+          [3 * h, 5],
+          [24 * h, 1],
+        ],
+        x,
+        y,
+        9 * h,
+        3 * h,
+      ),
+    ).toBe("M0.0,70.0H3.0L3.0,40.0H6.0M24.0,80.0H27.0");
+    expect(kpStepPath([[0, Number.NaN]], x, y, 9 * h, 3 * h)).toBe("");
+    const pts: [number, number][] = [
+      [0, 1],
+      [h, 2],
+      [2 * h, 3],
+    ];
+    expect(splitAt(pts, null)).toEqual({ before: pts, after: [] });
+    expect(splitAt(pts, h)).toEqual({
+      before: [[0, 1]],
+      after: [
+        [h, 2],
+        [2 * h, 3],
+      ],
+    });
+    expect(splitAt(pts, 5 * h)).toEqual({ before: pts, after: [] });
+    expect(splitAt(pts, -1)).toEqual({ before: [], after: pts });
+    expect(rowsFor(false).map((r) => r.id)).toEqual([
+      "kp",
+      "dst",
+      "power",
+      "mag",
+      "wind",
+      "xray",
+      "protons",
+    ]);
+    expect(rowsFor(true).map((r) => r.id)).toEqual(["kp", "dst", "sun"]);
+    const sun = ROWS.find((r) => r.id === "sun");
+    expect(sun?.domain([20, 300])).toEqual([-15, 315]);
+    expect(sun?.right?.domain([80, 120])).toEqual([45, 155]);
   });
 });

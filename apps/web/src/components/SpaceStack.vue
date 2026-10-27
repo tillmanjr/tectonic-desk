@@ -5,27 +5,36 @@ import { computed, ref } from "vue";
 import ChartAxes from "./ChartAxes.vue";
 import SpaceRow from "./SpaceRow.vue";
 import { ticksOf, type Tick } from "../lib/charts.js";
+import { cycleMarks } from "../lib/cycles.js";
+import { eraLabels, type EraLabel } from "../lib/eras.js";
 import { fmtClock, fmtStamp } from "../lib/format.js";
 import { AURORA, SPACE, useInjected, ZONE } from "../lib/keys.js";
+import { isLongRange } from "../lib/space.js";
 import {
+  AGGREGATE_WORDS,
+  bucketWords,
+  CADENCE_MS,
   flareBands,
   gapMs,
   kpBars,
   linePath,
   nearestIndex,
-  ROWS,
+  rowsFor,
+  splitAt,
+  kpStepPath,
   viewX,
   type Points,
   type RowData,
   type RowLine,
   type RowSpec,
 } from "../lib/space-chart.js";
-import { alertTitle, fmtKp, fmtValue, xrayClass } from "../lib/space-format.js";
+import { alertTitle, fmtKp, fmtThirds, fmtValue, xrayClass } from "../lib/space-format.js";
 
 /**
  * Every series of the window on one time axis, a row each, so a storm reads top to bottom at
  * one instant. SWPC alerts are ticks along the top, flares shade the X-ray row, and a pointer
- * over the stack reads every row at that moment.
+ * over the stack reads every row at that moment. Past 93 days the stack shows the long record
+ * (GFZ Kp, Dst, sunspots with F10.7) with the solar-cycle minima marked.
  */
 const props = defineProps<{ highlight: string | null }>();
 const store = useInjected(SPACE);
@@ -36,7 +45,7 @@ const W = 900;
 const M = { l: 52, r: 52, t: 16, b: 24 };
 const ROW_H = 70;
 const ROW_GAP = 10;
-const H = M.t + ROWS.length * ROW_H - ROW_GAP + M.b;
+const heightFor = (rows: number): number => M.t + rows * ROW_H - ROW_GAP + M.b;
 
 interface AlertTick {
   key: string;
@@ -45,11 +54,16 @@ interface AlertTick {
 }
 interface Stack {
   rows: RowData[];
+  h: number;
+  long: boolean;
   xTicks: Tick[];
   alerts: AlertTick[];
+  cycles: EraLabel[];
   x: ScaleTime<number, number>;
   samples: Record<SpaceSeries, Points>;
   bucketSeconds: number | null;
+  /** Epoch ms from which GFZ Kp is still preliminary, or null. */
+  preMs: number | null;
 }
 
 const SHORT: Record<SpaceSeries, string> = {
@@ -66,13 +80,46 @@ const SHORT: Record<SpaceSeries, string> = {
   p100: "≥100",
   hp_north: "N",
   hp_south: "S",
+  kp_gfz: "GFZ",
+  ap: "Ap",
+  ssn: "SSN",
+  f107: "F10.7",
 };
 
 /** A value in the row's own words: Kp in thirds, flux as a class, the rest to a decimal or two. */
 function fmtSeries(s: SpaceSeries, v: number): string {
-  if (s === "kp_3h") return fmtKp(v);
+  if (s === "kp_3h" || s === "kp_gfz") return fmtKp(v);
   if (s === "xray_long" || s === "xray_short") return xrayClass(v);
+  if (s === "ssn") return fmtValue(v, 0);
   return fmtValue(v, s === "kp_1m" || s === "p10" || s === "p100" || s === "density" ? 2 : 1);
+}
+
+/** The Kp row's lines: none at a long range; else the 1-minute line and GFZ's step, dashed once preliminary. */
+function kpLines(
+  s: Stack["samples"],
+  x: Stack["x"],
+  y: (v: number) => number,
+  bucket: number | null,
+  long: boolean,
+  preMs: number | null,
+): RowLine[] {
+  if (long) return [];
+  const lines: RowLine[] = [
+    { series: "kp_1m", d: linePath(s.kp_1m, x, y, gapMs("kp_1m", bucket)) },
+  ];
+  const gap = gapMs("kp_gfz", bucket);
+  const { before, after } = splitAt(s.kp_gfz, preMs);
+  if (before.length > 0) {
+    lines.push({ series: "kp_gfz", d: kpStepPath(before, x, y, gap, CADENCE_MS.kp_gfz) });
+  }
+  if (after.length > 0) {
+    lines.push({
+      series: "kp_gfz",
+      cls: "pre",
+      d: kpStepPath(after, x, y, gap, CADENCE_MS.kp_gfz),
+    });
+  }
+  return lines;
 }
 
 function buildRow(
@@ -81,6 +128,8 @@ function buildRow(
   s: Stack["samples"],
   x: Stack["x"],
   bucket: number | null,
+  long: boolean,
+  preMs: number | null,
   flareKeys: { key: string; startMs: number; endMs: number; label: string }[],
 ): RowData {
   const top = M.t + i * ROW_H;
@@ -99,9 +148,10 @@ function buildRow(
     ticks !== null && label !== null
       ? ticks(lo, hi).map((v) => ({ pos: yScale(v), label: label(v) }))
       : ticksOf(yScale, 3);
-  const lines: RowLine[] = spec.series
-    .filter((id) => id !== "kp_3h")
-    .map((id) => ({ series: id, d: linePath(s[id], x, y, gapMs(id, bucket)) }));
+  const lines: RowLine[] =
+    spec.id === "kp"
+      ? kpLines(s, x, y, bucket, long, preMs)
+      : spec.series.map((id) => ({ series: id, d: linePath(s[id], x, y, gapMs(id, bucket)) }));
   let yRight: Tick[] = [];
   let rightUnit: string | null = null;
   const right = spec.right;
@@ -119,8 +169,9 @@ function buildRow(
   const refs = spec.refs
     .filter((r) => r.value >= lo && r.value <= hi)
     .map((r) => ({ y: yScale(r.value), label: r.label }));
-  const read: SpaceSeries[] = [...spec.series];
+  const read: SpaceSeries[] = spec.id === "kp" && long ? ["kp_gfz"] : [...spec.series];
   if (right !== null) read.push(right.series);
+  const barWidth = Math.max(CADENCE_MS.kp_3h, (bucket ?? 0) * 1000);
   return {
     read,
     id: spec.id,
@@ -133,7 +184,7 @@ function buildRow(
     yRight,
     refs,
     lines,
-    bars: spec.id === "kp" ? kpBars(s.kp_3h, x, y, bottom) : [],
+    bars: spec.id === "kp" ? kpBars(long ? s.kp_gfz : s.kp_3h, x, y, bottom, barWidth) : [],
     bands:
       spec.id === "xray"
         ? flareKeys.map((b) => ({
@@ -152,25 +203,43 @@ const data = computed<Stack | null>(() => {
   if (w === null || !SPACE_SERIES.some((id) => w.samples[id].length > 0)) return null;
   const from = Date.parse(w.from);
   const to = Date.parse(w.to);
+  const long = isLongRange(new Date(from), new Date(to));
   const x = (zone.value === "utc" ? scaleUtc() : scaleTime())
     .domain([from, to])
     .range([M.l, W - M.r]);
   const spanDays = (to - from) / 864e5;
-  const xTicks = ticksOf(x, 8, spanDays <= 3 ? "%H:%M" : "%b %-d");
+  const xTicks = ticksOf(x, 8, spanDays <= 3 ? "%H:%M" : spanDays <= 120 ? "%b %-d" : "%Y");
   const bands = flareBands(w.flares, to);
-  const rows = ROWS.map((spec, i) => buildRow(spec, i, w.samples, x, w.bucketSeconds, bands));
-  const alerts = w.alerts.flatMap((a) => {
-    const ms = Date.parse(a.issueTime);
-    if (ms < from || ms > to) return [];
-    return [
-      {
-        key: `${a.productId}${a.issueTime}`,
-        x: x(ms),
-        title: `${fmtClock(a.issueTime, zone.value)} · ${alertTitle(a.message)}`,
-      },
-    ];
-  });
-  return { rows, xTicks, alerts, x, samples: w.samples, bucketSeconds: w.bucketSeconds };
+  const preMs = w.preliminaryKpFrom === null ? null : Date.parse(w.preliminaryKpFrom);
+  const rows = rowsFor(long).map((spec, i) =>
+    buildRow(spec, i, w.samples, x, w.bucketSeconds, long, preMs, bands),
+  );
+  const alerts = long
+    ? []
+    : w.alerts.flatMap((a) => {
+        const ms = Date.parse(a.issueTime);
+        if (ms < from || ms > to) return [];
+        return [
+          {
+            key: `${a.productId}${a.issueTime}`,
+            x: x(ms),
+            title: `${fmtClock(a.issueTime, zone.value)} · ${alertTitle(a.message)}`,
+          },
+        ];
+      });
+  const cycles = eraLabels(cycleMarks(new Date(from), new Date(to), (d) => x(d)));
+  return {
+    rows,
+    h: heightFor(rows.length),
+    long,
+    xTicks,
+    alerts,
+    cycles,
+    x,
+    samples: w.samples,
+    bucketSeconds: w.bucketSeconds,
+    preMs,
+  };
 });
 
 /**
@@ -191,8 +260,15 @@ const caption = computed(() => {
   const points =
     d.bucketSeconds === null
       ? "Stored samples"
-      : `Points are ${String(Math.round(d.bucketSeconds / 60))}-minute means`;
-  return `${points}. Kp bars are the 3-hour values coloured by G level under the 1-minute estimate; the X-ray row shades flares; triangles along the top are SWPC alerts and warnings. Hover for the values at one instant.`;
+      : `Points are ${bucketWords(d.bucketSeconds)} ${AGGREGATE_WORDS}`;
+  const cycles =
+    d.cycles.length === 0
+      ? ""
+      : ` Dashed lines mark solar-cycle minima: ${d.cycles.map((c) => `${c.era.label} (${c.era.note})`).join("; ")}.`;
+  if (d.long) {
+    return `${points}. Kp bars are GFZ's definitive 3-hour index coloured by G level, the bucket's largest value.${cycles} Hover for the values at one instant.`;
+  }
+  return `${points}. Kp bars are the 3-hour values coloured by G level under the 1-minute estimate; the thin step is GFZ's Kp, dashed while preliminary; the X-ray row shades flares; triangles along the top are SWPC alerts and warnings.${cycles} Hover for the values at one instant.`;
 });
 
 /** The pointer in viewBox units, or null when it is off the plot. */
@@ -210,6 +286,15 @@ interface CrossRow {
   y: number;
   text: string;
 }
+
+/** The point of a series nearest the instant, if one lies within the series' gap. */
+function pointAt(d: Stack, id: SpaceSeries, ms: number): [number, number] | null {
+  const pts = d.samples[id];
+  const pt = pts[nearestIndex(pts, ms)];
+  if (pt === undefined || Math.abs(pt[0] - ms) > gapMs(id, d.bucketSeconds)) return null;
+  return pt;
+}
+
 const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(() => {
   const d = data.value;
   const px = pointer.value;
@@ -217,18 +302,22 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
   const ms = d.x.invert(px).getTime();
   const rows = d.rows.map((row) => {
     const parts = row.read.flatMap((id) => {
-      const pts = d.samples[id];
-      const i = nearestIndex(pts, ms);
-      const pt = pts[i];
-      if (pt === undefined || Math.abs(pt[0] - ms) > gapMs(id, d.bucketSeconds)) return [];
+      const pt = pointAt(d, id, ms);
+      if (pt === null) return [];
       const short = SHORT[id];
-      return [`${short === "" ? "" : `${short} `}${fmtSeries(id, pt[1])}`];
+      const prelim = id === "kp_gfz" && d.preMs !== null && pt[0] >= d.preMs ? " (prelim.)" : "";
+      return [`${short === "" ? "" : `${short} `}${fmtSeries(id, pt[1])}${prelim}`];
     });
+    if (row.id === "kp" && !d.long) {
+      const swpc = pointAt(d, "kp_3h", ms);
+      const gfz = pointAt(d, "kp_gfz", ms);
+      if (swpc !== null && gfz !== null) parts.push(`Δ ${fmtThirds(gfz[1] - swpc[1])}`);
+    }
     return { id: row.id, y: row.top + 9, text: parts.join(" · ") };
   });
   return {
     x: px,
-    stamp: fmtStamp(new Date(ms).toISOString(), zone.value, { date: "monthday" }),
+    stamp: fmtStamp(new Date(ms).toISOString(), zone.value, d.long ? {} : { date: "monthday" }),
     rows,
   };
 });
@@ -240,7 +329,7 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
     <svg
       v-if="data !== null"
       class="stacksvg"
-      :viewBox="`0 0 ${String(W)} ${String(H)}`"
+      :viewBox="`0 0 ${String(W)} ${String(data.h)}`"
       @pointermove="onMove"
       @pointerleave="onLeave"
     >
@@ -248,7 +337,7 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
         :x-ticks="data.xTicks"
         :y-ticks="[]"
         :width="W"
-        :height="H"
+        :height="data.h"
         :margin="M"
         :grid="false"
       />
@@ -257,6 +346,10 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
           <title>{{ a.title }}</title>
         </path>
       </g>
+      <g v-for="c in data.cycles" :key="c.era.label" class="cyclemark">
+        <line :x1="c.x" :x2="c.x" :y1="M.t" :y2="data.h - M.b" />
+        <text :x="c.x + 3" :y="M.t + 9 + c.tier * 11">{{ c.era.label }}</text>
+      </g>
       <SpaceRow v-for="row in data.rows" :key="row.id" :row="row" :left="M.l" :right="W - M.r" />
       <line
         v-if="marker !== null"
@@ -264,10 +357,10 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
         :x1="marker"
         :x2="marker"
         :y1="M.t"
-        :y2="H - M.b"
+        :y2="data.h - M.b"
       />
       <g v-if="cross !== null" class="cross">
-        <line :x1="cross.x" :x2="cross.x" :y1="M.t" :y2="H - M.b" />
+        <line :x1="cross.x" :x2="cross.x" :y1="M.t" :y2="data.h - M.b" />
         <text :x="cross.x" :y="M.t - 4" :text-anchor="cross.x > W / 2 ? 'end' : 'start'">
           {{ cross.stamp }}
         </text>

@@ -15,6 +15,7 @@ import { syncSpaceEvents, syncSpaceFast, syncSpaceSlow } from "../../src/ingest/
 import { insertAuroraFrame, upsertSamples } from "../../src/repositories/space.js";
 import { utcDay } from "../../src/routes/space.js";
 import { recordingLogger } from "../support/fixtures.js";
+import { stubHistory } from "../support/history-stub.js";
 import { stubSpace } from "../support/space-stub.js";
 import { dockerAvailable, startPostgres, type TestDb } from "../setup/postgres.js";
 
@@ -49,7 +50,13 @@ describe.skipIf(!docker)("space routes", () => {
 
   const inject = (url: string) => app.inject({ method: "GET", url });
   const seed = async (): Promise<void> => {
-    const ctx = { db: t.db, space: stubSpace(), log: recordingLogger(), now: () => NOW };
+    const ctx = {
+      db: t.db,
+      history: stubHistory(),
+      space: stubSpace(),
+      log: recordingLogger(),
+      now: () => NOW,
+    };
     await Promise.all([syncSpaceFast(ctx), syncSpaceEvents(ctx), syncSpaceSlow(ctx)]);
   };
 
@@ -127,6 +134,7 @@ describe.skipIf(!docker)("space routes", () => {
       from: "2026-10-24T00:00:00.000Z",
       to: "2026-10-25T01:00:00.000Z",
       bucketSeconds: null,
+      preliminaryKpFrom: null,
     });
     expect(body.samples.kp_3h).toEqual([
       [Date.parse("2026-10-24T09:00:00Z"), 2],
@@ -166,6 +174,34 @@ describe.skipIf(!docker)("space routes", () => {
     expect(body.samples.bt).toHaveLength(5);
     expect(body.samples.bt[0]?.[1]).toBeCloseTo(7.5, 6);
     expect(body.samples.bt.every((p, i, a) => i === 0 || p[0] > (a[i - 1]?.[0] ?? 0))).toBe(true);
+  });
+
+  it("serves a long window without its events and names the first preliminary GFZ Kp", async () => {
+    await seed();
+    await upsertSamples(t.db, [
+      { series: "kp_gfz", time: new Date("2026-09-30T21:00:00Z"), source: "gfz", value: 0.333 },
+      { series: "kp_gfz", time: new Date("2026-10-01T00:00:00Z"), source: "gfz-pre", value: 0 },
+      { series: "ssn", time: new Date("2026-04-01T00:00:00Z"), source: "gfz", value: 140 },
+    ]);
+    const res = await inject("/api/space/window?from=2026-04-01T00:00:00Z&to=2026-10-25T04:00:00Z");
+    expect(res.statusCode).toBe(200);
+    const body = res.json<ApiSpaceWindow>();
+    expect(body.bucketSeconds).toBe(bucketFor(new Date("2026-04-01T00:00:00Z"), NOW));
+    expect(body.preliminaryKpFrom).toBe("2026-10-01T00:00:00.000Z");
+    // the bucket grid runs from 2000-01-01, so the point sits at its bucket start, not midnight
+    expect(body.samples.ssn.map((p) => p[1])).toEqual([140]);
+    expect(body.samples.kp_gfz.map((p) => Math.round(p[1] * 1000) / 1000)).toEqual([0.333, 0]);
+    expect(body.samples.kp_3h.length).toBeGreaterThan(0);
+    expect(body.flares).toEqual([]);
+    expect(body.alerts).toEqual([]);
+    expect(body.scales).toEqual([]);
+    const century = await inject(
+      "/api/space/window?from=1932-01-01T00:00:00Z&to=2026-10-25T04:00:00Z",
+    );
+    expect(century.statusCode).toBe(200);
+    expect(century.json<ApiSpaceWindow>().bucketSeconds).toBe(
+      bucketFor(new Date("1932-01-01T00:00:00Z"), NOW),
+    );
   });
 
   it("lists the stored aurora frames and serves one with its grid", async () => {
@@ -238,7 +274,7 @@ describe.skipIf(!docker)("space routes", () => {
       ["/api/space/window?from=yesterday", "from"],
       ["/api/space/window?from=2026-10-25T05:00:00Z", "to"],
       ["/api/space/window?from=2026-10-20T00:00:00Z&to=2026-10-19T00:00:00Z", "to"],
-      ["/api/space/window?from=2026-01-01T00:00:00Z&to=2026-06-01T00:00:00Z", "to"],
+      ["/api/space/window?from=1900-01-01T00:00:00Z&to=2026-06-01T00:00:00Z", "to"],
       ["/api/space/window?from=2026-10-24T00:00:00Z&n=3", ""],
     ] as const) {
       const res = await inject(url);
