@@ -250,6 +250,8 @@ export interface ApiSpaceWindow {
   bucketSeconds: number | null;
   /** Per series, `[epoch ms, value]` ascending. */
   samples: Record<SpaceSeries, [number, number][]>;
+  /** When the earliest GFZ Kp row still marked preliminary begins, or null when none is. */
+  preliminaryKpFrom: string | null;
   flares: ApiSpaceFlare[];
   alerts: ApiSpaceAlert[];
   scales: ApiSpaceScales[];

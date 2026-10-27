@@ -73,7 +73,7 @@ describe("lines, bars and bands", () => {
     expect(gapMs("kp_1m", null)).toBe(3 * 60_000);
     expect(gapMs("kp_1m", 420)).toBe(3 * 420_000);
     expect(gapMs("kp_3h", 420)).toBe(9 * 3_600_000);
-    expect(Object.keys(CADENCE_MS)).toHaveLength(13);
+    expect(Object.keys(CADENCE_MS)).toHaveLength(17);
   });
 
   it("maps a pointer to viewBox units against its element, or null without one", () => {

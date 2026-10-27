@@ -81,6 +81,7 @@ export const spaceRoutes: FastifyPluginCallback = (app, _opts, done) => {
       to: iso(to),
       bucketSeconds,
       samples,
+      preliminaryKpFrom: null,
       flares: flares.map(toApiSpaceFlare),
       alerts: alerts.map(toApiSpaceAlert),
       scales: scales.map(toApiSpaceScales),

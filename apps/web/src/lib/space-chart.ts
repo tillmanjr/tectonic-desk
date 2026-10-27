@@ -206,6 +206,10 @@ export const CADENCE_MS: Record<SpaceSeries, number> = {
   p100: 300_000,
   hp_north: 300_000,
   hp_south: 300_000,
+  kp_gfz: 3 * 3_600_000,
+  ap: 86_400_000,
+  ssn: 86_400_000,
+  f107: 86_400_000,
 };
 
 /** A line breaks where consecutive points lie more than three steps apart. */

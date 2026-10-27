@@ -31,6 +31,14 @@ export const SPACE_SERIES = [
   "hp_north",
   /** The same for the south. */
   "hp_south",
+  /** GFZ Potsdam's planetary Kp, 3-hourly since 1932; source `gfz` once definitive, `gfz-pre` before. */
+  "kp_gfz",
+  /** GFZ's daily Ap, the linear daily mean of ap, since 1932. */
+  "ap",
+  /** Daily total sunspot number as GFZ carries it (SILSO), since 1932. */
+  "ssn",
+  /** Observed 10.7 cm solar radio flux, sfu, daily since 1947. */
+  "f107",
 ] as const;
 export type SpaceSeries = (typeof SPACE_SERIES)[number];
 
@@ -52,8 +60,24 @@ export function seriesRecord<T>(fill: (s: SpaceSeries) => T): Record<SpaceSeries
     p100: fill("p100"),
     hp_north: fill("hp_north"),
     hp_south: fill("hp_south"),
+    kp_gfz: fill("kp_gfz"),
+    ap: fill("ap"),
+    ssn: fill("ssn"),
+    f107: fill("f107"),
   };
 }
+
+export type SeriesAggregate = "max" | "min" | "mean";
+
+/**
+ * How a wide bucket summarises a series. Indices and fluxes keep their peak and Dst and Bz
+ * their trough, so a storm survives a 23-day bucket; the rest average.
+ */
+export const SERIES_AGGREGATE: Record<SpaceSeries, SeriesAggregate> = seriesRecord((s) => {
+  if (s === "dst" || s === "bz_gsm") return "min";
+  if (s === "bt" || s === "speed" || s === "density" || s === "ssn" || s === "f107") return "mean";
+  return "max";
+});
 
 /** Maps every entry of a series record. */
 export function mapSeries<A, B>(

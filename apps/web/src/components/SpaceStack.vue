@@ -66,6 +66,10 @@ const SHORT: Record<SpaceSeries, string> = {
   p100: "≥100",
   hp_north: "N",
   hp_south: "S",
+  kp_gfz: "GFZ",
+  ap: "Ap",
+  ssn: "SSN",
+  f107: "F10.7",
 };
 
 /** A value in the row's own words: Kp in thirds, flux as a class, the rest to a decimal or two. */
