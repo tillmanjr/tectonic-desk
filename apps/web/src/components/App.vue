@@ -369,103 +369,108 @@ onUnmounted(() => {
       <ActiveEarthPage v-else />
     </template>
     <footer class="foot">
-      <p>
-        <b>Data.</b> Earthquake parameters from the USGS ANSS Comprehensive Catalog (ComCat), polled
-        every five minutes and kept in this site's own history. Mechanisms are USGS products (moment
-        tensor where available, otherwise first-motion focal mechanism), drawn as lower-hemisphere
-        equal-area projections with compressional quadrants shaded. Where a solution reports only P
-        and T axes, the double couple is reconstructed from those axes and labelled as such. Tensors
-        can lag an origin by hours. The catalogue reaches back to 1900; before 1973 ComCat carries
-        the ISC-GEM and Centennial compilations, so completeness varies by era, and the time chart
-        marks the breaks at 1964, 1973 and 1976.
-      </p>
-      <p>
-        <b>Plate boundaries.</b> Bird (2003), <i>An updated digital model of plate boundaries</i>,
-        G³ 4(3), 1027 (PB2002), via the fraxen/tectonicplates repository; segment class and relative
-        velocity from the PB2002 step file. Basemap: Natural Earth via world-atlas and us-atlas.
-      </p>
-      <p>
-        <b>Quaternary faults.</b> West Coast view: USGS
-        <a href="https://www.usgs.gov/programs/earthquake-hazards/faults"
-          >Quaternary Fault and Fold Database of the United States</a
-        >, traces with evidence of surface deformation in the past 1.6 million years, coloured by
-        age of last movement as on the USGS fault map; pieces whose ends lie within 50 m are joined
-        and bends under a pixel at full zoom are dropped.
-      </p>
-      <p>
-        <b>Volcanoes.</b> Catalogue and eruption history from the Smithsonian Institution's
-        <a href="https://volcano.si.edu/">Global Volcanism Program</a>, Volcanoes of the World
-        database (non-commercial use, with thanks). Alert levels and aviation colour codes from the
-        <a href="https://volcanoes.usgs.gov/">USGS Volcano Hazards Program</a> and
-        <a href="https://www.geonet.org.nz/volcano">GeoNet</a>; each agency's scale is shown as
-        published, they are not interchangeable. Weekly activity entries from the GVP/USGS Weekly
-        Volcanic Activity Report when its feed is reachable.
-      </p>
-      <p>
-        <b>Gravity and magnetics.</b> Global free-air gravity anomaly from the Scripps marine
-        gravity model v33 (Sandwell et al. 2019,
-        <a href="https://doi.org/10.1016/j.asr.2019.09.011" rel="noopener" target="_blank"
-          >doi:10.1016/j.asr.2019.09.011</a
-        >), EGM2008 over land; West Coast isostatic residual gravity from the
-        <a href="https://mrdata.usgs.gov/gravity/" rel="noopener" target="_blank"
-          >USGS Digital Data Series DDS-9</a
-        >
-        (Kucks 1999; isostatic reduction by Simpson, Jachens and Blakely), conterminous US only.
-        Total-field magnetic anomaly from EMAG2v3 (Meyer, Chulliat and Saltus 2017,
-        <a href="https://doi.org/10.7289/V5H70CVX" rel="noopener" target="_blank"
-          >doi:10.7289/V5H70CVX</a
-        >), upward-continued to 4 km. The global grids are the 6-arc-minute copies served by the
-        <a
-          href="https://www.generic-mapping-tools.org/remote-datasets/"
-          rel="noopener"
-          target="_blank"
-          >Generic Mapping Tools remote dataset server</a
-        >
-        (Wessel et al. 2019,
-        <a href="https://doi.org/10.1029/2019GC008515" rel="noopener" target="_blank"
-          >doi:10.1029/2019GC008515</a
-        >), rendered here into the map projections with equalised or clipped colour ramps as each
-        legend states. Topography and bathymetry along a cross-section from SRTM15+ v2.7 (Tozer et
-        al. 2019,
-        <a href="https://doi.org/10.1029/2019EA000658" rel="noopener" target="_blank"
-          >doi:10.1029/2019EA000658</a
-        >), the 3-arc-minute tiles from the same server.
-      </p>
-      <p>
-        <b>Space weather.</b> Solar wind, planetary K index, NOAA scales, GOES X-ray and proton
-        fluxes, flares and alerts from NOAA's
-        <a href="https://www.spaceweather.gov/" rel="noopener" target="_blank"
-          >Space Weather Prediction Center</a
-        >
-        (public domain), read from its data server every five minutes and kept in this site's own
-        store, so the series reach back further than the hours and days SWPC itself retains. Kp here
-        is SWPC's estimate from eight stations and revises until each three-hour window closes. The
-        definitive Kp, ap and Ap, the daily sunspot number and the 10.7 cm flux since 1932 come from
-        <a href="https://kp.gfz.de/" rel="noopener" target="_blank">GFZ Potsdam</a>
-        (CC BY 4.0; Matzka et al. 2021,
-        <a href="https://doi.org/10.5880/Kp.0001" rel="noopener" target="_blank"
-          >doi:10.5880/Kp.0001</a
-        >), drawn as a step over SWPC's bars and dashed while still preliminary. Dst is the hourly
-        index of the
-        <a href="https://wdc.kugi.kyoto-u.ac.jp/" rel="noopener" target="_blank"
-          >World Data Center for Geomagnetism, Kyoto</a
-        >
-        (<a href="https://doi.org/10.17593/14515-74000" rel="noopener" target="_blank"
-          >doi:10.17593/14515-74000</a
-        >, non-commercial use), read from the WDC since 1957 and relayed by SWPC for the newest
-        hours, which are real-time quicklook values. The solar wind comes from whichever spacecraft
-        at L1 SWPC marks active (SOLAR-1, ACE or IMAP), named on the page. The aurora oval is SWPC's
-        OVATION Prime (2013) model: the probability of aurora over each 1° cell at the forecast
-        time, 30 to 90 minutes after the solar wind observation, with the hemispheric power of the
-        same run; three days of frames are kept here. The pictures of the Sun are the latest frames
-        of NASA's
-        <a href="https://sdo.gsfc.nasa.gov/" rel="noopener" target="_blank"
-          >Solar Dynamics Observatory</a
-        >
-        (courtesy of NASA/SDO and the AIA, EVE, and HMI science teams) and the LASCO coronagraphs on
-        <a href="https://soho.nascom.nasa.gov/" rel="noopener" target="_blank">SOHO</a>
-        (ESA &amp; NASA), relayed by this site and refreshed as the observatories publish them.
-      </p>
+      <div class="credits">
+        <p>
+          <b>Data.</b> Earthquake parameters from the USGS ANSS Comprehensive Catalog (ComCat),
+          polled every five minutes and kept in this site's own history. Mechanisms are USGS
+          products (moment tensor where available, otherwise first-motion focal mechanism), drawn as
+          lower-hemisphere equal-area projections with compressional quadrants shaded. Where a
+          solution reports only P and T axes, the double couple is reconstructed from those axes and
+          labelled as such. Tensors can lag an origin by hours. The catalogue reaches back to 1900;
+          before 1973 ComCat carries the ISC-GEM and Centennial compilations, so completeness varies
+          by era, and the time chart marks the breaks at 1964, 1973 and 1976.
+        </p>
+        <p>
+          <b>Plate boundaries.</b> Bird (2003), <i>An updated digital model of plate boundaries</i>,
+          G³ 4(3), 1027 (PB2002), via the fraxen/tectonicplates repository; segment class and
+          relative velocity from the PB2002 step file. Basemap: Natural Earth via world-atlas and
+          us-atlas.
+        </p>
+        <p>
+          <b>Quaternary faults.</b> West Coast view: USGS
+          <a href="https://www.usgs.gov/programs/earthquake-hazards/faults"
+            >Quaternary Fault and Fold Database of the United States</a
+          >, traces with evidence of surface deformation in the past 1.6 million years, coloured by
+          age of last movement as on the USGS fault map; pieces whose ends lie within 50 m are
+          joined and bends under a pixel at full zoom are dropped.
+        </p>
+        <p>
+          <b>Volcanoes.</b> Catalogue and eruption history from the Smithsonian Institution's
+          <a href="https://volcano.si.edu/">Global Volcanism Program</a>, Volcanoes of the World
+          database (non-commercial use, with thanks). Alert levels and aviation colour codes from
+          the <a href="https://volcanoes.usgs.gov/">USGS Volcano Hazards Program</a> and
+          <a href="https://www.geonet.org.nz/volcano">GeoNet</a>; each agency's scale is shown as
+          published, they are not interchangeable. Weekly activity entries from the GVP/USGS Weekly
+          Volcanic Activity Report when its feed is reachable.
+        </p>
+        <p>
+          <b>Gravity and magnetics.</b> Global free-air gravity anomaly from the Scripps marine
+          gravity model v33 (Sandwell et al. 2019,
+          <a href="https://doi.org/10.1016/j.asr.2019.09.011" rel="noopener" target="_blank"
+            >doi:10.1016/j.asr.2019.09.011</a
+          >), EGM2008 over land; West Coast isostatic residual gravity from the
+          <a href="https://mrdata.usgs.gov/gravity/" rel="noopener" target="_blank"
+            >USGS Digital Data Series DDS-9</a
+          >
+          (Kucks 1999; isostatic reduction by Simpson, Jachens and Blakely), conterminous US only.
+          Total-field magnetic anomaly from EMAG2v3 (Meyer, Chulliat and Saltus 2017,
+          <a href="https://doi.org/10.7289/V5H70CVX" rel="noopener" target="_blank"
+            >doi:10.7289/V5H70CVX</a
+          >), upward-continued to 4 km. The global grids are the 6-arc-minute copies served by the
+          <a
+            href="https://www.generic-mapping-tools.org/remote-datasets/"
+            rel="noopener"
+            target="_blank"
+            >Generic Mapping Tools remote dataset server</a
+          >
+          (Wessel et al. 2019,
+          <a href="https://doi.org/10.1029/2019GC008515" rel="noopener" target="_blank"
+            >doi:10.1029/2019GC008515</a
+          >), rendered here into the map projections with equalised or clipped colour ramps as each
+          legend states. Topography and bathymetry along a cross-section from SRTM15+ v2.7 (Tozer et
+          al. 2019,
+          <a href="https://doi.org/10.1029/2019EA000658" rel="noopener" target="_blank"
+            >doi:10.1029/2019EA000658</a
+          >), the 3-arc-minute tiles from the same server.
+        </p>
+        <p>
+          <b>Space weather.</b> Solar wind, planetary K index, NOAA scales, GOES X-ray and proton
+          fluxes, flares and alerts from NOAA's
+          <a href="https://www.spaceweather.gov/" rel="noopener" target="_blank"
+            >Space Weather Prediction Center</a
+          >
+          (public domain), read from its data server every five minutes and kept in this site's own
+          store, so the series reach back further than the hours and days SWPC itself retains. Kp
+          here is SWPC's estimate from eight stations and revises until each three-hour window
+          closes. The definitive Kp, ap and Ap, the daily sunspot number and the 10.7 cm flux since
+          1932 come from
+          <a href="https://kp.gfz.de/" rel="noopener" target="_blank">GFZ Potsdam</a>
+          (CC BY 4.0; Matzka et al. 2021,
+          <a href="https://doi.org/10.5880/Kp.0001" rel="noopener" target="_blank"
+            >doi:10.5880/Kp.0001</a
+          >), drawn as a step over SWPC's bars and dashed while still preliminary. Dst is the hourly
+          index of the
+          <a href="https://wdc.kugi.kyoto-u.ac.jp/" rel="noopener" target="_blank"
+            >World Data Center for Geomagnetism, Kyoto</a
+          >
+          (<a href="https://doi.org/10.17593/14515-74000" rel="noopener" target="_blank"
+            >doi:10.17593/14515-74000</a
+          >, non-commercial use), read from the WDC since 1957 and relayed by SWPC for the newest
+          hours, which are real-time quicklook values. The solar wind comes from whichever
+          spacecraft at L1 SWPC marks active (SOLAR-1, ACE or IMAP), named on the page. The aurora
+          oval is SWPC's OVATION Prime (2013) model: the probability of aurora over each 1° cell at
+          the forecast time, 30 to 90 minutes after the solar wind observation, with the hemispheric
+          power of the same run; three days of frames are kept here. The pictures of the Sun are the
+          latest frames of NASA's
+          <a href="https://sdo.gsfc.nasa.gov/" rel="noopener" target="_blank"
+            >Solar Dynamics Observatory</a
+          >
+          (courtesy of NASA/SDO and the AIA, EVE, and HMI science teams) and the LASCO coronagraphs
+          on
+          <a href="https://soho.nascom.nasa.gov/" rel="noopener" target="_blank">SOHO</a>
+          (ESA &amp; NASA), relayed by this site and refreshed as the observatories publish them.
+        </p>
+      </div>
       <p class="byline">
         Built for Barbara by
         <a href="https://github.com/tillmanjr" rel="author noopener" target="_blank">Tillman</a>
