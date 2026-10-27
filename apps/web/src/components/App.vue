@@ -439,16 +439,25 @@ onUnmounted(() => {
         >
         (public domain), read from its data server every five minutes and kept in this site's own
         store, so the series reach back further than the hours and days SWPC itself retains. Kp here
-        is SWPC's estimate from eight stations and revises until each three-hour window closes; the
-        definitive index is published later by GFZ Potsdam. Dst is the provisional hourly index of
-        the
+        is SWPC's estimate from eight stations and revises until each three-hour window closes. The
+        definitive Kp, ap and Ap, the daily sunspot number and the 10.7 cm flux since 1932 come from
+        <a href="https://kp.gfz.de/" rel="noopener" target="_blank">GFZ Potsdam</a>
+        (CC BY 4.0; Matzka et al. 2021,
+        <a href="https://doi.org/10.5880/Kp.0001" rel="noopener" target="_blank"
+          >doi:10.5880/Kp.0001</a
+        >), drawn as a step over SWPC's bars and dashed while still preliminary. Dst is the hourly
+        index of the
         <a href="https://wdc.kugi.kyoto-u.ac.jp/" rel="noopener" target="_blank"
           >World Data Center for Geomagnetism, Kyoto</a
-        >, relayed by SWPC. The solar wind comes from whichever spacecraft at L1 SWPC marks active
-        (SOLAR-1, ACE or IMAP), named on the page. The aurora oval is SWPC's OVATION Prime (2013)
-        model: the probability of aurora over each 1° cell at the forecast time, 30 to 90 minutes
-        after the solar wind observation, with the hemispheric power of the same run; three days of
-        frames are kept here.
+        >
+        (<a href="https://doi.org/10.17593/14515-74000" rel="noopener" target="_blank"
+          >doi:10.17593/14515-74000</a
+        >, non-commercial use), read from the WDC since 1957 and relayed by SWPC for the newest
+        hours, which are real-time quicklook values. The solar wind comes from whichever spacecraft
+        at L1 SWPC marks active (SOLAR-1, ACE or IMAP), named on the page. The aurora oval is SWPC's
+        OVATION Prime (2013) model: the probability of aurora over each 1° cell at the forecast
+        time, 30 to 90 minutes after the solar wind observation, with the hemispheric power of the
+        same run; three days of frames are kept here.
       </p>
       <p class="byline">
         Built for Barbara by

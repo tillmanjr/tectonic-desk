@@ -96,6 +96,7 @@ describe("SpacePage", () => {
     await first?.trigger("click");
     expect(first?.find(".amsg").exists()).toBe(false);
     expect(w.find(".spacerail .mcard").exists()).toBe(false);
+    expect(w.find(".longnote").exists()).toBe(false);
     w.unmount();
 
     // on its own, without a row cap, the row shows every alert
@@ -103,6 +104,32 @@ describe("SpacePage", () => {
     expect(a.findAll(".mcard.alert")).toHaveLength(2);
     expect(a.find(".more").exists()).toBe(false);
     a.unmount();
+  });
+
+  it("drops the alerts and flares for a long window and says why", async () => {
+    const ctx = await makeContext({ space: true });
+    const w = mountWith(SpacePage, ctx);
+    const day = 86_400_000;
+    ctx.space.window.value = spaceWindow({
+      from: new Date(Date.parse("2026-10-13T12:00:00Z") - 400 * day).toISOString(),
+      bucketSeconds: 23_040,
+      flares: [],
+      alerts: [],
+      scales: [],
+    });
+    await nextTick();
+    expect(w.find(".longnote").text()).toBe(
+      "Flares, alerts and the minute-scale rows need a window of 93 days or less.",
+    );
+    expect(w.find(".sectionlabel").exists()).toBe(false);
+    expect(w.find(".flares").exists()).toBe(false);
+    expect(w.find(".forecast").exists()).toBe(true);
+    expect(w.findAll(".srow").map((r) => r.classes()[1])).toEqual(["kp", "dst", "sun"]);
+    ctx.space.window.value = spaceWindow();
+    await nextTick();
+    expect(w.find(".longnote").exists()).toBe(false);
+    expect(w.find(".flares").exists()).toBe(true);
+    w.unmount();
   });
 
   it("shows the empty states, the error banner and a retry", async () => {
