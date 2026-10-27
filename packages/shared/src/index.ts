@@ -5,6 +5,7 @@ export * from "./mechanism/solution.js";
 export * from "./api.js";
 export * from "./greatcircle.js";
 export * from "./space.js";
+export * from "./sun.js";
 
 export type MechanismKind = "mt" | "fm";
 
