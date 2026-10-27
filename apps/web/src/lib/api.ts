@@ -14,8 +14,11 @@ import type {
   ApiAuroraIndex,
   ApiSpaceNow,
   ApiSpaceWindow,
+  ApiSunFrames,
   ApiVolcanoStatusList,
   FieldsFile,
+  SunKey,
+  SunSize,
 } from "@tectonic/shared";
 
 /** The window filters shared by the list and the aggregates. */
@@ -59,6 +62,10 @@ export interface ApiClient {
   auroraIndex: () => Promise<ApiAuroraIndex>;
   /** One aurora frame by observation time, grid as base64. */
   auroraFrame: (observed: string) => Promise<ApiAuroraFrame>;
+  /** The seven Sun frames the server holds, with their upstream times. */
+  sunFrames: () => Promise<ApiSunFrames>;
+  /** The URL of one Sun frame; the time rides along so a new frame is a new URL under the hour's cache. */
+  sunImageUrl: (key: SunKey, size: SunSize, time: string | null) => string;
 }
 
 export class ApiRequestError extends Error {
@@ -123,5 +130,8 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
       get(`/space/window?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
     auroraIndex: () => get("/space/aurora"),
     auroraFrame: (observed) => get(`/space/aurora/${encodeURIComponent(observed)}`),
+    sunFrames: () => get("/space/sun"),
+    sunImageUrl: (key, size, time) =>
+      `${base}/space/sun/${key}/${String(size)}.jpg?t=${encodeURIComponent(time ?? "0")}`,
   };
 }

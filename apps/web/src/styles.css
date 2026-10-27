@@ -2518,6 +2518,148 @@ table.matrix {
   font: 10px var(--f-data);
   pointer-events: none;
 }
+/* The Sun strip under the tiles and its overlay. */
+.sunstrip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin: 6px 0 14px;
+}
+.sunthumb {
+  display: grid;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.sunthumb:hover,
+.sunthumb:focus-visible {
+  border-color: var(--accent);
+}
+.sunthumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: #000;
+}
+.sunthumb .t {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.sunthumb .m {
+  font: 11px var(--f-data);
+  color: var(--muted);
+}
+.sunoverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(8, 10, 14, 0.78);
+}
+.sunbox {
+  position: relative;
+  max-width: calc(100vw - 32px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 12px 10px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.sunlarge {
+  display: block;
+  width: min(90vw, 70vh);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: #000;
+}
+.sunclose,
+.sunarrow {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font: 20px/1 var(--f-ui);
+  cursor: pointer;
+}
+.sunclose {
+  top: -14px;
+  right: -14px;
+}
+.sunarrow {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.sunarrow.prev {
+  left: -16px;
+}
+.sunarrow.next {
+  right: -16px;
+}
+.suncap {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.suncap.muted {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.sunfilm {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.sunfilmthumb {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #000;
+  cursor: pointer;
+}
+.sunfilmthumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sunfilmthumb.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+@media (max-width: 900px) {
+  .sunstrip {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .sunarrow.prev {
+    left: 4px;
+  }
+  .sunarrow.next {
+    right: 4px;
+  }
+}
 /* The aurora frame on show, while a past one is chosen. */
 .aumark {
   stroke: var(--au-70);

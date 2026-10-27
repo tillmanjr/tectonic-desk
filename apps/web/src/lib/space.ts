@@ -1,4 +1,4 @@
-import type { ApiSpaceNow, ApiSpaceWindow } from "@tectonic/shared";
+import type { ApiSpaceNow, ApiSpaceWindow, ApiSunFrames } from "@tectonic/shared";
 import { ref, shallowRef, type Ref, type ShallowRef } from "vue";
 import { errorMessage, type ApiClient } from "./api.js";
 import type { DocLike } from "./status.js";
@@ -116,6 +116,8 @@ export interface SpaceStoreOptions {
 export interface SpaceStore {
   now: ShallowRef<ApiSpaceNow | null>;
   window: ShallowRef<ApiSpaceWindow | null>;
+  /** The Sun frames' manifest; null until the first answer, kept through a failed refresh. */
+  sun: ShallowRef<ApiSunFrames | null>;
   range: Ref<SpaceRange>;
   /** The window last in force, which a fixed range (a framed flare) returns to. */
   lastWindow: Ref<WindowId>;
@@ -139,6 +141,7 @@ export function createSpaceStore(
   const doc: DocLike = opts.doc ?? document;
   const now = shallowRef<ApiSpaceNow | null>(null);
   const window = shallowRef<ApiSpaceWindow | null>(null);
+  const sun = shallowRef<ApiSunFrames | null>(null);
   const range = ref<SpaceRange>({ kind: "window", id: DEFAULT_WINDOW });
   const lastWindow = ref<WindowId>(DEFAULT_WINDOW);
   const error = ref<string | null>(null);
@@ -147,9 +150,19 @@ export function createSpaceStore(
   let timer: ReturnType<typeof setInterval> | null = null;
   let seq = 0;
 
+  /** The frames ride with every load but fail on their own: the strip keeps its last manifest. */
+  async function loadSun(): Promise<void> {
+    try {
+      sun.value = await api.sunFrames();
+    } catch {
+      // the strip shows what it had; the page's error line is for the series
+    }
+  }
+
   async function load(): Promise<void> {
     const mine = ++seq;
     loading.value = true;
+    void loadSun();
     const { from, to } = rangeBounds(range.value, readNow());
     try {
       const [n, w] = await Promise.all([
@@ -199,6 +212,7 @@ export function createSpaceStore(
   return {
     now,
     window,
+    sun,
     range,
     lastWindow,
     error,
