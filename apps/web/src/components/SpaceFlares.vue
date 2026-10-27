@@ -7,7 +7,7 @@ import { windowLabel } from "../lib/space.js";
 import { minutesBetween } from "../lib/space-format.js";
 
 /**
- * The flares of the window, newest first, the first six shown and the rest behind a toggle.
+ * The flares of the window, newest first, the first four shown and the rest behind a toggle.
  * Hovering a row lights its band in the X-ray row; clicking one fixes the range around it (an
  * hour before to two hours after).
  */
@@ -18,8 +18,8 @@ const setRange = useInjected(SET_SPACE_RANGE);
 const zone = useInjected(ZONE);
 
 const H = 3_600_000;
-/** Rows shown before the list is opened out. */
-const FLARE_ROWS = 6;
+/** Rows shown before the list is opened out; with the forecast above, this fills the rail to the chart's foot. */
+const FLARE_ROWS = 4;
 
 interface Row {
   key: string;

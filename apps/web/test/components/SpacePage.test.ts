@@ -117,7 +117,7 @@ describe("SpacePage", () => {
     a.unmount();
   });
 
-  it("shows six flares and opens the rest out on request", async () => {
+  it("shows four flares and opens the rest out on request", async () => {
     const ctx = await makeContext({ space: true });
     const w = mountWith(SpacePage, ctx);
     const base = Date.parse("2026-10-13T00:00:00Z");
@@ -131,20 +131,20 @@ describe("SpacePage", () => {
     );
     ctx.space.window.value = spaceWindow({ flares: eight });
     await nextTick();
-    expect(w.findAll(".flares tbody tr")).toHaveLength(6);
+    expect(w.findAll(".flares tbody tr")).toHaveLength(4);
     expect(w.findAll(".flares tbody tr")[0]?.text()).toContain("C8.0");
     const more = w.find(".flares .morerow .more");
-    expect(more.text()).toBe("… 2 more");
+    expect(more.text()).toBe("… 4 more");
     expect(more.attributes("aria-expanded")).toBe("false");
     await more.trigger("click");
     expect(w.findAll(".flares tbody tr")).toHaveLength(8);
     expect(w.find(".flares .morerow .more").text()).toBe("show fewer");
     await w.find(".flares .morerow .more").trigger("click");
-    expect(w.findAll(".flares tbody tr")).toHaveLength(6);
-    // six or fewer: no toggle at all
-    ctx.space.window.value = spaceWindow({ flares: eight.slice(0, 6) });
+    expect(w.findAll(".flares tbody tr")).toHaveLength(4);
+    // four or fewer: no toggle at all
+    ctx.space.window.value = spaceWindow({ flares: eight.slice(0, 4) });
     await nextTick();
-    expect(w.findAll(".flares tbody tr")).toHaveLength(6);
+    expect(w.findAll(".flares tbody tr")).toHaveLength(4);
     expect(w.find(".flares .morerow").exists()).toBe(false);
     w.unmount();
   });

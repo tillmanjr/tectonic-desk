@@ -2532,7 +2532,7 @@ table.matrix {
   font: 10px var(--f-data);
   pointer-events: none;
 }
-/* The flares list past its first six rows. */
+/* The flares list past its first four rows. */
 .flares .cap .more {
   font: 600 11px var(--f-ui);
   letter-spacing: 0.04em;
