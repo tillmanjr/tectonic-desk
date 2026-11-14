@@ -54,6 +54,8 @@ describe("MarksOverlay", () => {
 
   it("lists marks newest first with rail counts, renames, deletes and opens a view", async () => {
     stubWorld();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-20T12:00:00Z"));
     const ctx = await makeContext();
     ctx.marks.add(quake);
     const b = ctx.marks.add(etna);
@@ -65,7 +67,7 @@ describe("MarksOverlay", () => {
     const rows = w.findAll(".markrow-item");
     expect(rows.map((r) => r.find(".mname").text())).toEqual(["Etna watch", "Kuril shock"]);
     expect(rows[1]?.text()).toContain("2026-10-13 10:00 UTC");
-    expect(rows[0]?.text()).toContain("marked 2026-10-");
+    expect(rows[0]?.text()).toContain("marked 2026-10-20");
     expect(rows[0]?.text()).toContain("no groups yet");
     expect(w.findAll("svg.thumb")).toHaveLength(2);
     expect(rows[0]?.find(".morder .up").attributes("disabled")).toBeDefined();

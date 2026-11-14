@@ -32,7 +32,7 @@ async function fetchFeed() {
   });
   try {
     const page = await browser.newPage();
-    await page.setUserAgent(AGENT);
+    await page.setUserAgent({ userAgent: AGENT });
     const res = await page.goto(FEED, { waitUntil: "domcontentloaded", timeout: 60_000 });
     if (res === null || !res.ok()) {
       throw new Error(`${FEED} answered ${res === null ? "nothing" : String(res.status())}`);
