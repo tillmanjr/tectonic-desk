@@ -28,6 +28,29 @@ describe("MapSection", () => {
     expect(w.find(".corridor").exists()).toBe(false);
   });
 
+  it("keeps a touch on a handle from reaching the map", () => {
+    const w = mount(MapSection, {
+      props: {
+        frame,
+        path,
+        k: 2,
+        section: { a: [-122, 40], b: [-118, 36], halfKm: 50 },
+        pending: null,
+        cursor: null,
+      },
+      attachTo: document.body,
+    });
+    const hit = w.find(".hhit");
+    expect(hit.attributes("r")).toBe("8");
+    let reached = false;
+    document.body.addEventListener("touchstart", () => (reached = true), { once: true });
+    const ev = new Event("touchstart", { bubbles: true, cancelable: true });
+    hit.element.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(true);
+    expect(reached).toBe(false);
+    w.unmount();
+  });
+
   it("skips a handle whose end the projection cannot place", () => {
     const projection = Object.assign(
       (ll: [number, number]) => (ll[0] === 100 ? null : frame.projection(ll)),
