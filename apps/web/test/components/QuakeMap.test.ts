@@ -542,7 +542,7 @@ describe("QuakeMap", () => {
     expect(layer.find(".sline").attributes("d")).toMatch(/^M/);
     expect(layer.findAll(".handle")).toHaveLength(2);
     expect(layer.findAll(".slabel").map((t) => t.text())).toEqual(["A", "A′"]);
-    const handles = layer.findAll(".handle");
+    const handles = layer.findAll(".hhit");
     const b = handles[1];
     if (b === undefined) throw new Error("no handle");
     (b.element as unknown as { setPointerCapture: (id: number) => void }).setPointerCapture = () =>
