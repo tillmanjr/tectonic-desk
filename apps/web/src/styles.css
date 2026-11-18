@@ -568,10 +568,14 @@ a:focus-visible,
 .section .handle {
   fill: var(--panel);
   stroke: var(--accent);
+  pointer-events: none;
+}
+.section .hhit {
+  fill: transparent;
   cursor: grab;
   touch-action: none;
 }
-.section .handle:active {
+.section .hhit:active {
   cursor: grabbing;
 }
 .section .slabel {

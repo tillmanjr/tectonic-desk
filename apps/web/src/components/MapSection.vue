@@ -24,6 +24,8 @@ const emit = defineEmits<{
 }>();
 
 const HANDLE_R = 7;
+/** Radius, in screen pixels, of the transparent ring that takes a press on a handle. */
+const HIT_R = 16;
 const corridor = computed(() =>
   props.section === null
     ? ""
@@ -74,16 +76,19 @@ function down(ev: PointerEvent, end: "a" | "b"): void {
     <path v-if="line !== ''" class="sline" :d="line" :stroke-width="2 / k" />
     <path v-if="rubber !== ''" class="sline rubber" :d="rubber" :stroke-width="1.5 / k" />
     <g v-for="h in handles" :key="h.end" class="shandle">
+      <circle class="handle" :cx="h.x" :cy="h.y" :r="HANDLE_R / k" :stroke-width="2 / k" />
+      <!-- The finger-sized target. Its touchstart stays here: let through, d3-zoom or the
+           page would take the gesture and the browser would cancel the drag a pixel in. -->
       <circle
-        class="handle"
+        class="hhit"
         :cx="h.x"
         :cy="h.y"
-        :r="HANDLE_R / k"
-        :stroke-width="2 / k"
+        :r="HIT_R / k"
         @pointerdown.stop.prevent="down($event, h.end)"
         @pointermove="emit('dragMove', $event)"
         @pointerup="emit('dragEnd')"
         @pointercancel="emit('dragEnd')"
+        @touchstart.stop.prevent
       />
       <text
         class="slabel"
