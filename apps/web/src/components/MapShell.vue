@@ -224,8 +224,8 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
     </div>
     <PinBar v-if="mv.pin.open.value" :tool="mv.pin" :view="viewOf(mv.view.value.frame.global)" />
     <slot name="bar"></slot>
-    <div :ref="mv.stageEl" class="mapstage">
-      <div class="mapwrap" :style="mv.theaterSize.value ?? undefined">
+    <div class="mapstage">
+      <div class="mapwrap">
         <span class="mapcount" aria-live="polite">{{ countLine }}</span>
         <button
           v-hint="
@@ -300,6 +300,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
           role="img"
           :aria-label="label"
           :viewBox="`0 0 ${String(mv.view.value.frame.width)} ${String(mv.view.value.frame.height)}`"
+          :preserveAspectRatio="mv.theater.value ? 'xMidYMid slice' : undefined"
           :class="{
             locked: mv.locked.value,
             arming: mv.section.armed.value || mv.pin.armed.value || mv.measure.armed.value,

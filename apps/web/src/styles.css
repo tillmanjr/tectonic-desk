@@ -3231,7 +3231,8 @@ table.matrix {
   font: 600 12px var(--f-data);
   pointer-events: none;
 }
-/* Theater mode: the map card fills the window; the map is fitted to its stage by script. */
+/* Theater mode: the map card fills the window and the map covers the area under its toolbar,
+   cropped on the long side; the reader pans to the rest. */
 .mapcard.theater {
   position: fixed;
   inset: 0;
@@ -3242,15 +3243,13 @@ table.matrix {
   border-radius: 0;
 }
 .mapcard.theater .mapstage {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
 }
 .mapcard.theater .mapwrap {
-  flex: none;
+  position: absolute;
+  inset: 0;
 }
 .mapcard.theater .map {
   width: 100%;
