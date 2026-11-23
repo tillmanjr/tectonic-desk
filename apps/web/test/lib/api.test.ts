@@ -19,6 +19,7 @@ describe("createApiClient", () => {
     await api.summary({ since: "2026-10-01", until: "2026-10-02", minMag: 4.5 });
     await api.grid({ since: "2026-10-01", bbox: "-136,27,-104,53", cell: 0.5 });
     await api.event("us 1");
+    await api.shakemap("us 1");
     await api.status();
     await api.geo("plates");
     await api.volcanoStatus();
@@ -43,6 +44,7 @@ describe("createApiClient", () => {
       "/api/events/summary?since=2026-10-01&until=2026-10-02&minMag=4.5",
       "/api/events/grid?since=2026-10-01&bbox=-136%2C27%2C-104%2C53&cell=0.5",
       "/api/events/us%201",
+      "/api/events/us%201/shakemap",
       "/api/status",
       "/api/geo/plates",
       "/api/volcanoes/status",

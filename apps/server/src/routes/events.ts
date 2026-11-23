@@ -1,7 +1,13 @@
-import type { ApiEventCount, ApiEventGrid, ApiEventList, ApiEventSummary } from "@tectonic/shared";
+import type {
+  ApiEventCount,
+  ApiEventGrid,
+  ApiEventList,
+  ApiEventSummary,
+  ApiShakeMap,
+} from "@tectonic/shared";
 import type { FastifyPluginCallback } from "fastify";
 import { cacheFor } from "../api/cache.js";
-import { notFound } from "../api/errors.js";
+import { HttpError, notFound } from "../api/errors.js";
 import {
   eventIdSchema,
   parseEventsFilter,
@@ -11,7 +17,7 @@ import {
   parseSummaryQuery,
   toListFilter,
 } from "../api/schemas.js";
-import { toApiEvent, toApiEventDetail, toApiFilter } from "../api/serialize.js";
+import { isoOrNull, toApiEvent, toApiEventDetail, toApiFilter } from "../api/serialize.js";
 import {
   countEvents,
   getEvent,
@@ -64,6 +70,22 @@ export const eventRoutes: FastifyPluginCallback = (app, _opts, done) => {
     if (!event) throw notFound("event not found");
     cacheFor(reply, 60);
     return toApiEventDetail(event);
+  });
+
+  // Read from USGS on demand through the cache; no database row is needed, so an event the
+  // catalogue has not ingested yet still has its ShakeMap.
+  app.get("/api/events/:id/shakemap", async (request, reply): Promise<ApiShakeMap> => {
+    const { id } = parseOrThrow(eventIdSchema, request.params);
+    let map;
+    try {
+      map = await app.shakemaps.get(id);
+    } catch (err: unknown) {
+      request.log.warn({ id, err }, "shakemap unavailable");
+      throw new HttpError(502, "shakemap unavailable");
+    }
+    if (map === null) throw notFound("no ShakeMap for this event");
+    cacheFor(reply, 600);
+    return { ...map, processed: isoOrNull(map.processed) };
   });
 
   done();

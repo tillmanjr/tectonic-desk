@@ -35,11 +35,16 @@ describe("QuakeMap", () => {
     await buttons[1]?.trigger("click");
     await buttons[2]?.trigger("click");
     expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
-    await w.findAll("input[type=checkbox]")[1]?.setValue(false);
+    const box = (text: string) =>
+      w
+        .findAll(".maptools label")
+        .find((l) => l.text().includes(text))
+        ?.find("input");
+    await box("Plate boundaries")?.setValue(false);
     expect(w.findComponent({ name: "MapPlates" }).exists()).toBe(false);
-    await w.findAll("input[type=checkbox]")[0]?.setValue(false);
+    await box("Focal mechanisms")?.setValue(false);
     expect(w.findComponent({ name: "MapEvents" }).findAll("circle")).toHaveLength(1);
-    await w.findAll("input[type=checkbox]")[2]?.setValue(false);
+    await box("Subduction teeth")?.setValue(false);
     expect(w.findComponent({ name: "MapTeeth" }).exists()).toBe(false);
   });
 

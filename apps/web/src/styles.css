@@ -3007,3 +3007,38 @@ table.matrix {
     user-select: none;
   }
 }
+/* ShakeMap: translucent MMI bands under the markers, the toggle's note and the legend key. */
+.shake {
+  pointer-events: none;
+}
+.shake .sbands {
+  opacity: 0.5;
+}
+.shake .sband {
+  stroke: none;
+}
+.shake .sextent {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+.maptools .shaketoggle.unavailable {
+  color: var(--muted);
+}
+.maptools .shakenote {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.legend .shakerow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.legend .shakerow .shakekey {
+  border-radius: 2px;
+  border: 1px solid var(--edge);
+}

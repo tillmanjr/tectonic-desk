@@ -10,6 +10,7 @@ import type {
   ApiVolcanoDetail,
   ApiVolcanoReportList,
   ApiRelief,
+  ApiShakeMap,
   ApiAuroraFrame,
   ApiAuroraIndex,
   ApiSpaceNow,
@@ -62,6 +63,8 @@ export interface ApiClient {
   auroraIndex: () => Promise<ApiAuroraIndex>;
   /** One aurora frame by observation time, grid as base64. */
   auroraFrame: (observed: string) => Promise<ApiAuroraFrame>;
+  /** The event's preferred USGS ShakeMap as an MMI grid; 404 when it has none. */
+  shakemap: (eventId: string) => Promise<ApiShakeMap>;
   /** The seven Sun frames the server holds, with their upstream times. */
   sunFrames: () => Promise<ApiSunFrames>;
   /** The URL of one Sun frame; the time rides along so a new frame is a new URL under the hour's cache. */
@@ -117,6 +120,7 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     summary: (query) => get(`/events/summary?${toParams(query)}`),
     grid: (query) => get(`/events/grid?${toParams(query)}`),
     event: (id) => get(`/events/${encodeURIComponent(id)}`),
+    shakemap: (id) => get(`/events/${encodeURIComponent(id)}/shakemap`),
     status: () => get("/status"),
     geo: (name) => get(`/geo/${name}`),
     volcanoStatus: () => get("/volcanoes/status"),
