@@ -6,6 +6,7 @@ import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomTransform } fr
 import type { Feature, LineString } from "geojson";
 import {
   computed,
+  nextTick,
   onMounted,
   onUnmounted,
   ref,
@@ -116,6 +117,10 @@ export interface MapView {
   measuring: ComputedRef<boolean>;
   /** The two lines the measure label reads, for the line placed, dragged or being placed; null for none. */
   measureText: ComputedRef<[string, string] | null>;
+  /** Theater mode: the map and its toolbar fill the window over the rest of the page. */
+  theater: Ref<boolean>;
+  /** Enters or leaves theater mode; the map unlocks while in it and gets its lock back after. */
+  toggleTheater(): void;
   /** Arms the measure tool, or clears the measurement and disarms it. */
   toggleMeasure(): void;
   onMeasureDragMove(ev: PointerEvent): void;
@@ -225,16 +230,23 @@ export function useMapView(opts: MapViewOptions): MapView {
     else ruler.toggle();
   }
   let lastDown: [number, number] | null = null;
+  const theater = ref(false);
+  /** Escape stands down a tool in use first; with none, it leaves theater mode. */
   function onEscape(ev: KeyboardEvent): void {
     if (ev.key !== "Escape") return;
-    section.cancel();
-    pin.cancel();
-    ruler.cancel();
-    tip.value = null;
+    if (toolBusy.value) {
+      section.cancel();
+      pin.cancel();
+      ruler.cancel();
+      tip.value = null;
+    } else {
+      toggleTheater();
+    }
   }
-  const escapable = computed(
+  const toolBusy = computed(
     () => section.armed.value || pin.armed.value || pin.lifted.value || ruler.armed.value,
   );
+  const escapable = computed(() => toolBusy.value || theater.value);
   watch(escapable, (on) => {
     if (on) document.addEventListener("keydown", onEscape);
     else document.removeEventListener("keydown", onEscape);
@@ -265,11 +277,38 @@ export function useMapView(opts: MapViewOptions): MapView {
    */
   const locked = ref(true);
   const cssScale = ref(1);
+  /**
+   * How the svg's viewBox sits in its box on screen: css pixels per viewBox unit and the offset
+   * of the viewBox origin. On the page the box has the frame's aspect and is read by its width; in
+   * theater mode the box fills the window and the viewBox covers it (`xMidYMid slice`), centred
+   * and cropped on the long side. An unmeasured box (0 wide) counts as one pixel per unit.
+   */
+  function screenFit(rect: DOMRect): { scale: number; dx: number; dy: number } {
+    const { width, height } = view.value.frame;
+    if (rect.width === 0) return { scale: 1, dx: 0, dy: 0 };
+    if (!theater.value) return { scale: rect.width / width, dx: 0, dy: 0 };
+    const scale = Math.max(rect.width / width, rect.height / height);
+    return { scale, dx: (rect.width - width * scale) / 2, dy: (rect.height - height * scale) / 2 };
+  }
   function measure(): void {
-    const width = mustRef(svgEl, "map svg").getBoundingClientRect().width;
-    cssScale.value = width > 0 ? width / view.value.frame.width : 1;
+    cssScale.value = screenFit(mustRef(svgEl, "map svg").getBoundingClientRect()).scale;
   }
   const minRadius = computed(() => (coarse ? TOUCH_MIN_RADIUS_PX / cssScale.value : 0));
+
+  /** The lock as it was before theater mode, given back on leaving. */
+  let lockBefore = true;
+  function toggleTheater(): void {
+    theater.value = !theater.value;
+    if (theater.value) {
+      lockBefore = locked.value;
+      locked.value = false;
+      document.body.style.overflow = "hidden";
+    } else {
+      locked.value = lockBefore;
+      document.body.style.overflow = "";
+    }
+    void nextTick(measure);
+  }
   const touchHint = ref<string | null>(null);
   let hintTimer: ReturnType<typeof setTimeout> | null = null;
   function showTouchHint(text: string): void {
@@ -428,12 +467,12 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** Pointer position in the map's unzoomed projected space, and viewBox units per screen pixel. */
   function projectedPointer(ev: MouseEvent): { x: number; y: number; unit: number } {
     const rect = mustRef(svgEl, "map svg").getBoundingClientRect();
-    const unit = view.value.frame.width / (rect.width || view.value.frame.width);
+    const { scale, dx, dy } = screenFit(rect);
     const [x, y] = transform.value.invert([
-      (ev.clientX - rect.left) * unit,
-      (ev.clientY - rect.top) * unit,
+      (ev.clientX - rect.left - dx) / scale,
+      (ev.clientY - rect.top - dy) / scale,
     ]);
-    return { x, y, unit };
+    return { x, y, unit: 1 / scale };
   }
   function invertPointer(ev: MouseEvent): [number, number] | null {
     const { x, y } = projectedPointer(ev);
@@ -573,6 +612,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     document.removeEventListener("mousedown", closePickOnOutside);
     pin.cancel();
     window.removeEventListener("resize", measure);
+    if (theater.value) document.body.style.overflow = "";
     if (hintTimer !== null) clearTimeout(hintTimer);
   });
 
@@ -623,6 +663,8 @@ export function useMapView(opts: MapViewOptions): MapView {
     measuring,
     measureText,
     toggleMeasure,
+    theater,
+    toggleTheater,
     onMeasureDragMove,
     invertPointer,
     section,

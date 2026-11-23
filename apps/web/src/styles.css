@@ -3231,3 +3231,57 @@ table.matrix {
   font: 600 12px var(--f-data);
   pointer-events: none;
 }
+/* Theater mode: the map card fills the window and the map covers the area under its toolbar,
+   cropped on the long side; the reader pans to the rest. */
+.mapcard.theater {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+}
+.mapcard.theater .mapstage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.mapcard.theater .mapwrap {
+  position: absolute;
+  inset: 0;
+}
+.mapcard.theater .map {
+  width: 100%;
+  height: 100%;
+}
+/* The theater toggle: a faded corner button over the map, as video players have it. */
+.mapwrap .theaterbtn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.mapwrap .theaterbtn:hover,
+.mapwrap .theaterbtn:focus-visible {
+  opacity: 1;
+}
+.mapwrap .theaterbtn path {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

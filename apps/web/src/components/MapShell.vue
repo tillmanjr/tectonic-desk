@@ -72,7 +72,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
 </script>
 
 <template>
-  <section :ref="mv.cardEl" class="mapcard">
+  <section :ref="mv.cardEl" class="mapcard" :class="{ theater: mv.theater.value }">
     <div class="maptools">
       <slot name="tools"></slot>
       <label
@@ -224,157 +224,197 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
     </div>
     <PinBar v-if="mv.pin.open.value" :tool="mv.pin" :view="viewOf(mv.view.value.frame.global)" />
     <slot name="bar"></slot>
-    <div class="mapwrap">
-      <span class="mapcount" aria-live="polite">{{ countLine }}</span>
-      <span v-if="busy !== null" class="mapbusy" role="status"
-        ><span class="spin" aria-hidden="true"></span>{{ busy }}</span
-      >
-      <button
-        v-hint="
-          mv.locked.value
-            ? 'Map locked: wheel and drag scroll the page. Click to pan and zoom by hand.'
-            : 'Map unlocked: wheel and drag move the map. Click to lock it.'
-        "
-        type="button"
-        class="maplock"
-        :aria-pressed="mv.locked.value"
-        aria-label="Lock map"
-        @click="mv.toggleLock()"
-      >
-        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
-          <rect
-            x="10"
-            y="5"
-            width="12"
-            height="22"
-            rx="6"
-            :style="{ fill: mv.locked.value ? 'var(--muted)' : 'var(--ink)' }"
-          />
-          <line x1="16" y1="5" x2="16" y2="13" stroke="var(--panel)" stroke-width="1.5" />
-          <rect x="15" y="8" width="2" height="4" rx="1" fill="var(--panel)" />
-          <g v-if="mv.locked.value" class="slash">
-            <circle cx="16" cy="16" r="14.5" fill="none" stroke="var(--muted)" stroke-width="2.2" />
-            <line x1="5.8" y1="5.8" x2="26.2" y2="26.2" stroke="var(--muted)" stroke-width="2.2" />
+    <div class="mapstage">
+      <div class="mapwrap">
+        <span class="mapcount" aria-live="polite">{{ countLine }}</span>
+        <button
+          v-hint="
+            mv.theater.value
+              ? 'Back to the page (Esc)'
+              : 'Theater mode: the map and its toolbar fill the browser window, with everything else set aside until you leave (this button or Esc). The map unlocks while in it, so wheel and drag move it.'
+          "
+          type="button"
+          class="theaterbtn"
+          :aria-pressed="mv.theater.value"
+          :aria-label="mv.theater.value ? 'Exit theater mode' : 'Theater mode'"
+          @click="mv.toggleTheater()"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+            <path
+              v-if="!mv.theater.value"
+              d="M2,7 V2 H7 M13,2 H18 V7 M18,13 V18 H13 M7,18 H2 V13"
+            />
+            <path v-else d="M7,2 V7 H2 M18,7 H13 V2 M13,18 V13 H18 M2,13 H7 V18" />
+          </svg>
+        </button>
+
+        <span v-if="busy !== null" class="mapbusy" role="status"
+          ><span class="spin" aria-hidden="true"></span>{{ busy }}</span
+        >
+        <button
+          v-hint="
+            mv.locked.value
+              ? 'Map locked: wheel and drag scroll the page. Click to pan and zoom by hand.'
+              : 'Map unlocked: wheel and drag move the map. Click to lock it.'
+          "
+          type="button"
+          class="maplock"
+          :aria-pressed="mv.locked.value"
+          aria-label="Lock map"
+          @click="mv.toggleLock()"
+        >
+          <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+            <rect
+              x="10"
+              y="5"
+              width="12"
+              height="22"
+              rx="6"
+              :style="{ fill: mv.locked.value ? 'var(--muted)' : 'var(--ink)' }"
+            />
+            <line x1="16" y1="5" x2="16" y2="13" stroke="var(--panel)" stroke-width="1.5" />
+            <rect x="15" y="8" width="2" height="4" rx="1" fill="var(--panel)" />
+            <g v-if="mv.locked.value" class="slash">
+              <circle
+                cx="16"
+                cy="16"
+                r="14.5"
+                fill="none"
+                stroke="var(--muted)"
+                stroke-width="2.2"
+              />
+              <line
+                x1="5.8"
+                y1="5.8"
+                x2="26.2"
+                y2="26.2"
+                stroke="var(--muted)"
+                stroke-width="2.2"
+              />
+            </g>
+          </svg>
+        </button>
+        <svg
+          :ref="mv.svgEl"
+          class="map"
+          role="img"
+          :aria-label="label"
+          :viewBox="`0 0 ${String(mv.view.value.frame.width)} ${String(mv.view.value.frame.height)}`"
+          :preserveAspectRatio="mv.theater.value ? 'xMidYMid slice' : undefined"
+          :class="{
+            locked: mv.locked.value,
+            arming: mv.section.armed.value || mv.pin.armed.value || mv.measure.armed.value,
+            busy: busy !== null,
+          }"
+          @mousemove="mv.onMapMove"
+          @mouseleave="mv.onMapLeave()"
+          @mousedown="mv.onMapDown"
+          @click="mv.onMapClick"
+          @touchstart.passive="mv.onTouchStart"
+        >
+          <g :transform="mv.transform.value.toString()">
+            <MapBasemap
+              :frame="mv.view.value.frame"
+              :path="mv.view.value.path"
+              :basemap="mv.basemap.value"
+            />
+            <MapField
+              v-if="mv.fieldRaster.value !== null"
+              :raster="mv.fieldRaster.value"
+              :frame="mv.view.value.frame"
+            />
+            <MapAurora
+              v-if="mv.showAurora.value && aurora.frame.value !== null"
+              :path="mv.view.value.path"
+              :bands="aurora.bands.value"
+              :forecast="aurora.frame.value.forecast"
+            />
+            <MapFaults
+              v-if="mv.faultsOn.value"
+              :path="mv.view.value.path"
+              :features="mv.visibleFaults.value"
+              :hovered="mv.hoveredFault.value === null ? null : mv.hoveredFault.value.feature"
+            />
+            <MapPlates
+              v-if="mv.showPlates.value"
+              :path="mv.view.value.path"
+              :features="mv.plates.value"
+              @hover="mv.onPlateHover"
+              @leave="mv.onPlateLeave()"
+            />
+            <MapTeeth
+              v-if="mv.showTeeth.value"
+              :frame="mv.view.value.frame"
+              :segments="mv.plateSegments.value"
+              :k="mv.transform.value.k"
+              :highlight="mv.hoveredPlate.value"
+            />
+            <slot
+              name="layers"
+              :frame="mv.view.value.frame"
+              :k="mv.transform.value.k"
+              :min-radius="mv.minRadius.value"
+            ></slot>
+            <MapSection
+              v-if="
+                sectionTool &&
+                (mv.section.shown.value !== null || mv.section.pending.value !== null)
+              "
+              :frame="mv.view.value.frame"
+              :path="mv.view.value.path"
+              :k="mv.transform.value.k"
+              :section="mv.section.shown.value"
+              :pending="mv.section.pending.value"
+              :cursor="mv.section.cursor.value"
+              @drag-start="mv.section.dragStart"
+              @drag-move="mv.onSectionDragMove"
+              @drag-end="mv.section.dragEnd()"
+            />
+            <MapMeasure
+              v-if="mv.measure.shown.value !== null || mv.measure.pending.value !== null"
+              :frame="mv.view.value.frame"
+              :path="mv.view.value.path"
+              :k="mv.transform.value.k"
+              :line="mv.measure.shown.value"
+              :pending="mv.measure.pending.value"
+              :cursor="mv.measure.cursor.value"
+              :lines="mv.measureText.value"
+              @drag-start="mv.measure.dragStart"
+              @drag-move="mv.onMeasureDragMove"
+              @drag-end="mv.measure.dragEnd()"
+            />
+            <MapPin
+              v-if="mv.pin.shown.value !== null"
+              :frame="mv.view.value.frame"
+              :k="mv.transform.value.k"
+              :at="mv.pin.shown.value"
+              :holding="mv.pin.holding.value"
+              :lifted="mv.pin.lifted.value"
+              @hover="mv.onPinHover"
+              @leave="mv.onPinLeave()"
+              @down="mv.onPinDown"
+              @move="mv.onPinMove"
+              @up="mv.onPinUp()"
+            />
+            <MapPin
+              v-if="mv.pin.armed.value && mv.pin.cursor.value !== null"
+              :frame="mv.view.value.frame"
+              :k="mv.transform.value.k"
+              :at="mv.pin.cursor.value"
+              :holding="false"
+              :lifted="false"
+              ghost
+            />
           </g>
         </svg>
-      </button>
-      <svg
-        :ref="mv.svgEl"
-        class="map"
-        role="img"
-        :aria-label="label"
-        :viewBox="`0 0 ${String(mv.view.value.frame.width)} ${String(mv.view.value.frame.height)}`"
-        :class="{
-          locked: mv.locked.value,
-          arming: mv.section.armed.value || mv.pin.armed.value || mv.measure.armed.value,
-          busy: busy !== null,
-        }"
-        @mousemove="mv.onMapMove"
-        @mouseleave="mv.onMapLeave()"
-        @mousedown="mv.onMapDown"
-        @click="mv.onMapClick"
-        @touchstart.passive="mv.onTouchStart"
-      >
-        <g :transform="mv.transform.value.toString()">
-          <MapBasemap
-            :frame="mv.view.value.frame"
-            :path="mv.view.value.path"
-            :basemap="mv.basemap.value"
-          />
-          <MapField
-            v-if="mv.fieldRaster.value !== null"
-            :raster="mv.fieldRaster.value"
-            :frame="mv.view.value.frame"
-          />
-          <MapAurora
-            v-if="mv.showAurora.value && aurora.frame.value !== null"
-            :path="mv.view.value.path"
-            :bands="aurora.bands.value"
-            :forecast="aurora.frame.value.forecast"
-          />
-          <MapFaults
-            v-if="mv.faultsOn.value"
-            :path="mv.view.value.path"
-            :features="mv.visibleFaults.value"
-            :hovered="mv.hoveredFault.value === null ? null : mv.hoveredFault.value.feature"
-          />
-          <MapPlates
-            v-if="mv.showPlates.value"
-            :path="mv.view.value.path"
-            :features="mv.plates.value"
-            @hover="mv.onPlateHover"
-            @leave="mv.onPlateLeave()"
-          />
-          <MapTeeth
-            v-if="mv.showTeeth.value"
-            :frame="mv.view.value.frame"
-            :segments="mv.plateSegments.value"
-            :k="mv.transform.value.k"
-            :highlight="mv.hoveredPlate.value"
-          />
-          <slot
-            name="layers"
-            :frame="mv.view.value.frame"
-            :k="mv.transform.value.k"
-            :min-radius="mv.minRadius.value"
-          ></slot>
-          <MapSection
-            v-if="
-              sectionTool && (mv.section.shown.value !== null || mv.section.pending.value !== null)
-            "
-            :frame="mv.view.value.frame"
-            :path="mv.view.value.path"
-            :k="mv.transform.value.k"
-            :section="mv.section.shown.value"
-            :pending="mv.section.pending.value"
-            :cursor="mv.section.cursor.value"
-            @drag-start="mv.section.dragStart"
-            @drag-move="mv.onSectionDragMove"
-            @drag-end="mv.section.dragEnd()"
-          />
-          <MapMeasure
-            v-if="mv.measure.shown.value !== null || mv.measure.pending.value !== null"
-            :frame="mv.view.value.frame"
-            :path="mv.view.value.path"
-            :k="mv.transform.value.k"
-            :line="mv.measure.shown.value"
-            :pending="mv.measure.pending.value"
-            :cursor="mv.measure.cursor.value"
-            :lines="mv.measureText.value"
-            @drag-start="mv.measure.dragStart"
-            @drag-move="mv.onMeasureDragMove"
-            @drag-end="mv.measure.dragEnd()"
-          />
-          <MapPin
-            v-if="mv.pin.shown.value !== null"
-            :frame="mv.view.value.frame"
-            :k="mv.transform.value.k"
-            :at="mv.pin.shown.value"
-            :holding="mv.pin.holding.value"
-            :lifted="mv.pin.lifted.value"
-            @hover="mv.onPinHover"
-            @leave="mv.onPinLeave()"
-            @down="mv.onPinDown"
-            @move="mv.onPinMove"
-            @up="mv.onPinUp()"
-          />
-          <MapPin
-            v-if="mv.pin.armed.value && mv.pin.cursor.value !== null"
-            :frame="mv.view.value.frame"
-            :k="mv.transform.value.k"
-            :at="mv.pin.cursor.value"
-            :holding="false"
-            :lifted="false"
-            ghost
-          />
-        </g>
-      </svg>
+      </div>
     </div>
     <MapTooltip :tip="mv.tip.value" />
     <div v-if="mv.touchHint.value !== null" class="touchhint" role="status">
       {{ mv.touchHint.value }}
     </div>
     <MapLegend
+      v-if="!mv.theater.value"
       :frame="mv.view.value.frame"
       :min-mag="floor ?? mv.view.value.minMag"
       :faults="mv.hasFaults.value ? mv.faultAges.value : []"
