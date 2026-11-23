@@ -144,6 +144,15 @@ describe("tour content", () => {
     expect(SPACE.pageFor("active")).toBe("space");
   });
 
+  it("closes the event panel before the cross-section profile, keeping the example's window", async () => {
+    const mv = fakeMap(false);
+    const ctx = fakeContext(mv);
+    await step(EARTHQUAKES, "profile").enter?.(ctx);
+    expect(ctx.go).toHaveBeenCalledWith(EXAMPLE_EVENT.window);
+    expect(ctx.setSection).toHaveBeenCalledWith(EXAMPLE_SECTIONS.regional);
+    expect(EXAMPLE_EVENT.url.startsWith(EXAMPLE_EVENT.window)).toBe(true);
+  });
+
   it("does nothing to a map that is not there", async () => {
     const ctx = fakeContext(null);
     for (const id of ["layers", "field", "section", "measure", "pin"])
