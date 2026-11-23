@@ -18,7 +18,7 @@
 		# Scripts, data and fetches come from this origin only; styles allow the inline
 		# style attributes Vue renders and the Google Fonts stylesheet; images allow the
 		# data: URLs the beachball raster uses.
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' https://sdo.gsfc.nasa.gov https://soho.nascom.nasa.gov; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' https://sdo.gsfc.nasa.gov https://soho.nascom.nasa.gov https://api.helioviewer.org; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin

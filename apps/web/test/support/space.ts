@@ -7,6 +7,7 @@ import {
   type ApiSpaceScales,
   type ApiSpaceWindow,
   type ApiSunFrames,
+  type ApiSunMovie,
 } from "@tectonic/shared";
 
 /** The web tests' "now": the same instant `makeContext` uses. */
@@ -168,6 +169,20 @@ export function spaceWindow(over: Partial<ApiSpaceWindow> = {}): ApiSpaceWindow 
     flares: [flare()],
     alerts: [alert(), alert({ productId: "K04A", issueTime: "2026-10-13T08:31:00.000Z" })],
     scales: SCALES.slice(0, 2),
+    ...over,
+  };
+}
+
+/** A generated movie, ready by default. */
+export function sunMovie(over: Partial<ApiSunMovie> = {}): ApiSunMovie {
+  return {
+    key: "aia193",
+    size: 512,
+    from: "2026-10-06T12:00:00.000Z",
+    to: "2026-10-13T12:00:00.000Z",
+    state: "ready",
+    progress: null,
+    url: "https://api.helioviewer.org/cache/movies/x/AIA_193.mp4",
     ...over,
   };
 }

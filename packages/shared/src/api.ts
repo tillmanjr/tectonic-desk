@@ -7,7 +7,7 @@ import type {
 } from "./index.js";
 import type { AuroraFrameMeta, SpaceAlert, SpaceFlare, SpaceScales, SpaceSeries } from "./space.js";
 import type { ShakeMap } from "./shakemap.js";
-import type { SunFrameMeta } from "./sun.js";
+import type { GeneratedMovie, SunFrameMeta } from "./sun.js";
 
 /** The wire form of a domain object: Date becomes an ISO 8601 UTC string. */
 export type Json<T> = {
@@ -280,3 +280,6 @@ export interface ApiSunFrames {
 
 /** `GET /api/events/:id/shakemap`: the preferred ShakeMap's MMI grid. */
 export type ApiShakeMap = Json<ShakeMap>;
+
+/** `GET /api/space/sun/:key/movie`: a generated movie's build state, polled until ready. */
+export type ApiSunMovie = Json<GeneratedMovie>;
