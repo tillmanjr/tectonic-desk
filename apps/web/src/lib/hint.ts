@@ -11,8 +11,10 @@ import type { Directive } from "vue";
 
 /** How long the pointer must rest on a control before its hint shows. */
 export const HINT_DELAY_MS = 1000;
-/** Gap between a control and its hint, in css pixels. */
+/** Gap between the hint and what it clears (the control, or the pointer's arrow), in css pixels. */
 const GAP_PX = 6;
+/** How far the arrow cursor reaches below its hot spot; a hint placed under the pointer clears it. */
+const CURSOR_PX = 20;
 /** Closest the hint may come to the viewport's sides. */
 const EDGE_PX = 8;
 const HINT_ID = "hint-float";
@@ -24,6 +26,8 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let users = 0;
 /** Set by a press so the focus a click brings does not bring the hint straight back. */
 let pressed = false;
+/** Where the pointer rests while a hint waits; null when keyboard focus asked for it. */
+let pointer: [number, number] | null = null;
 
 function hintedFrom(target: EventTarget | null): HTMLElement | null {
   if (!(target instanceof Element)) return null;
@@ -56,9 +60,16 @@ function boxEl(): HTMLDivElement {
   return box;
 }
 
-/** Places the hint under the control, or above it when there is no room below, inside the viewport. */
+/**
+ * Places the hint under what it clears, or above it when there is no room below, inside the
+ * viewport. With the pointer that is the arrow, so the cursor never covers the text; with
+ * keyboard focus it is the control.
+ */
 function place(el: HTMLElement, b: HTMLDivElement): void {
-  const r = el.getBoundingClientRect();
+  const r =
+    pointer === null
+      ? el.getBoundingClientRect()
+      : { left: pointer[0], top: pointer[1], bottom: pointer[1] + CURSOR_PX };
   const w = b.offsetWidth;
   const h = b.offsetHeight;
   const left = Math.max(EDGE_PX, Math.min(r.left, window.innerWidth - w - EDGE_PX));
@@ -96,7 +107,12 @@ function schedule(el: HTMLElement | null): void {
 }
 
 function onOver(ev: MouseEvent): void {
+  pointer = [ev.clientX, ev.clientY];
   schedule(hintedFrom(ev.target));
+}
+/** Keeps the resting place current while a hint waits; a shown hint stays put. */
+function onMove(ev: MouseEvent): void {
+  if (pending !== null) pointer = [ev.clientX, ev.clientY];
 }
 /** Leaving for another hinted element (or for none) moves or drops the hint. */
 function onOut(ev: MouseEvent | FocusEvent): void {
@@ -107,6 +123,7 @@ function onFocusIn(ev: FocusEvent): void {
     pressed = false;
     return;
   }
+  pointer = null;
   schedule(hintedFrom(ev.target));
 }
 function onDown(): void {
@@ -120,6 +137,7 @@ function onKey(ev: KeyboardEvent): void {
 
 function listen(): void {
   document.addEventListener("mouseover", onOver);
+  document.addEventListener("mousemove", onMove);
   document.addEventListener("mouseout", onOut);
   document.addEventListener("focusin", onFocusIn);
   document.addEventListener("focusout", onOut);
@@ -129,6 +147,7 @@ function listen(): void {
 }
 function unlisten(): void {
   document.removeEventListener("mouseover", onOver);
+  document.removeEventListener("mousemove", onMove);
   document.removeEventListener("mouseout", onOut);
   document.removeEventListener("focusin", onFocusIn);
   document.removeEventListener("focusout", onOut);
@@ -160,6 +179,7 @@ export const vHint: Directive<HTMLElement, string> = {
       box?.remove();
       box = null;
       pressed = false;
+      pointer = null;
     }
   },
 };

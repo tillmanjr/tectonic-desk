@@ -84,11 +84,11 @@ describe("vHint", () => {
     w.unmount();
   });
 
-  it("places the hint below the control, above it near the bottom, inside the sides", () => {
+  it("places a focus hint below the control, above it near the bottom, inside the sides", () => {
     const w = mount(Host, { attachTo: document.body });
     const input = w.get(".inner").element;
     rect(input, 100, -50);
-    over(input);
+    input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
     vi.advanceTimersByTime(HINT_DELAY_MS);
     const b = box();
     if (b === null) throw new Error("no hint box");
@@ -109,6 +109,35 @@ describe("vHint", () => {
         expect(b.style.top).toBe(`${String(10 + window.innerHeight + 6)}px`);
         w.unmount();
       });
+    });
+  });
+
+  it("places a pointer hint clear of the arrow, where the pointer came to rest", () => {
+    const w = mount(Host, { attachTo: document.body });
+    const input = w.get(".inner").element;
+    rect(input, 100);
+    input.dispatchEvent(new MouseEvent("mouseover", { bubbles: true, clientX: 40, clientY: 105 }));
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 60, clientY: 112 }));
+    vi.advanceTimersByTime(HINT_DELAY_MS);
+    const b = box();
+    if (b === null) throw new Error("no hint box");
+    expect(b.style.left).toBe("60px");
+    expect(b.style.top).toBe(`${String(112 + 20 + 6)}px`);
+    // Once shown it stays put.
+    document.dispatchEvent(new MouseEvent("mousemove", { clientX: 90, clientY: 118 }));
+    inner.value = "Moved";
+    return w.vm.$nextTick().then(() => {
+      expect(b.style.left).toBe("60px");
+      // Near the bottom it goes above the pointer.
+      vi.spyOn(b, "offsetHeight", "get").mockReturnValue(40);
+      over(w.get(".plain").element, input);
+      const low = window.innerHeight - 10;
+      input.dispatchEvent(
+        new MouseEvent("mouseover", { bubbles: true, clientX: 60, clientY: low }),
+      );
+      vi.advanceTimersByTime(HINT_DELAY_MS);
+      expect(b.style.top).toBe(`${String(low - 6 - 40)}px`);
+      w.unmount();
     });
   });
 
