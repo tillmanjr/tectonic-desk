@@ -4,10 +4,13 @@ import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { fmtStamp } from "../lib/format.js";
 import { API, SPACE, useInjected, ZONE } from "../lib/keys.js";
 import { stepKey } from "../lib/sun-frames.js";
+import { movieNote, SUN_MOVIES, type MovieSize } from "../lib/sun-movies.js";
 
 /**
- * One Sun frame large over the page: the 1024 px image, what it shows, its time and credit, and
- * a filmstrip of the seven. Escape, the × or a click on the backdrop close it; ← → step.
+ * One Sun channel large over the page: its animation (the agency's latest movie, 512 px unless
+ * the reader asks for 1024) or the latest 1024 px still, what it shows, which time it covers and
+ * its credit, and a filmstrip of the seven. Escape, the × or a click on the backdrop close it;
+ * ← → step. The animation and size choices hold while the reader steps between channels.
  */
 const props = defineProps<{ open: SunKey | null }>();
 const emit = defineEmits<{ "update:open": [key: SunKey | null] }>();
@@ -17,6 +20,12 @@ const zone = useInjected(ZONE);
 
 const timeOf = (key: SunKey): string | null =>
   store.sun.value?.frames.find((f) => f.key === key)?.time ?? null;
+
+/** Animation or still, and the animation's size; kept across channels and openings. */
+const mode = ref<"movie" | "still">("movie");
+const size = ref<MovieSize>(512);
+/** Where the movie for the channel and size shown stands. */
+const movieState = ref<"loading" | "ready" | "error">("loading");
 
 const current = computed(() => {
   if (props.open === null) return null;
@@ -31,6 +40,20 @@ const current = computed(() => {
     credit: SUN_CREDIT[f.source],
   };
 });
+
+const movie = computed(() => {
+  if (props.open === null) return null;
+  const m = SUN_MOVIES[props.open];
+  return { src: m.src[size.value], note: movieNote(m, store.range.value, zone.value) };
+});
+/** The movie plays unless the reader chose the still or it failed to load. */
+const playing = computed(() => mode.value === "movie" && movieState.value !== "error");
+watch(
+  () => movie.value?.src,
+  () => {
+    movieState.value = "loading";
+  },
+);
 
 const strip = computed(() =>
   SUN_FRAMES.map((f) => ({
@@ -100,7 +123,26 @@ onUnmounted(() => {
       <button type="button" class="sunarrow prev" aria-label="Previous frame" @click="step(-1)">
         ‹
       </button>
+      <video
+        v-if="playing && movie !== null"
+        :key="movie.src"
+        class="sunlarge"
+        :src="movie.src"
+        :poster="current.src"
+        :aria-label="`${current.title}, animation of ${movie.note}`"
+        width="1024"
+        height="1024"
+        autoplay
+        muted
+        loop
+        playsinline
+        controls
+        preload="auto"
+        @loadeddata="movieState = 'ready'"
+        @error="movieState = 'error'"
+      ></video>
       <img
+        v-else
         class="sunlarge"
         :src="current.src"
         :alt="`${current.title}, ${current.stamp}`"
@@ -110,10 +152,40 @@ onUnmounted(() => {
       <button type="button" class="sunarrow next" aria-label="Next frame" @click="step(1)">
         ›
       </button>
+      <div class="sunmodes" role="group" aria-label="Animation or still">
+        <button type="button" :aria-pressed="mode === 'movie'" @click="mode = 'movie'">
+          Animation
+        </button>
+        <button type="button" :aria-pressed="mode === 'still'" @click="mode = 'still'">
+          Still
+        </button>
+        <button
+          v-if="mode === 'movie'"
+          type="button"
+          class="sunsize"
+          @click="size = size === 512 ? 1024 : 512"
+        >
+          {{
+            size === 512
+              ? "Higher resolution (1024 px, a larger download)"
+              : "Lower resolution (512 px)"
+          }}
+        </button>
+        <span class="sunstate" role="status"
+          ><template v-if="mode === 'movie' && movieState === 'loading'"
+            ><span class="spin" aria-hidden="true"></span>Loading animation…</template
+          ><template v-else-if="mode === 'movie' && movieState === 'error'"
+            >Animation unavailable; showing the latest still.</template
+          ></span
+        >
+      </div>
       <p class="suncap">
         <b>{{ current.title }}</b> · {{ current.note }}
       </p>
-      <p class="suncap muted">{{ current.stamp }} · {{ current.credit }}</p>
+      <p v-if="playing && movie !== null" class="suncap span">{{ movie.note }}</p>
+      <p class="suncap muted">
+        <template v-if="!playing">{{ current.stamp }} · </template>{{ current.credit }}
+      </p>
       <div class="sunfilm">
         <button
           v-for="f in strip"

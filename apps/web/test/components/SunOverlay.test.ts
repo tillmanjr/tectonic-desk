@@ -24,6 +24,11 @@ describe("SunOverlay", () => {
     expect(box.attributes("role")).toBe("dialog");
     expect(box.attributes("aria-modal")).toBe("true");
     expect(box.attributes("aria-label")).toBe("LASCO C2");
+    // The animation leads; the still is a click away.
+    expect(w.find("video.sunlarge").exists()).toBe(true);
+    await w.findAll(".sunmodes button")[1]?.trigger("click");
+    expect(w.find(".sunsize").exists()).toBe(false);
+    expect(w.find(".sunstate").text()).toBe("");
     expect(w.find("img.sunlarge").attributes("src")).toBe(
       "/api/space/sun/c2/1024.jpg?t=2026-10-13T11%3A45%3A00.000Z",
     );
@@ -103,5 +108,56 @@ describe("SunOverlay", () => {
     w.unmount();
     expect(document.body.style.overflow).toBe("");
     key("Escape");
+  });
+
+  it("plays the channel's latest movie at 512 px, offers 1024, says what time it covers, and falls back to the still", async () => {
+    const ctx = await makeContext({ space: true });
+    const w = mountWith(SunOverlay, ctx, { open: "aia193" });
+    const video = () => w.find("video.sunlarge");
+    expect(video().attributes("src")).toBe(
+      "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_512_0193.mp4",
+    );
+    expect(video().attributes("poster")).toBe(
+      "/api/space/sun/aia193/1024.jpg?t=2026-10-13T11%3A45%3A00.000Z",
+    );
+    expect(video().attributes("muted")).toBeDefined();
+    expect(video().attributes("playsinline")).toBeDefined();
+    expect(w.find(".sunstate").text()).toBe("Loading animation…");
+    expect(w.find(".suncap.span").text()).toBe(
+      "Showing the last 48 hours only; the page shows 24 hours.",
+    );
+    expect(w.find(".suncap.muted").text()).toBe(
+      "Courtesy of NASA/SDO and the AIA, EVE, and HMI science teams",
+    );
+    await video().trigger("loadeddata");
+    expect(w.find(".sunstate").text()).toBe("");
+    // Higher resolution on request, kept while stepping to another channel.
+    expect(w.find(".sunsize").text()).toBe("Higher resolution (1024 px, a larger download)");
+    await w.find(".sunsize").trigger("click");
+    expect(video().attributes("src")).toBe(
+      "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_1024_0193.mp4",
+    );
+    expect(w.find(".sunstate").text()).toBe("Loading animation…");
+    await w.setProps({ open: "c3" });
+    expect(video().attributes("src")).toBe(
+      "https://soho.nascom.nasa.gov/data/LATEST/current_c3.mp4",
+    );
+    expect(w.find(".suncap.span").text()).toContain("about the last 4 days");
+    await w.find(".sunsize").trigger("click");
+    expect(video().attributes("src")).toBe(
+      "https://soho.nascom.nasa.gov/data/LATEST/current_c3small.mp4",
+    );
+    // A movie that fails gives way to the still and says so.
+    await video().trigger("error");
+    expect(w.find("video.sunlarge").exists()).toBe(false);
+    expect(w.find("img.sunlarge").exists()).toBe(true);
+    expect(w.find(".sunstate").text()).toBe("Animation unavailable; showing the latest still.");
+    expect(w.find(".suncap.span").exists()).toBe(false);
+    await w.setProps({ open: "c2" });
+    expect(video().exists()).toBe(true);
+    await w.findAll(".sunmodes button")[0]?.trigger("click");
+    expect(w.findAll(".sunmodes button")[0]?.attributes("aria-pressed")).toBe("true");
+    await w.setProps({ open: null });
+    w.unmount();
   });
 });
