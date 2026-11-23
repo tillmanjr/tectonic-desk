@@ -18,3 +18,17 @@ mark) explains itself in a hint written for a reader with geology training.
 - Keyboard focus shows the hint after the same delay; a press, Escape, scroll or leaving hides it,
   and the focus a click brings does not re-show it.
 - Hinted controls drop their `title` so two tooltips never stack.
+
+## Touch (iPad)
+
+- No hover on touch, so a finger held still on a hinted control for `TOUCH_HOLD_MS` (500 ms, 10 px
+  slop) shows its hint above the control, away from the hand, and the click that release produces
+  is swallowed so the control does not toggle.
+- A tap on a hinted element that does nothing itself (the info marks, the text labels on the refine
+  bar) shows its hint at once and swallows that click (the refine bar does not fold).
+- The next touch anywhere dismisses the hint. Text inputs and selects never start a hold, keeping
+  the browser's caret and picker; their labels carry the same hint.
+- Mouse and focus events within 1 s of a touch are the browser's emulation and are ignored. A
+  trackpad or mouse on an iPad reports `pointerType` mouse and gets the hover behaviour.
+- On coarse pointers hinted elements drop the long-press callout and text selection, and the context
+  menu is suppressed while a hold runs or its hint shows.
