@@ -16,8 +16,9 @@ the 24 most recent placements persist in this browser.
 - Tool: `src/lib/pin-tool.ts` (`usePinTool`), created in `useMapView` beside the section tool.
   Arming one tool stands the other down; Escape cancels either; a region change cancels a placement.
 - Placing: the `Pin` button opens `PinBar.vue` under the toolbar (armed when the view has no pin).
-  While armed the map shows a crosshair, a ghost pin under the pointer and a `lat, lon · click to
-  place` readout; the bar shows the same coordinates. A click that ends a pan is not a placement.
+  While armed the map shows a crosshair, a ghost pin under the pointer and a readout beside it
+  (`lat, lon · click to place`); the bar shows the same coordinates. A click that ends a pan is not
+  a placement.
 - Moving must be deliberate: a press on the pin has to hold still for `PIN_HOLD_MS` (450 ms, within
   `PIN_SLOP_PX` 4 px) before the pin lifts and follows the pointer, reading out its coordinates until
   release. A quick press or a drag opens the bar and never moves the pin. The press is kept off
