@@ -33,7 +33,23 @@ const TOURS: Tour[] = [
     title: "Two",
     blurb: "The second tour.",
     pageFor: (p) => p,
-    steps: [{ id: "x", title: "Ex", body: "Only.", targets: [] }],
+    steps: [
+      {
+        id: "x",
+        title: "Ex",
+        body: "Only.",
+        targets: [],
+        detour: { tour: "mechanism", label: "Look closer" },
+      },
+    ],
+  },
+  {
+    id: "mechanism",
+    title: "Side",
+    blurb: "A side path.",
+    sidePath: true,
+    pageFor: (p) => p,
+    steps: [{ id: "s", title: "Ess", body: "Aside.", targets: [] }],
   },
 ];
 
@@ -189,6 +205,25 @@ describe("TourCard", () => {
     w.unmount();
   });
 
+  it("offers a step's side path and leads back from it", async () => {
+    const { tour, mountIt } = setup();
+    const w = mountIt(TourCard);
+    await tour.start("map");
+    await nextTick();
+    expect(w.find(".tourdetour").text()).toBe("Look closer →");
+    await w.find(".tourdetour").trigger("click");
+    await flushPromises();
+    expect(w.find(".tourpath").text()).toBe("Two › Side · 1 of 1");
+    expect(w.find(".tourbtn").attributes("disabled")).toBeUndefined();
+    expect(w.find(".tourbtn.primary").text()).toBe("Back to Two");
+    expect(w.find(".tourdetour").exists()).toBe(false);
+    await w.find(".tourbtn.primary").trigger("click");
+    await flushPromises();
+    expect(w.find(".tourpath").text()).toBe("Two · 1 of 1");
+    await tour.exit();
+    w.unmount();
+  });
+
   it("exits from its button and finishes from Done", async () => {
     const { tour, progress, mountIt } = setup();
     const w = mountIt(TourCard);
@@ -214,7 +249,12 @@ describe("HelpMenu", () => {
     await w.find(".help-btn").trigger("click");
     expect(w.find(".help-btn").attributes("aria-expanded")).toBe("true");
     expect(w.find(".hresume").exists()).toBe(false);
-    expect(w.findAll(".hstate").map((s) => s.text())).toEqual(["Not started", "Not started"]);
+    expect(w.findAll(".hstate").map((s) => s.text())).toEqual([
+      "Not started",
+      "Not started",
+      "Not started",
+    ]);
+    expect(w.find(".htour.hside .hsidetag").text()).toBe("· side path");
     expect(w.find(".hblurb").text()).toBe("The first tour.");
     w.find(".hblurb").element.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     await nextTick();
@@ -260,7 +300,11 @@ describe("HelpMenu", () => {
     progress.record("orientation", 1, false);
     const w = mountIt(HelpMenu);
     await w.find(".help-btn").trigger("click");
-    expect(w.findAll(".hstate").map((s) => s.text())).toEqual(["Step 2 of 3", "Done"]);
+    expect(w.findAll(".hstate").map((s) => s.text())).toEqual([
+      "Step 2 of 3",
+      "Done",
+      "Not started",
+    ]);
     expect(w.find(".hresume").text()).toBe("Resume One at step 2");
     expect(w.findAll(".htour")[1]?.find(".tourbtn.primary").text()).toBe("Take again");
     await w.find(".hresume").trigger("click");

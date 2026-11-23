@@ -8,11 +8,11 @@ import { API, CLOCK, MARKS, SETTINGS, THEME } from "../../src/lib/keys.js";
 import { createMarks } from "../../src/lib/marks.js";
 import { createSettings } from "../../src/lib/settings.js";
 import { createTourProgress, TOUR_PROGRESS } from "../../src/lib/tour.js";
-import { TOURS } from "../../src/lib/tour-steps.js";
+import { EXAMPLE_EVENT, TOURS } from "../../src/lib/tour-steps.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, listOf } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
-import { event } from "../support/events.js";
+import { event, mech } from "../support/events.js";
 import { fakeTheme, NOW } from "../support/mount.js";
 import { stubWorld } from "../support/world.js";
 
@@ -115,6 +115,90 @@ describe("quick tours in the app", () => {
     expect(plates.element.checked).toBe(false);
     expect(m.router.currentRoute.value.fullPath).toBe("/active");
     expect(m.progress.doc.value.tours.map).toMatchObject({ step: 7, done: false });
+    m.wrapper.unmount();
+  });
+
+  /** An API whose one event carries a moment tensor and a second solution, like the example's. */
+  function exampleApi(): ApiClient {
+    const quake = event({
+      id: EXAMPLE_EVENT.id,
+      mechanisms: [mech(), mech({ id: 2, kind: "fm", preferred: false, code: "nc_1" })],
+    });
+    return fakeApi({
+      events: vi.fn().mockResolvedValue(listOf([quake])),
+      event: vi.fn().mockResolvedValue({
+        ...quake,
+        firstSeen: "2026-10-12T05:00:00.000Z",
+        lastSeen: "2026-10-12T05:00:00.000Z",
+        detailCheckedUpdated: null,
+        usgs: { title: "M 6.2" },
+      }),
+    });
+  }
+
+  it("walks the earthquakes tour on the example event and folds away what it opened", async () => {
+    const m = await mountApp("/active/wc", exampleApi());
+    const missing = await walk(m, 2);
+    expect(missing).toEqual([]);
+    expect(m.router.currentRoute.value.fullPath).toBe(EXAMPLE_EVENT.url);
+    await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
+    await flushPromises();
+    const shake = m.wrapper.find<HTMLInputElement>('[data-tour~="map.shake"] input');
+    expect(shake.element.checked).toBe(true);
+    await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".filters.refine").classes()).toContain("expanded");
+    expect(shake.element.checked).toBe(false);
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".filters.refine").classes()).not.toContain("expanded");
+    expect(m.router.currentRoute.value.fullPath).toBe("/active/wc");
+    m.wrapper.unmount();
+  });
+
+  it("takes the focal mechanism side path from its step and comes back to it", async () => {
+    const m = await mountApp("/earthquakes", exampleApi());
+    await startFromHelp(m, 2);
+    await m.wrapper.findAll(".tourdot")[5]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourcard h2").text()).toBe("Mechanism");
+    await m.wrapper.find(".tourdetour").trigger("click");
+    await flushPromises();
+    const side = TOURS[3];
+    if (side === undefined) throw new Error("no side path");
+    const missing: string[] = [];
+    for (const [i, step] of side.steps.entries()) {
+      expect(m.wrapper.find(".tourpath").text()).toBe(
+        `Earthquakes › Focal mechanism · ${String(i + 1)} of ${String(side.steps.length)}`,
+      );
+      for (const n of missingTargets(step.targets)) missing.push(`${step.id}: ${n}`);
+      if (i < side.steps.length - 1) {
+        await m.wrapper.find(".tourbtn.primary").trigger("click");
+        await flushPromises();
+      }
+    }
+    expect(missing).toEqual([]);
+    expect(m.wrapper.find(".tourbtn.primary").text()).toBe("Back to Earthquakes");
+    await m.wrapper.find(".tourbtn.primary").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourpath").text()).toBe("Earthquakes · 6 of 16");
+    expect(m.progress.doc.value.tours.mechanism?.done).toBe(true);
+    await m.wrapper.find(".tourdetour").trigger("click");
+    await flushPromises();
+    await m.wrapper.findAll(".tourbtn")[0]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourcard h2").text()).toBe("Mechanism");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/earthquakes");
+    m.wrapper.unmount();
+  });
+
+  it("offers the side path on its own from the Help menu", async () => {
+    const m = await mountApp("/earthquakes", exampleApi());
+    expect(m.wrapper.find(".help-btn").classes()).toContain("fresh");
+    expect(await walk(m, 3)).toEqual([]);
+    expect(m.wrapper.find(".tourpath").text()).toBe("Focal mechanism · 7 of 7");
     m.wrapper.unmount();
   });
 

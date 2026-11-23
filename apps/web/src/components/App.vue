@@ -251,7 +251,7 @@ function setSection(s: Section | null): void {
 }
 provide(SET_SECTION, setSection);
 
-/** The largest event in the window the catalogue holds, for the tour's detail step. */
+/** The largest event in the window the catalogue holds, for the orientation's detail step. */
 function largestEvent(): string | null {
   let best: { id: string; mag: number } | null = null;
   for (const e of catalog.filtered.value) {
@@ -266,6 +266,9 @@ const tour = createTour(TOURS, inject(TOUR_PROGRESS, null) ?? createTourProgress
   },
   selectLargest: () => {
     select(largestEvent());
+  },
+  go: async (url) => {
+    await router.replace(url);
   },
   clearSelection: () => {
     select(null);

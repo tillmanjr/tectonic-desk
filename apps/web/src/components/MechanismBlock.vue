@@ -50,6 +50,7 @@ const dc = computed(() => {
     <h3>{{ mechanism.kind === "mt" ? "Moment tensor" : "Focal mechanism (first motion)" }}</h3>
     <div class="mechbox">
       <BeachballImage
+        data-tour="mech.ball"
         :mechanism="mechanism"
         :px="150"
         :depth-km="depthKm"
@@ -57,8 +58,8 @@ const dc = computed(() => {
         alt="Beachball diagram"
       />
       <div>
-        <div class="style">{{ geo.style }}</div>
-        <p v-if="geo.sense !== null">{{ geo.sense }}</p>
+        <div class="style" data-tour="mech.style">{{ geo.style }}</div>
+        <p v-if="geo.sense !== null" data-tour="mech.style">{{ geo.sense }}</p>
         <p>
           Lower hemisphere, equal area. Shaded quadrants are compressional; T and P mark the tension
           and pressure axes.
@@ -66,38 +67,42 @@ const dc = computed(() => {
       </div>
     </div>
     <dl class="kv">
-      <dt>Nodal plane 1</dt>
-      <dd>{{ pf(geo.p1) }}</dd>
-      <dt>Nodal plane 2</dt>
-      <dd>{{ pf(geo.p2) }}</dd>
+      <dt data-tour="mech.planes">Nodal plane 1</dt>
+      <dd data-tour="mech.planes">{{ pf(geo.p1) }}</dd>
+      <dt data-tour="mech.planes">Nodal plane 2</dt>
+      <dd data-tour="mech.planes">{{ pf(geo.p2) }}</dd>
       <dt></dt>
-      <dd class="hint">
+      <dd class="hint" data-tour="mech.planes">
         strike / dip / rake<template v-if="geo.reconstructed">
           · reconstructed from P/T axes</template
         >
       </dd>
-      <dt>T axis</dt>
-      <dd>
+      <dt data-tour="mech.axes">T axis</dt>
+      <dd data-tour="mech.axes">
         az {{ Math.round(geo.axes.t.azimuth) }}° · plunge {{ Math.round(geo.axes.t.plunge) }}°
       </dd>
-      <dt>P axis</dt>
-      <dd>
+      <dt data-tour="mech.axes">P axis</dt>
+      <dd data-tour="mech.axes">
         az {{ Math.round(geo.axes.p.azimuth) }}° · plunge {{ Math.round(geo.axes.p.plunge) }}°
       </dd>
       <template v-if="mechanism.kind === 'mt'">
-        <dt>Scalar moment</dt>
-        <dd>
+        <dt data-tour="mech.moment">Scalar moment</dt>
+        <dd data-tour="mech.moment">
           <template v-if="moment !== null"
             >{{ moment.mantissa }} × 10<sup>{{ moment.exponent }}</sup> N·m</template
           >
           <template v-else>—</template>
         </dd>
-        <dt>Moment magnitude</dt>
-        <dd>{{ mechanism.mw === null ? "—" : `Mw ${String(mechanism.mw)}` }}</dd>
-        <dt>Centroid depth</dt>
-        <dd>{{ mechanism.depthKm === null ? "—" : `${String(mechanism.depthKm)} km` }}</dd>
-        <dt>Double couple</dt>
-        <dd>{{ dc }}</dd>
+        <dt data-tour="mech.moment">Moment magnitude</dt>
+        <dd data-tour="mech.moment">
+          {{ mechanism.mw === null ? "—" : `Mw ${String(mechanism.mw)}` }}
+        </dd>
+        <dt data-tour="mech.moment">Centroid depth</dt>
+        <dd data-tour="mech.moment">
+          {{ mechanism.depthKm === null ? "—" : `${String(mechanism.depthKm)} km` }}
+        </dd>
+        <dt data-tour="mech.moment">Double couple</dt>
+        <dd data-tour="mech.moment">{{ dc }}</dd>
       </template>
       <dt>Solution source</dt>
       <dd>{{ mechanism.source }} network · {{ mechanism.code }}</dd>

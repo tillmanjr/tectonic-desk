@@ -64,7 +64,7 @@ const data = computed(() => {
 </script>
 
 <template>
-  <div class="panel chart">
+  <div class="panel chart" data-tour="chart.fm">
     <h2>Frequency–magnitude</h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(H)}`">
       <template v-if="data !== null">

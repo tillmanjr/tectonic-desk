@@ -81,10 +81,10 @@ const countLine = computed(
         v-hint="
           'Draws a lower-hemisphere beachball (compressional quadrants filled) in place of the dot for events with a moment tensor or focal mechanism.'
         "
-        data-tour="map.page"
+        data-tour="map.page map.mech"
         ><input v-model="q.showMech.value" type="checkbox" /> Focal mechanisms</label
       >
-      <ShakeToggle :shake="shake" data-tour="map.page" />
+      <ShakeToggle :shake="shake" data-tour="map.page map.shake" />
     </template>
     <template #actions>
       <button

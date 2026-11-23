@@ -74,3 +74,29 @@ tour breaks the build rather than the tour.
 - `src/lib/tour-target.ts`: `targetRect` (union of the targets' boxes), `dockOf`, `isVisible`.
 - `TourCard.vue` (spotlight and card), `HelpMenu.vue` (the "?" menu), `TourOffer.vue` (the first
   visit line).
+
+## Earthquakes tour (2026-11-23)
+
+Sixteen steps on the Earthquakes page: the summary, the major-event cards, the refine bar (opened),
+an event with its mechanism, impact and sequence, its ShakeMap on the map, beachballs on the map,
+the cross-section profile with the example line, the catalogue table, the three charts, the Mark
+button, and Help.
+
+From the event step on, the tour reads one well-recorded event rather than whatever is largest in
+the reader's window: the M6.2 of 20 December 2021, 7 km N of Petrolia (`nc73666231`), with a moment
+tensor, other solutions, a reviewed ShakeMap, DYFI and a PAGER alert. The stage's `go(url)` opens
+it on the West Coast in a window of its first month (`EXAMPLE_EVENT.url`); selecting it zooms the
+map to it, and the example section line crosses the Mendocino triple junction beside it.
+
+A step can offer a side path (`detour`): its card shows a link that starts another tour, marked
+`sidePath`, whose last step reads "Back to" the first tour and returns to the step it left, as does
+Back from its first step. The Mechanism step leads to "Focal mechanism" (seven steps over the
+beachball, the quadrants, the nodal planes, the P and T axes, the faulting style, the moment and
+double couple, and the other solutions). Side paths are listed in the Help menu under their tour
+and do not keep the Help button lit, being optional.
+
+Some state lives only in a component (the refine bar's open state, the ShakeMap and mechanism
+toggles), out of the stage's reach. A step flips it through `ctx.setSwitch(name, on)`: the runner
+clicks the checkbox, or the element with `aria-expanded`, carrying that `data-tour` name, as the
+reader would, records the state it found the first time, and clicks it back when the tour ends.
+`selectLargest({ mechanism: true })` skips events without a solution.

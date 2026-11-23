@@ -54,6 +54,13 @@ const spot = computed(() => {
   };
 });
 
+/** Next, or on the last step Done, or the way back from a side path. */
+const nextLabel = computed(() => {
+  const a = active.value;
+  if (a === null || a.index < a.tour.steps.length - 1) return "Next";
+  return a.parent === null ? "Done" : `Back to ${a.parent.title}`;
+});
+
 function track(): void {
   const els = targetElements(targets);
   const b = unionBox(els);
@@ -122,6 +129,7 @@ onUnmounted(stop);
     >
       <header class="tourhead">
         <span class="tourpath"
+          ><template v-if="active.parent !== null">{{ active.parent.title }} › </template
           >{{ active.tour.title }} · {{ active.index + 1 }} of {{ active.tour.steps.length }}</span
         >
         <button type="button" class="tourexit" @click="tour.exit()">Exit tour</button>
@@ -132,6 +140,14 @@ onUnmounted(stop);
         <b>Try it.</b> {{ active.step.tryIt }}
       </p>
       <p v-if="missing" class="tourmiss">This part is not on screen right now.</p>
+      <button
+        v-if="active.step.detour !== undefined"
+        type="button"
+        class="tourdetour"
+        @click="tour.detour()"
+      >
+        {{ active.step.detour.label }} →
+      </button>
       <footer class="tourfoot">
         <div class="tourdots">
           <button
@@ -144,11 +160,16 @@ onUnmounted(stop);
             @click="tour.goTo(i)"
           ></button>
         </div>
-        <button type="button" class="tourbtn" :disabled="active.index === 0" @click="tour.back()">
+        <button
+          type="button"
+          class="tourbtn"
+          :disabled="active.index === 0 && active.parent === null"
+          @click="tour.back()"
+        >
           Back
         </button>
         <button ref="next" type="button" class="tourbtn primary" @click="tour.next()">
-          {{ active.index === active.tour.steps.length - 1 ? "Done" : "Next" }}
+          {{ nextLabel }}
         </button>
       </footer>
     </section>
