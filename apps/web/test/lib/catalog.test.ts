@@ -280,6 +280,35 @@ describe("createCatalog", () => {
     expect(c.windowEvents.value).toBe(c.events.value);
     expect(c.loading.value).toBe(false);
   });
+  it("stays loading until both the preset and the range loads land, and stops when a range is dropped", async () => {
+    const api = fakeApi();
+    const pending: (() => void)[] = [];
+    vi.mocked(api.events).mockImplementation(
+      (q) =>
+        new Promise((resolve) => {
+          pending.push(() => {
+            resolve(list(q.until === undefined ? "preset" : "ranged"));
+          });
+        }),
+    );
+    const c = createCatalog(api, now);
+    await c.init();
+    const switching = c.setRegion("global");
+    expect(c.loading.value).toBe(true);
+    c.setRange(win);
+    await flush();
+    expect(c.loading.value).toBe(true);
+    pending.shift()?.();
+    await switching;
+    // The preset landed; the range is still out.
+    expect(c.loading.value).toBe(true);
+    c.setRange(null);
+    expect(c.loading.value).toBe(false);
+    pending.shift()?.();
+    await flush();
+    expect(c.loading.value).toBe(false);
+  });
+
   it("clears the selection on a region switch and keeps it on refetch", async () => {
     const api = fakeApi();
     const c = createCatalog(api, now);

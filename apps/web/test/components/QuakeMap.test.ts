@@ -40,10 +40,13 @@ describe("QuakeMap", () => {
         .findAll(".maptools label")
         .find((l) => l.text().includes(text))
         ?.find("input");
+    // Focal mechanisms start off: dots, no beachballs, until the reader turns them on.
+    expect((box("Focal mechanisms")?.element as HTMLInputElement | undefined)?.checked).toBe(false);
     await box("Plate boundaries")?.setValue(false);
     expect(w.findComponent({ name: "MapPlates" }).exists()).toBe(false);
-    await box("Focal mechanisms")?.setValue(false);
     expect(w.findComponent({ name: "MapEvents" }).findAll("circle")).toHaveLength(1);
+    await box("Focal mechanisms")?.setValue(true);
+    expect(w.findComponent({ name: "MapEvents" }).props("showMech")).toBe(true);
     await box("Subduction teeth")?.setValue(false);
     expect(w.findComponent({ name: "MapTeeth" }).exists()).toBe(false);
   });

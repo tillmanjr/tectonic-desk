@@ -83,8 +83,46 @@ describe("CombinedMap", () => {
     await toggle("Density")?.find("input").setValue(true);
     expect(w.findComponent({ name: "MapDensity" }).exists()).toBe(true);
     expect(w.text()).toContain("events per 2° cell");
-    await toggle("Focal mechanisms")?.find("input").setValue(false);
     expect(w.findComponent({ name: "MapEvents" }).props("showMech")).toBe(false);
+    await toggle("Focal mechanisms")?.find("input").setValue(true);
+    expect(w.findComponent({ name: "MapEvents" }).props("showMech")).toBe(true);
+    w.unmount();
+  });
+
+  it("says what it is loading over the map and dims the markers until it lands", async () => {
+    stubWorld();
+    stubCanvas();
+    const ctx = await makeContext();
+    const w = mountWith(CombinedMap, ctx, { animate: false });
+    await flushPromises();
+    const busy = () => (w.find(".mapbusy").exists() ? w.find(".mapbusy").text() : null);
+    expect(busy()).toBeNull();
+    expect(w.find("svg.map").classes()).not.toContain("busy");
+    let landEvents: () => void = () => undefined;
+    const events = vi.mocked(ctx.api.events);
+    const listed = await events.mock.results[0]?.value;
+    events.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          landEvents = () => {
+            resolve(listed);
+          };
+        }),
+    );
+    const refetch = ctx.catalog.refetch();
+    const files = ctx.volcanoes.load();
+    await nextTick();
+    expect(busy()).toBe("Loading events and volcanoes…");
+    expect(w.find(".mapbusy").attributes("role")).toBe("status");
+    expect(w.find("svg.map").classes()).toContain("busy");
+    await files;
+    await nextTick();
+    expect(busy()).toBe("Loading events…");
+    landEvents();
+    await refetch;
+    await nextTick();
+    expect(busy()).toBeNull();
+    expect(w.find("svg.map").classes()).not.toContain("busy");
     w.unmount();
   });
 });

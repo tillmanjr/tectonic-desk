@@ -51,3 +51,6 @@ export function volcanoParts(f: VolcanoFilter): SummaryPart[] {
     part("status", f.status === null ? null : STATUS_FILTERS[f.status].toLowerCase()),
   ];
 }
+
+/** How long a refine bar says "Updated" after the fetch its refinements started has landed. */
+export const UPDATED_MS = 2500;

@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import RefineBar from "../../src/components/RefineBar.vue";
+import { UPDATED_MS } from "../../src/lib/refine.js";
 
 describe("RefineBar", () => {
   it("collapses to a summary, toggles on the bar and its head, and reports the hide checkbox", async () => {
@@ -60,5 +61,53 @@ describe("RefineBar", () => {
     Object.defineProperty(stray, "target", { value: document.createElement("div") });
     w.find(".rhide input").element.dispatchEvent(stray);
     expect(w.emitted("update:hidden")).toHaveLength(1);
+  });
+
+  describe("status", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+    const props = { dataset: "earthquakes" as const, parts: [], hidden: false };
+
+    it("says Updating while fetching, then Updated for a while, and nothing when settled", async () => {
+      vi.useFakeTimers();
+      const w = mount(RefineBar, { props });
+      const state = () => w.find(".rstate");
+      expect(state().attributes("role")).toBe("status");
+      expect(state().text()).toBe("");
+      await w.setProps({ busy: true });
+      expect(state().text()).toBe("Updating…");
+      expect(state().find(".spin").exists()).toBe(true);
+      await w.setProps({ busy: false });
+      expect(state().text()).toBe("✓ Updated");
+      vi.advanceTimersByTime(UPDATED_MS - 1);
+      await w.vm.$nextTick();
+      expect(state().text()).toBe("✓ Updated");
+      vi.advanceTimersByTime(1);
+      await w.vm.$nextTick();
+      expect(state().text()).toBe("");
+      // A new fetch cuts the message short; unmounting mid-message leaves no timer behind.
+      await w.setProps({ busy: true });
+      await w.setProps({ busy: false });
+      await w.setProps({ busy: true });
+      expect(state().text()).toBe("Updating…");
+      await w.setProps({ busy: false });
+      w.unmount();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("says Not updated, with the error in its hint, when the fetch failed", async () => {
+      const w = mount(RefineBar, { props: { ...props, busy: true } });
+      await w.setProps({ busy: false, error: "HTTP 502" });
+      const state = w.find(".rstate");
+      expect(state.text()).toBe("Not updated");
+      expect(state.classes()).toContain("bad");
+      expect(state.find("span").attributes("data-hint")).toBe(
+        "The data could not be fetched: HTTP 502",
+      );
+      await w.setProps({ busy: true });
+      expect(state.classes()).not.toContain("bad");
+      w.unmount();
+    });
   });
 });

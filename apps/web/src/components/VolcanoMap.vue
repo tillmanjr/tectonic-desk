@@ -35,6 +35,7 @@ const v = useVolcanoLayer({ store, mv });
 
 <template>
   <MapShell
+    :busy="store.loading.value ? 'Loading volcanoes…' : null"
     :mv="mv"
     :section-tool="false"
     label="Map of Holocene volcanoes"
