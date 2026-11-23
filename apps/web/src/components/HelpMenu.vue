@@ -3,7 +3,14 @@ import { onUnmounted, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import { vHint } from "../lib/hint.js";
 import { useInjected } from "../lib/keys.js";
-import { TOUR, tourState, tourTitle, type TourId, type TourState } from "../lib/tour.js";
+import {
+  GROUP_NAMES,
+  TOUR,
+  tourState,
+  tourTitle,
+  type TourId,
+  type TourState,
+} from "../lib/tour.js";
 
 /** The header's Help menu: the quick tours, each with its progress, and every step to start at. */
 const tour = useInjected(TOUR);
@@ -25,8 +32,18 @@ function begin(id: TourId, step: number): void {
 }
 /** The tours, then the deep dives under their own heading. */
 const parts = [
-  { head: "", tours: tour.tours.filter((t) => t.deep === undefined) },
-  { head: "Deep dives", tours: tour.tours.filter((t) => t.deep !== undefined) },
+  {
+    kind: "quick",
+    head: GROUP_NAMES.quick,
+    sub: "The app at a glance, page by page.",
+    tours: tour.tours.filter((t) => t.deep === undefined),
+  },
+  {
+    kind: "deep",
+    head: GROUP_NAMES.deep,
+    sub: "One part of the app, every control in detail, with examples set as you go.",
+    tours: tour.tours.filter((t) => t.deep !== undefined),
+  },
 ];
 /** Starts a tour where the reader left it, or from the top. */
 function resume(id: TourId): void {
@@ -72,7 +89,6 @@ onUnmounted(() => {
       ?
     </button>
     <div v-if="open" id="help-menu" class="settings-menu helpmenu" aria-label="Help">
-      <p class="hhead">Quick tours</p>
       <button
         v-if="tour.resumable.value !== null"
         type="button"
@@ -82,14 +98,10 @@ onUnmounted(() => {
         Resume {{ tourTitle(tour.resumable.value.tour) }} at step
         {{ tour.resumable.value.step + 1 }}
       </button>
-      <template v-for="part in parts" :key="part.head">
-        <p v-if="part.head !== ''" class="hhead hdeephead">{{ part.head }}</p>
-        <div
-          v-for="t in part.tours"
-          :key="t.id"
-          class="htour"
-          :class="{ hdeep: t.deep !== undefined }"
-        >
+      <section v-for="part in parts" :key="part.kind" class="hgroup" :class="part.kind">
+        <h3 class="hgrouphead">{{ part.head }}</h3>
+        <p class="hgroupsub">{{ part.sub }}</p>
+        <div v-for="t in part.tours" :key="t.id" class="htour">
           <div class="htitle">
             <b>{{ tourTitle(t) }}</b>
             <span class="hstate">{{
@@ -119,7 +131,7 @@ onUnmounted(() => {
             </ol>
           </details>
         </div>
-      </template>
+      </section>
       <!-- Out of the way at the foot: for demos, back to a first visit. -->
       <div class="hreset">
         <ConfirmButton label="Reset tour progress" @confirm="tour.reset()" />

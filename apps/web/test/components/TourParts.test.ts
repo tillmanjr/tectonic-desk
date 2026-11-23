@@ -267,11 +267,14 @@ describe("TourCard", () => {
     await nextTick();
     expect(w.find(".tourdetour").text()).toBe("Look closer →");
     expect(w.find(".tourmore").text()).toBe(
-      "It is also in the Help menu, under Deep dives, as Area: Side.",
+      "Also in the Help menu under Deep dives as Area: Side.",
     );
+    expect(w.find(".tourmore .tourkind.deep").text()).toBe("Deep dives");
+    expect(w.find(".tourhead .tourkind").text()).toBe("Quick tour");
     await w.find(".tourdetour").trigger("click");
     await flushPromises();
     expect(w.find(".tourpath").text()).toBe("Two › Area: Side · 1 of 1");
+    expect(w.find(".tourhead .tourkind.deep").text()).toBe("Deep dive");
     expect(w.find(".tourbtn").attributes("disabled")).toBeUndefined();
     expect(w.find(".tourbtn.primary").text()).toBe("Back to Two");
     expect(w.find(".tourdetour").exists()).toBe(false);
@@ -312,8 +315,9 @@ describe("HelpMenu", () => {
       "Not started",
       "Not started",
     ]);
-    expect(w.find(".hdeephead").text()).toBe("Deep dives");
-    expect(w.find(".htour.hdeep b").text()).toBe("Area: Side");
+    expect(w.findAll(".hgrouphead").map((h) => h.text())).toEqual(["Quick tours", "Deep dives"]);
+    expect(w.find(".hgroup.deep .htour b").text()).toBe("Area: Side");
+    expect(w.find(".hgroup.quick .hgroupsub").text()).toContain("at a glance");
     expect(w.find(".hblurb").text()).toBe("The first tour.");
     w.find(".hblurb").element.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     await nextTick();
