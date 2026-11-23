@@ -35,7 +35,7 @@ const settings = useInjected(SETTINGS);
   <CombinedMap />
   <SectionProfile volcanoes />
   <p class="sectionlabel">Earthquakes</p>
-  <section class="grid2">
+  <section class="grid2" data-tour="analysis">
     <CatalogTable />
     <div class="charts">
       <MagnitudeTimeChart />

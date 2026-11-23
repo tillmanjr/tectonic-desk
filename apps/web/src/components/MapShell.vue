@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch } from "vue";
+import { computed, inject, onBeforeUnmount, onMounted, watch } from "vue";
 import MapAurora from "./MapAurora.vue";
 import MapBasemap from "./MapBasemap.vue";
 import MapFaults from "./MapFaults.vue";
@@ -20,6 +20,7 @@ import { fmtClock } from "../lib/format.js";
 import { vHint } from "../lib/hint.js";
 import { AURORA, useInjected, ZONE } from "../lib/keys.js";
 import type { MapView } from "../lib/mapview.js";
+import { TOUR } from "../lib/tour.js";
 
 /**
  * The card around a map: toolbar with the shared layer toggles and zoom
@@ -49,6 +50,14 @@ const props = withDefaults(
 const { mv } = props;
 const aurora = useInjected(AURORA);
 const zone = useInjected(ZONE);
+// A running tour reaches this map through the runner while it is on screen.
+const tour = inject(TOUR, null);
+onMounted(() => {
+  tour?.attachMap(mv);
+});
+onBeforeUnmount(() => {
+  tour?.detachMap(mv);
+});
 
 // The aurora layer holds the shared store running while its toggle is on.
 watch(
@@ -72,28 +81,31 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
 </script>
 
 <template>
-  <section :ref="mv.cardEl" class="mapcard" :class="{ theater: mv.theater.value }">
-    <div class="maptools">
+  <section :ref="mv.cardEl" class="mapcard" data-tour="map" :class="{ theater: mv.theater.value }">
+    <div class="maptools" data-tour="map.tools">
       <slot name="tools"></slot>
       <label
         v-hint="
           'Draws the PB2002 plate boundaries (Bird 2003), coloured by boundary class. Hover a segment for the plate pair and its class.'
         "
+        data-tour="map.layers"
         ><input v-model="mv.showPlates.value" type="checkbox" /> Plate boundaries</label
       >
       <label
         v-hint="
           'Adds teeth along the PB2002 subduction boundaries, on the overriding plate and pointing down-dip. Drawn whether or not the boundaries are on.'
         "
+        data-tour="map.layers"
         ><input v-model="mv.showTeeth.value" type="checkbox" /> Subduction teeth</label
       >
       <label
         v-hint="
           'Overlays the latest NOAA SWPC OVATION Prime aurora forecast as probability bands, drawn on the night side only. Refreshes about every five minutes while on.'
         "
+        data-tour="map.layers"
         ><input v-model="mv.showAurora.value" type="checkbox" /> Aurora</label
       >
-      <div v-if="mv.hasFaults.value" class="layerpick">
+      <div v-if="mv.hasFaults.value" class="layerpick" data-tour="map.layers">
         <label
           v-hint="
             'Draws USGS Quaternary Fault and Fold Database traces, styled by age of most recent deformation and by location certainty. Hover a trace for its name and slip sense.'
@@ -144,6 +156,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
           'Underlays a potential-field anomaly grid: free-air gravity (isostatic residual onshore in the West Coast view) or the EMAG2v3 total-field magnetic anomaly. The legend gives the source and the colour ramp.'
         "
         class="fieldpick"
+        data-tour="map.field"
         >Field
         <select v-model="mv.field.value" aria-label="Field overlay">
           <option v-for="c in FIELD_CHOICES" :key="c.id" :value="c.id">{{ c.label }}</option>
@@ -157,6 +170,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         "
         type="button"
         class="sectionbtn"
+        data-tour="map.section"
         :aria-pressed="mv.section.armed.value"
         @click="mv.section.toggle()"
       >
@@ -168,6 +182,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         "
         type="button"
         class="sectionbtn measurebtn"
+        data-tour="map.measure"
         :aria-pressed="mv.measuring.value"
         @click="mv.toggleMeasure()"
       >
@@ -179,6 +194,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         "
         type="button"
         class="sectionbtn pinbtn"
+        data-tour="map.pin"
         :aria-pressed="mv.pin.open.value"
         @click="mv.pin.toggle()"
       >
@@ -196,6 +212,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         v-hint="'Zoom in on the centre of the map'"
         type="button"
         class="zbtn"
+        data-tour="map.zoom"
         aria-label="Zoom in"
         @click="mv.scaleBy(1.8)"
       >
@@ -205,6 +222,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         v-hint="'Zoom out from the centre of the map'"
         type="button"
         class="zbtn"
+        data-tour="map.zoom"
         aria-label="Zoom out"
         @click="mv.scaleBy(1 / 1.8)"
       >
@@ -214,6 +232,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         v-hint="'Return to the full view of the region'"
         type="button"
         class="zbtn"
+        data-tour="map.zoom"
         aria-label="Reset view"
         style="width: auto; padding: 0 8px"
         @click="mv.reset()"
@@ -222,9 +241,14 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
       </button>
       <slot name="actions"></slot>
     </div>
-    <PinBar v-if="mv.pin.open.value" :tool="mv.pin" :view="viewOf(mv.view.value.frame.global)" />
+    <PinBar
+      v-if="mv.pin.open.value"
+      data-tour="map.pinbar"
+      :tool="mv.pin"
+      :view="viewOf(mv.view.value.frame.global)"
+    />
     <slot name="bar"></slot>
-    <div class="mapstage">
+    <div class="mapstage" data-tour="map.stage">
       <div class="mapwrap">
         <span class="mapcount" aria-live="polite">{{ countLine }}</span>
         <button
@@ -235,6 +259,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
           "
           type="button"
           class="theaterbtn"
+          data-tour="map.theater"
           :aria-pressed="mv.theater.value"
           :aria-label="mv.theater.value ? 'Exit theater mode' : 'Theater mode'"
           @click="mv.toggleTheater()"
@@ -259,6 +284,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
           "
           type="button"
           class="maplock"
+          data-tour="map.lock"
           :aria-pressed="mv.locked.value"
           aria-label="Lock map"
           @click="mv.toggleLock()"
@@ -415,6 +441,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
     </div>
     <MapLegend
       v-if="!mv.theater.value"
+      data-tour="map.legend"
       :frame="mv.view.value.frame"
       :min-mag="floor ?? mv.view.value.minMag"
       :faults="mv.hasFaults.value ? mv.faultAges.value : []"
