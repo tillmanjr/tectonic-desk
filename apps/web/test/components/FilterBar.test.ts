@@ -29,7 +29,7 @@ describe("FilterBar", () => {
     expect(inputs[1]?.element.value).toBe("");
     expect(w.text()).toContain("Window (UTC)");
     expect(w.find(".ftitle").text()).toBe("Refine");
-    expect(w.find(".finfo").attributes("title")).toContain(
+    expect(w.find(".finfo").attributes("data-hint")).toContain(
       "summary tiles and major events are unaffected",
     );
     expect(w.find(".fclear").attributes("disabled")).toBeDefined();
