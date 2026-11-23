@@ -7,6 +7,7 @@ import {
   API,
   CATALOG,
   CLOCK,
+  PINS,
   SECTION,
   SELECT,
   SET_SECTION,
@@ -14,6 +15,7 @@ import {
   ZONE,
 } from "../lib/keys.js";
 import { useQuakeLayer } from "../lib/layers.js";
+import { vHint } from "../lib/hint.js";
 import { useMapView } from "../lib/mapview.js";
 
 const props = withDefaults(defineProps<{ animate?: boolean }>(), { animate: true });
@@ -30,6 +32,7 @@ const mv = useMapView({
   animate: () => props.animate,
   section: useInjected(SECTION),
   setSection: useInjected(SET_SECTION),
+  pins: useInjected(PINS),
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });
 </script>
@@ -43,18 +46,27 @@ const q = useQuakeLayer({ catalog, clock, zone, mv });
     :floor="catalog.floor.value"
   >
     <template #tools>
-      <label v-if="q.density.value !== null"
+      <label
+        v-if="q.density.value !== null"
+        v-hint="
+          'Shades grid cells by the number of events in the window at the requested magnitude, including those below the raised marker floor. Offered only when a long window raised the floor.'
+        "
         ><input v-model="q.showDensity.value" type="checkbox" /> Density</label
       >
-      <label><input v-model="q.showMech.value" type="checkbox" /> Focal mechanisms</label>
+      <label
+        v-hint="
+          'Draws a lower-hemisphere beachball (compressional quadrants filled) in place of the dot for events with a moment tensor or focal mechanism.'
+        "
+        ><input v-model="q.showMech.value" type="checkbox" /> Focal mechanisms</label
+      >
     </template>
     <template #actions>
       <button
+        v-hint="'Replay the loaded window on the map, step by step'"
         type="button"
         class="zbtn"
         style="width: auto; padding: 0 8px"
         :aria-pressed="q.anim.active.value"
-        title="Replay the loaded window on the map, step by step"
         @click="q.anim.active.value ? q.anim.close() : q.openAnimation()"
       >
         Animate

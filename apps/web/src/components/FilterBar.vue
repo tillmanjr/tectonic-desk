@@ -15,9 +15,21 @@ import {
   type NumberKey,
 } from "../lib/filters.js";
 import { fmtFloor, fmtInt } from "../lib/format.js";
+import { vHint } from "../lib/hint.js";
 import { CATALOG, CLOCK, SET_FILTER, useInjected, ZONE } from "../lib/keys.js";
 import { quakeParts } from "../lib/refine.js";
 
+/** Hints for the inputs, shown after a pause. */
+const HINTS = {
+  magnitude:
+    "Magnitude range for the map, catalog and charts, in whatever magnitude type the authoritative network reports (Mw, ML, mb, Md …). The minimum cannot go below the region's catalogue floor.",
+  depth:
+    "Hypocentral depth range in km below sea level, as reported. Leave a side empty for no bound; shallow events can carry small negative depths.",
+  span: "How long the window is. Picking a length moves the from date; changing the to date keeps the length.",
+  from: "First day of the window, inclusive. Changing it makes the window custom.",
+  to: "Last day of the window, inclusive. The from date moves with it while a preset length is in force.",
+  reset: "Clear every refinement: back to the region's magnitude floor and the default window.",
+};
 const catalog = useInjected(CATALOG);
 const clock = useInjected(CLOCK);
 const zone = useInjected(ZONE);
@@ -91,15 +103,18 @@ function clear(): void {
   >
     <template #info>
       <span
+        v-hint="
+          'These settings refine the map, catalog and charts. The summary tiles and major events are unaffected.'
+        "
         class="finfo"
         role="img"
         aria-label="These settings refine the map, catalog and charts; the summary tiles and major events are unaffected"
-        title="These settings refine the map, catalog and charts. The summary tiles and major events are unaffected."
         >i</span
       >
     </template>
-    <span class="flabel">Magnitude</span>
+    <span v-hint="HINTS.magnitude" class="flabel">Magnitude</span>
     <input
+      v-hint="HINTS.magnitude"
       type="number"
       step="0.1"
       :min="floor"
@@ -110,6 +125,7 @@ function clear(): void {
     />
     <span class="fto">to</span>
     <input
+      v-hint="HINTS.magnitude"
       type="number"
       step="0.1"
       :value="text('maxMag')"
@@ -117,8 +133,9 @@ function clear(): void {
       aria-label="Maximum magnitude"
       @change="changeNumber('maxMag', $event)"
     />
-    <span class="flabel">Depth km</span>
+    <span v-hint="HINTS.depth" class="flabel">Depth km</span>
     <input
+      v-hint="HINTS.depth"
       type="number"
       step="1"
       :value="text('minDepth')"
@@ -128,6 +145,7 @@ function clear(): void {
     />
     <span class="fto">to</span>
     <input
+      v-hint="HINTS.depth"
       type="number"
       step="1"
       :value="text('maxDepth')"
@@ -135,12 +153,18 @@ function clear(): void {
       aria-label="Maximum depth"
       @change="changeNumber('maxDepth', $event)"
     />
-    <span class="flabel fdates">Window ({{ zoneName }})</span>
+    <span
+      v-hint="
+        `The time window, in ${zoneName} calendar days (the Settings menu switches between UTC and local).`
+      "
+      class="flabel fdates"
+      >Window ({{ zoneName }})</span
+    >
     <select
+      v-hint="HINTS.span"
       class="fspan"
       :value="presetIndex < 0 ? '' : String(presetIndex)"
       aria-label="Window length"
-      title="How long the window is. Pick a length to set the from date; changing the to date keeps the length."
       @change="pickSpan"
     >
       <option value="" disabled>Custom</option>
@@ -148,6 +172,7 @@ function clear(): void {
     </select>
     <span class="fto">from</span>
     <input
+      v-hint="HINTS.from"
       type="date"
       class="fdate"
       :min="bounds.min"
@@ -158,6 +183,7 @@ function clear(): void {
     />
     <span class="fto">to</span>
     <input
+      v-hint="HINTS.to"
       type="date"
       class="fdate"
       :min="bounds.min"
@@ -166,7 +192,9 @@ function clear(): void {
       aria-label="To date"
       @change="changeDate('until', $event)"
     />
-    <button type="button" class="fclear" :disabled="!active" @click="clear">Reset</button>
+    <button v-hint="HINTS.reset" type="button" class="fclear" :disabled="!active" @click="clear">
+      Reset
+    </button>
     <template #note>
       <p v-if="note !== null" class="fnote">{{ note }}</p>
     </template>
