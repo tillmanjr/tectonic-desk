@@ -20,6 +20,7 @@ import {
 import { fieldsFile } from "./fields.js";
 import { FLAT_RELIEF } from "./relief.js";
 import { auroraFrame, auroraIndex } from "./aurora.js";
+import { shakeMap } from "./shakemap.js";
 import { spaceNow, spaceWindow, sunFrames } from "./space.js";
 
 export function status(over: Partial<ApiStatus> = {}): ApiStatus {
@@ -103,6 +104,7 @@ export function fakeApi(over: Partial<ApiClient> = {}): ApiClient {
       detailCheckedUpdated: null,
       usgs: { title: "M 5.5" },
     }),
+    shakemap: vi.fn().mockResolvedValue(shakeMap()),
     status: vi.fn().mockResolvedValue(status()),
     geo: vi
       .fn()

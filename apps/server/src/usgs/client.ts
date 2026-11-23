@@ -1,5 +1,5 @@
 import type { BBox } from "@tectonic/shared";
-import type { z } from "zod";
+import { z } from "zod";
 import {
   detailDocumentSchema,
   feedDocumentSchema,
@@ -30,6 +30,8 @@ export interface UsgsClient {
   fetchFeed: (kind: FeedKind) => Promise<FeedDocument>;
   fetchDetail: (eventId: string) => Promise<DetailDocument>;
   fetchQuery: (params: QueryParams) => Promise<FeedDocument>;
+  /** Any JSON document by absolute URL, such as a product file named in a detail document. */
+  fetchJson: (url: string) => Promise<unknown>;
 }
 
 export class UsgsHttpError extends Error {
@@ -90,5 +92,6 @@ export function createUsgsClient(opts: UsgsClientOptions): UsgsClient {
       }
       return getJson(`${base}/fdsnws/event/1/query?${q.toString()}`, feedDocumentSchema);
     },
+    fetchJson: (url) => getJson(url, z.unknown()),
   };
 }

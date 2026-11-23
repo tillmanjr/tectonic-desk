@@ -1,11 +1,22 @@
-import type { ApiEvent, ApiEventGrid, Volcano } from "@tectonic/shared";
-import { computed, onUnmounted, ref, watch, type ComputedRef, type Ref } from "vue";
+import type { ApiEvent, ApiEventGrid, ApiShakeMap, Volcano } from "@tectonic/shared";
+import {
+  computed,
+  onUnmounted,
+  ref,
+  shallowRef,
+  watch,
+  type ComputedRef,
+  type Ref,
+  type ShallowRef,
+} from "vue";
+import type { ApiClient } from "./api.js";
 import { createAnimation, DAY_MS, type Animation } from "./animation.js";
 import type { Catalog } from "./catalog.js";
 import type { Clock } from "./clock.js";
 import { densityLegendFor, type DensityLegend } from "./density.js";
 import { fmtFloor, fmtInt, fmtMag, fmtShort, placeOf, type Zone } from "./format.js";
 import { TIP_LIFT, type MapView } from "./mapview.js";
+import { hasShakeMap, loadShakeMap, mmiAt, mmiText } from "./shakemap.js";
 import {
   aviationColor,
   lastEruptionText,
@@ -40,7 +51,8 @@ export function useQuakeLayer(o: {
 }): QuakeLayer {
   const { catalog, clock, zone, mv } = o;
   const events = catalog.filtered;
-  const showMech = ref(true);
+  // Off by default: beachballs at the window's magnitudes crowd the map; a reader turns them on.
+  const showMech = ref(false);
   const showDensity = ref(false);
   const density = computed(() => {
     const s = catalog.stats.value;
@@ -100,6 +112,85 @@ export function useQuakeLayer(o: {
       );
     },
   };
+}
+
+/** Where the ShakeMap layer stands for the selected event. */
+export type ShakeState = "off" | "none" | "loading" | "ready" | "missing" | "error";
+
+export interface ShakeLayer {
+  /** The reader's toggle; it stays on across selections. */
+  show: Ref<boolean>;
+  /** Whether the selected event lists a ShakeMap, so the toggle can be used. */
+  available: ComputedRef<boolean>;
+  state: ComputedRef<ShakeState>;
+  /** The selected event's ShakeMap while shown and loaded. */
+  map: ShallowRef<ApiShakeMap | null>;
+}
+
+/**
+ * The selected earthquake's USGS ShakeMap as intensity bands under the markers, with the MMI
+ * under the pointer as the map's readout. Loads only while shown, once per event. Call inside setup.
+ */
+export function useShakeLayer(o: { api: ApiClient; catalog: Catalog; mv: MapView }): ShakeLayer {
+  const { api, catalog, mv } = o;
+  const show = ref(false);
+  const map = shallowRef<ApiShakeMap | null>(null);
+  const loading = ref(false);
+  const failed = ref(false);
+  /**
+   * A loaded event says whether the feed lists a ShakeMap; a selection the page has not loaded
+   * (opened from a mark, say) is given the benefit of the doubt and the server answers.
+   */
+  const available = computed(() => {
+    const id = catalog.selectedId.value;
+    const e = catalog.selected.value;
+    return id !== null && (e === null || hasShakeMap(e));
+  });
+  let seq = 0;
+  watch(
+    [show, catalog.selectedId, available],
+    ([on, id, ok]) => {
+      const token = ++seq;
+      map.value = null;
+      failed.value = false;
+      loading.value = false;
+      if (!on || id === null || !ok) return;
+      loading.value = true;
+      loadShakeMap(api, id)
+        .then((m) => {
+          if (token !== seq) return;
+          map.value = m;
+        })
+        .catch(() => {
+          if (token === seq) failed.value = true;
+        })
+        .finally(() => {
+          if (token === seq) loading.value = false;
+        });
+    },
+    { immediate: true },
+  );
+  const state = computed<ShakeState>(() => {
+    if (!show.value) return "off";
+    if (!available.value) return "none";
+    if (loading.value) return "loading";
+    if (failed.value) return "error";
+    return map.value === null ? "missing" : "ready";
+  });
+  watch(
+    map,
+    (m) => {
+      mv.probe.value =
+        m === null
+          ? null
+          : ([lon, lat]) => {
+              const v = mmiAt(m.grid, lon, lat);
+              return v === null ? null : mmiText(v);
+            };
+    },
+    { immediate: true },
+  );
+  return { show, available, state, map };
 }
 
 export interface VolcanoLayer {

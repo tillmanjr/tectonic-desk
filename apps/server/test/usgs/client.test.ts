@@ -45,6 +45,16 @@ describe("createUsgsClient", () => {
     expect(reqs[0]?.url).toBe("https://usgs.test/fdsnws/event/1/query?eventid=us1&format=geojson");
   });
 
+  it("fetches any JSON document by its absolute URL", async () => {
+    const reqs: Request[] = [];
+    const fetch = fetchReturning(200, { type: "Coverage" }, reqs);
+    const doc = await createUsgsClient({ ...base, fetch }).fetchJson(
+      "https://elsewhere.test/a.json",
+    );
+    expect(doc).toEqual({ type: "Coverage" });
+    expect(reqs[0]?.url).toBe("https://elsewhere.test/a.json");
+  });
+
   it("builds the query URL with ISO times", async () => {
     const reqs: Request[] = [];
     const fetch = fetchReturning(200, { features: [] }, reqs);

@@ -3,7 +3,10 @@ import { computed } from "vue";
 import AnimationBar from "./AnimationBar.vue";
 import MapDensity from "./MapDensity.vue";
 import MapEvents from "./MapEvents.vue";
+import MapShake from "./MapShake.vue";
 import MapShell from "./MapShell.vue";
+import ShakeLegendRow from "./ShakeLegendRow.vue";
+import ShakeToggle from "./ShakeToggle.vue";
 import MapVolcanoes from "./MapVolcanoes.vue";
 import VolcanoLegendRows from "./VolcanoLegendRows.vue";
 import {
@@ -19,7 +22,7 @@ import {
   VOLCANOES,
   ZONE,
 } from "../lib/keys.js";
-import { useQuakeLayer, useVolcanoLayer } from "../lib/layers.js";
+import { useQuakeLayer, useShakeLayer, useVolcanoLayer } from "../lib/layers.js";
 import { vHint } from "../lib/hint.js";
 import { useMapView } from "../lib/mapview.js";
 
@@ -43,6 +46,14 @@ const mv = useMapView({
   pins: useInjected(PINS),
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });
+const shake = useShakeLayer({ api, catalog, mv });
+const busy = computed(() => {
+  const parts = [
+    catalog.loading.value ? "events" : null,
+    store.loading.value ? "volcanoes" : null,
+  ].filter((p) => p !== null);
+  return parts.length === 0 ? null : `Loading ${parts.join(" and ")}…`;
+});
 const v = useVolcanoLayer({ store, mv });
 const countLine = computed(
   () => `${q.countLine.value} · ${v.countLine.value.replace(/^Showing /, "")}`,
@@ -51,6 +62,7 @@ const countLine = computed(
 
 <template>
   <MapShell
+    :busy="busy"
     :mv="mv"
     label="Map of earthquake epicenters and Holocene volcanoes"
     :count-line="countLine"
@@ -71,6 +83,7 @@ const countLine = computed(
         "
         ><input v-model="q.showMech.value" type="checkbox" /> Focal mechanisms</label
       >
+      <ShakeToggle :shake="shake" />
     </template>
     <template #actions>
       <button
@@ -97,6 +110,7 @@ const countLine = computed(
         :path="mv.view.value.path"
         :grid="q.density.value"
       />
+      <MapShake v-if="shake.map.value !== null" :path="mv.view.value.path" :map="shake.map.value" />
       <MapVolcanoes
         v-if="!store.hideMarkers.value"
         :frame="frame"
@@ -125,6 +139,7 @@ const countLine = computed(
       />
     </template>
     <template #legend>
+      <ShakeLegendRow v-if="shake.map.value !== null" :map="shake.map.value" />
       <VolcanoLegendRows />
     </template>
   </MapShell>

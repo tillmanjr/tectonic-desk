@@ -16,6 +16,8 @@ import { statusRoutes } from "./routes/status.js";
 import { sunRoutes } from "./routes/sun.js";
 import { volcanoRoutes } from "./routes/volcanoes.js";
 import { createSunCache, type SunCache } from "./space/sun.js";
+import { createUsgsClient } from "./usgs/client.js";
+import { createShakeMapCache, type ShakeMapCache } from "./usgs/shakemap-cache.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -27,6 +29,8 @@ declare module "fastify" {
     reliefLayout: ReliefLayout;
     /** The proxied Sun frames. */
     sun: SunCache;
+    /** USGS ShakeMaps read on demand. */
+    shakemaps: ShakeMapCache;
   }
 }
 
@@ -55,6 +59,8 @@ export interface AppOptions {
   reliefLayout?: ReliefLayout;
   /** The Sun frame cache; defaults to one over the global fetch with a local user agent. */
   sun?: SunCache;
+  /** The ShakeMap cache; defaults to one over the public USGS service with a local user agent. */
+  shakemaps?: ShakeMapCache;
 }
 
 /** Builds the Fastify app without listening, so tests can inject requests. */
@@ -68,6 +74,12 @@ export function buildApp({
   rateLimit: limit = DEFAULT_RATE_LIMIT,
   trustProxy = false,
   sun = createSunCache({ userAgent: "tectonic-desk/0.0 (+local)" }),
+  shakemaps = createShakeMapCache({
+    usgs: createUsgsClient({
+      baseUrl: "https://earthquake.usgs.gov",
+      userAgent: "tectonic-desk/0.0 (+local)",
+    }),
+  }),
 }: AppOptions): FastifyInstance {
   const app = Fastify({ logger, trustProxy });
   app.decorate("db", db);
@@ -76,6 +88,7 @@ export function buildApp({
   app.decorate("relief", reliefFile === null ? null : loadRelief(reliefFile));
   app.decorate("reliefLayout", reliefLayout);
   app.decorate("sun", sun);
+  app.decorate("shakemaps", shakemaps);
   registerErrorHandlers(app);
   if (limit.max > 0) {
     void app.register(rateLimit, {

@@ -65,9 +65,11 @@ export interface Catalog {
   /** The preset window: feeds the summary tiles and the major-event cards. */
   events: ShallowRef<ApiEvent[]>;
   truncated: Ref<boolean>;
-  loading: Ref<boolean>;
+  /** True while the preset window or the date range is being fetched. */
+  loading: ComputedRef<boolean>;
   error: Ref<string | null>;
   selectedId: Ref<string | null>;
+  /** The selected event as loaded: from the window shown, else the preset window; null when neither holds it. */
   selected: ComputedRef<ApiEvent | null>;
   /** Magnitude and depth bounds applied to the map, table and charts. */
   filter: Ref<EventFilter>;
@@ -111,15 +113,23 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
   const rangeEvents = shallowRef<ApiEvent[] | null>(null);
   const stats = shallowRef<WindowStats | null>(null);
   const truncated = ref(false);
-  const loading = ref(false);
+  // The preset and range loads overlap; each keeps its own flag so one ending does not end both.
+  const liveLoading = ref(false);
+  const rangeLoading = ref(false);
+  const loading = computed(() => liveLoading.value || rangeLoading.value);
   const error = ref<string | null>(null);
   const selectedId = ref<string | null>(null);
   const region = computed(() => regions.value.find((r) => r.id === regionId.value) ?? null);
-  const selected = computed(() => events.value.find((e) => e.id === selectedId.value) ?? null);
   const filter = ref<EventFilter>(EMPTY_FILTER);
   const range = ref<Range | null>(null);
   const hideMarkers = ref(false);
   const windowEvents = computed(() => rangeEvents.value ?? events.value);
+  const selected = computed(() => {
+    const id = selectedId.value;
+    return (
+      windowEvents.value.find((e) => e.id === id) ?? events.value.find((e) => e.id === id) ?? null
+    );
+  });
   const filtered = computed(() => applyFilter(windowEvents.value, filter.value));
   const requested = computed(() => {
     const base = region.value?.minMag ?? 0;
@@ -137,7 +147,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
 
   async function load(r: ApiRegion): Promise<void> {
     const token = ++seq;
-    loading.value = true;
+    liveLoading.value = true;
     error.value = null;
     try {
       const list = await api.events({
@@ -151,13 +161,13 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
       if (token !== seq) return;
       error.value = errorMessage(e);
     } finally {
-      if (token === seq) loading.value = false;
+      if (token === seq) liveLoading.value = false;
     }
   }
 
   async function loadRange(r: ApiRegion, win: Range): Promise<void> {
     const token = ++rangeSeq;
-    loading.value = true;
+    rangeLoading.value = true;
     error.value = null;
     try {
       const req = requested.value;
@@ -183,7 +193,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
       if (token !== rangeSeq) return;
       error.value = errorMessage(e);
     } finally {
-      if (token === rangeSeq) loading.value = false;
+      if (token === rangeSeq) rangeLoading.value = false;
     }
   }
 
@@ -195,6 +205,7 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
   /** Forgets the loaded window and invalidates any answer still in flight for it. */
   function dropRange(): void {
     rangeSeq += 1;
+    rangeLoading.value = false;
     rangeEvents.value = null;
     stats.value = null;
   }

@@ -6,6 +6,7 @@ export * from "./api.js";
 export * from "./greatcircle.js";
 export * from "./space.js";
 export * from "./sun.js";
+export * from "./shakemap.js";
 
 export type MechanismKind = "mt" | "fm";
 
