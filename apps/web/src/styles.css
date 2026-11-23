@@ -192,8 +192,8 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: 10px 20px;
-  /* room for the Settings pill, pinned to the top right outside the flow */
-  padding-right: 42px;
+  /* room for the Help and Settings pills, pinned to the top right outside the flow */
+  padding-right: 82px;
 }
 /* Every header control is a 34 px pill: the page switch, Marks, the region switch and Settings. */
 .tools {
@@ -1549,7 +1549,8 @@ a {
   top: 8px;
   right: 0;
 }
-.settings-btn {
+.settings-btn,
+.help-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1563,7 +1564,8 @@ a {
   color: var(--muted);
   cursor: pointer;
 }
-.settings-btn[aria-expanded="true"] {
+.settings-btn[aria-expanded="true"],
+.help-btn[aria-expanded="true"] {
   color: var(--ink);
   border-color: var(--ink);
 }
@@ -3284,4 +3286,241 @@ table.matrix {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Help: the "?" pill left of Settings, and its menu of quick tours. */
+.help {
+  position: absolute;
+  top: 8px;
+  right: 40px;
+}
+/* Until every tour step has been shown, the "?" stands out in the accent colour. */
+.help-btn.fresh {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--panel);
+  font-weight: 700;
+}
+.help-btn.fresh[aria-expanded="true"] {
+  color: var(--panel);
+  border-color: var(--ink);
+}
+.helpmenu {
+  width: min(340px, calc(100vw - 32px));
+  gap: 10px;
+}
+.helpmenu .hhead {
+  margin: 0;
+  font: 600 13px var(--f-ui);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.helpmenu .hresume {
+  text-align: left;
+  font: 600 14px var(--f-ui);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--accent);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.htour {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.htour .htitle {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font: 15px var(--f-ui);
+}
+.htour .hstate {
+  color: var(--muted);
+  font-size: 13px;
+}
+.htour .hblurb {
+  margin: 2px 0 6px;
+  font: 13px var(--f-ui);
+  color: var(--muted);
+}
+.htour .hacts {
+  display: flex;
+  gap: 6px;
+}
+.hsteps {
+  margin-top: 6px;
+  font: 13px var(--f-ui);
+}
+.hsteps summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.hsteps ol {
+  margin: 4px 0 0;
+  padding-left: 22px;
+}
+.hsteps li button {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: 13px var(--f-ui);
+  padding: 2px 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Quick tour: a spotlight that never takes the pointer, and a card docked away from it. */
+.tourspot,
+.tourdim {
+  position: fixed;
+  z-index: 45;
+  pointer-events: none;
+}
+.tourspot {
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 200vmax rgb(0 0 0 / 0.55);
+  transition:
+    left 0.2s ease,
+    top 0.2s ease,
+    width 0.2s ease,
+    height 0.2s ease;
+}
+.tourdim {
+  inset: 0;
+  background: rgb(0 0 0 / 0.55);
+}
+.tourcard {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 46;
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 32px));
+  max-height: 45vh;
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.3);
+  font: 14px/1.45 var(--f-ui);
+}
+.tourcard.bottom {
+  bottom: 16px;
+}
+.tourcard.top {
+  top: 16px;
+}
+.tourcard .tourhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.tourcard .tourpath {
+  font: 600 12px var(--f-ui);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tourcard h2 {
+  margin: 4px 0 2px;
+  font: 600 18px var(--f-ui);
+}
+.tourcard p {
+  margin: 4px 0;
+}
+.tourcard .tourtry {
+  color: var(--accent);
+}
+.tourcard .tourmiss {
+  color: var(--muted);
+  font-style: italic;
+}
+.tourexit {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 13px var(--f-ui);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+.tourfoot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.tourdots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  flex: 1;
+}
+/* 10 px dots inside 20 px hit areas, so fingers can land on them */
+.tourdot {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  position: relative;
+}
+.tourdot::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+}
+.tourdot[aria-current="step"]::after {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.tourbtn {
+  font: 600 13px var(--f-ui);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.tourbtn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--panel);
+}
+.tourbtn:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+/* The tour offer sits where the notice does, but takes the pointer. */
+.notice.touroffer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 14px;
+  pointer-events: auto;
+}
+.touroffx {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 18px var(--f-ui);
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tourspot {
+    transition: none;
+  }
 }

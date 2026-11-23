@@ -53,7 +53,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <aside class="detail" :class="{ open }" aria-label="Event detail" :aria-hidden="!open">
+  <aside
+    class="detail"
+    data-tour="detail"
+    :class="{ open }"
+    aria-label="Event detail"
+    :aria-hidden="!open"
+  >
     <div class="hd">
       <div>
         <div class="mag num">

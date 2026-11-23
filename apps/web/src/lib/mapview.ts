@@ -143,6 +143,8 @@ export interface MapView {
   hoveredFault: Ref<FaultHit | null>;
   scaleBy(f: number): void;
   reset(): void;
+  /** Moves the map to a zoom transform, as a reader's pan and zoom would. */
+  setTransform(t: ZoomTransform): void;
   zoomTo(lon: number, lat: number): void;
   showTip(text: string, x: number, y: number): void;
   clearTip(): void;
@@ -234,6 +236,8 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** Escape stands down a tool in use first; with none, it leaves theater mode. */
   function onEscape(ev: KeyboardEvent): void {
     if (ev.key !== "Escape") return;
+    // Consumed here, so a running tour leaves its own Escape alone.
+    ev.preventDefault();
     if (toolBusy.value) {
       section.cancel();
       pin.cancel();
@@ -647,6 +651,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     hoveredFault,
     scaleBy,
     reset,
+    setTransform: applyTransform,
     zoomTo,
     showTip,
     clearTip,

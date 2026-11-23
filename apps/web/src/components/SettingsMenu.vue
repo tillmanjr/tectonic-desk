@@ -29,7 +29,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="settings" @keydown="onKey">
+  <div ref="root" class="settings" data-tour="settings" @keydown="onKey">
     <button
       type="button"
       class="settings-btn"
