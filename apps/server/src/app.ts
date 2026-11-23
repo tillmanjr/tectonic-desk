@@ -15,7 +15,9 @@ import { spaceRoutes } from "./routes/space.js";
 import { statusRoutes } from "./routes/status.js";
 import { sunRoutes } from "./routes/sun.js";
 import { volcanoRoutes } from "./routes/volcanoes.js";
+import { createHelioviewerClient } from "./space/helioviewer.js";
 import { createSunCache, type SunCache } from "./space/sun.js";
+import { createSunMovieCache, type SunMovieCache } from "./space/sun-movies.js";
 import { createUsgsClient } from "./usgs/client.js";
 import { createShakeMapCache, type ShakeMapCache } from "./usgs/shakemap-cache.js";
 
@@ -29,6 +31,8 @@ declare module "fastify" {
     reliefLayout: ReliefLayout;
     /** The proxied Sun frames. */
     sun: SunCache;
+    /** Generated Sun movies, built by Helioviewer. */
+    sunMovies: SunMovieCache;
     /** USGS ShakeMaps read on demand. */
     shakemaps: ShakeMapCache;
   }
@@ -59,6 +63,8 @@ export interface AppOptions {
   reliefLayout?: ReliefLayout;
   /** The Sun frame cache; defaults to one over the global fetch with a local user agent. */
   sun?: SunCache;
+  /** The generated-movie cache; defaults to one over Helioviewer with a local user agent. */
+  sunMovies?: SunMovieCache;
   /** The ShakeMap cache; defaults to one over the public USGS service with a local user agent. */
   shakemaps?: ShakeMapCache;
 }
@@ -74,6 +80,9 @@ export function buildApp({
   rateLimit: limit = DEFAULT_RATE_LIMIT,
   trustProxy = false,
   sun = createSunCache({ userAgent: "tectonic-desk/0.0 (+local)" }),
+  sunMovies = createSunMovieCache({
+    client: createHelioviewerClient({ userAgent: "tectonic-desk/0.0 (+local)" }),
+  }),
   shakemaps = createShakeMapCache({
     usgs: createUsgsClient({
       baseUrl: "https://earthquake.usgs.gov",
@@ -88,6 +97,7 @@ export function buildApp({
   app.decorate("relief", reliefFile === null ? null : loadRelief(reliefFile));
   app.decorate("reliefLayout", reliefLayout);
   app.decorate("sun", sun);
+  app.decorate("sunMovies", sunMovies);
   app.decorate("shakemaps", shakemaps);
   registerErrorHandlers(app);
   if (limit.max > 0) {

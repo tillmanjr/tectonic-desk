@@ -8,7 +8,9 @@ import { syncVolcanoReports, syncVolcanoStatus } from "./ingest/volcanoes.js";
 import { buildLoggerOptions } from "./logging.js";
 import { createSpaceClient } from "./space/client.js";
 import { createHistoryClient } from "./space/history-client.js";
+import { createHelioviewerClient } from "./space/helioviewer.js";
 import { createSunCache } from "./space/sun.js";
+import { createSunMovieCache } from "./space/sun-movies.js";
 import { createUsgsClient } from "./usgs/client.js";
 import { createShakeMapCache } from "./usgs/shakemap-cache.js";
 import { createVolcanoClient } from "./volcano/client.js";
@@ -23,6 +25,9 @@ const app = buildApp({
   db,
   logger: buildLoggerOptions(config),
   sun: createSunCache({ userAgent: config.USGS_USER_AGENT }),
+  sunMovies: createSunMovieCache({
+    client: createHelioviewerClient({ userAgent: config.USGS_USER_AGENT }),
+  }),
   shakemaps: createShakeMapCache({ usgs }),
   rateLimit: { max: config.RATE_LIMIT_MAX, windowMs: config.RATE_LIMIT_WINDOW_MS },
   trustProxy: config.TRUST_PROXY,

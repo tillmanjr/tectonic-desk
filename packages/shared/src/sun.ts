@@ -77,3 +77,44 @@ export interface SunFrameMeta {
   time: Date | null;
   bytes: number;
 }
+
+/**
+ * Generated animations: a Helioviewer movie of one channel over a window the reader chose,
+ * when the agencies' latest movies do not cover it. At most `SUN_MOVIE_MAX_MS` long; a longer
+ * window is cut to its last 30 days.
+ */
+export const SUN_MOVIE_MAX_MS = 30 * 86_400_000;
+export const SUN_MOVIE_SIZES = [512, 1024] as const;
+export type SunMovieSize = (typeof SUN_MOVIE_SIZES)[number];
+export const isSunMovieSize = (n: number): n is SunMovieSize =>
+  SUN_MOVIE_SIZES.some((s) => s === n);
+
+/** The first image Helioviewer holds for each channel; a generated movie cannot start earlier. */
+export const SUN_ARCHIVE_START: Record<SunKey, string> = {
+  aia193: "2010-06-02T00:00:00Z",
+  aia304: "2010-06-02T00:00:00Z",
+  aia171: "2010-06-02T00:00:00Z",
+  hmii: "2010-12-06T00:00:00Z",
+  hmib: "2010-12-06T00:00:00Z",
+  c2: "1997-02-21T00:00:00Z",
+  c3: "1997-02-21T00:00:00Z",
+};
+
+/** Credit for a generated movie, beside the agency's own. */
+export const HELIOVIEWER_CREDIT = "Movie built by Helioviewer.org";
+
+export type GeneratedMovieState = "building" | "ready";
+
+/** A generated movie: where its build stands, and its address once ready. */
+export interface GeneratedMovie {
+  key: SunKey;
+  size: SunMovieSize;
+  /** The span asked for, after the server rounded it to whole hours. */
+  from: Date;
+  to: Date;
+  state: GeneratedMovieState;
+  /** Percent done while building, when Helioviewer says; null otherwise. */
+  progress: number | null;
+  /** The movie's URL once ready. */
+  url: string | null;
+}

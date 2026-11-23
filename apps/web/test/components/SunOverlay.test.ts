@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { flushPromises } from "@vue/test-utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import SunOverlay from "../../src/components/SunOverlay.vue";
 import { makeContext, mountWith } from "../support/mount.js";
+import { sunMovie } from "../support/space.js";
 
 const key = (name: string): void => {
   window.dispatchEvent(new KeyboardEvent("keydown", { key: name, cancelable: true }));
@@ -24,6 +26,11 @@ describe("SunOverlay", () => {
     expect(box.attributes("role")).toBe("dialog");
     expect(box.attributes("aria-modal")).toBe("true");
     expect(box.attributes("aria-label")).toBe("LASCO C2");
+    // The animation leads; the still is a click away.
+    expect(w.find("video.sunlarge").exists()).toBe(true);
+    await w.findAll(".sunmodes button")[1]?.trigger("click");
+    expect(w.find(".sunsize").exists()).toBe(false);
+    expect(w.find(".sunstate").text()).toBe("");
     expect(w.find("img.sunlarge").attributes("src")).toBe(
       "/api/space/sun/c2/1024.jpg?t=2026-10-13T11%3A45%3A00.000Z",
     );
@@ -103,5 +110,176 @@ describe("SunOverlay", () => {
     w.unmount();
     expect(document.body.style.overflow).toBe("");
     key("Escape");
+  });
+
+  it("plays the channel's latest movie at 512 px, offers 1024, says what time it covers, and falls back to the still", async () => {
+    const ctx = await makeContext({ space: true });
+    const w = mountWith(SunOverlay, ctx, { open: "aia193" });
+    const video = () => w.find("video.sunlarge");
+    expect(video().attributes("src")).toBe(
+      "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_512_0193.mp4",
+    );
+    expect(video().attributes("poster")).toBe(
+      "/api/space/sun/aia193/1024.jpg?t=2026-10-13T11%3A45%3A00.000Z",
+    );
+    expect(video().attributes("muted")).toBeDefined();
+    expect(video().attributes("playsinline")).toBeDefined();
+    expect(w.find(".sunstate").text()).toBe("Loading animation…");
+    expect(w.find(".suncap.span").text()).toBe(
+      "Showing the last 48 hours only; the page shows 24 hours.",
+    );
+    expect(w.find(".suncap.muted").text()).toBe(
+      "Courtesy of NASA/SDO and the AIA, EVE, and HMI science teams",
+    );
+    await video().trigger("loadeddata");
+    expect(w.find(".sunstate").text()).toBe("");
+    // Higher resolution on request, kept while stepping to another channel.
+    expect(w.find(".sunsize").text()).toBe("Higher resolution (1024 px, a larger download)");
+    await w.find(".sunsize").trigger("click");
+    expect(video().attributes("src")).toBe(
+      "https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_1024_0193.mp4",
+    );
+    expect(w.find(".sunstate").text()).toBe("Loading animation…");
+    await w.setProps({ open: "c3" });
+    expect(video().attributes("src")).toBe(
+      "https://soho.nascom.nasa.gov/data/LATEST/current_c3.mp4",
+    );
+    expect(w.find(".suncap.span").text()).toContain("about the last 4 days");
+    await w.find(".sunsize").trigger("click");
+    expect(video().attributes("src")).toBe(
+      "https://soho.nascom.nasa.gov/data/LATEST/current_c3small.mp4",
+    );
+    // A movie that fails gives way to the still and says so.
+    await video().trigger("error");
+    expect(w.find("video.sunlarge").exists()).toBe(false);
+    expect(w.find("img.sunlarge").exists()).toBe(true);
+    expect(w.find(".sunstate").text()).toBe("Animation unavailable; showing the latest still.");
+    expect(w.find(".suncap.span").exists()).toBe(false);
+    await w.setProps({ open: "c2" });
+    expect(video().exists()).toBe(true);
+    await w.findAll(".sunmodes button")[0]?.trigger("click");
+    expect(w.findAll(".sunmodes button")[0]?.attributes("aria-pressed")).toBe("true");
+    await w.setProps({ open: null });
+    w.unmount();
+  });
+
+  describe("generated animations", () => {
+    const button = (w: ReturnType<typeof mountWith>, text: string) => {
+      const b = w.findAll(".sunbox button").find((x) => x.text() === text);
+      if (b === undefined) throw new Error(`no ${text} button`);
+      return b;
+    };
+
+    it("offers Generate only where the latest movie falls short, with an info mark", async () => {
+      const ctx = await makeContext({ space: true });
+      const w = mountWith(SunOverlay, ctx, { open: "aia193" });
+      expect(w.find(".sungen").exists()).toBe(false);
+      ctx.space.range.value = { kind: "window", id: "7d" };
+      await w.vm.$nextTick();
+      expect(w.find(".sungen").text()).toBe("Generate animation for this window");
+      expect(w.find(".sunmodes .finfo").attributes("data-hint")).toContain("Helioviewer.org");
+      ctx.space.range.value = {
+        kind: "fixed",
+        from: new Date("2001-01-01T00:00:00Z"),
+        to: new Date("2001-01-02T00:00:00Z"),
+      };
+      await w.vm.$nextTick();
+      expect(w.find(".sungen").exists()).toBe(false);
+      w.unmount();
+    });
+
+    it("asks first, with the span, the caveat and any cut; Cancel and Escape back out", async () => {
+      const ctx = await makeContext({ space: true });
+      ctx.space.range.value = { kind: "window", id: "7d" };
+      const w = mountWith(SunOverlay, ctx, { open: "aia304" });
+      await w.find(".sungen").trigger("click");
+      const dialog = () => w.find(".sunconfirm");
+      expect(dialog().attributes("role")).toBe("alertdialog");
+      expect(dialog().text()).toContain(
+        "Generate a 512 px animation of AIA 304 Å for 2026-10-06 12:00 to 2026-10-13 12:00 UTC?",
+      );
+      expect(dialog().text()).toContain("This may take from a few seconds to several minutes.");
+      expect(dialog().findAll("p.muted")).toHaveLength(0);
+      await button(w, "Cancel").trigger("click");
+      expect(dialog().exists()).toBe(false);
+      await w.find(".sungen").trigger("click");
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
+      await w.vm.$nextTick();
+      expect(dialog().exists()).toBe(false);
+      expect(w.find(".sunoverlay").exists()).toBe(true);
+      expect(ctx.api.sunMovie).not.toHaveBeenCalled();
+      // A year's window is cut to its last 30 days; one reaching before HMI begins starts there.
+      ctx.space.range.value = { kind: "window", id: "1y" };
+      await w.vm.$nextTick();
+      await w.find(".sungen").trigger("click");
+      expect(dialog().text()).toContain("this covers its last 30 days");
+      await button(w, "Cancel").trigger("click");
+      await w.setProps({ open: "hmii" });
+      ctx.space.range.value = {
+        kind: "fixed",
+        from: new Date("2010-11-20T00:00:00Z"),
+        to: new Date("2010-12-10T00:00:00Z"),
+      };
+      await w.vm.$nextTick();
+      await w.find(".sungen").trigger("click");
+      expect(dialog().text()).toContain("Images for this channel begin 2010-12-06");
+      await w.setProps({ open: "hmib" });
+      expect(dialog().exists()).toBe(false);
+      w.unmount();
+    });
+
+    it("builds with progress, can stop waiting, plays the movie with its span, and reports failure", async () => {
+      const ctx = await makeContext({ space: true });
+      ctx.space.range.value = { kind: "window", id: "7d" };
+      vi.mocked(ctx.api.sunMovie).mockResolvedValueOnce(
+        sunMovie({ state: "building", progress: 40, url: null }),
+      );
+      const w = mountWith(SunOverlay, ctx, { open: "aia193" });
+      await w.find(".sunsize").trigger("click");
+      await w.find(".sungen").trigger("click");
+      await button(w, "Continue").trigger("click");
+      expect(ctx.api.sunMovie).toHaveBeenCalledWith(
+        "aia193",
+        "2026-10-06T12:00:00.000Z",
+        "2026-10-13T12:00:00.000Z",
+        1024,
+      );
+      await flushPromises();
+      expect(w.find(".sunstate").text()).toMatch(/^Building the animation… 40%\s+Stop waiting$/);
+      expect(button(w, "Generated").attributes("aria-pressed")).toBe("true");
+      expect(w.find(".sungen").exists()).toBe(false);
+      expect(w.find(".sunsize").exists()).toBe(false);
+      expect(w.find("img.sunlarge").exists()).toBe(true);
+      await button(w, "Stop waiting").trigger("click");
+      expect(button(w, "Animation").attributes("aria-pressed")).toBe("true");
+      expect(w.findAll(".sunbox button").some((b) => b.text() === "Generated")).toBe(false);
+      // Again, ready at once this time.
+      await w.find(".sungen").trigger("click");
+      await button(w, "Continue").trigger("click");
+      await flushPromises();
+      const video = w.find("video.sunlarge");
+      expect(video.attributes("src")).toBe(
+        "https://api.helioviewer.org/cache/movies/x/AIA_193.mp4",
+      );
+      expect(w.find(".suncap.span").text()).toBe(
+        "Generated for 2026-10-06 12:00 to 2026-10-13 12:00 UTC at 512 px.",
+      );
+      expect(w.find(".suncap.muted").text()).toContain("Movie built by Helioviewer.org");
+      await button(w, "Animation").trigger("click");
+      expect(w.find("video.sunlarge").attributes("src")).toContain("sdo.gsfc.nasa.gov");
+      await button(w, "Generated").trigger("click");
+      expect(w.find("video.sunlarge").attributes("src")).toContain("helioviewer");
+      // Stepping to another channel drops the generated movie.
+      await w.setProps({ open: "aia171" });
+      expect(button(w, "Animation").attributes("aria-pressed")).toBe("true");
+      vi.mocked(ctx.api.sunMovie).mockRejectedValueOnce(new Error("the movie could not be built"));
+      await w.find(".sungen").trigger("click");
+      await button(w, "Continue").trigger("click");
+      await flushPromises();
+      expect(w.find(".sunstate").text()).toBe(
+        "The animation could not be built: the movie could not be built",
+      );
+      w.unmount();
+    });
   });
 });

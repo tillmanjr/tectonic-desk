@@ -16,9 +16,11 @@ import type {
   ApiSpaceNow,
   ApiSpaceWindow,
   ApiSunFrames,
+  ApiSunMovie,
   ApiVolcanoStatusList,
   FieldsFile,
   SunKey,
+  SunMovieSize,
   SunSize,
 } from "@tectonic/shared";
 
@@ -67,6 +69,8 @@ export interface ApiClient {
   shakemap: (eventId: string) => Promise<ApiShakeMap>;
   /** The seven Sun frames the server holds, with their upstream times. */
   sunFrames: () => Promise<ApiSunFrames>;
+  /** A generated movie of one channel over a span: queued on the first call, its build state after. */
+  sunMovie: (key: SunKey, from: string, to: string, size: SunMovieSize) => Promise<ApiSunMovie>;
   /** The URL of one Sun frame; the time rides along so a new frame is a new URL under the hour's cache. */
   sunImageUrl: (key: SunKey, size: SunSize, time: string | null) => string;
 }
@@ -135,6 +139,10 @@ export function createApiClient(fetchFn: FetchLike, base = "/api"): ApiClient {
     auroraIndex: () => get("/space/aurora"),
     auroraFrame: (observed) => get(`/space/aurora/${encodeURIComponent(observed)}`),
     sunFrames: () => get("/space/sun"),
+    sunMovie: (key, from, to, size) =>
+      get(
+        `/space/sun/${key}/movie?${new URLSearchParams({ from, to, size: String(size) }).toString()}`,
+      ),
     sunImageUrl: (key, size, time) =>
       `${base}/space/sun/${key}/${String(size)}.jpg?t=${encodeURIComponent(time ?? "0")}`,
   };

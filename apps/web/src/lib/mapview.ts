@@ -6,6 +6,7 @@ import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomTransform } fr
 import type { Feature, LineString } from "geojson";
 import {
   computed,
+  nextTick,
   onMounted,
   onUnmounted,
   ref,
@@ -20,6 +21,7 @@ import { loadBasemapFor, resetBasemapCache } from "./basemap-cache.js";
 import { loadFields, rasterFor, resetFieldsCache, viewOf, type FieldChoice } from "./fields.js";
 import { usePinTool, type PinTool } from "./pin-tool.js";
 import { fmtLatLon, pinTitle, type PinsStore } from "./pins.js";
+import { measureLines, measureOf } from "./measure.js";
 import type { Section } from "./section.js";
 import { useSectionTool, type SectionTool } from "./section-tool.js";
 import { mustRef } from "./dom.js";
@@ -106,6 +108,22 @@ export interface MapView {
   section: SectionTool;
   /** The pin tool: the bar, placing the view's pin and moving it. */
   pin: PinTool;
+  /**
+   * The measure tool: the section tool's placing and dragging over a line kept in memory only
+   * (its `halfKm` unused); `shown` is the line, `pending` and `cursor` the line being placed.
+   */
+  measure: SectionTool;
+  /** Whether the Measure button reads as on: placing, or a line on the map. */
+  measuring: ComputedRef<boolean>;
+  /** The two lines the measure label reads, for the line placed, dragged or being placed; null for none. */
+  measureText: ComputedRef<[string, string] | null>;
+  /** Theater mode: the map and its toolbar fill the window over the rest of the page. */
+  theater: Ref<boolean>;
+  /** Enters or leaves theater mode; the map unlocks while in it and gets its lock back after. */
+  toggleTheater(): void;
+  /** Arms the measure tool, or clears the measurement and disarms it. */
+  toggleMeasure(): void;
+  onMeasureDragMove(ev: PointerEvent): void;
   /**
    * A page layer's readout for the lon/lat under the pointer (the ShakeMap intensity), or null
    * for none there; consulted where no marker, boundary or fault has a tip of its own.
@@ -195,25 +213,60 @@ export function useMapView(opts: MapViewOptions): MapView {
   );
   const section = useSectionTool(opts.section, opts.setSection);
   const pin = usePinTool(opts.pins, () => viewOf(view.value.frame.global));
+  const measured = ref<Section | null>(null);
+  const ruler = useSectionTool(measured, (s) => {
+    measured.value = s;
+  });
+  const measuring = computed(() => ruler.armed.value || ruler.shown.value !== null);
+  const measureText = computed<[string, string] | null>(() => {
+    const s = ruler.shown.value;
+    const a = ruler.pending.value;
+    const b = ruler.cursor.value;
+    if (s !== null) return measureLines(measureOf(s.a, s.b));
+    return a === null || b === null ? null : measureLines(measureOf(a, b));
+  });
+  function toggleMeasure(): void {
+    if (measuring.value) ruler.clear();
+    else ruler.toggle();
+  }
   let lastDown: [number, number] | null = null;
+  const theater = ref(false);
+  /** Escape stands down a tool in use first; with none, it leaves theater mode. */
   function onEscape(ev: KeyboardEvent): void {
     if (ev.key !== "Escape") return;
-    section.cancel();
-    pin.cancel();
-    tip.value = null;
+    if (toolBusy.value) {
+      section.cancel();
+      pin.cancel();
+      ruler.cancel();
+      tip.value = null;
+    } else {
+      toggleTheater();
+    }
   }
-  const escapable = computed(() => section.armed.value || pin.armed.value || pin.lifted.value);
+  const toolBusy = computed(
+    () => section.armed.value || pin.armed.value || pin.lifted.value || ruler.armed.value,
+  );
+  const escapable = computed(() => toolBusy.value || theater.value);
   watch(escapable, (on) => {
     if (on) document.addEventListener("keydown", onEscape);
     else document.removeEventListener("keydown", onEscape);
   });
-  // One placement at a time: arming either tool stands the other down.
+  // One placement at a time: arming any tool stands the others down.
   watch(section.armed, (on) => {
-    if (on) pin.cancel();
+    if (!on) return;
+    pin.cancel();
+    ruler.cancel();
   });
   watch(pin.armed, (on) => {
-    if (on) section.cancel();
-    else tip.value = null;
+    if (on) {
+      section.cancel();
+      ruler.cancel();
+    } else tip.value = null;
+  });
+  watch(ruler.armed, (on) => {
+    if (!on) return;
+    section.cancel();
+    pin.cancel();
   });
   const coarse = coarsePointer();
   /**
@@ -224,11 +277,38 @@ export function useMapView(opts: MapViewOptions): MapView {
    */
   const locked = ref(true);
   const cssScale = ref(1);
+  /**
+   * How the svg's viewBox sits in its box on screen: css pixels per viewBox unit and the offset
+   * of the viewBox origin. On the page the box has the frame's aspect and is read by its width; in
+   * theater mode the box fills the window and the viewBox covers it (`xMidYMid slice`), centred
+   * and cropped on the long side. An unmeasured box (0 wide) counts as one pixel per unit.
+   */
+  function screenFit(rect: DOMRect): { scale: number; dx: number; dy: number } {
+    const { width, height } = view.value.frame;
+    if (rect.width === 0) return { scale: 1, dx: 0, dy: 0 };
+    if (!theater.value) return { scale: rect.width / width, dx: 0, dy: 0 };
+    const scale = Math.max(rect.width / width, rect.height / height);
+    return { scale, dx: (rect.width - width * scale) / 2, dy: (rect.height - height * scale) / 2 };
+  }
   function measure(): void {
-    const width = mustRef(svgEl, "map svg").getBoundingClientRect().width;
-    cssScale.value = width > 0 ? width / view.value.frame.width : 1;
+    cssScale.value = screenFit(mustRef(svgEl, "map svg").getBoundingClientRect()).scale;
   }
   const minRadius = computed(() => (coarse ? TOUCH_MIN_RADIUS_PX / cssScale.value : 0));
+
+  /** The lock as it was before theater mode, given back on leaving. */
+  let lockBefore = true;
+  function toggleTheater(): void {
+    theater.value = !theater.value;
+    if (theater.value) {
+      lockBefore = locked.value;
+      locked.value = false;
+      document.body.style.overflow = "hidden";
+    } else {
+      locked.value = lockBefore;
+      document.body.style.overflow = "";
+    }
+    void nextTick(measure);
+  }
   const touchHint = ref<string | null>(null);
   let hintTimer: ReturnType<typeof setTimeout> | null = null;
   function showTouchHint(text: string): void {
@@ -387,12 +467,12 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** Pointer position in the map's unzoomed projected space, and viewBox units per screen pixel. */
   function projectedPointer(ev: MouseEvent): { x: number; y: number; unit: number } {
     const rect = mustRef(svgEl, "map svg").getBoundingClientRect();
-    const unit = view.value.frame.width / (rect.width || view.value.frame.width);
+    const { scale, dx, dy } = screenFit(rect);
     const [x, y] = transform.value.invert([
-      (ev.clientX - rect.left) * unit,
-      (ev.clientY - rect.top) * unit,
+      (ev.clientX - rect.left - dx) / scale,
+      (ev.clientY - rect.top - dy) / scale,
     ]);
-    return { x, y, unit };
+    return { x, y, unit: 1 / scale };
   }
   function invertPointer(ev: MouseEvent): [number, number] | null {
     const { x, y } = projectedPointer(ev);
@@ -404,7 +484,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** How far a press may travel and still count as a click rather than a pan. */
   const CLICK_SLOP_PX = 3;
   function onMapClick(ev: MouseEvent): void {
-    if (!section.armed.value && !pin.armed.value) return;
+    if (!section.armed.value && !pin.armed.value && !ruler.armed.value) return;
     const down = lastDown;
     if (down !== null && Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > CLICK_SLOP_PX) {
       return;
@@ -412,6 +492,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     const ll = invertPointer(ev);
     if (ll === null) return;
     if (pin.armed.value) pin.place(ll);
+    else if (ruler.armed.value) ruler.place(ll);
     else section.place(ll);
   }
   /** The live readout beside the pointer while the pin is placed or moved. */
@@ -440,6 +521,10 @@ export function useMapView(opts: MapViewOptions): MapView {
     pin.release();
     tip.value = null;
   }
+  function onMeasureDragMove(ev: PointerEvent): void {
+    const ll = invertPointer(ev);
+    if (ll !== null) ruler.dragMove(ll);
+  }
   function onSectionDragMove(ev: PointerEvent): void {
     const ll = invertPointer(ev);
     if (ll !== null) section.dragMove(ll);
@@ -447,6 +532,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** Fault traces have no hit paths of their own; the svg looks one up under the pointer. */
   function onMapMove(ev: MouseEvent): void {
     if (section.armed.value) section.hover(invertPointer(ev));
+    if (ruler.armed.value) ruler.hover(invertPointer(ev));
     if (pin.armed.value) {
       const ll = invertPointer(ev);
       pin.hover(ll);
@@ -526,6 +612,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     document.removeEventListener("mousedown", closePickOnOutside);
     pin.cancel();
     window.removeEventListener("resize", measure);
+    if (theater.value) document.body.style.overflow = "";
     if (hintTimer !== null) clearTimeout(hintTimer);
   });
 
@@ -572,6 +659,13 @@ export function useMapView(opts: MapViewOptions): MapView {
     onMapDown,
     onMapClick,
     onSectionDragMove,
+    measure: ruler,
+    measuring,
+    measureText,
+    toggleMeasure,
+    theater,
+    toggleTheater,
+    onMeasureDragMove,
     invertPointer,
     section,
     pin,

@@ -21,7 +21,7 @@ import { fieldsFile } from "./fields.js";
 import { FLAT_RELIEF } from "./relief.js";
 import { auroraFrame, auroraIndex } from "./aurora.js";
 import { shakeMap } from "./shakemap.js";
-import { spaceNow, spaceWindow, sunFrames } from "./space.js";
+import { spaceNow, spaceWindow, sunFrames, sunMovie } from "./space.js";
 
 export function status(over: Partial<ApiStatus> = {}): ApiStatus {
   return {
@@ -132,6 +132,7 @@ export function fakeApi(over: Partial<ApiClient> = {}): ApiClient {
     auroraIndex: vi.fn().mockResolvedValue(auroraIndex()),
     auroraFrame: vi.fn().mockResolvedValue(auroraFrame()),
     sunFrames: vi.fn().mockResolvedValue(sunFrames()),
+    sunMovie: vi.fn().mockResolvedValue(sunMovie()),
     sunImageUrl: vi.fn(
       (key: string, size: number, time: string | null) =>
         `/api/space/sun/${key}/${String(size)}.jpg?t=${encodeURIComponent(time ?? "0")}`,

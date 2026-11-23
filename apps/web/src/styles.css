@@ -2662,6 +2662,92 @@ table.matrix {
   font-size: 12.5px;
   color: var(--ink);
 }
+.suncap.span {
+  margin-top: 2px;
+  color: var(--accent);
+}
+.sunmodes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+.sunmodes button {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 600 12.5px var(--f-ui);
+  cursor: pointer;
+}
+.sunmodes button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sunmodes .sunstate {
+  color: var(--muted);
+}
+.sunmodes .finfo {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  color: var(--muted);
+  font: 700 10px var(--f-ui);
+  cursor: help;
+}
+.sunmodes .sunstate .sunstop {
+  margin-left: 8px;
+  height: 22px;
+}
+.sunconfirm {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  width: min(420px, 80vw);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 13.5px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.sunconfirm p {
+  margin: 0 0 8px;
+}
+.sunconfirm .muted {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.sunconfirmrow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.sunconfirmrow button {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 600 13px var(--f-ui);
+  cursor: pointer;
+}
+.sunconfirmrow .go {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--panel);
+}
 .suncap.muted {
   margin-top: 2px;
   font-size: 11.5px;
@@ -3098,4 +3184,104 @@ table.matrix {
   .spin {
     animation: none;
   }
+}
+/* Measure: an ink dashed line with a halo, diamond handles, the reading at the midpoint. */
+.measurebtn[aria-pressed="true"] {
+  border-color: var(--ink);
+}
+.measure .mhalo {
+  fill: none;
+  stroke: var(--panel);
+  stroke-opacity: 0.85;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.measure .mline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.measure .mline.placing {
+  stroke-opacity: 0.7;
+}
+.measure .mdiamond {
+  fill: var(--ink);
+  stroke: var(--panel);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.measure .mhit {
+  fill: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.measure .mhit:active {
+  cursor: grabbing;
+}
+.measure .mlabelbox {
+  fill: var(--panel);
+  fill-opacity: 0.88;
+  stroke: var(--ink);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.measure .mlabel {
+  fill: var(--ink);
+  font: 600 12px var(--f-data);
+  pointer-events: none;
+}
+/* Theater mode: the map card fills the window and the map covers the area under its toolbar,
+   cropped on the long side; the reader pans to the rest. */
+.mapcard.theater {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+}
+.mapcard.theater .mapstage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.mapcard.theater .mapwrap {
+  position: absolute;
+  inset: 0;
+}
+.mapcard.theater .map {
+  width: 100%;
+  height: 100%;
+}
+/* The theater toggle: a faded corner button over the map, as video players have it. */
+.mapwrap .theaterbtn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.mapwrap .theaterbtn:hover,
+.mapwrap .theaterbtn:focus-visible {
+  opacity: 1;
+}
+.mapwrap .theaterbtn path {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

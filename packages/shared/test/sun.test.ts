@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   isSunKey,
+  isSunMovieSize,
   isSunSize,
+  SUN_ARCHIVE_START,
+  SUN_MOVIE_MAX_MS,
   SUN_CREDIT,
   SUN_FRAMES,
   SUN_SIZES,
@@ -35,5 +38,12 @@ describe("sun frames", () => {
     expect(isSunSize(256)).toBe(false);
     expect(SUN_CREDIT.sdo).toContain("NASA/SDO");
     expect(SUN_CREDIT.soho).toBe("SOHO (ESA & NASA)");
+  });
+
+  it("limits generated movies to two sizes, 30 days and each channel's archive", () => {
+    expect(isSunMovieSize(512)).toBe(true);
+    expect(isSunMovieSize(640)).toBe(false);
+    expect(SUN_MOVIE_MAX_MS).toBe(30 * 86_400_000);
+    for (const f of SUN_FRAMES) expect(Date.parse(SUN_ARCHIVE_START[f.key])).not.toBeNaN();
   });
 });
