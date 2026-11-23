@@ -109,3 +109,11 @@ through `go`): its GVP record, its agency status history and weekly report entri
 strip and list, and the earthquakes within 50 km; then the volcano table, the two charts, the Mark
 button, and Help. The text describes what each part shows rather than Kīlauea's level at the time
 of writing, which changes week to week.
+
+## Reset (2026-11-23)
+
+A muted "Reset tour progress" at the foot of the Help menu, behind the inline yes/no confirm,
+ends a running tour and returns the stored progress to a first visit: every tour not started, no
+step seen (so the Help button stands out again), and the first-visit offer due again. It is there
+for demonstrations. The Help button's own hint uses `v-hint` rather than `title`, so it sits under
+the pointer's arrow like the other hints.

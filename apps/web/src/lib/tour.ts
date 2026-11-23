@@ -137,6 +137,8 @@ export interface TourProgress {
   /** Records the step reached; `stepId`, when given, is marked as shown. */
   record: (id: TourId, step: number, done: boolean, stepId?: string) => void;
   dismissOffer: () => void;
+  /** Forgets everything: every tour back to not started, no step seen, the offer due again. */
+  reset: () => void;
 }
 
 export function createTourProgress(
@@ -176,6 +178,9 @@ export function createTourProgress(
     },
     dismissOffer() {
       if (!doc.value.offerDismissed) commit({ ...doc.value, offerDismissed: true });
+    },
+    reset() {
+      commit(parseTourProgress(null));
     },
   };
 }
@@ -218,6 +223,8 @@ export interface TourRunner {
   detour: () => Promise<void>;
   /** Leaves the tour where it stands, saving the step, and gives the reader's view back. */
   exit: () => Promise<void>;
+  /** Ends a running tour, then resets the reader's progress through every tour. */
+  reset: () => Promise<void>;
   /** `MapShell` hands its map over while mounted. */
   attachMap: (mv: MapView) => void;
   detachMap: (mv: MapView) => void;
@@ -414,6 +421,10 @@ export function createTour(
       await enter(side, 0, null, { tour: c.tour, index: c.index });
     },
     exit: () => end(false),
+    async reset() {
+      await end(false);
+      progress.reset();
+    },
     attachMap(mv) {
       map.value = mv;
       const w = waiting;
