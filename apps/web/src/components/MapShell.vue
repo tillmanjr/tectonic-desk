@@ -14,6 +14,7 @@ import type { DensityLegend } from "../lib/density.js";
 import { AGE_CODES, FAULT_AGES } from "../lib/faults.js";
 import { FIELD_CHOICES } from "../lib/fields.js";
 import { fmtClock } from "../lib/format.js";
+import { vHint } from "../lib/hint.js";
 import { AURORA, useInjected, ZONE } from "../lib/keys.js";
 import type { MapView } from "../lib/mapview.js";
 
@@ -69,11 +70,29 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
   <section :ref="mv.cardEl" class="mapcard">
     <div class="maptools">
       <slot name="tools"></slot>
-      <label><input v-model="mv.showPlates.value" type="checkbox" /> Plate boundaries</label>
-      <label><input v-model="mv.showTeeth.value" type="checkbox" /> Subduction teeth</label>
-      <label><input v-model="mv.showAurora.value" type="checkbox" /> Aurora</label>
+      <label
+        v-hint="
+          'Draws the PB2002 plate boundaries (Bird 2003), coloured by boundary class. Hover a segment for the plate pair and its class.'
+        "
+        ><input v-model="mv.showPlates.value" type="checkbox" /> Plate boundaries</label
+      >
+      <label
+        v-hint="
+          'Adds teeth along the PB2002 subduction boundaries, on the overriding plate and pointing down-dip. Drawn whether or not the boundaries are on.'
+        "
+        ><input v-model="mv.showTeeth.value" type="checkbox" /> Subduction teeth</label
+      >
+      <label
+        v-hint="
+          'Overlays the latest NOAA SWPC OVATION Prime aurora forecast as probability bands, drawn on the night side only. Refreshes about every five minutes while on.'
+        "
+        ><input v-model="mv.showAurora.value" type="checkbox" /> Aurora</label
+      >
       <div v-if="mv.hasFaults.value" class="layerpick">
         <label
+          v-hint="
+            'Draws USGS Quaternary Fault and Fold Database traces, styled by age of most recent deformation and by location certainty. Hover a trace for its name and slip sense.'
+          "
           ><input
             type="checkbox"
             :checked="mv.faultsAll.value"
@@ -86,10 +105,10 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
           }}</span></label
         >
         <button
+          v-hint="'Choose which Quaternary faults to show, by age of most recent deformation'"
           type="button"
           class="pickopen"
           aria-label="Choose which Quaternary faults to show"
-          title="Choose which Quaternary faults to show, by age of last movement"
           aria-haspopup="true"
           :aria-expanded="mv.pickOpen.value"
           @click="mv.pickOpen.value = !mv.pickOpen.value"
@@ -115,7 +134,11 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
           </div>
         </div>
       </div>
-      <label class="fieldpick"
+      <label
+        v-hint="
+          'Underlays a potential-field anomaly grid: free-air gravity (isostatic residual onshore in the West Coast view) or the EMAG2v3 total-field magnetic anomaly. The legend gives the source and the colour ramp.'
+        "
+        class="fieldpick"
         >Field
         <select v-model="mv.field.value" aria-label="Field overlay">
           <option v-for="c in FIELD_CHOICES" :key="c.id" :value="c.id">{{ c.label }}</option>
@@ -124,20 +147,37 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
       </label>
       <button
         v-if="sectionTool"
+        v-hint="
+          'Draws a cross-section line: click two points on the map, then drag either end to adjust. The profile under the map plots the events inside the corridor at true scale.'
+        "
         type="button"
         class="sectionbtn"
         :aria-pressed="mv.section.armed.value"
-        title="Draw a section line: click two points on the map; drag the ends to adjust"
         @click="mv.section.toggle()"
       >
         Section
       </button>
       <span class="sp"></span>
-      <button type="button" class="zbtn" aria-label="Zoom in" @click="mv.scaleBy(1.8)">+</button>
-      <button type="button" class="zbtn" aria-label="Zoom out" @click="mv.scaleBy(1 / 1.8)">
+      <button
+        v-hint="'Zoom in on the centre of the map'"
+        type="button"
+        class="zbtn"
+        aria-label="Zoom in"
+        @click="mv.scaleBy(1.8)"
+      >
+        +
+      </button>
+      <button
+        v-hint="'Zoom out from the centre of the map'"
+        type="button"
+        class="zbtn"
+        aria-label="Zoom out"
+        @click="mv.scaleBy(1 / 1.8)"
+      >
         −
       </button>
       <button
+        v-hint="'Return to the full view of the region'"
         type="button"
         class="zbtn"
         aria-label="Reset view"
@@ -152,15 +192,15 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
     <div class="mapwrap">
       <span class="mapcount" aria-live="polite">{{ countLine }}</span>
       <button
-        type="button"
-        class="maplock"
-        :aria-pressed="mv.locked.value"
-        aria-label="Lock map"
-        :title="
+        v-hint="
           mv.locked.value
             ? 'Map locked: wheel and drag scroll the page. Click to pan and zoom by hand.'
             : 'Map unlocked: wheel and drag move the map. Click to lock it.'
         "
+        type="button"
+        class="maplock"
+        :aria-pressed="mv.locked.value"
+        aria-label="Lock map"
         @click="mv.toggleLock()"
       >
         <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">

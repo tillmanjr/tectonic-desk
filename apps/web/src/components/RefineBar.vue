@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { vHint } from "../lib/hint.js";
 import type { SummaryPart } from "../lib/refine.js";
 
 /**
@@ -42,12 +43,12 @@ function onHeadKey(ev: KeyboardEvent): void {
     @click="onBarClick"
   >
     <div
+      v-hint="expanded ? 'Fold the inputs away' : 'Open the inputs'"
       class="rhead"
       role="button"
       tabindex="0"
       :aria-expanded="expanded"
       :aria-controls="bodyId"
-      :title="expanded ? 'Fold the inputs away' : 'Open the inputs'"
       @keydown="onHeadKey"
     >
       <span class="ftitle">Refine</span>
@@ -65,7 +66,11 @@ function onHeadKey(ev: KeyboardEvent): void {
       <div :id="bodyId" class="rbody"><slot></slot></div>
     </template>
     <slot name="note"></slot>
-    <label class="rhide"
+    <label
+      v-hint="
+        `Takes the ${dataset} markers off the map without changing the refinements; the table, cards and charts are unaffected.`
+      "
+      class="rhide"
       ><input type="checkbox" :checked="hidden" @change="onHide" /> Hide markers</label
     >
   </section>

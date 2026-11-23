@@ -314,7 +314,7 @@ describe("QuakeMap", () => {
     expect(w.find(".tip").exists()).toBe(false);
     await svg.trigger("mouseleave");
     expect(pick().find(".pickmenu").exists()).toBe(false);
-    expect(pick().find(".pickopen").attributes("title")).toContain("Quaternary faults to show");
+    expect(pick().find(".pickopen").attributes("data-hint")).toContain("Quaternary faults to show");
     await pick().find(".pickopen").trigger("click");
     expect(pick().findAll(".pickmenu input")).toHaveLength(6);
     await pick().findAll(".pickmenu input")[0]?.setValue(false);
