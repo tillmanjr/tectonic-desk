@@ -6,6 +6,7 @@ import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomTransform } fr
 import type { Feature, LineString } from "geojson";
 import {
   computed,
+  nextTick,
   onMounted,
   onUnmounted,
   ref,
@@ -116,6 +117,14 @@ export interface MapView {
   measuring: ComputedRef<boolean>;
   /** The two lines the measure label reads, for the line placed, dragged or being placed; null for none. */
   measureText: ComputedRef<[string, string] | null>;
+  /** Theater mode: the map and its toolbar fill the window over the rest of the page. */
+  theater: Ref<boolean>;
+  /** The element the map is fitted inside in theater mode. */
+  stageEl: Ref<HTMLElement | null>;
+  /** The map's size in theater mode, the largest that fits at its aspect; null otherwise. */
+  theaterSize: Ref<{ width: string; height: string } | null>;
+  /** Enters or leaves theater mode; the map unlocks while in it and gets its lock back after. */
+  toggleTheater(): void;
   /** Arms the measure tool, or clears the measurement and disarms it. */
   toggleMeasure(): void;
   onMeasureDragMove(ev: PointerEvent): void;
@@ -225,16 +234,23 @@ export function useMapView(opts: MapViewOptions): MapView {
     else ruler.toggle();
   }
   let lastDown: [number, number] | null = null;
+  const theater = ref(false);
+  /** Escape stands down a tool in use first; with none, it leaves theater mode. */
   function onEscape(ev: KeyboardEvent): void {
     if (ev.key !== "Escape") return;
-    section.cancel();
-    pin.cancel();
-    ruler.cancel();
-    tip.value = null;
+    if (toolBusy.value) {
+      section.cancel();
+      pin.cancel();
+      ruler.cancel();
+      tip.value = null;
+    } else {
+      toggleTheater();
+    }
   }
-  const escapable = computed(
+  const toolBusy = computed(
     () => section.armed.value || pin.armed.value || pin.lifted.value || ruler.armed.value,
   );
+  const escapable = computed(() => toolBusy.value || theater.value);
   watch(escapable, (on) => {
     if (on) document.addEventListener("keydown", onEscape);
     else document.removeEventListener("keydown", onEscape);
@@ -270,6 +286,39 @@ export function useMapView(opts: MapViewOptions): MapView {
     cssScale.value = width > 0 ? width / view.value.frame.width : 1;
   }
   const minRadius = computed(() => (coarse ? TOUCH_MIN_RADIUS_PX / cssScale.value : 0));
+
+  const stageEl = ref<HTMLElement | null>(null);
+  const theaterSize = ref<{ width: string; height: string } | null>(null);
+  /** The lock as it was before theater mode, given back on leaving. */
+  let lockBefore = true;
+  /** Fits the map to its stage at the frame's aspect in theater mode, then re-measures it. */
+  function fit(): void {
+    if (theater.value) {
+      const box = mustRef(stageEl, "map stage").getBoundingClientRect();
+      const { width, height } = view.value.frame;
+      const w = Math.min(box.width, (box.height * width) / height);
+      theaterSize.value = { width: `${String(w)}px`, height: `${String((w * height) / width)}px` };
+    } else {
+      theaterSize.value = null;
+    }
+    void nextTick(measure);
+  }
+  function toggleTheater(): void {
+    theater.value = !theater.value;
+    if (theater.value) {
+      lockBefore = locked.value;
+      locked.value = false;
+      document.body.style.overflow = "hidden";
+    } else {
+      locked.value = lockBefore;
+      document.body.style.overflow = "";
+    }
+    void nextTick(fit);
+  }
+  function onResize(): void {
+    if (theater.value) fit();
+    else measure();
+  }
   const touchHint = ref<string | null>(null);
   let hintTimer: ReturnType<typeof setTimeout> | null = null;
   function showTouchHint(text: string): void {
@@ -558,11 +607,13 @@ export function useMapView(opts: MapViewOptions): MapView {
       reset();
       pin.cancel();
       void loadBasemap(r);
+      // Another region's frame has another aspect.
+      if (theater.value) void nextTick(fit);
     },
   );
   onMounted(() => {
     document.addEventListener("mousedown", closePickOnOutside);
-    window.addEventListener("resize", measure);
+    window.addEventListener("resize", onResize);
     measure();
     svgSelection().call(zoomBehavior).on("dblclick.zoom", null);
     void loadBasemap(view.value.region);
@@ -572,7 +623,8 @@ export function useMapView(opts: MapViewOptions): MapView {
     document.removeEventListener("keydown", onEscape);
     document.removeEventListener("mousedown", closePickOnOutside);
     pin.cancel();
-    window.removeEventListener("resize", measure);
+    window.removeEventListener("resize", onResize);
+    if (theater.value) document.body.style.overflow = "";
     if (hintTimer !== null) clearTimeout(hintTimer);
   });
 
@@ -623,6 +675,10 @@ export function useMapView(opts: MapViewOptions): MapView {
     measuring,
     measureText,
     toggleMeasure,
+    theater,
+    stageEl,
+    theaterSize,
+    toggleTheater,
     onMeasureDragMove,
     invertPointer,
     section,
