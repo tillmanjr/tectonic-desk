@@ -2862,3 +2862,11 @@ table.matrix {
 .hintfloat[hidden] {
   display: none;
 }
+/* A held finger shows a control's hint, so keep the browser's long-press callout and selection off it. */
+@media (pointer: coarse) {
+  [data-hint]:not(input, select, textarea) {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}

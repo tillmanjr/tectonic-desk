@@ -1,7 +1,7 @@
 import { mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent, h, ref, withDirectives } from "vue";
-import { HINT_DELAY_MS, shownHint, vHint } from "../../src/lib/hint.js";
+import { HINT_DELAY_MS, shownHint, TOUCH_HOLD_MS, vHint } from "../../src/lib/hint.js";
 
 const outer = ref("Label text");
 const inner = ref("Input text");
@@ -18,6 +18,11 @@ const Host = defineComponent({
         ),
         withDirectives(h("button", { class: "empty" }), [[vHint, ""]]),
         h("p", { class: "plain" }, "no hint"),
+        withDirectives(h("span", { class: "info" }, "i"), [[vHint, "Info text"]]),
+        withDirectives(
+          h("label", { class: "check" }, [h("input", { type: "checkbox" }), "Check"]),
+          [[vHint, "Check text"]],
+        ),
       ]);
   },
 });
@@ -208,5 +213,158 @@ describe("vHint", () => {
     expect(shownHint()).toBe("Label text");
     expect(box()?.isConnected).toBe(true);
     again.unmount();
+  });
+
+  describe("touch", () => {
+    const touch = (type: string, el: Element, x = 50, y = 110, kind = "touch"): void => {
+      el.dispatchEvent(
+        new PointerEvent(type, { bubbles: true, clientX: x, clientY: y, pointerType: kind }),
+      );
+    };
+    /** Dispatches a click and says whether it reached the document with its default intact. */
+    const click = (el: Element): boolean => {
+      const ev = new MouseEvent("click", { bubbles: true, cancelable: true });
+      const spy = vi.fn();
+      document.addEventListener("click", spy);
+      el.dispatchEvent(ev);
+      document.removeEventListener("click", spy);
+      return spy.mock.calls.length > 0 && !ev.defaultPrevented;
+    };
+    beforeEach(() => {
+      vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(40);
+    });
+
+    it("shows a control's hint above it after a hold and keeps the release from acting", () => {
+      const w = mount(Host, { attachTo: document.body });
+      const label = w.get(".check").element;
+      rect(label, 100);
+      touch("pointerdown", label);
+      vi.advanceTimersByTime(TOUCH_HOLD_MS - 1);
+      expect(shownHint()).toBeNull();
+      vi.advanceTimersByTime(1);
+      expect(shownHint()).toBe("Check text");
+      expect(box()?.style.top).toBe(`${String(100 - 6 - 40)}px`);
+      touch("pointerup", label);
+      // The emulated mouse and focus events after the touch are not hovers or presses.
+      label.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+      label.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      label.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: null }));
+      label.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+      expect(shownHint()).toBe("Check text");
+      expect(click(label)).toBe(false);
+      expect(click(label)).toBe(true);
+      // The next touch dismisses it.
+      touch("pointerdown", w.get(".plain").element);
+      expect(shownHint()).toBeNull();
+      touch("pointerup", w.get(".plain").element);
+      w.unmount();
+    });
+
+    it("shows a hint at once on a tap where the tap does nothing else, below when no room above", () => {
+      const w = mount(Host, { attachTo: document.body });
+      const info = w.get(".info").element;
+      rect(info, 10);
+      touch("pointerdown", info);
+      touch("pointerup", info);
+      expect(shownHint()).toBe("Info text");
+      expect(box()?.style.top).toBe(`${String(10 + 20 + 6)}px`);
+      expect(click(info)).toBe(false);
+      w.unmount();
+    });
+
+    it("leaves a tap on a control alone and gives up a hold that moves or is cancelled", () => {
+      const w = mount(Host, { attachTo: document.body });
+      const label = w.get(".check").element;
+      touch("pointerdown", label);
+      touch("pointerup", label);
+      expect(shownHint()).toBeNull();
+      expect(click(label)).toBe(true);
+      touch("pointerdown", label, 50, 110);
+      touch("pointermove", label, 55, 112);
+      touch("pointermove", label, 50, 130);
+      vi.advanceTimersByTime(TOUCH_HOLD_MS);
+      expect(shownHint()).toBeNull();
+      touch("pointermove", label, 50, 150);
+      touch("pointerdown", label);
+      touch("pointercancel", label);
+      vi.advanceTimersByTime(TOUCH_HOLD_MS);
+      expect(shownHint()).toBeNull();
+      // A tap on nothing hinted shows nothing.
+      touch("pointerdown", w.get(".plain").element);
+      touch("pointerup", w.get(".plain").element);
+      expect(shownHint()).toBeNull();
+      w.unmount();
+    });
+
+    it("leaves text inputs their own long press, and ignores mouse pointers", () => {
+      const w = mount(Host, { attachTo: document.body });
+      const input = w.get(".inner").element;
+      touch("pointerdown", input);
+      vi.advanceTimersByTime(TOUCH_HOLD_MS);
+      expect(shownHint()).toBeNull();
+      touch("pointerup", input);
+      const label = w.get(".check").element;
+      touch("pointerdown", label, 50, 110, "mouse");
+      vi.advanceTimersByTime(TOUCH_HOLD_MS);
+      touch("pointerup", label, 50, 110, "mouse");
+      expect(shownHint()).toBeNull();
+      // Long after the touch, a real hover works again.
+      vi.advanceTimersByTime(1000);
+      over(label);
+      vi.advanceTimersByTime(HINT_DELAY_MS);
+      expect(shownHint()).toBe("Check text");
+      w.unmount();
+    });
+
+    it("keeps the long-press menu off while a hold runs or its hint shows", () => {
+      const w = mount(Host, { attachTo: document.body });
+      const label = w.get(".check").element;
+      const menu = (): boolean => {
+        const ev = new Event("contextmenu", { bubbles: true, cancelable: true });
+        label.dispatchEvent(ev);
+        return ev.defaultPrevented;
+      };
+      expect(menu()).toBe(false);
+      touch("pointerdown", label);
+      expect(menu()).toBe(true);
+      vi.advanceTimersByTime(TOUCH_HOLD_MS);
+      expect(menu()).toBe(true);
+      touch("pointerup", label);
+      // A click that never came does not swallow the next tap's.
+      touch("pointerdown", label);
+      touch("pointerup", label);
+      expect(click(label)).toBe(true);
+      // A hint shown by the mouse leaves the menu alone.
+      vi.advanceTimersByTime(1000);
+      over(label);
+      vi.advanceTimersByTime(HINT_DELAY_MS);
+      expect(menu()).toBe(false);
+      w.unmount();
+    });
+
+    it("drops a running hold when its element or the last hint unmounts", async () => {
+      const shown = ref(true);
+      const Lone = defineComponent({
+        setup() {
+          return () =>
+            h("div", [
+              shown.value
+                ? withDirectives(h("span", { class: "gone" }, "x"), [[vHint, "Gone"]])
+                : null,
+              withDirectives(h("span", { class: "stay" }, "y"), [[vHint, "Stay"]]),
+            ]);
+        },
+      });
+      const w = mount(Lone, { attachTo: document.body });
+      touch("pointerdown", w.get(".gone").element);
+      shown.value = false;
+      await w.vm.$nextTick();
+      vi.advanceTimersByTime(TOUCH_HOLD_MS);
+      expect(shownHint()).toBeNull();
+      touch("pointerdown", w.get(".stay").element);
+      w.unmount();
+      vi.advanceTimersByTime(TOUCH_HOLD_MS);
+      expect(shownHint()).toBeNull();
+    });
   });
 });
