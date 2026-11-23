@@ -38,7 +38,7 @@ const totals = computed(() => {
 </script>
 
 <template>
-  <div class="status" :class="state.cls" aria-live="polite">
+  <div class="status" :class="state.cls" aria-live="polite" data-tour="status">
     <span>{{ state.text }}</span>
     <span v-if="totals !== ''">{{ totals }}</span>
   </div>

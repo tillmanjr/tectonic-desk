@@ -9,7 +9,7 @@ const windowOf = (r: ApiRegion): string => `M${String(r.minMag)}+ · ${String(r.
 </script>
 
 <template>
-  <div class="tabs" role="tablist" aria-label="Region">
+  <div class="tabs" role="tablist" aria-label="Region" data-tour="regions">
     <button
       v-for="r in regions"
       :key="r.id"

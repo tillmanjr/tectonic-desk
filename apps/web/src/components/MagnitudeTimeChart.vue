@@ -162,7 +162,7 @@ const caption = computed(
 </script>
 
 <template>
-  <div class="panel chart">
+  <div class="panel chart" data-tour="chart.magtime">
     <h2>Magnitude through time</h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(H)}`">
       <template v-if="overview !== null">

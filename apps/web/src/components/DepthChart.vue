@@ -82,7 +82,7 @@ const data = computed<Data>(() => {
 </script>
 
 <template>
-  <div class="panel chart">
+  <div class="panel chart" data-tour="chart.depth">
     <h2>Depth distribution</h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(data.H)}`">
       <template v-if="data.marks.length > 0">

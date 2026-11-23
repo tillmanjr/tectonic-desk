@@ -65,6 +65,7 @@ function onHeadKey(ev: KeyboardEvent): void {
 <template>
   <section
     class="filters refine"
+    :data-tour="`refine refine.${dataset}`"
     :class="[dataset, { expanded }]"
     :aria-label="`Refine ${dataset}`"
     @click="onBarClick"

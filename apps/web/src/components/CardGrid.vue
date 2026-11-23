@@ -7,7 +7,13 @@ import { CATALOG, useInjected } from "../lib/keys.js";
  * A labelled card grid clipped to `rows` rows: the slot gets `limit`, how
  * many cards to render (null for all), and the label offers the rest.
  */
-const props = defineProps<{ label: string; count: number; rows: number | null }>();
+const props = defineProps<{
+  label: string;
+  count: number;
+  rows: number | null;
+  /** The grid's `data-tour` name, on both the label and the cards. */
+  tour?: string;
+}>();
 const catalog = useInjected(CATALOG);
 const el = ref<HTMLElement | null>(null);
 const columns = ref(1);
@@ -40,7 +46,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <p class="sectionlabel">
+  <p class="sectionlabel" :data-tour="tour">
     {{ label }}
     <button
       v-if="hidden > 0 || expanded"
@@ -52,5 +58,5 @@ onUnmounted(() => {
       {{ expanded ? "show fewer" : `… ${String(hidden)} more` }}
     </button>
   </p>
-  <section ref="el" class="major"><slot :limit="limit"></slot></section>
+  <section ref="el" class="major" :data-tour="tour"><slot :limit="limit"></slot></section>
 </template>

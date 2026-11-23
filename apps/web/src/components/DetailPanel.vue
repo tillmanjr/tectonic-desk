@@ -53,7 +53,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <aside class="detail" :class="{ open }" aria-label="Event detail" :aria-hidden="!open">
+  <aside
+    class="detail"
+    data-tour="detail"
+    :class="{ open }"
+    aria-label="Event detail"
+    :aria-hidden="!open"
+  >
     <div class="hd">
       <div>
         <div class="mag num">
@@ -73,7 +79,7 @@ onUnmounted(() => {
       </div>
       <button type="button" class="close" aria-label="Close detail" @click="close">×</button>
     </div>
-    <MarkButton :subject="subject" />
+    <MarkButton :subject="subject" data-tour="detail.mark" />
     <div class="bd">
       <EventDetailBody
         v-if="catalog.selectedId.value !== null"

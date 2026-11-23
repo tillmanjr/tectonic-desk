@@ -12,7 +12,7 @@ const PAGES: { id: Page; label: string }[] = [
 </script>
 
 <template>
-  <nav class="pages" aria-label="Page">
+  <nav class="pages" aria-label="Page" data-tour="pages">
     <button
       v-for="p in PAGES"
       :key="p.id"

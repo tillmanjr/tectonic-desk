@@ -4,6 +4,7 @@ import { useRoute, useRouter, type LocationQuery } from "vue-router";
 import ActiveEarthPage from "./ActiveEarthPage.vue";
 import DetailPanel from "./DetailPanel.vue";
 import EarthquakesPage from "./EarthquakesPage.vue";
+import HelpMenu from "./HelpMenu.vue";
 import MarksOverlay from "./MarksOverlay.vue";
 import PageSwitch from "./PageSwitch.vue";
 import RegionTabs from "./RegionTabs.vue";
@@ -11,6 +12,8 @@ import SettingsMenu from "./SettingsMenu.vue";
 import SpacePage from "./SpacePage.vue";
 import SpaceStatus from "./SpaceStatus.vue";
 import StatusLine from "./StatusLine.vue";
+import TourCard from "./TourCard.vue";
+import TourOffer from "./TourOffer.vue";
 import VolcanoDetail from "./VolcanoDetail.vue";
 import VolcanoesPage from "./VolcanoesPage.vue";
 import { createApiClient } from "../lib/api.js";
@@ -66,6 +69,8 @@ import {
 } from "../lib/space.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
+import { createTour, createTourProgress, TOUR, TOUR_PROGRESS } from "../lib/tour.js";
+import { TOURS } from "../lib/tour-steps.js";
 import {
   createVolcanoStore,
   parseVolcanoFilter,
@@ -245,6 +250,38 @@ function setSection(s: Section | null): void {
   });
 }
 provide(SET_SECTION, setSection);
+
+/** The largest event in the window the catalogue holds, for the orientation's detail step. */
+function largestEvent(): string | null {
+  let best: { id: string; mag: number } | null = null;
+  for (const e of catalog.filtered.value) {
+    if (e.mag !== null && (best === null || e.mag > best.mag)) best = { id: e.id, mag: e.mag };
+  }
+  return best?.id ?? null;
+}
+const tour = createTour(TOURS, inject(TOUR_PROGRESS, null) ?? createTourProgress(), {
+  page: () => page.value,
+  goPage: async (p) => {
+    await router.replace({ path: pagePath(p, routeRegion.value), query: withoutSelection() });
+  },
+  selectLargest: () => {
+    select(largestEvent());
+  },
+  go: async (url) => {
+    await router.replace(url);
+  },
+  clearSelection: () => {
+    select(null);
+  },
+  setSection,
+  location: () => route.fullPath,
+  restore: async (to) => {
+    await router.replace(to);
+  },
+});
+provide(TOUR, tour);
+/** A plain visit (no query) may be offered the tour; a shared link goes straight to what it names. */
+const plainVisit = Object.keys(route.query).length === 0;
 function toggleZone(): void {
   const query = { ...route.query };
   if (zone.value === "utc") query.tz = "local";
@@ -334,6 +371,7 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="marks-btn"
+                data-tour="marks"
                 aria-haspopup="dialog"
                 :aria-current="overlay !== null ? 'page' : undefined"
                 :title="`Your marked ${MARK_TERMS.things}, over the current page`"
@@ -351,6 +389,7 @@ onUnmounted(() => {
               :aria-hidden="page === 'space' ? 'true' : undefined"
               @pick="pickRegion"
             />
+            <HelpMenu />
             <SettingsMenu :zone="zone" @toggle-zone="toggleZone" />
           </div>
         </nav>
@@ -484,6 +523,8 @@ onUnmounted(() => {
   <DetailPanel />
   <VolcanoDetail v-if="hasVolcanoes(page)" />
   <MarksOverlay v-if="overlay !== null" />
+  <TourOffer :eligible="plainVisit" :location="route.fullPath" />
+  <TourCard />
   <Transition name="notice">
     <div v-if="notice.current.value !== null" class="notice" role="status">
       {{ notice.current.value }}
