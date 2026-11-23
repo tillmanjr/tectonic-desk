@@ -88,6 +88,16 @@ describe("createTourProgress", () => {
     expect(parseTourProgress(m.store.value).offerDismissed).toBe(true);
   });
 
+  it("resets to a first visit", () => {
+    const m = memory();
+    const p = createTourProgress(m.storage, () => NOW);
+    p.record("map", 3, true, "x");
+    p.dismissOffer();
+    p.reset();
+    expect(p.doc.value).toEqual(parseTourProgress(null));
+    expect(parseTourProgress(m.store.value)).toEqual(parseTourProgress(null));
+  });
+
   it("starts fresh when storage throws, and keeps progress in memory when writing fails", () => {
     const p = createTourProgress({
       getItem: () => {

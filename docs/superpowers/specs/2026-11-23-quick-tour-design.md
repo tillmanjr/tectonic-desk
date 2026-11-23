@@ -100,3 +100,20 @@ toggles), out of the stage's reach. A step flips it through `ctx.setSwitch(name,
 clicks the checkbox, or the element with `aria-expanded`, carrying that `data-tour` name, as the
 reader would, records the state it found the first time, and clicks it back when the tour ends.
 `selectLargest({ mechanism: true })` skips events without a solution.
+
+## Volcanoes tour (2026-11-23)
+
+Fourteen steps on the Volcanoes page: the summary tiles, the elevated-or-changed cards, the refine
+bar (opened), the map's markers and legend, then Kīlauea (`EXAMPLE_VOLCANO`, GVP 332010, opened
+through `go`): its GVP record, its agency status history and weekly report entries, its eruption
+strip and list, and the earthquakes within 50 km; then the volcano table, the two charts, the Mark
+button, and Help. The text describes what each part shows rather than Kīlauea's level at the time
+of writing, which changes week to week.
+
+## Reset (2026-11-23)
+
+A muted "Reset tour progress" at the foot of the Help menu, behind the inline yes/no confirm,
+ends a running tour and returns the stored progress to a first visit: every tour not started, no
+step seen (so the Help button stands out again), and the first-visit offer due again. It is there
+for demonstrations. The Help button's own hint uses `v-hint` rather than `title`, so it sits under
+the pointer's arrow like the other hints.

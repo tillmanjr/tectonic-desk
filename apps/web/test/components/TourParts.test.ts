@@ -280,7 +280,7 @@ describe("HelpMenu", () => {
     const { tour, mountIt } = setup();
     const w = mountIt(HelpMenu);
     expect(w.find(".help-btn").classes()).toContain("fresh");
-    expect(w.find(".help-btn").attributes("title")).toContain("not seen yet");
+    expect(w.find(".help-btn").attributes("data-hint")).toContain("not seen yet");
     await tour.start("orientation");
     await tour.next();
     await tour.next();
@@ -290,7 +290,27 @@ describe("HelpMenu", () => {
     await tour.exit();
     await nextTick();
     expect(w.find(".help-btn").classes()).not.toContain("fresh");
-    expect(w.find(".help-btn").attributes("title")).toBe("Help: quick tours of the app");
+    expect(w.find(".help-btn").attributes("data-hint")).toBe("Help: quick tours of the app");
+    w.unmount();
+  });
+
+  it("resets every tour from the foot of the menu, ending a running one first", async () => {
+    const { tour, progress, mountIt } = setup();
+    await tour.start("map");
+    const w = mountIt(HelpMenu);
+    await w.find(".help-btn").trigger("click");
+    expect(w.findAll(".hstate")[1]?.text()).toBe("Step 1 of 1");
+    await w.find(".hreset button").trigger("click");
+    await w.find(".hreset .yes").trigger("click");
+    await flushPromises();
+    expect(tour.active.value).toBeNull();
+    expect(progress.doc.value).toMatchObject({ offerDismissed: false, tours: {}, seen: {} });
+    expect(w.findAll(".hstate").map((s) => s.text())).toEqual([
+      "Not started",
+      "Not started",
+      "Not started",
+    ]);
+    expect(w.find(".help-btn").classes()).toContain("fresh");
     w.unmount();
   });
 

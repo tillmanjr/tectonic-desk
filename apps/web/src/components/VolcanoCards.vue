@@ -18,6 +18,7 @@ const selectVolcano = useInjected(SELECT_VOLCANO);
     label="Elevated or changed in the last 7 days"
     :count="store.attention.value.length"
     :rows="props.rows"
+    tour="volcano.cards"
   >
     <p v-if="store.attention.value.length === 0" class="note">
       No monitored volcano is above normal and none changed status in the last 7 days.
