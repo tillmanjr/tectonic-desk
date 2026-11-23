@@ -7,6 +7,7 @@ import { ticksOf, type Tick } from "../lib/charts.js";
 import { depthColor } from "../lib/depth.js";
 import { fmtMag, placeOf } from "../lib/format.js";
 import { CATALOG, SELECT, useInjected } from "../lib/keys.js";
+import { vHint } from "../lib/hint.js";
 
 const W = 520;
 const M = { l: 40, r: 10, t: 8, b: 28 };
@@ -114,6 +115,7 @@ const data = computed<Data>(() => {
         <circle
           v-for="m in data.marks"
           :key="m.e.id"
+          v-hint="`M${fmtMag(m.e.mag)} · ${m.e.depthKm.toFixed(0)} km · ${placeOf(m.e)}`"
           :cx="m.x"
           :cy="m.y"
           :r="m.e.id === catalog.selectedId.value ? 5 : 3"
@@ -125,11 +127,7 @@ const data = computed<Data>(() => {
           fill-opacity="0.8"
           stroke-width="1.5"
           @click="select(m.e.id)"
-        >
-          <title>
-            M{{ fmtMag(m.e.mag) }} · {{ m.e.depthKm.toFixed(0) }} km · {{ placeOf(m.e) }}
-          </title>
-        </circle>
+        />
       </template>
     </svg>
     <div class="cap">{{ data.caption }}</div>

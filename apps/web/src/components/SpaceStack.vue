@@ -29,6 +29,7 @@ import {
   type RowSpec,
 } from "../lib/space-chart.js";
 import { alertTitle, fmtKp, fmtThirds, fmtValue, xrayClass } from "../lib/space-format.js";
+import { vHint } from "../lib/hint.js";
 
 /**
  * Every series of the window on one time axis, a row each, so a storm reads top to bottom at
@@ -342,9 +343,12 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
         :grid="false"
       />
       <g class="alertticks">
-        <path v-for="a in data.alerts" :key="a.key" :d="`M${String(a.x)},3l4,8h-8z`">
-          <title>{{ a.title }}</title>
-        </path>
+        <path
+          v-for="a in data.alerts"
+          :key="a.key"
+          v-hint="a.title"
+          :d="`M${String(a.x)},3l4,8h-8z`"
+        />
       </g>
       <g v-for="c in data.cycles" :key="c.era.label" class="cyclemark">
         <line :x1="c.x" :x2="c.x" :y1="M.t" :y2="data.h - M.b" />

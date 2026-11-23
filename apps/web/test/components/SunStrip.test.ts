@@ -18,7 +18,7 @@ describe("SunStrip", () => {
     expect(first?.find("img").attributes("loading")).toBe("lazy");
     expect(first?.find(".t").text()).toBe("AIA 193 Å");
     expect(first?.find(".m").text()).toBe("11:45 UTC");
-    expect(first?.attributes("title")).toContain("coronal holes");
+    expect(first?.attributes("data-hint")).toContain("coronal holes");
     const c3 = thumbs[6];
     expect(c3?.find("img").attributes("src")).toBe("/api/space/sun/c3/512.jpg?t=0");
     expect(c3?.find(".m").text()).toBe("time unknown");

@@ -51,7 +51,7 @@ describe("SpaceStack", () => {
     expect(xray?.findAll(".refs text").map((t) => t.text())).toEqual(["M1 · R1", "X1 · R3"]);
     expect(xray?.findAll(".flareband")).toHaveLength(1);
     expect(xray?.find(".flareband").classes()).not.toContain("hl");
-    expect(xray?.find(".flareband title").text()).toBe("M1.3");
+    expect(xray?.find(".flareband").attributes("data-hint")).toBe("M1.3");
     expect(rows[6]?.findAll(".axis text").map((t) => t.text())).toEqual([
       "10⁰",
       "10¹",
@@ -63,7 +63,7 @@ describe("SpaceStack", () => {
     expect(rows[0]?.find(".rowlabel").text()).toBe("Kp");
     const ticks = w.findAll(".alertticks path");
     expect(ticks).toHaveLength(2);
-    expect(ticks[0]?.find("title").text()).toBe(
+    expect(ticks[0]?.attributes("data-hint")).toBe(
       "11:02 UTC · WARNING: Geomagnetic K-index of 5 expected",
     );
     expect(w.find(".cap").text()).toContain("Stored samples.");

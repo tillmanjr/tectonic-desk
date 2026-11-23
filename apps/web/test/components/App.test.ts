@@ -167,15 +167,15 @@ describe("App", () => {
     });
     expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events");
     expect(wrapper.find("th").text()).toBe("Time (UTC)");
-    expect(wrapper.find("button[title^='Show every date']").exists()).toBe(false);
+    expect(wrapper.find("button[data-hint^='Show every date']").exists()).toBe(false);
     await wrapper.find(".settings-btn").trigger("click");
-    await wrapper.find("button[title^='Show every date']").trigger("click");
+    await wrapper.find("button[data-hint^='Show every date']").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.tz).toBe("local");
     expect(wrapper.find("th").text()).toBe("Time (local)");
     await wrapper.find(".filters .rhead").trigger("click");
     expect(wrapper.find(".filters").text()).toContain("Window (local)");
-    await wrapper.find("button[title^='Show every date']").trigger("click");
+    await wrapper.find("button[data-hint^='Show every date']").trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.query.tz).toBeUndefined();
   });

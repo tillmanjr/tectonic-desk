@@ -245,19 +245,21 @@ describe("MarksOverlay", () => {
     const ctx = await makeContext({ volcanoes: true });
     const w = await open(ctx);
     expect(w.find(".compare").attributes("disabled")).toBeDefined();
-    expect(w.find(".compare").attributes("title")).toBe("Mark at least two events to compare them");
+    expect(w.find(".compare").attributes("data-hint")).toBe(
+      "Mark at least two events to compare them",
+    );
     ctx.marks.add(quake);
     ctx.marks.add({ ...quake, ref: "us2", name: "Second", lon: -121, mag: 4.7, depthKm: 34.4 });
     ctx.marks.add(etna);
     await nextTick();
     // jsdom measures the main area at 0 px, so the grid is reported as too wide
-    expect(w.find(".compare").attributes("title")).toBe(
+    expect(w.find(".compare").attributes("data-hint")).toBe(
       "Compare 3 events pairwise · about 900 px wide, wider than this window; the grid will scroll sideways",
     );
     Object.defineProperty(w.find(".marks-main").element, "clientWidth", { value: 1200 });
     window.dispatchEvent(new Event("resize"));
     await nextTick();
-    expect(w.find(".compare").attributes("title")).toBe("Compare 3 events pairwise");
+    expect(w.find(".compare").attributes("data-hint")).toBe("Compare 3 events pairwise");
     await w.find(".compare").trigger("click");
     expect(ctx.nav.compare).toHaveBeenCalledWith("all");
     ctx.overlay.value = { group: "all", mode: "matrix" };

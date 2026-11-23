@@ -8,6 +8,7 @@ import MarkRow from "./MarkRow.vue";
 import { MARKS, MARKS_NAV, useInjected } from "../lib/keys.js";
 import { ALL_GROUP, MARK_TERMS, NAME_MAX, type MarkView } from "../lib/marks.js";
 import { compareTitle } from "../lib/matrix.js";
+import { vHint } from "../lib/hint.js";
 
 /** The full-screen manager for marked views: groups in a rail, marks as rows or as stacked panels. */
 const store = useInjected(MARKS);
@@ -183,10 +184,10 @@ onUnmounted(() => {
           />
           <button
             v-else
+            v-hint="view.virtual ? '' : 'Rename'"
             type="button"
             class="gname"
             :disabled="view.virtual"
-            :title="view.virtual ? undefined : 'Rename'"
             @click="beginRename(view)"
           >
             {{ view.name }}
@@ -201,10 +202,10 @@ onUnmounted(() => {
             Show events
           </button>
           <button
+            v-hint="compareTitle(view.marks.length, mainWidth - MAIN_PAD_PX)"
             type="button"
             class="compare"
             :disabled="view.marks.length < 2"
-            :title="compareTitle(view.marks.length, mainWidth - MAIN_PAD_PX)"
             @click="nav.compare(view.id)"
           >
             Compare

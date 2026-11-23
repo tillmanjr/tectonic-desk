@@ -15,6 +15,7 @@ import {
   reportText,
   type MarksDocument,
 } from "../lib/marks.js";
+import { vHint } from "../lib/hint.js";
 
 /** Export and import of the whole marks document, at the foot of the overlay's rail. */
 const store = useInjected(MARKS);
@@ -86,9 +87,9 @@ onUnmounted(clearTimer);
       <span class="io-facts">{{ picked.name }}: {{ countsText(picked.doc) }}</span>
       <span class="io-actions">
         <button
+          v-hint="'Add what is missing, keep everything here'"
           type="button"
           class="merge"
-          title="Add what is missing, keep everything here"
           @click="merge(picked.doc)"
         >
           Merge
@@ -101,17 +102,17 @@ onUnmounted(clearTimer);
       <div v-if="result !== null" class="io-result" role="status">{{ result }}</div>
       <div class="io-buttons">
         <button
+          v-hint="'Download every mark and group as a JSON file'"
           type="button"
           class="export"
-          title="Download every mark and group as a JSON file"
           @click="exportAll"
         >
           Export
         </button>
         <button
+          v-hint="'Read a marks file and merge or replace'"
           type="button"
           class="import"
-          title="Read a marks file and merge or replace"
           @click="chooseFile"
         >
           Import

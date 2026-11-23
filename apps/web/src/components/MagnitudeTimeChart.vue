@@ -9,6 +9,7 @@ import { eraLabels, eraStart, erasWithin, type EraLabel } from "../lib/eras.js";
 import { fmtFloor, fmtInt, fmtMag, placeOf } from "../lib/format.js";
 import { CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { sequenceOf } from "../lib/sequence.js";
+import { vHint } from "../lib/hint.js";
 
 const W = 520;
 const H = 200;
@@ -205,14 +206,13 @@ const caption = computed(
         <circle
           v-for="d in overview.dots"
           :key="d.key"
+          v-hint="d.title"
           class="binmax"
           :cx="d.x"
           :cy="d.y"
           r="3"
           style="fill: var(--accent)"
-        >
-          <title>{{ d.title }}</title>
-        </circle>
+        />
       </template>
       <template v-else-if="data !== null">
         <ChartAxes
@@ -253,6 +253,7 @@ const caption = computed(
         <circle
           v-for="m in data.marks"
           :key="m.e.id"
+          v-hint="`M${fmtMag(m.e.mag)} ${placeOf(m.e)}`"
           :cx="m.x"
           :cy="m.y"
           :r="m.e.id === catalog.selectedId.value ? 5 : 3"
@@ -263,9 +264,7 @@ const caption = computed(
           }"
           stroke-width="1.5"
           @click="select(m.e.id)"
-        >
-          <title>M{{ fmtMag(m.e.mag) }} {{ placeOf(m.e) }}</title>
-        </circle>
+        />
       </template>
     </svg>
     <div class="cap">{{ caption }}</div>

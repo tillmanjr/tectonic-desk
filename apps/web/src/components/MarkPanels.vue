@@ -5,6 +5,7 @@ import MarkThumb from "./MarkThumb.vue";
 import VolcanoDetailBody from "./VolcanoDetailBody.vue";
 import { MARKS, MARKS_NAV, useInjected, VOLCANOES } from "../lib/keys.js";
 import type { MarkView } from "../lib/marks.js";
+import { vHint } from "../lib/hint.js";
 
 /** A group's marks laid out as full panels, each over the same body the side panel renders. */
 const props = defineProps<{ view: MarkView }>();
@@ -55,9 +56,9 @@ watch(
           </div>
           <div class="mactions">
             <button
+              v-hint="'Select it in the view you were in'"
               type="button"
               class="openhere"
-              title="Select it in the view you were in"
               @click="nav.openHere(m)"
             >
               Open here
