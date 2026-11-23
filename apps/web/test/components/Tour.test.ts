@@ -5,10 +5,16 @@ import { createMemoryHistory, RouterView } from "vue-router";
 import type { ApiClient } from "../../src/lib/api.js";
 import { createClock } from "../../src/lib/clock.js";
 import { API, CLOCK, MARKS, SETTINGS, THEME } from "../../src/lib/keys.js";
-import { createMarks } from "../../src/lib/marks.js";
+import { createMarks, type MarkDraft } from "../../src/lib/marks.js";
 import { createSettings } from "../../src/lib/settings.js";
 import { createTourProgress, TOUR_PROGRESS } from "../../src/lib/tour.js";
-import { EXAMPLE_EVENT, EXAMPLE_VOLCANO, TOURS } from "../../src/lib/tour-steps.js";
+import {
+  DEMO_GROUP_NAME,
+  EXAMPLE_EVENT,
+  EXAMPLE_MARKS,
+  EXAMPLE_VOLCANO,
+  TOURS,
+} from "../../src/lib/tour-steps.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, listOf } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
@@ -16,16 +22,20 @@ import { event, mech } from "../support/events.js";
 import { fakeTheme, NOW } from "../support/mount.js";
 import { stubWorld } from "../support/world.js";
 
-async function mountApp(path: string, api: ApiClient = fakeApi()) {
+async function mountApp(
+  path: string,
+  api: ApiClient = fakeApi(),
+  marks = createMarks(null),
+  progress = createTourProgress(null, () => NOW),
+) {
   stubWorld();
   stubCanvas();
   const router = createAppRouter(createMemoryHistory());
   await router.push(path);
-  const progress = createTourProgress(null, () => NOW);
   const Root = defineComponent({
     setup() {
       provide(API, api);
-      provide(MARKS, createMarks(null));
+      provide(MARKS, marks);
       provide(
         CLOCK,
         createClock(1e9, () => NOW),
@@ -38,7 +48,7 @@ async function mountApp(path: string, api: ApiClient = fakeApi()) {
   });
   const wrapper = mount(Root, { global: { plugins: [router] }, attachTo: document.body });
   await flushPromises();
-  return { wrapper, router, progress };
+  return { wrapper, router, progress, marks };
 }
 
 type Mounted = Awaited<ReturnType<typeof mountApp>>;
@@ -212,6 +222,60 @@ describe("quick tours in the app", () => {
     await m.wrapper.find(".tourexit").trigger("click");
     await flushPromises();
     expect(m.wrapper.find(".filters.refine.volcanoes").classes()).not.toContain("expanded");
+    expect(m.router.currentRoute.value.fullPath).toBe("/active");
+    m.wrapper.unmount();
+  });
+
+  it("walks the marks tour over example marks, and takes them out at the end", async () => {
+    const marks = createMarks(null);
+    const own = marks.add({ ...EXAMPLE_MARKS[0], name: "my own" } as MarkDraft);
+    const m = await mountApp("/active", exampleApi(), marks);
+    expect(await walk(m, 5)).toEqual([]);
+    expect(m.progress.doc.value.demo?.marks).toHaveLength(3);
+    expect(marks.groups.value.map((g) => g.name)).toEqual([DEMO_GROUP_NAME]);
+    await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.query.show).toBe("matrix");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(marks.marks.value.map((x) => x.id)).toEqual([own.id]);
+    expect(marks.groups.value).toEqual([]);
+    expect(m.progress.doc.value.demo).toBeNull();
+    expect(m.router.currentRoute.value.fullPath).toBe("/active");
+    m.wrapper.unmount();
+  });
+
+  it("takes out example marks a page left mid-tour, and reuses the group while they are in", async () => {
+    const marks = createMarks(null);
+    const progress = createTourProgress(null, () => NOW);
+    const g = marks.addGroup(DEMO_GROUP_NAME);
+    const left = marks.add({ ...EXAMPLE_MARKS[2], name: "left" } as MarkDraft);
+    progress.setDemo({ group: g.id, marks: [left.id] });
+    const m = await mountApp("/active", fakeApi(), marks, progress);
+    expect(marks.marks.value).toEqual([]);
+    expect(progress.doc.value.demo).toBeNull();
+    await startFromHelp(m, 5);
+    await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
+    await flushPromises();
+    await m.wrapper.findAll(".tourdot")[4]?.trigger("click");
+    await flushPromises();
+    expect(marks.groups.value).toHaveLength(1);
+    expect(marks.marks.value).toHaveLength(3);
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    m.wrapper.unmount();
+  });
+
+  it("goes on from one tour's last step to the next", async () => {
+    const m = await mountApp("/active");
+    await startFromHelp(m, 0);
+    await m.wrapper.findAll(".tourdot")[11]?.trigger("click");
+    await flushPromises();
+    await m.wrapper.find(".tourdetour").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourpath").text()).toBe("Map tools · 1 of 12");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
     expect(m.router.currentRoute.value.fullPath).toBe("/active");
     m.wrapper.unmount();
   });

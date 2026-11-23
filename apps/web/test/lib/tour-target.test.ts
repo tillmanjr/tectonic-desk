@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  cardBox,
   dockOf,
   domSwitches,
   inView,
@@ -34,9 +35,28 @@ describe("tour targets", () => {
   });
 
   it("docks the card away from the target and tells whether a box is in view", () => {
-    expect(dockOf(null, 800)).toBe("bottom");
-    expect(dockOf({ left: 0, top: 100, right: 10, bottom: 200 }, 800)).toBe("bottom");
-    expect(dockOf({ left: 0, top: 500, right: 10, bottom: 700 }, 800)).toBe("top");
+    const card = { width: 400, height: 200 };
+    const vp = { width: 1000, height: 800 };
+    const at = (top: number, bottom: number, left = 400, right = 600) => ({
+      left,
+      top,
+      right,
+      bottom,
+    });
+    expect(cardBox("top", card, vp)).toEqual({ left: 300, top: 16, right: 700, bottom: 216 });
+    expect(cardBox("bottom", card, vp)).toEqual({ left: 300, top: 584, right: 700, bottom: 784 });
+    // no target, or one clear of the card: the card stays put
+    expect(dockOf(null, "top", card, vp)).toBe("top");
+    expect(dockOf(at(300, 400), "top", card, vp)).toBe("top");
+    expect(dockOf(at(300, 400), "bottom", card, vp)).toBe("bottom");
+    expect(dockOf(at(650, 700, 10, 100), "bottom", card, vp)).toBe("bottom");
+    // a target under the card sends it to the other edge
+    expect(dockOf(at(600, 700), "bottom", card, vp)).toBe("top");
+    expect(dockOf(at(100, 150), "top", card, vp)).toBe("bottom");
+    // a target tall enough to meet both: away from the half its centre is in
+    expect(dockOf(at(100, 700), "top", card, vp)).toBe("top");
+    expect(dockOf(at(100, 300 + 400), "bottom", card, vp)).toBe("top");
+    expect(dockOf(at(50, 650), "bottom", card, vp)).toBe("bottom");
     expect(inView({ left: 0, top: 0, right: 100, bottom: 100 }, 100, 100)).toBe(true);
     expect(inView({ left: 0, top: -1, right: 100, bottom: 100 }, 100, 100)).toBe(false);
     expect(inView({ left: 0, top: 0, right: 100, bottom: 101 }, 100, 100)).toBe(false);

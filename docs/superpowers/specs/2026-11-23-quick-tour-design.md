@@ -117,3 +117,23 @@ ends a running tour and returns the stored progress to a first visit: every tour
 step seen (so the Help button stands out again), and the first-visit offer due again. It is there
 for demonstrations. The Help button's own hint uses `v-hint` rather than `title`, so it sits under
 the pointer's arrow like the other hints.
+
+## Marks tour, a steadier card, and going on (2026-11-24)
+
+Ten steps over the Mark button, the header's Marks button, the overlay's groups rail, a mark's row,
+a group's head, stacked panels, Compare and export/import. The list, panels and comparison need
+marks, so the tour adds three examples (Petrolia, Ridgecrest and Kīlauea, `EXAMPLE_MARKS`) in a
+group called Tour examples through the stage's `demoMarks()`, and the runner's end takes them out
+again (`clearDemoMarks()`, after the route is restored so an overlay showing the group has closed).
+Their ids are kept in the progress document (`demo`), so a page left mid-tour has them taken out
+on the next load. A mark the reader makes during the tour stays.
+
+The card no longer re-decides top or bottom on every step: `dockOf` keeps it where it is unless
+its box (the card's measured size, centred, 16 px from the edge) would meet the spotlight, then
+moves it to the other edge, or for a target tall enough to meet both, away from the target's
+half. Walking every tour against the live site, the card now moves at most twice per tour.
+
+On the last step of a main tour the card offers "Continue to …", the next main tour in the list
+with a step not yet seen (side paths are skipped). Going on marks the tour done and starts the next
+one (at the step it was left on, if partway) without giving the view back in between; the reader's
+view comes back when the last tour ends.

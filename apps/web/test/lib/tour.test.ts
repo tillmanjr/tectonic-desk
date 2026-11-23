@@ -9,6 +9,7 @@ import {
   TOUR_KEY,
   tourState,
   type Tour,
+  type TourId,
 } from "../../src/lib/tour.js";
 import type { Page } from "../../src/router.js";
 import { fakeMap, fakeStage, fakeSwitches } from "../support/tour.js";
@@ -32,7 +33,7 @@ function memory(initial: string | null = null) {
 
 describe("parseTourProgress", () => {
   it("reads nothing, bad JSON or a non-object as a fresh start", () => {
-    const fresh = { offerDismissed: false, last: null, tours: {}, seen: {} };
+    const fresh = { offerDismissed: false, last: null, tours: {}, seen: {}, demo: null };
     expect(parseTourProgress(null)).toEqual(fresh);
     expect(parseTourProgress("{")).toEqual(fresh);
     expect(parseTourProgress("3")).toEqual(fresh);
@@ -54,6 +55,7 @@ describe("parseTourProgress", () => {
       last: "map",
       tours: { map: { step: 3, done: false, at: AT } },
       seen: {},
+      demo: null,
     });
     for (const bad of [
       null,
@@ -62,7 +64,7 @@ describe("parseTourProgress", () => {
       { step: 1, done: false, at: 5 },
     ]) {
       const doc = parseTourProgress(JSON.stringify({ last: "space", tours: { map: bad } }));
-      expect(doc).toEqual({ offerDismissed: false, last: null, tours: {}, seen: {} });
+      expect(doc).toEqual({ offerDismissed: false, last: null, tours: {}, seen: {}, demo: null });
     }
   });
 });
@@ -81,6 +83,7 @@ describe("createTourProgress", () => {
       last: "map",
       tours: { map: { step: 2, done: false, at: AT } },
       seen: {},
+      demo: null,
     });
     p.dismissOffer();
     p.dismissOffer();
@@ -119,6 +122,82 @@ describe("createTourProgress", () => {
     p.dismissOffer();
     p.record("map", 0, false);
     expect(localStorage.getItem(TOUR_KEY)).toContain('"offerDismissed":true');
+  });
+});
+
+describe("example marks", () => {
+  it("keeps the example marks' ids, drops a malformed record, and survives a reset", () => {
+    const p = createTourProgress(null, () => NOW);
+    p.setDemo({ group: "g", marks: ["a", "b"] });
+    p.reset();
+    expect(p.doc.value.demo).toEqual({ group: "g", marks: ["a", "b"] });
+    p.setDemo(null);
+    expect(p.doc.value.demo).toBeNull();
+    const read = (demo: unknown) => parseTourProgress(JSON.stringify({ demo })).demo;
+    expect(read({ group: "g", marks: ["a", 3] })).toEqual({ group: "g", marks: ["a"] });
+    expect(read({ group: 1, marks: [] })).toBeNull();
+    expect(read({ group: "g", marks: "a" })).toBeNull();
+    expect(read("x")).toBeNull();
+  });
+});
+
+describe("continuing to the next tour", () => {
+  function three(): Tour[] {
+    const one = (id: TourId, title: string, sidePath = false): Tour => ({
+      id,
+      title,
+      blurb: "",
+      sidePath,
+      pageFor: (p: Page) => p,
+      steps: [
+        { id: "a", title: "A", body: "", targets: [] },
+        {
+          id: "b",
+          title: "B",
+          body: "",
+          targets: [],
+          leave: () => undefined,
+        },
+      ],
+    });
+    return [
+      one("orientation", "One"),
+      one("mechanism", "Side", true),
+      one("map", "Two"),
+      one("earthquakes", "Three"),
+    ];
+  }
+
+  it("offers the next main tour with unseen steps on a last step, and goes on keeping the view", async () => {
+    const { stage } = fakeStage();
+    const progress = createTourProgress(null, () => NOW);
+    const tour = createTour(three(), progress, stage);
+    expect(tour.following.value).toBeNull();
+    await tour.continueOn();
+    await tour.start("orientation");
+    expect(tour.following.value).toBeNull();
+    await tour.next();
+    expect(tour.following.value?.id).toBe("map");
+    progress.record("map", 1, false, "a");
+    progress.record("map", 1, false, "b");
+    expect(tour.following.value?.id).toBe("earthquakes");
+    progress.record("earthquakes", 1, false, "a");
+    await tour.continueOn();
+    expect(tour.active.value?.tour.id).toBe("earthquakes");
+    expect(tour.active.value?.index).toBe(1);
+    expect(progress.doc.value.tours.orientation?.done).toBe(true);
+    expect(stage.restore).not.toHaveBeenCalled();
+    expect(tour.following.value).toBeNull();
+    await tour.exit();
+    expect(stage.clearDemoMarks).toHaveBeenCalled();
+    // A tour taken before, with a step added since, starts again from the top.
+    const fresh = createTourProgress(null, () => NOW);
+    fresh.record("map", 1, true, "a");
+    const again = createTour(three(), fresh, fakeStage().stage);
+    await again.start("orientation", 1);
+    await again.continueOn();
+    expect(again.active.value?.tour.id).toBe("map");
+    expect(again.active.value?.index).toBe(0);
   });
 });
 

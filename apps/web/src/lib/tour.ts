@@ -10,7 +10,7 @@ import { domSwitches, type Switches } from "./tour-target.js";
  * ends, and the reader's progress through each tour, kept in localStorage.
  */
 
-export type TourId = "orientation" | "map" | "earthquakes" | "mechanism" | "volcanoes";
+export type TourId = "orientation" | "map" | "earthquakes" | "mechanism" | "volcanoes" | "marks";
 
 /** What a step acts through, built by `App.vue`; `map` resolves once a map is on screen. */
 export interface TourStage {
@@ -25,6 +25,12 @@ export interface TourStage {
   /** The route as it stands, for `restore`. */
   location: () => string;
   restore: (location: string) => Promise<void>;
+  /**
+   * Adds the tour's example marks, in a group of their own, unless they are there already, and
+   * answers the group's id; `clearDemoMarks` takes them out again (the runner calls it at the end).
+   */
+  demoMarks: () => string;
+  clearDemoMarks: () => void;
 }
 
 /** The stage as a step sees it, with the map on screen (recorded for the restore on first use). */
@@ -80,10 +86,24 @@ export interface TourProgressDocument {
   tours: Partial<Record<TourId, TourRecord>>;
   /** The ids of the steps the reader has been shown, per tour; a step added later is unseen. */
   seen: Partial<Record<TourId, string[]>>;
+  /** The example marks a tour added, so a page left mid-tour can take them out on the next load. */
+  demo: TourDemo | null;
+}
+
+export interface TourDemo {
+  group: string;
+  marks: string[];
 }
 
 export const TOUR_KEY = "tectonic.tour";
-const TOUR_IDS: readonly TourId[] = ["orientation", "map", "earthquakes", "mechanism", "volcanoes"];
+const TOUR_IDS: readonly TourId[] = [
+  "orientation",
+  "map",
+  "earthquakes",
+  "mechanism",
+  "volcanoes",
+  "marks",
+];
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
@@ -98,9 +118,20 @@ function parseRecord(v: unknown): TourRecord | null {
   return { step, done, at };
 }
 
+function parseDemo(v: unknown): TourDemo | null {
+  if (!isRecord(v) || typeof v.group !== "string" || !Array.isArray(v.marks)) return null;
+  return { group: v.group, marks: v.marks.filter((m): m is string => typeof m === "string") };
+}
+
 /** Reads a stored document; anything malformed reads as a fresh start. */
 export function parseTourProgress(raw: string | null): TourProgressDocument {
-  const fresh: TourProgressDocument = { offerDismissed: false, last: null, tours: {}, seen: {} };
+  const fresh: TourProgressDocument = {
+    offerDismissed: false,
+    last: null,
+    tours: {},
+    seen: {},
+    demo: null,
+  };
   if (raw === null) return fresh;
   let v: unknown;
   try {
@@ -129,6 +160,7 @@ export function parseTourProgress(raw: string | null): TourProgressDocument {
     last: isTourId(v.last) ? v.last : null,
     tours,
     seen,
+    demo: parseDemo(v.demo),
   };
 }
 
@@ -139,6 +171,7 @@ export interface TourProgress {
   dismissOffer: () => void;
   /** Forgets everything: every tour back to not started, no step seen, the offer due again. */
   reset: () => void;
+  setDemo: (demo: TourDemo | null) => void;
 }
 
 export function createTourProgress(
@@ -180,7 +213,10 @@ export function createTourProgress(
       if (!doc.value.offerDismissed) commit({ ...doc.value, offerDismissed: true });
     },
     reset() {
-      commit(parseTourProgress(null));
+      commit({ ...parseTourProgress(null), demo: doc.value.demo });
+    },
+    setDemo(demo) {
+      commit({ ...doc.value, demo });
     },
   };
 }
@@ -219,6 +255,13 @@ export interface TourRunner {
   next: () => Promise<void>;
   back: () => Promise<void>;
   goTo: (index: number) => Promise<void>;
+  /**
+   * On the last step of a main tour, the next main tour in the list with a step not yet seen;
+   * null elsewhere.
+   */
+  following: ComputedRef<Tour | null>;
+  /** Goes on from the last step into `following`, keeping the reader's view to give back at the end. */
+  continueOn: () => Promise<void>;
   /** Takes the step's side path; its last step, or Back from its first, returns here. */
   detour: () => Promise<void>;
   /** Leaves the tour where it stands, saving the step, and gives the reader's view back. */
@@ -345,6 +388,13 @@ export function createTour(
     await enter(parent.tour, parent.index, null, null);
   }
 
+  const following = computed(() => {
+    const c = current.value;
+    if (c?.parent !== null || c.index < c.tour.steps.length - 1) return null;
+    const after = tours.slice(tours.indexOf(c.tour) + 1);
+    return after.find((t) => t.sidePath !== true && hasUnseen(progress.doc.value, [t])) ?? null;
+  });
+
   async function end(done: boolean): Promise<void> {
     const c = current.value;
     if (c === null) return;
@@ -360,6 +410,8 @@ export function createTour(
     const back = origin;
     origin = null;
     if (back !== null && back !== stage.location()) await stage.restore(back);
+    // After the route, so an overlay showing the examples has closed before they go.
+    stage.clearDemoMarks();
   }
 
   return {
@@ -412,6 +464,17 @@ export function createTour(
       const c = current.value;
       if (c === null || index < 0 || index >= c.tour.steps.length) return;
       await enter(c.tour, index, c.index, c.parent);
+    },
+    following,
+    async continueOn() {
+      const c = current.value;
+      const to = following.value;
+      if (c === null || to === null) return;
+      await c.tour.steps[c.index]?.leave?.(ctx);
+      progress.record(c.tour.id, 0, true);
+      const r = progress.doc.value.tours[to.id];
+      const step = r !== undefined && !r.done ? Math.min(r.step, to.steps.length - 1) : 0;
+      await enter(to, step, null, null);
     },
     async detour() {
       const c = current.value;

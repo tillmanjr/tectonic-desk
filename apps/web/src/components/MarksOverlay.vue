@@ -113,7 +113,7 @@ onUnmounted(() => {
         ×
       </button>
     </div>
-    <nav class="marks-rail" :aria-label="MARK_TERMS.groups">
+    <nav class="marks-rail" data-tour="marks.rail" :aria-label="MARK_TERMS.groups">
       <button
         type="button"
         :aria-current="state.group === ALL_GROUP ? 'true' : undefined"
@@ -146,11 +146,11 @@ onUnmounted(() => {
       </button>
       <MarksIO />
     </nav>
-    <div v-if="view !== null" ref="mainEl" class="marks-main">
+    <div v-if="view !== null" ref="mainEl" class="marks-main" data-tour="marks.main">
       <MarkPanels v-if="state.mode === 'panels'" :view="view" />
       <MarkMatrix v-else-if="state.mode === 'matrix'" :view="view" />
       <template v-else>
-        <div class="marks-grouphead">
+        <div class="marks-grouphead" data-tour="marks.grouphead">
           <div v-if="!view.virtual" class="morder">
             <button
               type="button"
