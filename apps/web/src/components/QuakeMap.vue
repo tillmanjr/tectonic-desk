@@ -48,6 +48,7 @@ const shake = useShakeLayer({ api, catalog, mv });
     :count-line="q.countLine.value"
     :density="q.densityLegend.value"
     :floor="catalog.floor.value"
+    :busy="catalog.loading.value ? 'Loading events…' : null"
   >
     <template #tools>
       <label

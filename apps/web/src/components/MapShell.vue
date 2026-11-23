@@ -40,8 +40,10 @@ const props = withDefaults(
     floor?: number | null;
     /** Whether the Section tool and its line are offered; the Volcanoes page has no profile. */
     sectionTool?: boolean;
+    /** What the page is fetching, shown over the map while the markers dim; null when settled. */
+    busy?: string | null;
   }>(),
-  { quakes: true, density: null, floor: null, sectionTool: true },
+  { quakes: true, density: null, floor: null, sectionTool: true, busy: null },
 );
 const { mv } = props;
 const aurora = useInjected(AURORA);
@@ -212,6 +214,9 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
     <slot name="bar"></slot>
     <div class="mapwrap">
       <span class="mapcount" aria-live="polite">{{ countLine }}</span>
+      <span v-if="busy !== null" class="mapbusy" role="status"
+        ><span class="spin" aria-hidden="true"></span>{{ busy }}</span
+      >
       <button
         v-hint="
           mv.locked.value
@@ -250,6 +255,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         :class="{
           locked: mv.locked.value,
           arming: mv.section.armed.value || mv.pin.armed.value,
+          busy: busy !== null,
         }"
         @mousemove="mv.onMapMove"
         @mouseleave="mv.onMapLeave()"

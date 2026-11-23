@@ -99,6 +99,8 @@ function clear(): void {
     dataset="earthquakes"
     :parts="parts"
     :hidden="catalog.hideMarkers.value"
+    :busy="catalog.loading.value"
+    :error="catalog.error.value"
     @update:hidden="catalog.hideMarkers.value = $event"
   >
     <template #info>

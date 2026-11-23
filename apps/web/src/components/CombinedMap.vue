@@ -47,6 +47,13 @@ const mv = useMapView({
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });
 const shake = useShakeLayer({ api, catalog, mv });
+const busy = computed(() => {
+  const parts = [
+    catalog.loading.value ? "events" : null,
+    store.loading.value ? "volcanoes" : null,
+  ].filter((p) => p !== null);
+  return parts.length === 0 ? null : `Loading ${parts.join(" and ")}…`;
+});
 const v = useVolcanoLayer({ store, mv });
 const countLine = computed(
   () => `${q.countLine.value} · ${v.countLine.value.replace(/^Showing /, "")}`,
@@ -55,6 +62,7 @@ const countLine = computed(
 
 <template>
   <MapShell
+    :busy="busy"
     :mv="mv"
     label="Map of earthquake epicenters and Holocene volcanoes"
     :count-line="countLine"

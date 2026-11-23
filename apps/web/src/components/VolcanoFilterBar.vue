@@ -44,6 +44,8 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
     dataset="volcanoes"
     :parts="parts"
     :hidden="store.hideMarkers.value"
+    :busy="store.loading.value"
+    :error="store.error.value"
     @update:hidden="store.hideMarkers.value = $event"
   >
     <template #info>
