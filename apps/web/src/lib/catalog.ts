@@ -68,6 +68,7 @@ export interface Catalog {
   loading: Ref<boolean>;
   error: Ref<string | null>;
   selectedId: Ref<string | null>;
+  /** The selected event as loaded: from the window shown, else the preset window; null when neither holds it. */
   selected: ComputedRef<ApiEvent | null>;
   /** Magnitude and depth bounds applied to the map, table and charts. */
   filter: Ref<EventFilter>;
@@ -115,11 +116,16 @@ export function createCatalog(api: ApiClient, now: () => Date): Catalog {
   const error = ref<string | null>(null);
   const selectedId = ref<string | null>(null);
   const region = computed(() => regions.value.find((r) => r.id === regionId.value) ?? null);
-  const selected = computed(() => events.value.find((e) => e.id === selectedId.value) ?? null);
   const filter = ref<EventFilter>(EMPTY_FILTER);
   const range = ref<Range | null>(null);
   const hideMarkers = ref(false);
   const windowEvents = computed(() => rangeEvents.value ?? events.value);
+  const selected = computed(() => {
+    const id = selectedId.value;
+    return (
+      windowEvents.value.find((e) => e.id === id) ?? events.value.find((e) => e.id === id) ?? null
+    );
+  });
   const filtered = computed(() => applyFilter(windowEvents.value, filter.value));
   const requested = computed(() => {
     const base = region.value?.minMag ?? 0;

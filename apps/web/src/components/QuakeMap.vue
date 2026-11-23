@@ -2,7 +2,10 @@
 import AnimationBar from "./AnimationBar.vue";
 import MapDensity from "./MapDensity.vue";
 import MapEvents from "./MapEvents.vue";
+import MapShake from "./MapShake.vue";
 import MapShell from "./MapShell.vue";
+import ShakeLegendRow from "./ShakeLegendRow.vue";
+import ShakeToggle from "./ShakeToggle.vue";
 import {
   API,
   CATALOG,
@@ -14,7 +17,7 @@ import {
   useInjected,
   ZONE,
 } from "../lib/keys.js";
-import { useQuakeLayer } from "../lib/layers.js";
+import { useQuakeLayer, useShakeLayer } from "../lib/layers.js";
 import { vHint } from "../lib/hint.js";
 import { useMapView } from "../lib/mapview.js";
 
@@ -35,6 +38,7 @@ const mv = useMapView({
   pins: useInjected(PINS),
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });
+const shake = useShakeLayer({ api, catalog, mv });
 </script>
 
 <template>
@@ -59,6 +63,7 @@ const q = useQuakeLayer({ catalog, clock, zone, mv });
         "
         ><input v-model="q.showMech.value" type="checkbox" /> Focal mechanisms</label
       >
+      <ShakeToggle :shake="shake" />
     </template>
     <template #actions>
       <button
@@ -85,6 +90,7 @@ const q = useQuakeLayer({ catalog, clock, zone, mv });
         :path="mv.view.value.path"
         :grid="q.density.value"
       />
+      <MapShake v-if="shake.map.value !== null" :path="mv.view.value.path" :map="shake.map.value" />
       <MapEvents
         v-if="!catalog.hideMarkers.value"
         :frame="frame"
@@ -98,6 +104,9 @@ const q = useQuakeLayer({ catalog, clock, zone, mv });
         @hover="q.onHover"
         @leave="mv.clearTip()"
       />
+    </template>
+    <template #legend>
+      <ShakeLegendRow v-if="shake.map.value !== null" :map="shake.map.value" />
     </template>
   </MapShell>
 </template>

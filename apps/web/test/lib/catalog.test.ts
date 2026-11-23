@@ -135,6 +135,14 @@ describe("createCatalog", () => {
     expect(c.filtered.value[0]?.id).toBe("ranged");
     expect(c.events.value[0]?.id).toBe("preset");
     expect(c.truncated.value).toBe(true);
+    // The selection is found in the window shown, else in the preset window.
+    c.select("ranged");
+    expect(c.selected.value?.id).toBe("ranged");
+    c.select("preset");
+    expect(c.selected.value?.id).toBe("preset");
+    c.select("elsewhere");
+    expect(c.selected.value).toBeNull();
+    c.select(null);
     expect(api.events).toHaveBeenCalledTimes(2);
     expect(vi.mocked(api.events).mock.calls[1]?.[0]).toMatchObject(win);
     await c.refetch();

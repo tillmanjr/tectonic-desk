@@ -6,6 +6,7 @@ import type {
   StoredVolcanoStatus,
 } from "./index.js";
 import type { AuroraFrameMeta, SpaceAlert, SpaceFlare, SpaceScales, SpaceSeries } from "./space.js";
+import type { ShakeMap } from "./shakemap.js";
 import type { SunFrameMeta } from "./sun.js";
 
 /** The wire form of a domain object: Date becomes an ISO 8601 UTC string. */
@@ -276,3 +277,6 @@ export interface ApiSunFrames {
   generatedAt: string;
   frames: Json<SunFrameMeta>[];
 }
+
+/** `GET /api/events/:id/shakemap`: the preferred ShakeMap's MMI grid. */
+export type ApiShakeMap = Json<ShakeMap>;

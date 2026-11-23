@@ -1,0 +1,57 @@
+{
+  "type": "Feature",
+  "id": "us6000u1z5",
+  "properties": {
+    "mag": 6.7,
+    "place": "central Mid-Atlantic Ridge",
+    "time": 1791870281603,
+    "updated": 1793722776277,
+    "felt": 1,
+    "cdi": 2,
+    "mmi": 0,
+    "alert": "green",
+    "status": "reviewed",
+    "tsunami": 0,
+    "sig": 691,
+    "net": "us",
+    "types": ",dyfi,internal-moment-tensor,internal-origin,losspager,moment-tensor,origin,phase-data,shakemap,",
+    "magType": "mww",
+    "type": "earthquake",
+    "products": {
+      "shakemap": [
+        {
+          "id": "urn:usgs-product:us:shakemap:us6000u1z5:1793564504643",
+          "type": "shakemap",
+          "code": "us6000u1z5",
+          "source": "us",
+          "updateTime": 1793564504643,
+          "status": "UPDATE",
+          "preferredWeight": 183,
+          "properties": {
+            "maxmmi": "nan",
+            "map-status": "automatic",
+            "process-timestamp": "2026-11-01T20:20:52Z",
+            "version": "4",
+            "event-type": "ACTUAL"
+          },
+          "contents": {
+            "download/coverage_mmi_medium_res.covjson": {
+              "contentType": "application/octet-stream",
+              "url": "https://earthquake.usgs.gov/product/shakemap/us6000u1z5/us/1793564504643/download/coverage_mmi_medium_res.covjson",
+              "length": 92137
+            },
+            "download/cont_mmi.json": {
+              "contentType": "application/json",
+              "url": "https://earthquake.usgs.gov/product/shakemap/us6000u1z5/us/1793564504643/download/cont_mmi.json",
+              "length": 7959
+            }
+          }
+        }
+      ]
+    }
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [-19.122, -0.5314, 10]
+  }
+}

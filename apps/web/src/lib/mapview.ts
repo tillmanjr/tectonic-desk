@@ -106,6 +106,11 @@ export interface MapView {
   section: SectionTool;
   /** The pin tool: the bar, placing the view's pin and moving it. */
   pin: PinTool;
+  /**
+   * A page layer's readout for the lon/lat under the pointer (the ShakeMap intensity), or null
+   * for none there; consulted where no marker, boundary or fault has a tip of its own.
+   */
+  probe: ShallowRef<((lonLat: [number, number]) => string | null) | null>;
   plateSegments: ShallowRef<PlateSegment[]>;
   plates: ShallowRef<Feature<LineString, PlateProps>[]>;
   hoveredPlate: Ref<number | null>;
@@ -246,6 +251,9 @@ export function useMapView(opts: MapViewOptions): MapView {
   const plates = shallowRef<Feature<LineString, PlateProps>[]>([]);
   const basemap = shallowRef<Basemap | null>(null);
   const tip = ref<Tip | null>(null);
+  const probe = shallowRef<((lonLat: [number, number]) => string | null) | null>(null);
+  /** Whether the tip showing is the probe's, so moving off its layer clears it. */
+  let probing = false;
   const hoveredPlate = ref<number | null>(null);
 
   /** Which age classes of Quaternary faults are shown; empty means none. Opens on the historic and latest Quaternary classes. */
@@ -445,21 +453,51 @@ export function useMapView(opts: MapViewOptions): MapView {
       pinReadout(ev, ll, "click to place");
       return;
     }
-    if (!faultsOn.value || visibleFaults.value.length === 0) return;
     const target = ev.target;
-    if (target instanceof Element && target.closest("[data-hit]") !== null) return;
+    // Markers and boundaries show their own tips.
+    if (target instanceof Element && target.closest("[data-hit]") !== null) {
+      probing = false;
+      return;
+    }
+    if (faultAt(ev)) probing = false;
+    else probeAt(ev);
+  }
+  /** Shows the Quaternary fault under the pointer; false when none is near. */
+  function faultAt(ev: MouseEvent): boolean {
+    if (!faultsOn.value || visibleFaults.value.length === 0) return false;
     const { x, y, unit } = projectedPointer(ev);
     const hit = faultIdx.value.nearest(x, y, (FAULT_HIT_PX * unit) / transform.value.k);
     if (hit === null) {
-      onMapLeave();
-      return;
+      if (hoveredFault.value !== null) {
+        hoveredFault.value = null;
+        tip.value = null;
+      }
+      return false;
     }
     hoveredFault.value = hit;
     showTip(faultTitle(hit.feature.properties), ev.clientX, ev.clientY - TIP_LIFT);
+    return true;
+  }
+  /** A page layer's readout for the point under the pointer, when it has one there. */
+  function probeAt(ev: MouseEvent): void {
+    const read = probe.value;
+    const ll = read === null ? null : invertPointer(ev);
+    const text = read === null || ll === null ? null : read(ll);
+    if (text !== null) {
+      probing = true;
+      showTip(text, ev.clientX, ev.clientY - TIP_LIFT);
+    } else if (probing) {
+      probing = false;
+      tip.value = null;
+    }
   }
   function onMapLeave(): void {
     if (pin.armed.value) {
       pin.hover(null);
+      tip.value = null;
+    }
+    if (probing) {
+      probing = false;
       tip.value = null;
     }
     if (hoveredFault.value === null) return;
@@ -537,6 +575,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     invertPointer,
     section,
     pin,
+    probe,
     onPinHover,
     onPinLeave,
     onPinDown,

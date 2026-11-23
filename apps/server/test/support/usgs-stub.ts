@@ -5,10 +5,12 @@ export interface StubOptions {
   feeds?: Partial<Record<FeedKind, FeedDocument | Error>>;
   details?: Record<string, DetailDocument | Error>;
   query?: (p: QueryParams) => FeedDocument;
+  /** Documents by absolute URL for `fetchJson`. */
+  urls?: Record<string, unknown>;
 }
 
 export interface StubUsgs extends UsgsClient {
-  calls: { feed: FeedKind[]; detail: string[]; query: QueryParams[] };
+  calls: { feed: FeedKind[]; detail: string[]; query: QueryParams[]; json: string[] };
 }
 
 const settle = <T>(v: T | Error | undefined, what: string): Promise<T> => {
@@ -18,7 +20,7 @@ const settle = <T>(v: T | Error | undefined, what: string): Promise<T> => {
 };
 
 export function stubUsgs(opts: StubOptions = {}): StubUsgs {
-  const calls: StubUsgs["calls"] = { feed: [], detail: [], query: [] };
+  const calls: StubUsgs["calls"] = { feed: [], detail: [], query: [], json: [] };
   return {
     calls,
     fetchFeed: (kind) => {
@@ -34,6 +36,10 @@ export function stubUsgs(opts: StubOptions = {}): StubUsgs {
       return opts.query
         ? Promise.resolve(opts.query(p))
         : Promise.reject(new Error("stub has no query"));
+    },
+    fetchJson: (url) => {
+      calls.json.push(url);
+      return settle(opts.urls?.[url], `url ${url}`);
     },
   };
 }
