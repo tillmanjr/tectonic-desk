@@ -5,6 +5,7 @@ import MapBasemap from "./MapBasemap.vue";
 import MapFaults from "./MapFaults.vue";
 import MapField from "./MapField.vue";
 import MapLegend from "./MapLegend.vue";
+import MapMeasure from "./MapMeasure.vue";
 import MapPin from "./MapPin.vue";
 import MapPlates from "./MapPlates.vue";
 import MapSection from "./MapSection.vue";
@@ -163,6 +164,17 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
       </button>
       <button
         v-hint="
+          'Measures between two points: click both on the map, then drag either end. Reads the angular distance Δ and surface (great-circle) distance, and the straight chord through the Earth with how deep its midpoint dips and the PREM layer there. Spherical Earth, 6371 km; within about 0.5 % of the WGS84 geodesic. Click again to clear.'
+        "
+        type="button"
+        class="sectionbtn measurebtn"
+        :aria-pressed="mv.measuring.value"
+        @click="mv.toggleMeasure()"
+      >
+        Measure
+      </button>
+      <button
+        v-hint="
           'Drops your own pin on this map view (one each for Global and West Coast), kept in this browser. Click the map to place it; press and hold the pin to move it. The bar lists recent placements.'
         "
         type="button"
@@ -254,7 +266,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         :viewBox="`0 0 ${String(mv.view.value.frame.width)} ${String(mv.view.value.frame.height)}`"
         :class="{
           locked: mv.locked.value,
-          arming: mv.section.armed.value || mv.pin.armed.value,
+          arming: mv.section.armed.value || mv.pin.armed.value || mv.measure.armed.value,
           busy: busy !== null,
         }"
         @mousemove="mv.onMapMove"
@@ -319,6 +331,19 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
             @drag-start="mv.section.dragStart"
             @drag-move="mv.onSectionDragMove"
             @drag-end="mv.section.dragEnd()"
+          />
+          <MapMeasure
+            v-if="mv.measure.shown.value !== null || mv.measure.pending.value !== null"
+            :frame="mv.view.value.frame"
+            :path="mv.view.value.path"
+            :k="mv.transform.value.k"
+            :line="mv.measure.shown.value"
+            :pending="mv.measure.pending.value"
+            :cursor="mv.measure.cursor.value"
+            :lines="mv.measureText.value"
+            @drag-start="mv.measure.dragStart"
+            @drag-move="mv.onMeasureDragMove"
+            @drag-end="mv.measure.dragEnd()"
           />
           <MapPin
             v-if="mv.pin.shown.value !== null"

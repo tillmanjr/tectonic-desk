@@ -20,6 +20,7 @@ import { loadBasemapFor, resetBasemapCache } from "./basemap-cache.js";
 import { loadFields, rasterFor, resetFieldsCache, viewOf, type FieldChoice } from "./fields.js";
 import { usePinTool, type PinTool } from "./pin-tool.js";
 import { fmtLatLon, pinTitle, type PinsStore } from "./pins.js";
+import { measureLines, measureOf } from "./measure.js";
 import type { Section } from "./section.js";
 import { useSectionTool, type SectionTool } from "./section-tool.js";
 import { mustRef } from "./dom.js";
@@ -106,6 +107,18 @@ export interface MapView {
   section: SectionTool;
   /** The pin tool: the bar, placing the view's pin and moving it. */
   pin: PinTool;
+  /**
+   * The measure tool: the section tool's placing and dragging over a line kept in memory only
+   * (its `halfKm` unused); `shown` is the line, `pending` and `cursor` the line being placed.
+   */
+  measure: SectionTool;
+  /** Whether the Measure button reads as on: placing, or a line on the map. */
+  measuring: ComputedRef<boolean>;
+  /** The two lines the measure label reads, for the line placed, dragged or being placed; null for none. */
+  measureText: ComputedRef<[string, string] | null>;
+  /** Arms the measure tool, or clears the measurement and disarms it. */
+  toggleMeasure(): void;
+  onMeasureDragMove(ev: PointerEvent): void;
   /**
    * A page layer's readout for the lon/lat under the pointer (the ShakeMap intensity), or null
    * for none there; consulted where no marker, boundary or fault has a tip of its own.
@@ -195,25 +208,53 @@ export function useMapView(opts: MapViewOptions): MapView {
   );
   const section = useSectionTool(opts.section, opts.setSection);
   const pin = usePinTool(opts.pins, () => viewOf(view.value.frame.global));
+  const measured = ref<Section | null>(null);
+  const ruler = useSectionTool(measured, (s) => {
+    measured.value = s;
+  });
+  const measuring = computed(() => ruler.armed.value || ruler.shown.value !== null);
+  const measureText = computed<[string, string] | null>(() => {
+    const s = ruler.shown.value;
+    const a = ruler.pending.value;
+    const b = ruler.cursor.value;
+    if (s !== null) return measureLines(measureOf(s.a, s.b));
+    return a === null || b === null ? null : measureLines(measureOf(a, b));
+  });
+  function toggleMeasure(): void {
+    if (measuring.value) ruler.clear();
+    else ruler.toggle();
+  }
   let lastDown: [number, number] | null = null;
   function onEscape(ev: KeyboardEvent): void {
     if (ev.key !== "Escape") return;
     section.cancel();
     pin.cancel();
+    ruler.cancel();
     tip.value = null;
   }
-  const escapable = computed(() => section.armed.value || pin.armed.value || pin.lifted.value);
+  const escapable = computed(
+    () => section.armed.value || pin.armed.value || pin.lifted.value || ruler.armed.value,
+  );
   watch(escapable, (on) => {
     if (on) document.addEventListener("keydown", onEscape);
     else document.removeEventListener("keydown", onEscape);
   });
-  // One placement at a time: arming either tool stands the other down.
+  // One placement at a time: arming any tool stands the others down.
   watch(section.armed, (on) => {
-    if (on) pin.cancel();
+    if (!on) return;
+    pin.cancel();
+    ruler.cancel();
   });
   watch(pin.armed, (on) => {
-    if (on) section.cancel();
-    else tip.value = null;
+    if (on) {
+      section.cancel();
+      ruler.cancel();
+    } else tip.value = null;
+  });
+  watch(ruler.armed, (on) => {
+    if (!on) return;
+    section.cancel();
+    pin.cancel();
   });
   const coarse = coarsePointer();
   /**
@@ -404,7 +445,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** How far a press may travel and still count as a click rather than a pan. */
   const CLICK_SLOP_PX = 3;
   function onMapClick(ev: MouseEvent): void {
-    if (!section.armed.value && !pin.armed.value) return;
+    if (!section.armed.value && !pin.armed.value && !ruler.armed.value) return;
     const down = lastDown;
     if (down !== null && Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > CLICK_SLOP_PX) {
       return;
@@ -412,6 +453,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     const ll = invertPointer(ev);
     if (ll === null) return;
     if (pin.armed.value) pin.place(ll);
+    else if (ruler.armed.value) ruler.place(ll);
     else section.place(ll);
   }
   /** The live readout beside the pointer while the pin is placed or moved. */
@@ -440,6 +482,10 @@ export function useMapView(opts: MapViewOptions): MapView {
     pin.release();
     tip.value = null;
   }
+  function onMeasureDragMove(ev: PointerEvent): void {
+    const ll = invertPointer(ev);
+    if (ll !== null) ruler.dragMove(ll);
+  }
   function onSectionDragMove(ev: PointerEvent): void {
     const ll = invertPointer(ev);
     if (ll !== null) section.dragMove(ll);
@@ -447,6 +493,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** Fault traces have no hit paths of their own; the svg looks one up under the pointer. */
   function onMapMove(ev: MouseEvent): void {
     if (section.armed.value) section.hover(invertPointer(ev));
+    if (ruler.armed.value) ruler.hover(invertPointer(ev));
     if (pin.armed.value) {
       const ll = invertPointer(ev);
       pin.hover(ll);
@@ -572,6 +619,11 @@ export function useMapView(opts: MapViewOptions): MapView {
     onMapDown,
     onMapClick,
     onSectionDragMove,
+    measure: ruler,
+    measuring,
+    measureText,
+    toggleMeasure,
+    onMeasureDragMove,
     invertPointer,
     section,
     pin,
