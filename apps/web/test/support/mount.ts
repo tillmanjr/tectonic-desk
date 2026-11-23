@@ -15,6 +15,7 @@ import {
   MARKS,
   MARKS_NAV,
   NOTICE,
+  PINS,
   SECTION,
   SELECT,
   SELECT_VOLCANO,
@@ -33,6 +34,7 @@ import {
 } from "../../src/lib/keys.js";
 import { createMarks, type MarksStore } from "../../src/lib/marks.js";
 import { createNotice, type NoticeStore } from "../../src/lib/notice.js";
+import { createPins, type PinsStore } from "../../src/lib/pins.js";
 import type { Section } from "../../src/lib/section.js";
 import { createSettings, type SettingsStore } from "../../src/lib/settings.js";
 import { createSpaceStore, type SpaceRange, type SpaceStore } from "../../src/lib/space.js";
@@ -58,6 +60,7 @@ export interface Context {
   setVolcanoFilter: Mock<(f: VolcanoFilter) => void>;
   settings: SettingsStore;
   marks: MarksStore;
+  pins: PinsStore;
   notice: NoticeStore;
   section: Ref<Section | null>;
   setSection: Mock<(s: Section | null) => void>;
@@ -142,6 +145,7 @@ export async function makeContext(
     setVolcanoFilter: vi.fn(),
     settings: createSettings(null),
     marks: createMarks(null),
+    pins: createPins(null, () => now),
     notice: createNotice(),
     section: ref<Section | null>(null),
     setSection: vi.fn(),
@@ -185,6 +189,7 @@ export function mountWith(
       provide(SET_VOLCANO_FILTER, ctx.setVolcanoFilter);
       provide(SETTINGS, ctx.settings);
       provide(MARKS, ctx.marks);
+      provide(PINS, ctx.pins);
       provide(MARKS_NAV, ctx.nav);
       provide(NOTICE, ctx.notice);
       provide(SECTION, ctx.section);

@@ -18,6 +18,8 @@ import {
 import type { ApiClient } from "./api.js";
 import { loadBasemapFor, resetBasemapCache } from "./basemap-cache.js";
 import { loadFields, rasterFor, resetFieldsCache, viewOf, type FieldChoice } from "./fields.js";
+import { usePinTool, type PinTool } from "./pin-tool.js";
+import { fmtLatLon, pinTitle, type PinsStore } from "./pins.js";
 import type { Section } from "./section.js";
 import { useSectionTool, type SectionTool } from "./section-tool.js";
 import { mustRef } from "./dom.js";
@@ -67,6 +69,8 @@ export interface MapViewOptions {
   /** The section in the route and its setter, for the section tool. */
   section: Readonly<Ref<Section | null>>;
   setSection: (s: Section | null) => void;
+  /** The reader's pins, one per map view. */
+  pins: PinsStore;
 }
 
 export interface MapViewFrame {
@@ -100,6 +104,8 @@ export interface MapView {
   fieldError: Ref<boolean>;
   /** The section tool: arming, placing and dragging the line. */
   section: SectionTool;
+  /** The pin tool: the bar, placing the view's pin and moving it. */
+  pin: PinTool;
   plateSegments: ShallowRef<PlateSegment[]>;
   plates: ShallowRef<Feature<LineString, PlateProps>[]>;
   hoveredPlate: Ref<number | null>;
@@ -125,8 +131,13 @@ export interface MapView {
   onMapLeave(): void;
   /** Records where a press began, so a click that ends a pan is not a placement. */
   onMapDown(ev: MouseEvent): void;
-  /** Places a section point while the tool is armed. */
+  /** Places a section point or the pin while its tool is armed. */
   onMapClick(ev: MouseEvent): void;
+  onPinHover(ev: MouseEvent): void;
+  onPinLeave(): void;
+  onPinDown(ev: PointerEvent): void;
+  onPinMove(ev: PointerEvent): void;
+  onPinUp(): void;
   onSectionDragMove(ev: PointerEvent): void;
   /** The lon/lat under a pointer event, or null off the map. */
   invertPointer(ev: MouseEvent): [number, number] | null;
@@ -135,6 +146,8 @@ export interface MapView {
 
 /** Boundary and fault tooltips follow the pointer, so lift them clear of the cursor. */
 export const TIP_LIFT = 10;
+/** The pin readout sits above the pin's head, which stands 26 px over the pointer. */
+const PIN_TIP_LIFT = 34;
 /** How close, in screen pixels, the pointer must come to a fault vertex. */
 const FAULT_HIT_PX = 6;
 
@@ -176,13 +189,26 @@ export function useMapView(opts: MapViewOptions): MapView {
     rasterFor(fields.value, field.value, viewOf(view.value.frame.global)),
   );
   const section = useSectionTool(opts.section, opts.setSection);
+  const pin = usePinTool(opts.pins, () => viewOf(view.value.frame.global));
   let lastDown: [number, number] | null = null;
   function onEscape(ev: KeyboardEvent): void {
-    if (ev.key === "Escape") section.cancel();
+    if (ev.key !== "Escape") return;
+    section.cancel();
+    pin.cancel();
+    tip.value = null;
   }
-  watch(section.armed, (on) => {
+  const escapable = computed(() => section.armed.value || pin.armed.value || pin.lifted.value);
+  watch(escapable, (on) => {
     if (on) document.addEventListener("keydown", onEscape);
     else document.removeEventListener("keydown", onEscape);
+  });
+  // One placement at a time: arming either tool stands the other down.
+  watch(section.armed, (on) => {
+    if (on) pin.cancel();
+  });
+  watch(pin.armed, (on) => {
+    if (on) section.cancel();
+    else tip.value = null;
   });
   const coarse = coarsePointer();
   /**
@@ -370,13 +396,41 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** How far a press may travel and still count as a click rather than a pan. */
   const CLICK_SLOP_PX = 3;
   function onMapClick(ev: MouseEvent): void {
-    if (!section.armed.value) return;
+    if (!section.armed.value && !pin.armed.value) return;
     const down = lastDown;
     if (down !== null && Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > CLICK_SLOP_PX) {
       return;
     }
     const ll = invertPointer(ev);
-    if (ll !== null) section.place(ll);
+    if (ll === null) return;
+    if (pin.armed.value) pin.place(ll);
+    else section.place(ll);
+  }
+  /** The live readout beside the pointer while the pin is placed or moved. */
+  function pinReadout(ev: MouseEvent, ll: [number, number] | null, verb: string): void {
+    if (ll === null) tip.value = null;
+    else showTip(`${fmtLatLon(ll[0], ll[1])} · ${verb}`, ev.clientX, ev.clientY - PIN_TIP_LIFT);
+  }
+  function onPinHover(ev: MouseEvent): void {
+    const p = pin.pin.value;
+    if (p === null || pin.lifted.value) return;
+    showTip(pinTitle(p), ev.clientX, ev.clientY - PIN_TIP_LIFT);
+  }
+  function onPinLeave(): void {
+    if (!pin.lifted.value) tip.value = null;
+  }
+  function onPinDown(ev: PointerEvent): void {
+    pin.press([ev.clientX, ev.clientY]);
+  }
+  function onPinMove(ev: PointerEvent): void {
+    const ll = invertPointer(ev);
+    pin.pressMove([ev.clientX, ev.clientY], ll);
+    if (pin.lifted.value) pinReadout(ev, ll, "release to set down");
+    else onPinHover(ev);
+  }
+  function onPinUp(): void {
+    pin.release();
+    tip.value = null;
   }
   function onSectionDragMove(ev: PointerEvent): void {
     const ll = invertPointer(ev);
@@ -385,6 +439,12 @@ export function useMapView(opts: MapViewOptions): MapView {
   /** Fault traces have no hit paths of their own; the svg looks one up under the pointer. */
   function onMapMove(ev: MouseEvent): void {
     if (section.armed.value) section.hover(invertPointer(ev));
+    if (pin.armed.value) {
+      const ll = invertPointer(ev);
+      pin.hover(ll);
+      pinReadout(ev, ll, "click to place");
+      return;
+    }
     if (!faultsOn.value || visibleFaults.value.length === 0) return;
     const target = ev.target;
     if (target instanceof Element && target.closest("[data-hit]") !== null) return;
@@ -398,6 +458,10 @@ export function useMapView(opts: MapViewOptions): MapView {
     showTip(faultTitle(hit.feature.properties), ev.clientX, ev.clientY - TIP_LIFT);
   }
   function onMapLeave(): void {
+    if (pin.armed.value) {
+      pin.hover(null);
+      tip.value = null;
+    }
     if (hoveredFault.value === null) return;
     hoveredFault.value = null;
     tip.value = null;
@@ -407,6 +471,7 @@ export function useMapView(opts: MapViewOptions): MapView {
     () => view.value.region,
     (r) => {
       reset();
+      pin.cancel();
       void loadBasemap(r);
     },
   );
@@ -421,6 +486,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   onUnmounted(() => {
     document.removeEventListener("keydown", onEscape);
     document.removeEventListener("mousedown", closePickOnOutside);
+    pin.cancel();
     window.removeEventListener("resize", measure);
     if (hintTimer !== null) clearTimeout(hintTimer);
   });
@@ -470,6 +536,12 @@ export function useMapView(opts: MapViewOptions): MapView {
     onSectionDragMove,
     invertPointer,
     section,
+    pin,
+    onPinHover,
+    onPinLeave,
+    onPinDown,
+    onPinMove,
+    onPinUp,
     onTouchStart,
   };
 }

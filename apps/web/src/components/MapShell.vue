@@ -5,14 +5,16 @@ import MapBasemap from "./MapBasemap.vue";
 import MapFaults from "./MapFaults.vue";
 import MapField from "./MapField.vue";
 import MapLegend from "./MapLegend.vue";
+import MapPin from "./MapPin.vue";
 import MapPlates from "./MapPlates.vue";
 import MapSection from "./MapSection.vue";
 import MapTeeth from "./MapTeeth.vue";
 import MapTooltip from "./MapTooltip.vue";
+import PinBar from "./PinBar.vue";
 import type { AuroraLegend } from "../lib/aurora-map.js";
 import type { DensityLegend } from "../lib/density.js";
 import { AGE_CODES, FAULT_AGES } from "../lib/faults.js";
-import { FIELD_CHOICES } from "../lib/fields.js";
+import { FIELD_CHOICES, viewOf } from "../lib/fields.js";
 import { fmtClock } from "../lib/format.js";
 import { vHint } from "../lib/hint.js";
 import { AURORA, useInjected, ZONE } from "../lib/keys.js";
@@ -157,6 +159,24 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
       >
         Section
       </button>
+      <button
+        v-hint="
+          'Drops your own pin on this map view (one each for Global and West Coast), kept in this browser. Click the map to place it; press and hold the pin to move it. The bar lists recent placements.'
+        "
+        type="button"
+        class="sectionbtn pinbtn"
+        :aria-pressed="mv.pin.open.value"
+        @click="mv.pin.toggle()"
+      >
+        <svg width="10" height="14" viewBox="-10 -27 20 28" aria-hidden="true">
+          <path
+            class="pbody"
+            d="M0,0 C-1.5,-6 -9,-10.5 -9,-17 A9,9 0 1 1 9,-17 C9,-10.5 1.5,-6 0,0 Z"
+          />
+          <circle class="pcore" cx="0" cy="-17" r="3.6" />
+        </svg>
+        Pin
+      </button>
       <span class="sp"></span>
       <button
         v-hint="'Zoom in on the centre of the map'"
@@ -188,6 +208,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
       </button>
       <slot name="actions"></slot>
     </div>
+    <PinBar v-if="mv.pin.open.value" :tool="mv.pin" :view="viewOf(mv.view.value.frame.global)" />
     <slot name="bar"></slot>
     <div class="mapwrap">
       <span class="mapcount" aria-live="polite">{{ countLine }}</span>
@@ -226,7 +247,10 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         role="img"
         :aria-label="label"
         :viewBox="`0 0 ${String(mv.view.value.frame.width)} ${String(mv.view.value.frame.height)}`"
-        :class="{ locked: mv.locked.value, arming: mv.section.armed.value }"
+        :class="{
+          locked: mv.locked.value,
+          arming: mv.section.armed.value || mv.pin.armed.value,
+        }"
         @mousemove="mv.onMapMove"
         @mouseleave="mv.onMapLeave()"
         @mousedown="mv.onMapDown"
@@ -289,6 +313,28 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
             @drag-start="mv.section.dragStart"
             @drag-move="mv.onSectionDragMove"
             @drag-end="mv.section.dragEnd()"
+          />
+          <MapPin
+            v-if="mv.pin.shown.value !== null"
+            :frame="mv.view.value.frame"
+            :k="mv.transform.value.k"
+            :at="mv.pin.shown.value"
+            :holding="mv.pin.holding.value"
+            :lifted="mv.pin.lifted.value"
+            @hover="mv.onPinHover"
+            @leave="mv.onPinLeave()"
+            @down="mv.onPinDown"
+            @move="mv.onPinMove"
+            @up="mv.onPinUp()"
+          />
+          <MapPin
+            v-if="mv.pin.armed.value && mv.pin.cursor.value !== null"
+            :frame="mv.view.value.frame"
+            :k="mv.transform.value.k"
+            :at="mv.pin.cursor.value"
+            :holding="false"
+            :lifted="false"
+            ghost
           />
         </g>
       </svg>

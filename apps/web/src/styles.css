@@ -49,6 +49,9 @@
   --au-70: #f57c00;
   --au-90: #c2185b;
   --au-night: rgba(10, 20, 60, 0.22);
+  --pin: #c2128c;
+  --pin-edge: #ffffff;
+  --pin-core: #ffffff;
   --f-ui: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
   --f-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
@@ -102,11 +105,17 @@
     --au-70: #ff9800;
     --au-90: #ec407a;
     --au-night: rgba(0, 0, 0, 0.45);
+    --pin: #ff4fc3;
+    --pin-edge: #141c22;
+    --pin-core: #141c22;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0c1216;
+  --pin: #ff4fc3;
+  --pin-edge: #141c22;
+  --pin-core: #141c22;
   --panel: #141c22;
   --ink: #e3e9ed;
   --muted: #8e9ba6;
@@ -2861,6 +2870,134 @@ table.matrix {
 }
 .hintfloat[hidden] {
   display: none;
+}
+/* The reader's pin: its own colour and a teardrop, unlike the section handles and every marker. */
+.mappin .pbody,
+.pinbtn .pbody {
+  fill: var(--pin);
+  stroke: var(--pin-edge);
+  stroke-width: 1.4;
+}
+.mappin .pcore,
+.pinbtn .pcore {
+  fill: var(--pin-core);
+}
+.mappin .pshadow {
+  fill: rgb(0 0 0 / 30%);
+  pointer-events: none;
+}
+.mappin .pbody,
+.mappin .pcore {
+  pointer-events: none;
+}
+.mappin .phit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 8;
+  cursor: pointer;
+  touch-action: none;
+}
+.mappin.holding .pshadow {
+  animation: pinhold 450ms linear forwards;
+}
+.mappin.lifted .phit {
+  cursor: grabbing;
+}
+.mappin.ghost {
+  opacity: 0.55;
+  pointer-events: none;
+}
+@keyframes pinhold {
+  to {
+    fill: var(--pin);
+    opacity: 0.8;
+  }
+}
+.maptools .pinbtn[aria-pressed="true"] {
+  border-color: var(--pin);
+  color: var(--pin);
+}
+.pinbar button {
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 600 12.5px var(--f-ui);
+  cursor: pointer;
+}
+.maptools .pinbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.pinbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid var(--pin);
+  font-size: 13.5px;
+}
+.pinbar .ptitle {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  color: var(--muted);
+}
+.pinbar .pcoords {
+  font: 500 13px var(--f-data);
+  min-width: 17ch;
+}
+.pinbar .pnote {
+  color: var(--muted);
+}
+.pinbar .pname {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pinbar .pname input {
+  width: 16ch;
+  font: 13px var(--f-ui);
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.pinbar .precent {
+  flex-basis: 100%;
+}
+.pinbar .precent summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.pinbar .precent ol {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: auto auto auto auto;
+  gap: 2px 14px;
+  justify-content: start;
+}
+.pinbar .precent li {
+  display: contents;
+}
+.pinbar .precent .pwhen,
+.pinbar .precent .pat {
+  font: 12.5px var(--f-data);
+}
+.pinbar .precent .pview {
+  color: var(--muted);
+}
+.pinbar .pclose {
+  margin-left: auto;
 }
 /* A held finger shows a control's hint, so keep the browser's long-press callout and selection off it. */
 @media (pointer: coarse) {
