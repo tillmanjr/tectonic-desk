@@ -114,9 +114,10 @@ function clear(): void {
         >i</span
       >
     </template>
-    <span v-hint="HINTS.magnitude" class="flabel">Magnitude</span>
+    <span v-hint="HINTS.magnitude" class="flabel" data-tour="refine.mag">Magnitude</span>
     <input
       v-hint="HINTS.magnitude"
+      data-tour="refine.mag"
       type="number"
       step="0.1"
       :min="floor"
@@ -128,6 +129,7 @@ function clear(): void {
     <span class="fto">to</span>
     <input
       v-hint="HINTS.magnitude"
+      data-tour="refine.mag"
       type="number"
       step="0.1"
       :value="text('maxMag')"
@@ -135,9 +137,10 @@ function clear(): void {
       aria-label="Maximum magnitude"
       @change="changeNumber('maxMag', $event)"
     />
-    <span v-hint="HINTS.depth" class="flabel">Depth km</span>
+    <span v-hint="HINTS.depth" class="flabel" data-tour="refine.depth">Depth km</span>
     <input
       v-hint="HINTS.depth"
+      data-tour="refine.depth"
       type="number"
       step="1"
       :value="text('minDepth')"
@@ -148,6 +151,7 @@ function clear(): void {
     <span class="fto">to</span>
     <input
       v-hint="HINTS.depth"
+      data-tour="refine.depth"
       type="number"
       step="1"
       :value="text('maxDepth')"
@@ -160,11 +164,13 @@ function clear(): void {
         `The time window, in ${zoneName} calendar days (the Settings menu switches between UTC and local).`
       "
       class="flabel fdates"
+      data-tour="refine.window"
       >Window ({{ zoneName }})</span
     >
     <select
       v-hint="HINTS.span"
       class="fspan"
+      data-tour="refine.window refine.span"
       :value="presetIndex < 0 ? '' : String(presetIndex)"
       aria-label="Window length"
       @change="pickSpan"
@@ -177,6 +183,7 @@ function clear(): void {
       v-hint="HINTS.from"
       type="date"
       class="fdate"
+      data-tour="refine.window refine.dates"
       :min="bounds.min"
       :max="bounds.max"
       :value="span.since"
@@ -188,17 +195,25 @@ function clear(): void {
       v-hint="HINTS.to"
       type="date"
       class="fdate"
+      data-tour="refine.window refine.dates"
       :min="bounds.min"
       :max="bounds.max"
       :value="span.until"
       aria-label="To date"
       @change="changeDate('until', $event)"
     />
-    <button v-hint="HINTS.reset" type="button" class="fclear" :disabled="!active" @click="clear">
+    <button
+      v-hint="HINTS.reset"
+      type="button"
+      class="fclear"
+      data-tour="refine.reset"
+      :disabled="!active"
+      @click="clear"
+    >
       Reset
     </button>
     <template #note>
-      <p v-if="note !== null" class="fnote">{{ note }}</p>
+      <p v-if="note !== null" class="fnote" data-tour="refine.note">{{ note }}</p>
     </template>
   </RefineBar>
 </template>
