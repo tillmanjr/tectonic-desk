@@ -13,6 +13,7 @@ import {
   EXAMPLE_EVENT,
   EXAMPLE_MARKS,
   EXAMPLE_VOLCANO,
+  SPACE_HISTORY,
   TOURS,
 } from "../../src/lib/tour-steps.js";
 import { createAppRouter } from "../../src/router.js";
@@ -274,6 +275,19 @@ describe("quick tours in the app", () => {
     await m.wrapper.find(".tourdetour").trigger("click");
     await flushPromises();
     expect(m.wrapper.find(".tourpath").text()).toBe("Map tools · 1 of 12");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/active");
+    m.wrapper.unmount();
+  });
+
+  it("walks the space tour over a week and eleven years, and ends the tours with nothing to go on to", async () => {
+    const m = await mountApp("/active");
+    expect(await walk(m, 6)).toEqual([]);
+    expect(m.wrapper.find(".tourdetour").exists()).toBe(false);
+    await m.wrapper.findAll(".tourdot")[10]?.trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe(SPACE_HISTORY);
     await m.wrapper.find(".tourexit").trigger("click");
     await flushPromises();
     expect(m.router.currentRoute.value.fullPath).toBe("/active");

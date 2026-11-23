@@ -63,7 +63,7 @@ describe("parseTourProgress", () => {
       { step: 1, done: "no", at: AT },
       { step: 1, done: false, at: 5 },
     ]) {
-      const doc = parseTourProgress(JSON.stringify({ last: "space", tours: { map: bad } }));
+      const doc = parseTourProgress(JSON.stringify({ last: "nowhere", tours: { map: bad } }));
       expect(doc).toEqual({ offerDismissed: false, last: null, tours: {}, seen: {}, demo: null });
     }
   });
@@ -204,7 +204,7 @@ describe("continuing to the next tour", () => {
 describe("seen steps", () => {
   it("reads the steps shown per tour, keeping only strings of known tours", () => {
     const doc = parseTourProgress(
-      JSON.stringify({ seen: { map: ["a", 3, "b"], orientation: "a", space: ["x"] } }),
+      JSON.stringify({ seen: { map: ["a", 3, "b"], orientation: "a", nowhere: ["x"] } }),
     );
     expect(doc.seen).toEqual({ map: ["a", "b"] });
   });
@@ -556,7 +556,7 @@ describe("createTour", () => {
     await tour.goTo(0);
     await tour.exit();
     // @ts-expect-error an id that no tour has
-    await tour.start("space");
+    await tour.start("nowhere");
     expect(tour.active.value).toBeNull();
     expect(progress.doc.value.tours).toEqual({});
     expect(tour.resumable.value).toBeNull();

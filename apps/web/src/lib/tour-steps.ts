@@ -710,6 +710,109 @@ export const MARKS: Tour = {
   ],
 };
 
+/** The Space tour's windows: a week, for flares and alerts, and eleven years, for the history. */
+export const SPACE_WEEK = "/space?window=7d";
+export const SPACE_HISTORY = "/space?window=11y";
+const week = async (ctx: StepContext): Promise<void> => {
+  await ctx.go(SPACE_WEEK);
+};
+
+export const SPACE: Tour = {
+  id: "space",
+  title: "Space weather",
+  blurb: "The Sun, the solar wind, geomagnetic activity and the aurora, now and since 1932.",
+  pageFor: () => "space",
+  steps: [
+    {
+      id: "intro",
+      title: "The Space page",
+      body: "NOAA SWPC's real-time solar wind, indices, X-ray and proton fluxes, flares and alerts, kept here longer than SWPC keeps them, with GFZ Potsdam's Kp since 1932, Kyoto's Dst since 1957, the latest SDO and SOHO pictures and the OVATION aurora forecast. The tour shows the last 7 days, then the last 11 years.",
+      targets: [],
+      enter: week,
+    },
+    {
+      id: "status",
+      title: "Status",
+      body: "When the SWPC files were last read, and which spacecraft at L1 the solar wind comes from (SWPC switches between them).",
+      targets: ["status"],
+      enter: week,
+    },
+    {
+      id: "window",
+      title: "Window",
+      body: "From 6 hours to everything since 1932, or between two moments. Up to 25 hours every sample shows; longer windows are averaged into buckets (the note says how wide), taking the maximum for indices and fluxes and the minimum for Dst and Bz, so storms are not smoothed away.",
+      targets: ["space.window"],
+      enter: week,
+    },
+    {
+      id: "tiles",
+      title: "Now",
+      body: "The latest reading of each headline series over a sparkline of the window: the NOAA G, R and S scales for today, Kp, the interplanetary field Bz and Bt (GSM), solar wind speed and density, the GOES X-ray flux with its flare class, and the ≥10 MeV proton flux.",
+      targets: ["space.tiles"],
+      enter: week,
+    },
+    {
+      id: "sun",
+      title: "The Sun",
+      body: "The latest frames from SDO (AIA 193, 304 and 171 Å, and HMI continuum and magnetogram) and SOHO's LASCO C2 and C3 coronagraphs. Rest on one for what it shows.",
+      tryIt:
+        "Click a picture: it opens large on the latest movie, with a higher resolution and the still, and, when that movie does not cover the window, a movie generated for it.",
+      targets: ["space.sun"],
+      enter: week,
+    },
+    {
+      id: "alerts",
+      title: "Alerts",
+      body: "SWPC's watches, warnings, alerts and summaries in the window, newest first, edged by kind; open one for its full text.",
+      targets: ["space.alerts"],
+      enter: week,
+    },
+    {
+      id: "stack",
+      title: "The stack",
+      body: "Seven rows on one time axis: Kp (G1 marked at 5), Dst, hemispheric power, Bz and Bt, speed and density, the X-ray flux with the M and X thresholds, and the ≥10 and ≥100 MeV protons with the S levels. Point anywhere for every row's value at that moment; flares shade the X-ray row and alerts tick the top.",
+      targets: ["space.stack"],
+      enter: week,
+    },
+    {
+      id: "forecast",
+      title: "Forecast",
+      body: "SWPC's three-day forecast: the geomagnetic storm level, the chances of R1–R2 and R3+ radio blackouts and of an S1+ radiation storm, and the largest Kp expected.",
+      targets: ["space.forecast"],
+      enter: week,
+    },
+    {
+      id: "flares",
+      title: "Flares",
+      body: "The window's flares from the GOES X-ray flux, by class and peak time. Point at one to light its band on the stack; click it to frame the stack on the flare.",
+      targets: ["space.flares"],
+      enter: week,
+    },
+    {
+      id: "aurora",
+      title: "Aurora",
+      body: "The OVATION Prime forecast as the chance of aurora over each hemisphere, seen from above with noon at the top and the night side shaded, and the hemispheric power. Three days of frames are kept: scrub back or Play them, and the stack marks the time of a past frame.",
+      targets: ["space.aurora"],
+      enter: week,
+    },
+    {
+      id: "history",
+      title: "Since 1932",
+      body: "Eleven years, one solar cycle. Past 93 days the stack keeps Kp, Dst and the Sun: GFZ's definitive Kp as a step over SWPC's bars (dashed while preliminary), Kyoto's hourly Dst, and the daily sunspot number with the 10.7 cm flux, with the solar-cycle minima marked. Pick Since 1932 for all of it.",
+      targets: ["space.stack"],
+      enter: async (ctx) => {
+        await ctx.go(SPACE_HISTORY);
+      },
+    },
+    {
+      id: "done",
+      title: "That's space weather",
+      body: "Every step of this tour, and of the others, stays in the Help menu.",
+      targets: ["help"],
+    },
+  ],
+};
+
 export const TOURS: readonly Tour[] = [
   ORIENTATION,
   MAP_TOOLS,
@@ -717,4 +820,5 @@ export const TOURS: readonly Tour[] = [
   MECHANISM,
   VOLCANOES,
   MARKS,
+  SPACE,
 ];

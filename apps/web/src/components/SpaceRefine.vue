@@ -52,7 +52,7 @@ function live(): void {
 </script>
 
 <template>
-  <section class="filters spacebar" aria-label="Space weather window">
+  <section class="filters spacebar" aria-label="Space weather window" data-tour="space.window">
     <span class="ftitle">Window</span>
     <select class="fspan" :value="selectValue" aria-label="Window length" @change="pickWindow">
       <option value="" disabled>Custom</option>
