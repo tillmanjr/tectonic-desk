@@ -68,7 +68,7 @@ const data = computed<Data>(() => {
 </script>
 
 <template>
-  <div class="panel chart">
+  <div class="panel chart" data-tour="chart.vei">
     <h2>VEI distribution</h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(H)}`">
       <template v-if="data.bars.length > 0">
