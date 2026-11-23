@@ -51,7 +51,8 @@ export function useQuakeLayer(o: {
 }): QuakeLayer {
   const { catalog, clock, zone, mv } = o;
   const events = catalog.filtered;
-  const showMech = ref(true);
+  // Off by default: beachballs at the window's magnitudes crowd the map; a reader turns them on.
+  const showMech = ref(false);
   const showDensity = ref(false);
   const density = computed(() => {
     const s = catalog.stats.value;
