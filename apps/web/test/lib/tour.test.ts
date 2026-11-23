@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createTour,
   createTourProgress,
+  hasUnseen,
   mapSnapshot,
   parseTourProgress,
   TOUR_KEY,
@@ -31,7 +32,7 @@ function memory(initial: string | null = null) {
 
 describe("parseTourProgress", () => {
   it("reads nothing, bad JSON or a non-object as a fresh start", () => {
-    const fresh = { offerDismissed: false, last: null, tours: {} };
+    const fresh = { offerDismissed: false, last: null, tours: {}, seen: {} };
     expect(parseTourProgress(null)).toEqual(fresh);
     expect(parseTourProgress("{")).toEqual(fresh);
     expect(parseTourProgress("3")).toEqual(fresh);
@@ -52,6 +53,7 @@ describe("parseTourProgress", () => {
       offerDismissed: true,
       last: "map",
       tours: { map: { step: 3, done: false, at: AT } },
+      seen: {},
     });
     for (const bad of [
       null,
@@ -60,7 +62,7 @@ describe("parseTourProgress", () => {
       { step: 1, done: false, at: 5 },
     ]) {
       const doc = parseTourProgress(JSON.stringify({ last: "space", tours: { map: bad } }));
-      expect(doc).toEqual({ offerDismissed: false, last: null, tours: {} });
+      expect(doc).toEqual({ offerDismissed: false, last: null, tours: {}, seen: {} });
     }
   });
 });
@@ -78,6 +80,7 @@ describe("createTourProgress", () => {
       offerDismissed: false,
       last: "map",
       tours: { map: { step: 2, done: false, at: AT } },
+      seen: {},
     });
     p.dismissOffer();
     p.dismissOffer();
@@ -106,6 +109,35 @@ describe("createTourProgress", () => {
     p.dismissOffer();
     p.record("map", 0, false);
     expect(localStorage.getItem(TOUR_KEY)).toContain('"offerDismissed":true');
+  });
+});
+
+describe("seen steps", () => {
+  it("reads the steps shown per tour, keeping only strings of known tours", () => {
+    const doc = parseTourProgress(
+      JSON.stringify({ seen: { map: ["a", 3, "b"], orientation: "a", space: ["x"] } }),
+    );
+    expect(doc.seen).toEqual({ map: ["a", "b"] });
+  });
+
+  it("marks a step shown once, and says whether any step of the tours is unseen", () => {
+    const p = createTourProgress(null, () => NOW);
+    const ts = tours([]);
+    expect(hasUnseen(p.doc.value, ts)).toBe(true);
+    p.record("orientation", 0, false, "a");
+    p.record("orientation", 0, false, "a");
+    p.record("orientation", 1, false);
+    expect(p.doc.value.seen).toEqual({ orientation: ["a"] });
+    for (const id of ["b", "c"]) p.record("orientation", 0, false, id);
+    expect(hasUnseen(p.doc.value, ts)).toBe(true);
+    for (const id of ["x", "y"]) p.record("map", 0, false, id);
+    expect(hasUnseen(p.doc.value, ts)).toBe(false);
+    const grown = ts.map((t) =>
+      t.id === "map"
+        ? { ...t, steps: [...t.steps, { id: "z", title: "Z", body: "", targets: [] }] }
+        : t,
+    );
+    expect(hasUnseen(p.doc.value, grown)).toBe(true);
   });
 });
 
@@ -251,6 +283,11 @@ describe("createTour", () => {
     expect(state.location).toBe("/earthquakes?x=1");
     expect(progress.doc.value.tours.orientation).toEqual({ step: 0, done: true, at: AT });
     expect(tour.resumable.value).toBeNull();
+    expect(progress.doc.value.seen.orientation).toEqual(["a", "b", "c"]);
+    expect(tour.unseen.value).toBe(true);
+    await tour.start("map");
+    await tour.next();
+    expect(tour.unseen.value).toBe(false);
   });
 
   it("steps back and jumps, ignoring moves out of range, and exits where it stands", async () => {

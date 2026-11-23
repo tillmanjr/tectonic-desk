@@ -50,11 +50,16 @@ onUnmounted(() => {
     <button
       type="button"
       class="help-btn"
+      :class="{ fresh: tour.unseen.value }"
       aria-haspopup="true"
       :aria-expanded="open"
       aria-controls="help-menu"
       aria-label="Help"
-      title="Help: quick tours of the app"
+      :title="
+        tour.unseen.value
+          ? 'Help: quick tours of the app, with steps you have not seen yet'
+          : 'Help: quick tours of the app'
+      "
       @click="open = !open"
     >
       ?

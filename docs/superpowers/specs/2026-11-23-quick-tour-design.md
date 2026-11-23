@@ -22,6 +22,10 @@ is checked by the tests like any other code.
   and has room for shortcuts, sources or "What's new" later. Each tour lists its state (not
   started, step n of m, done), Start or Resume and Restart, and its steps, any of which starts the
   tour there. The menu's first line offers to resume the tour left unfinished most recently.
+- **Unseen steps stand out.** The "?" is filled in the accent colour until every step of every
+  tour has been shown at least once, then returns to the grey of the other header pills. Steps are
+  tracked by id, so a step or tour added later brings the colour back until the reader has seen
+  it.
 - **First release.** The engine, the Help menu, the offer, an orientation tour (the app's parts,
   on Active Earth) and the Map tools tour. Earthquakes, Volcanoes, Marks and Space follow as content.
 - **Own code, no library.** It is about the size of a library's adapter, fits the hint system and
@@ -45,7 +49,8 @@ is checked by the tests like any other code.
   (Done on the last step) and Exit. Escape exits unless something else consumed it (a map tool in
   use, theater mode), and ← and → step when focus is not in a field.
 - **Progress** lives in `localStorage` (`tectonic.tour`): per tour the step reached, whether it was
-  finished, and when; the tour last left; and whether the offer was dismissed. A bad or missing
+  finished, and when; the ids of the steps shown; the tour last left; and whether the offer was
+  dismissed. A bad or missing
   entry reads as a fresh start.
 - **Staging.** `App.vue` builds the stage a step acts through (`TourStage`: go to a page, select
   the largest event in the window, write a section, the map on screen) and snapshots the route at

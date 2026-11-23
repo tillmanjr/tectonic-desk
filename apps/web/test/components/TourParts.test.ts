@@ -236,6 +236,24 @@ describe("HelpMenu", () => {
     w.unmount();
   });
 
+  it("stands out until every step has been shown, then turns quiet", async () => {
+    const { tour, mountIt } = setup();
+    const w = mountIt(HelpMenu);
+    expect(w.find(".help-btn").classes()).toContain("fresh");
+    expect(w.find(".help-btn").attributes("title")).toContain("not seen yet");
+    await tour.start("orientation");
+    await tour.next();
+    await tour.next();
+    await nextTick();
+    expect(w.find(".help-btn").classes()).toContain("fresh");
+    await tour.start("map");
+    await tour.exit();
+    await nextTick();
+    expect(w.find(".help-btn").classes()).not.toContain("fresh");
+    expect(w.find(".help-btn").attributes("title")).toBe("Help: quick tours of the app");
+    w.unmount();
+  });
+
   it("resumes, restarts and retakes tours, and starts at any step", async () => {
     const { tour, progress, mountIt } = setup();
     progress.record("map", 0, true);

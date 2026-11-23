@@ -66,6 +66,8 @@ export interface TourProgressDocument {
   /** The tour left most recently. */
   last: TourId | null;
   tours: Partial<Record<TourId, TourRecord>>;
+  /** The ids of the steps the reader has been shown, per tour; a step added later is unseen. */
+  seen: Partial<Record<TourId, string[]>>;
 }
 
 export const TOUR_KEY = "tectonic.tour";
@@ -86,7 +88,7 @@ function parseRecord(v: unknown): TourRecord | null {
 
 /** Reads a stored document; anything malformed reads as a fresh start. */
 export function parseTourProgress(raw: string | null): TourProgressDocument {
-  const fresh: TourProgressDocument = { offerDismissed: false, last: null, tours: {} };
+  const fresh: TourProgressDocument = { offerDismissed: false, last: null, tours: {}, seen: {} };
   if (raw === null) return fresh;
   let v: unknown;
   try {
@@ -102,16 +104,26 @@ export function parseTourProgress(raw: string | null): TourProgressDocument {
       if (isTourId(id) && r !== null) tours[id] = r;
     }
   }
+  const seen: Partial<Record<TourId, string[]>> = {};
+  if (isRecord(v.seen)) {
+    for (const [id, ids] of Object.entries(v.seen)) {
+      if (isTourId(id) && Array.isArray(ids)) {
+        seen[id] = ids.filter((s): s is string => typeof s === "string");
+      }
+    }
+  }
   return {
     offerDismissed: v.offerDismissed === true,
     last: isTourId(v.last) ? v.last : null,
     tours,
+    seen,
   };
 }
 
 export interface TourProgress {
   doc: Readonly<Ref<TourProgressDocument>>;
-  record: (id: TourId, step: number, done: boolean) => void;
+  /** Records the step reached; `stepId`, when given, is marked as shown. */
+  record: (id: TourId, step: number, done: boolean, stepId?: string) => void;
   dismissOffer: () => void;
 }
 
@@ -136,14 +148,29 @@ export function createTourProgress(
   }
   return {
     doc,
-    record(id, step, done) {
+    record(id, step, done, stepId) {
       const at = now().toISOString();
-      commit({ ...doc.value, last: id, tours: { ...doc.value.tours, [id]: { step, done, at } } });
+      const had = doc.value.seen[id] ?? [];
+      const seen =
+        stepId === undefined || had.includes(stepId)
+          ? doc.value.seen
+          : { ...doc.value.seen, [id]: [...had, stepId] };
+      commit({
+        ...doc.value,
+        last: id,
+        tours: { ...doc.value.tours, [id]: { step, done, at } },
+        seen,
+      });
     },
     dismissOffer() {
       if (!doc.value.offerDismissed) commit({ ...doc.value, offerDismissed: true });
     },
   };
+}
+
+/** Whether any step of the tours has not yet been shown to the reader. */
+export function hasUnseen(doc: TourProgressDocument, tours: readonly Tour[]): boolean {
+  return tours.some((t) => t.steps.some((s) => doc.seen[t.id]?.includes(s.id) !== true));
 }
 
 /** What a tour's entry in the Help menu says about it. */
@@ -167,6 +194,8 @@ export interface TourRunner {
   active: ComputedRef<ActiveTour | null>;
   /** The tour left unfinished most recently, with the step to resume at. */
   resumable: ComputedRef<{ tour: Tour; step: number } | null>;
+  /** True while some step of the tours is yet to be shown; the Help button stands out until then. */
+  unseen: ComputedRef<boolean>;
   start: (id: TourId, step?: number) => Promise<void>;
   next: () => Promise<void>;
   back: () => Promise<void>;
@@ -257,7 +286,7 @@ export function createTour(
     const mine = ++seq;
     const prev = from === null ? undefined : tour.steps[from];
     current.value = { tour, index };
-    progress.record(tour.id, index, false);
+    progress.record(tour.id, index, false, tour.steps[index]?.id);
     if (prev?.leave !== undefined && from !== index) await prev.leave(ctx);
     if (mine !== seq) return;
     const want = tour.pageFor(stage.page());
@@ -287,6 +316,7 @@ export function createTour(
       const step = c?.tour.steps[c.index];
       return c === null || step === undefined ? null : { ...c, step };
     }),
+    unseen: computed(() => hasUnseen(progress.doc.value, tours)),
     resumable: computed(() => {
       const last = progress.doc.value.last;
       if (last === null) return null;

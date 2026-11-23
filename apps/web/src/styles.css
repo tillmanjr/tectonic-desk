@@ -3294,6 +3294,17 @@ table.matrix {
   top: 8px;
   right: 40px;
 }
+/* Until every tour step has been shown, the "?" stands out in the accent colour. */
+.help-btn.fresh {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--panel);
+  font-weight: 700;
+}
+.help-btn.fresh[aria-expanded="true"] {
+  color: var(--panel);
+  border-color: var(--ink);
+}
 .helpmenu {
   width: min(340px, calc(100vw - 32px));
   gap: 10px;
