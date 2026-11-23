@@ -304,11 +304,11 @@ onUnmounted(() => {
         <button
           v-for="f in strip"
           :key="f.key"
+          v-hint="f.title"
           type="button"
           class="sunfilmthumb"
           :class="{ on: f.key === current.key }"
           :aria-pressed="f.key === current.key"
-          :title="f.title"
           @click="emit('update:open', f.key)"
         >
           <img :src="f.src" :alt="f.title" />

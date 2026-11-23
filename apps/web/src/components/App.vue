@@ -78,6 +78,7 @@ import {
   type VolcanoFilter,
 } from "../lib/volcanoes.js";
 import { hasVolcanoes, pageOf, pagePath, type Page } from "../router.js";
+import { vHint } from "../lib/hint.js";
 
 const api = inject(API, null) ?? createApiClient((input, init) => fetch(input, init));
 const clock = inject(CLOCK, null) ?? createClock();
@@ -369,12 +370,12 @@ onUnmounted(() => {
             <PageSwitch :page="page" @pick="pickPage" />
             <nav class="pages" :aria-label="MARK_TERMS.title">
               <button
+                v-hint="`Your marked ${MARK_TERMS.things}, over the current page`"
                 type="button"
                 class="marks-btn"
                 data-tour="marks"
                 aria-haspopup="dialog"
                 :aria-current="overlay !== null ? 'page' : undefined"
-                :title="`Your marked ${MARK_TERMS.things}, over the current page`"
                 @click="nav.open()"
               >
                 {{ MARK_TERMS.noun

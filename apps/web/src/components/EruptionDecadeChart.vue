@@ -4,6 +4,7 @@ import { computed } from "vue";
 import ChartAxes from "./ChartAxes.vue";
 import { ticksOf, type Tick } from "../lib/charts.js";
 import { CLOCK, useInjected, VOLCANOES } from "../lib/keys.js";
+import { vHint } from "../lib/hint.js";
 
 const W = 520;
 const H = 200;
@@ -91,15 +92,14 @@ const data = computed<Data>(() => {
         <rect
           v-for="b in data.bars"
           :key="b.decade"
+          v-hint="`${String(b.decade)}s: ${String(b.n)}`"
           :x="b.x"
           :y="b.y"
           :width="b.w"
           :height="b.h"
           style="fill: var(--vc-historic)"
           fill-opacity="0.85"
-        >
-          <title>{{ b.decade }}s: {{ b.n }}</title>
-        </rect>
+        />
       </template>
     </svg>
     <div class="cap">{{ data.caption }}</div>

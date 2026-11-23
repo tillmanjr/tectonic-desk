@@ -5,6 +5,7 @@ import { fmtStamp } from "../lib/format.js";
 import { SET_SPACE_RANGE, SPACE, useInjected, ZONE } from "../lib/keys.js";
 import { windowLabel } from "../lib/space.js";
 import { minutesBetween } from "../lib/space-format.js";
+import { vHint } from "../lib/hint.js";
 
 /**
  * The flares of the window, newest first, the first four shown and the rest behind a toggle.
@@ -88,11 +89,11 @@ function frame(f: ApiSpaceFlare): void {
         <tr
           v-for="r in shown"
           :key="r.key"
+          v-hint="`Frame this flare: ${r.cls} at ${r.max}`"
           class="flarerow"
           :class="{ hl: r.key === props.highlight }"
           tabindex="0"
           role="button"
-          :title="`Frame this flare: ${r.cls} at ${r.max}`"
           @mouseenter="emit('update:highlight', r.key)"
           @mouseleave="emit('update:highlight', null)"
           @focus="emit('update:highlight', r.key)"

@@ -27,7 +27,7 @@ describe("MarkButton", () => {
     const w = mountWith(MarkButton, ctx, { subject: null });
     expect(w.find("button.mark").attributes("disabled")).toBeDefined();
     expect(w.find("button.mark").text()).toBe("☆ Mark");
-    expect(w.find("button.mark").attributes("title")).toBe("Mark this event");
+    expect(w.find("button.mark").attributes("data-hint")).toBe("Mark this event");
     await w.find("button.mark").trigger("click");
     expect(w.find("input").exists()).toBe(false);
     w.unmount();
@@ -37,7 +37,7 @@ describe("MarkButton", () => {
     vi.useFakeTimers();
     const ctx = await makeContext();
     const w = mountWith(MarkButton, ctx, { subject });
-    expect(w.find("button.mark").attributes("title")).toBe("Mark this earthquake");
+    expect(w.find("button.mark").attributes("data-hint")).toBe("Mark this earthquake");
     await w.find("button.mark").trigger("click");
     const input = w.find<HTMLInputElement>("input");
     expect(input.element.value).toBe("M5.5 mww · 10 km N of Somewhere");
@@ -52,14 +52,14 @@ describe("MarkButton", () => {
       ref: "us1",
     });
     expect(w.find("button.mark").text()).toBe("★ Mark");
-    expect(w.find("button.mark").attributes("title")).toBe("Marked once");
+    expect(w.find("button.mark").attributes("data-hint")).toBe("Marked once");
     expect(w.find(".flash").text()).toBe("Marked");
     vi.advanceTimersByTime(2100);
     await nextTick();
     expect(w.find(".flash").exists()).toBe(false);
     ctx.marks.add({ ...subject, name: "again", url: "/" });
     await nextTick();
-    expect(w.find("button.mark").attributes("title")).toBe("Marked 2 times");
+    expect(w.find("button.mark").attributes("data-hint")).toBe("Marked 2 times");
     // a second save while the flash is up restarts the timer
     await w.find("button.mark").trigger("click");
     await w.find("button.save").trigger("click");
@@ -72,7 +72,7 @@ describe("MarkButton", () => {
   it("cancels on Escape and Cancel without closing the panel", async () => {
     const ctx = await makeContext();
     const w = mountWith(MarkButton, ctx, { subject: { ...subject, kind: "volcano", ref: "1" } });
-    expect(w.find("button.mark").attributes("title")).toBe("Mark this volcano");
+    expect(w.find("button.mark").attributes("data-hint")).toBe("Mark this volcano");
     await w.find("button.mark").trigger("click");
     const stop = vi.fn();
     await w.find("input").trigger("keydown", { key: "Escape", stopPropagation: stop });

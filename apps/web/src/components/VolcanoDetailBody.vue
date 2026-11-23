@@ -14,6 +14,7 @@ import {
   TYPE_GROUPS,
   typeGroup,
 } from "../lib/volcanoes.js";
+import { vHint } from "../lib/hint.js";
 
 const STRIP_FROM = 1800;
 
@@ -84,6 +85,11 @@ const strip = computed(() => {
   });
   return { bars, earlier: eruptions.value.length - recent.length };
 });
+/** "1924 · VEI 3 · continuing": an eruption bar's readout. */
+function barHint(e: Eruption, open: boolean): string {
+  const vei = e.vei === null ? "" : ` · VEI ${String(e.vei)}${e.veiModifier ?? ""}`;
+  return `${eruptionStart(e)}${vei}${open ? " · continuing" : ""}`;
+}
 const gvpUrl = (number: number): string =>
   `https://volcano.si.edu/volcano.cfm?vn=${String(number)}`;
 </script>
@@ -163,6 +169,7 @@ const gvpUrl = (number: number): string =>
             <rect
               v-for="b in strip.bars"
               :key="b.e.number"
+              v-hint="barHint(b.e, b.open)"
               :x="b.x"
               :y="44 - b.h"
               :width="b.w"
@@ -172,13 +179,7 @@ const gvpUrl = (number: number): string =>
                 stroke: 'var(--vc-recent)',
               }"
               :stroke-dasharray="b.queried ? '2 1' : undefined"
-            >
-              <title>
-                {{ eruptionStart(b.e)
-                }}{{ b.e.vei === null ? "" : ` · VEI ${String(b.e.vei)}${b.e.veiModifier ?? ""}`
-                }}{{ b.open ? " · continuing" : "" }}
-              </title>
-            </rect>
+            />
           </svg>
           <p class="cap">
             {{ strip.bars.length }} since 1800 (bar height is VEI; open bar continuing; dashed

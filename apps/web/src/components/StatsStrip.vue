@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { fmtMag, placeOf } from "../lib/format.js";
 import { CATALOG, CLOCK, useInjected } from "../lib/keys.js";
 import { summary } from "../lib/stats.js";
+import { vHint } from "../lib/hint.js";
 
 const { events } = useInjected(CATALOG);
 const clock = useInjected(CLOCK);
@@ -20,7 +21,7 @@ const s = computed(() => summary(events.value, clock.now.value));
       <div class="k">Largest</div>
       <template v-if="s.largest !== null">
         <div class="v num">M{{ fmtMag(s.largest.mag) }}</div>
-        <div class="s" :title="placeOf(s.largest.e)">{{ placeOf(s.largest.e) }}</div>
+        <div v-hint="placeOf(s.largest.e)" class="s">{{ placeOf(s.largest.e) }}</div>
       </template>
       <template v-else>
         <div class="v num">—</div>
@@ -38,7 +39,7 @@ const s = computed(() => summary(events.value, clock.now.value));
         <div class="v num">
           {{ Math.round(s.deepest.km) }}<span style="font-size: 15px"> km</span>
         </div>
-        <div class="s" :title="placeOf(s.deepest.e)">{{ placeOf(s.deepest.e) }}</div>
+        <div v-hint="placeOf(s.deepest.e)" class="s">{{ placeOf(s.deepest.e) }}</div>
       </template>
       <template v-else>
         <div class="v num">—</div>

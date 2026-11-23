@@ -2,6 +2,7 @@
 import { onUnmounted, ref, watch } from "vue";
 import ThemeToggle from "./ThemeToggle.vue";
 import type { Zone } from "../lib/format.js";
+import { vHint } from "../lib/hint.js";
 
 /** The header's settings menu: the time zone and the theme, behind one button. */
 defineProps<{ zone: Zone }>();
@@ -31,13 +32,13 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="settings" data-tour="settings" @keydown="onKey">
     <button
+      v-hint="'Settings: time zone and theme'"
       type="button"
       class="settings-btn"
       aria-haspopup="true"
       :aria-expanded="open"
       aria-controls="settings-menu"
       aria-label="Settings"
-      title="Settings: time zone and theme"
       @click="open = !open"
     >
       ⚙
@@ -46,9 +47,9 @@ onUnmounted(() => {
       <div class="srow">
         <span class="slabel">Times</span>
         <button
+          v-hint="'Show every date and time in UTC or in your browser\'s zone'"
           type="button"
           class="theme-btn fixed"
-          title="Show every date and time in UTC or in your browser's zone"
           @click="emit('toggleZone')"
         >
           {{ zone === "utc" ? "UTC" : "local" }}

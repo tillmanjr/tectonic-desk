@@ -35,12 +35,15 @@ const ACTS_ON_TAP = "button, a, input, select, textarea, label, summary, [role=b
 const KEEPS_LONG_PRESS = "input:not([type=checkbox]):not([type=radio]), select, textarea";
 const HINT_ID = "hint-float";
 
+/** What can carry a hint: a control, a label, or a mark in a chart's svg. */
+type Hinted = HTMLElement | SVGElement;
+
 /** What the hint keeps clear of: the resting pointer, the focused control, or the control under a finger. */
 type Anchor = { kind: "pointer"; x: number; y: number } | { kind: "control" } | { kind: "touch" };
 
 let box: HTMLDivElement | null = null;
-let owner: HTMLElement | null = null;
-let pending: HTMLElement | null = null;
+let owner: Hinted | null = null;
+let pending: Hinted | null = null;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let users = 0;
 /** Set by a press so the focus a click brings does not bring the hint straight back. */
@@ -48,15 +51,14 @@ let pressed = false;
 let anchor: Anchor = { kind: "control" };
 /** When the last finger or pen touched or lifted, for telling emulated mouse events apart. */
 let touchAt = Number.NEGATIVE_INFINITY;
-let hold: { el: HTMLElement; x: number; y: number; timer: ReturnType<typeof setTimeout> } | null =
-  null;
+let hold: { el: Hinted; x: number; y: number; timer: ReturnType<typeof setTimeout> } | null = null;
 /** Set when a touch showed a hint, so the click that touch produces does not act. */
 let swallowClick = false;
 
-function hintedFrom(target: EventTarget | null): HTMLElement | null {
+function hintedFrom(target: EventTarget | null): Hinted | null {
   if (!(target instanceof Element)) return null;
   const el = target.closest("[data-hint]");
-  return el instanceof HTMLElement ? el : null;
+  return el instanceof HTMLElement || el instanceof SVGElement ? el : null;
 }
 
 function cancelTimer(): void {
@@ -89,7 +91,7 @@ function boxEl(): HTMLDivElement {
  * under the arrow (above near the bottom), so the cursor never covers the text; with keyboard
  * focus under the control; with a finger above the control, away from the hand.
  */
-function place(el: HTMLElement, b: HTMLDivElement): void {
+function place(el: Hinted, b: HTMLDivElement): void {
   const r =
     anchor.kind === "pointer"
       ? { left: anchor.x, top: anchor.y, bottom: anchor.y + CURSOR_PX }
@@ -105,7 +107,7 @@ function place(el: HTMLElement, b: HTMLDivElement): void {
   b.style.top = `${String(top)}px`;
 }
 
-function show(el: HTMLElement): void {
+function show(el: Hinted): void {
   cancelTimer();
   const text = el.dataset.hint ?? "";
   if (text === "") return;
@@ -117,7 +119,7 @@ function show(el: HTMLElement): void {
   place(el, b);
 }
 
-function schedule(el: HTMLElement | null): void {
+function schedule(el: Hinted | null): void {
   if (el === null) {
     hide();
     return;
@@ -172,7 +174,7 @@ function cancelHold(): void {
   if (hold !== null) clearTimeout(hold.timer);
   hold = null;
 }
-function showByTouch(el: HTMLElement): void {
+function showByTouch(el: Hinted): void {
   anchor = { kind: "touch" };
   swallowClick = true;
   show(el);
@@ -250,7 +252,7 @@ function unlisten(): void {
   window.removeEventListener("scroll", hide, true);
 }
 
-function setText(el: HTMLElement, text: string): void {
+function setText(el: Hinted, text: string): void {
   el.dataset.hint = text;
   if (el !== owner) return;
   const b = boxEl();
@@ -258,7 +260,7 @@ function setText(el: HTMLElement, text: string): void {
   place(el, b);
 }
 
-export const vHint: Directive<HTMLElement, string> = {
+export const vHint: Directive<Hinted, string> = {
   mounted(el, binding) {
     setText(el, binding.value);
     if (users++ === 0) listen();
