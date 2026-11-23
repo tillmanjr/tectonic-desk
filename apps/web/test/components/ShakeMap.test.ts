@@ -158,6 +158,16 @@ describe("ShakeMap layer", () => {
     w.unmount();
   });
 
+  it("asks the server for a selection the page has not loaded", async () => {
+    const { ctx, w } = await mounted(QuakeMap, apiWith(), "global", "nc269151");
+    expect(toggle(w).classes()).not.toContain("unavailable");
+    await toggle(w).get("input").setValue(true);
+    await flushPromises();
+    expect(ctx.api.shakemap).toHaveBeenCalledWith("nc269151");
+    expect(w.find("g.shake").exists()).toBe(true);
+    w.unmount();
+  });
+
   it("ignores a stale success after the selection moved on", async () => {
     let resolveLate: (v: ReturnType<typeof shakeMap>) => void = () => undefined;
     const api = apiWith([shaken, plain], {

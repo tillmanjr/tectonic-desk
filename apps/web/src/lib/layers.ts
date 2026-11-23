@@ -136,13 +136,18 @@ export function useShakeLayer(o: { api: ApiClient; catalog: Catalog; mv: MapView
   const map = shallowRef<ApiShakeMap | null>(null);
   const loading = ref(false);
   const failed = ref(false);
+  /**
+   * A loaded event says whether the feed lists a ShakeMap; a selection the page has not loaded
+   * (opened from a mark, say) is given the benefit of the doubt and the server answers.
+   */
   const available = computed(() => {
+    const id = catalog.selectedId.value;
     const e = catalog.selected.value;
-    return e !== null && hasShakeMap(e);
+    return id !== null && (e === null || hasShakeMap(e));
   });
   let seq = 0;
   watch(
-    [show, () => catalog.selected.value?.id ?? null, available],
+    [show, catalog.selectedId, available],
     ([on, id, ok]) => {
       const token = ++seq;
       map.value = null;
