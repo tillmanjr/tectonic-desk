@@ -74,3 +74,16 @@ tour breaks the build rather than the tour.
 - `src/lib/tour-target.ts`: `targetRect` (union of the targets' boxes), `dockOf`, `isVisible`.
 - `TourCard.vue` (spotlight and card), `HelpMenu.vue` (the "?" menu), `TourOffer.vue` (the first
   visit line).
+
+## Earthquakes tour (2026-11-23)
+
+Sixteen steps on the Earthquakes page: the summary, the major-event cards, the refine bar (opened),
+an event (the largest in the window with a mechanism) with its mechanism, impact and sequence, its
+ShakeMap on the map, beachballs on the map, the cross-section profile with the example line, the
+catalogue table, the three charts, the Mark button, and Help.
+
+Some state lives only in a component (the refine bar's open state, the ShakeMap and mechanism
+toggles), out of the stage's reach. A step flips it through `ctx.setSwitch(name, on)`: the runner
+clicks the checkbox, or the element with `aria-expanded`, carrying that `data-tour` name, as the
+reader would, records the state it found the first time, and clicks it back when the tour ends.
+`selectLargest({ mechanism: true })` skips events without a solution.

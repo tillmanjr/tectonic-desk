@@ -235,7 +235,11 @@ const selectedId = catalog.selectedId;
 </script>
 
 <template>
-  <div v-if="data !== null && section !== null" class="panel chart sectionpanel">
+  <div
+    v-if="data !== null && section !== null"
+    class="panel chart sectionpanel"
+    data-tour="section.profile"
+  >
     <h2 class="withfilter">
       <span class="stitle">{{ data.title }}</span>
       <span class="sctl">

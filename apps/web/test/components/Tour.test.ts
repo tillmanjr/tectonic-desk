@@ -12,7 +12,7 @@ import { TOURS } from "../../src/lib/tour-steps.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, listOf } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
-import { event } from "../support/events.js";
+import { event, mech } from "../support/events.js";
 import { fakeTheme, NOW } from "../support/mount.js";
 import { stubWorld } from "../support/world.js";
 
@@ -115,6 +115,38 @@ describe("quick tours in the app", () => {
     expect(plates.element.checked).toBe(false);
     expect(m.router.currentRoute.value.fullPath).toBe("/active");
     expect(m.progress.doc.value.tours.map).toMatchObject({ step: 7, done: false });
+    m.wrapper.unmount();
+  });
+
+  it("walks the earthquakes tour and folds away what it opened", async () => {
+    const quake = event({ mechanisms: [mech()] });
+    const api = fakeApi({
+      events: vi.fn().mockResolvedValue(listOf([event({ id: "bigger", mag: 7 }), quake])),
+      event: vi.fn().mockResolvedValue({
+        ...quake,
+        firstSeen: "2026-10-12T05:00:00.000Z",
+        lastSeen: "2026-10-12T05:00:00.000Z",
+        detailCheckedUpdated: null,
+        usgs: { title: "M 5.5" },
+      }),
+    });
+    const m = await mountApp("/active/wc", api);
+    const missing = await walk(m, 2);
+    expect(missing).toEqual([]);
+    expect(m.router.currentRoute.value.path).toBe("/earthquakes/wc");
+    expect(m.router.currentRoute.value.query.event).toBe("us1");
+    await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
+    await flushPromises();
+    const shake = m.wrapper.find<HTMLInputElement>('[data-tour~="map.shake"] input');
+    expect(shake.element.checked).toBe(true);
+    await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".filters.refine").classes()).toContain("expanded");
+    expect(shake.element.checked).toBe(false);
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".filters.refine").classes()).not.toContain("expanded");
+    expect(m.router.currentRoute.value.fullPath).toBe("/active/wc");
     m.wrapper.unmount();
   });
 

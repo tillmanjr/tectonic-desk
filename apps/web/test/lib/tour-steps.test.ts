@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   EXAMPLE_MEASURES,
+  EARTHQUAKES,
   EXAMPLE_SECTIONS,
   MAP_TOOLS,
   ORIENTATION,
@@ -85,6 +86,25 @@ describe("tour content", () => {
     expect(ctx.setSection).toHaveBeenCalledWith(EXAMPLE_SECTIONS.regional);
     await step(MAP_TOOLS, "measure").enter?.(ctx);
     expect(mv.measure.shown.value?.a).toEqual(EXAMPLE_MEASURES.regional[0]);
+  });
+
+  it("opens the refine bar, an event with a mechanism, its ShakeMap and the beachballs, and closes them after", async () => {
+    const ctx = fakeContext(null);
+    await run(EARTHQUAKES, "refine", ctx);
+    for (const id of ["detail", "mechanism", "impact", "mark"]) await run(EARTHQUAKES, id, ctx);
+    await run(EARTHQUAKES, "shakemap", ctx);
+    await run(EARTHQUAKES, "mechanisms", ctx);
+    expect(ctx.selectLargest).toHaveBeenCalledTimes(5);
+    expect(ctx.selectLargest).toHaveBeenCalledWith({ mechanism: true });
+    expect(vi.mocked(ctx.setSwitch).mock.calls).toEqual([
+      ["refine.earthquakes", true],
+      ["refine.earthquakes", false],
+      ["map.shake", true],
+      ["map.shake", false],
+      ["map.mech", true],
+      ["map.mech", false],
+    ]);
+    expect(EARTHQUAKES.pageFor("space")).toBe("earthquakes");
   });
 
   it("does nothing to a map that is not there", async () => {

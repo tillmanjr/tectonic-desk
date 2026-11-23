@@ -2,6 +2,7 @@ import { computed, ref, shallowRef, type ComputedRef, type InjectionKey, type Re
 import type { Page } from "../router.js";
 import type { MapView } from "./mapview.js";
 import type { Section } from "./section.js";
+import { domSwitches, type Switches } from "./tour-target.js";
 
 /**
  * The quick tours: a runner that walks a tour's steps through the real app (a step may switch
@@ -9,14 +10,17 @@ import type { Section } from "./section.js";
  * ends, and the reader's progress through each tour, kept in localStorage.
  */
 
-export type TourId = "orientation" | "map";
+export type TourId = "orientation" | "map" | "earthquakes";
 
 /** What a step acts through, built by `App.vue`; `map` resolves once a map is on screen. */
 export interface TourStage {
   page: () => Page;
   goPage: (p: Page) => Promise<void>;
-  /** Selects the largest event in the window (none when the window is empty). */
-  selectLargest: () => void;
+  /**
+   * Selects the largest event in the window, or with `mechanism` the largest with a moment
+   * tensor or focal mechanism (none when the window has none).
+   */
+  selectLargest: (opts?: { mechanism?: boolean }) => void;
   clearSelection: () => void;
   setSection: (s: Section | null) => void;
   /** The route as it stands, for `restore`. */
@@ -27,6 +31,11 @@ export interface TourStage {
 /** The stage as a step sees it, with the map on screen (recorded for the restore on first use). */
 export interface StepContext extends TourStage {
   map: () => Promise<MapView | null>;
+  /**
+   * Turns a named switch (a checkbox, or a control with `aria-expanded`) on or off as a click
+   * would; its first state is put back when the tour ends.
+   */
+  setSwitch: (name: string, on: boolean) => void;
 }
 
 export interface TourStep {
@@ -71,7 +80,7 @@ export interface TourProgressDocument {
 }
 
 export const TOUR_KEY = "tectonic.tour";
-const TOUR_IDS: readonly TourId[] = ["orientation", "map"];
+const TOUR_IDS: readonly TourId[] = ["orientation", "map", "earthquakes"];
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
@@ -248,7 +257,7 @@ export function createTour(
   tours: readonly Tour[],
   progress: TourProgress,
   stage: TourStage,
-  opts: { mapWaitMs?: number } = {},
+  opts: { mapWaitMs?: number; switches?: Switches } = {},
 ): TourRunner {
   const mapWaitMs = opts.mapWaitMs ?? MAP_WAIT_MS;
   const current = shallowRef<{ tour: Tour; index: number } | null>(null);
@@ -280,7 +289,19 @@ export function createTour(
       waiting.push(done);
     });
   }
-  const ctx: StepContext = { ...stage, map: touchedMap };
+  const switches = opts.switches ?? domSwitches();
+  /** Each switch a step set, as the reader had it. */
+  const switched = new Map<string, boolean>();
+  const ctx: StepContext = {
+    ...stage,
+    map: touchedMap,
+    setSwitch(name, on) {
+      const was = switches.get(name);
+      if (was === null) return;
+      if (!switched.has(name)) switched.set(name, was);
+      if (was !== on) switches.set(name, on);
+    },
+  };
 
   async function enter(tour: Tour, index: number, from: number | null): Promise<void> {
     const mine = ++seq;
@@ -303,6 +324,10 @@ export function createTour(
     progress.record(c.tour.id, done ? 0 : c.index, done);
     for (const restore of restores.values()) restore();
     restores.clear();
+    for (const [name, was] of switched) {
+      if (switches.get(name) === !was) switches.set(name, was);
+    }
+    switched.clear();
     const back = origin;
     origin = null;
     if (back !== null && back !== stage.location()) await stage.restore(back);

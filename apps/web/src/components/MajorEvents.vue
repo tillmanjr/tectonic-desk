@@ -48,6 +48,7 @@ const sevStyle = (alert: string | null): Record<string, string> | undefined =>
     :label="majorLabel(catalog.requireRegion())"
     :count="cards.length"
     :rows="props.rows"
+    tour="quakes.cards"
   >
     <p v-if="cards.length === 0" class="note">No events meet the threshold in this window.</p>
     <button

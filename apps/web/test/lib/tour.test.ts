@@ -11,7 +11,7 @@ import {
   type Tour,
 } from "../../src/lib/tour.js";
 import type { Page } from "../../src/router.js";
-import { fakeMap, fakeStage } from "../support/tour.js";
+import { fakeMap, fakeStage, fakeSwitches } from "../support/tour.js";
 
 const NOW = new Date("2026-11-23T10:00:00Z");
 const AT = NOW.toISOString();
@@ -253,6 +253,78 @@ function runner(page: Page = "earthquakes", mapWaitMs = 50) {
   const tour = createTour(tours(log), progress, stage, { mapWaitMs });
   return { log, stage, state, progress, tour };
 }
+
+describe("tour switches", () => {
+  function switchTour(): Tour {
+    return {
+      id: "earthquakes",
+      title: "Three",
+      blurb: "",
+      pageFor: (p: Page) => p,
+      steps: [
+        {
+          id: "s",
+          title: "S",
+          body: "",
+          targets: [],
+          enter: (ctx) => {
+            ctx.setSwitch("open", true);
+            ctx.setSwitch("on", true);
+            ctx.setSwitch("missing", true);
+          },
+          leave: (ctx) => {
+            ctx.setSwitch("open", false);
+          },
+        },
+        {
+          id: "t",
+          title: "T",
+          body: "",
+          targets: [],
+          enter: (ctx) => {
+            ctx.setSwitch("open", true);
+          },
+        },
+      ],
+    };
+  }
+
+  it("flips a switch as a click would and puts every switch back when the tour ends", async () => {
+    const { switches, state, set } = fakeSwitches({ open: false, on: true, gone: false });
+    const { stage } = fakeStage();
+    const tour = createTour([switchTour()], createTourProgress(null), stage, { switches });
+    await tour.start("earthquakes");
+    expect(state.get("open")).toBe(true);
+    expect(set).not.toHaveBeenCalledWith("on", true);
+    await tour.next();
+    expect(set.mock.calls).toEqual([
+      ["open", true],
+      ["open", false],
+      ["open", true],
+    ]);
+    state.delete("open");
+    await tour.exit();
+    expect(set).toHaveBeenCalledTimes(3);
+    state.set("open", false);
+    await tour.start("earthquakes", 1);
+    expect(state.get("open")).toBe(true);
+    await tour.exit();
+    expect(state.get("open")).toBe(false);
+  });
+
+  it("works on the document by default", async () => {
+    const box = document.createElement("label");
+    box.dataset.tour = "open";
+    box.innerHTML = '<input type="checkbox">';
+    document.body.append(box);
+    const tour = createTour([switchTour()], createTourProgress(null), fakeStage().stage);
+    await tour.start("earthquakes");
+    expect(box.querySelector("input")?.checked).toBe(true);
+    await tour.exit();
+    expect(box.querySelector("input")?.checked).toBe(false);
+    box.remove();
+  });
+});
 
 describe("createTour", () => {
   afterEach(() => {

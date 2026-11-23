@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { dockOf, inView, targetElements, unionBox } from "../../src/lib/tour-target.js";
+import {
+  dockOf,
+  domSwitches,
+  inView,
+  targetElements,
+  unionBox,
+} from "../../src/lib/tour-target.js";
 
 function el(tour: string, r: { left: number; top: number; width: number; height: number }) {
   const e = document.createElement("div");
@@ -36,5 +42,31 @@ describe("tour targets", () => {
     expect(inView({ left: 0, top: 0, right: 100, bottom: 101 }, 100, 100)).toBe(false);
     expect(inView({ left: -1, top: 0, right: 100, bottom: 100 }, 100, 100)).toBe(false);
     expect(inView({ left: 0, top: 0, right: 101, bottom: 100 }, 100, 100)).toBe(false);
+  });
+
+  it("reads and flips switches: a checkbox inside, or an element with aria-expanded", () => {
+    document.body.innerHTML = `
+      <label data-tour="mech"><input type="checkbox"> Mechanisms</label>
+      <input data-tour="bare" type="checkbox" checked>
+      <section data-tour="bar"><div class="head" aria-expanded="false"></div></section>
+      <p data-tour="plain">text</p>`;
+    const head = document.querySelector<HTMLElement>(".head");
+    head?.addEventListener("click", () => {
+      head.setAttribute("aria-expanded", String(head.getAttribute("aria-expanded") !== "true"));
+    });
+    const sw = domSwitches();
+    expect(sw.get("mech")).toBe(false);
+    expect(sw.get("bare")).toBe(true);
+    expect(sw.get("bar")).toBe(false);
+    expect(sw.get("plain")).toBeNull();
+    expect(sw.get("nothing")).toBeNull();
+    sw.set("mech", true);
+    sw.set("bar", true);
+    sw.set("bar", true);
+    sw.set("bare", true);
+    sw.set("plain", true);
+    expect(sw.get("mech")).toBe(true);
+    expect(sw.get("bar")).toBe(true);
+    expect(sw.get("bare")).toBe(true);
   });
 });

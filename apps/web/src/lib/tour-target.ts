@@ -56,3 +56,39 @@ export function dockOf(box: Box | null, viewportHeight: number): Dock {
 export function inView(box: Box, width: number, height: number): boolean {
   return box.top >= 0 && box.left >= 0 && box.bottom <= height && box.right <= width;
 }
+
+/** Reads and flips named switches; the runner's default works on the document. */
+export interface Switches {
+  /** Whether the switch is on; null when nothing carries the name. */
+  get: (name: string) => boolean | null;
+  /** Clicks the switch's control, as the reader would. */
+  set: (name: string, on: boolean) => void;
+}
+
+/** The control behind a name: a checkbox, or an element with `aria-expanded`, at or inside it. */
+function switchControl(name: string, root: ParentNode): HTMLElement | null {
+  const el = root.querySelector(`[data-tour~="${name}"]`);
+  if (!(el instanceof HTMLElement)) return null;
+  const sel = 'input[type="checkbox"], [aria-expanded]';
+  const control = el.matches(sel) ? el : el.querySelector(sel);
+  return control instanceof HTMLElement ? control : null;
+}
+
+function isOn(control: HTMLElement): boolean {
+  return control instanceof HTMLInputElement
+    ? control.checked
+    : control.getAttribute("aria-expanded") === "true";
+}
+
+export function domSwitches(root: ParentNode = document): Switches {
+  return {
+    get(name) {
+      const c = switchControl(name, root);
+      return c === null ? null : isOn(c);
+    },
+    set(name, on) {
+      const c = switchControl(name, root);
+      if (c !== null && isOn(c) !== on) c.click();
+    },
+  };
+}

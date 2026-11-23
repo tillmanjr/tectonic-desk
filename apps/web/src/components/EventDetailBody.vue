@@ -133,6 +133,7 @@ function describe(m: ApiMechanism): string {
       </dl>
       <MechanismBlock
         v-if="derived.preferred !== null"
+        data-tour="detail.mechanism"
         :mechanism="derived.preferred"
         :depth-km="derived.d.depthKm"
       />
@@ -152,7 +153,7 @@ function describe(m: ApiMechanism): string {
           </template>
         </div>
       </div>
-      <div v-if="derived.impact.length > 0">
+      <div v-if="derived.impact.length > 0" data-tour="detail.impact">
         <h3>Impact</h3>
         <dl class="kv">
           <template v-for="row in derived.impact" :key="row.k">
@@ -165,7 +166,7 @@ function describe(m: ApiMechanism): string {
           </template>
         </dl>
       </div>
-      <div v-if="derived.sequence !== null">
+      <div v-if="derived.sequence !== null" data-tour="detail.impact">
         <h3>Sequence</h3>
         <p class="note" style="margin: 0">
           {{ derived.sequence.count }} later
@@ -177,7 +178,7 @@ function describe(m: ApiMechanism): string {
           }}.
         </p>
       </div>
-      <div v-if="derived.parent !== null">
+      <div v-if="derived.parent !== null" data-tour="detail.impact">
         <h3>Sequence</h3>
         <p class="note" style="margin: 0">
           Within 150 km of, and after, the M{{ fmtMag(derived.parent.mag) }} event of
