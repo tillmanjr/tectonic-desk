@@ -51,6 +51,8 @@ async function hideSection(ctx: StepContext): Promise<void> {
  */
 export const EXAMPLE_EVENT = {
   id: "nc73666231",
+  /** The event's first month on the West Coast map, with nothing selected. */
+  window: "/earthquakes/wc?since=2021-12-20&until=2022-01-19",
   url: "/earthquakes/wc?since=2021-12-20&until=2022-01-19&event=nc73666231",
 };
 /**
@@ -364,7 +366,11 @@ export const EARTHQUAKES: Tour = {
       body: "With a section line on the map, the events within its corridor plot here against distance along the line and depth, at true scale, over the relief along it. Exaggerate the vertical ×2 or ×4, widen or narrow the corridor, or clear the line from the title.",
       tryIt: "Drag an end of the line on the map; the profile follows.",
       targets: ["section.profile"],
-      enter: showSection,
+      // The profile does not depend on the selection, and the event panel would cover it.
+      enter: async (ctx) => {
+        await ctx.go(EXAMPLE_EVENT.window);
+        await showSection(ctx);
+      },
       leave: hideSection,
     },
     {
