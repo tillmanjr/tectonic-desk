@@ -33,6 +33,7 @@ describe("createApiClient", () => {
     await api.auroraIndex();
     await api.auroraFrame("2026-10-13T11:50:00.000Z");
     await api.sunFrames();
+    await api.sunMovie("c2", "2026-10-06T12:00:00.000Z", "2026-10-13T12:00:00.000Z", 512);
     expect(api.sunImageUrl("aia193", 512, "2026-10-13T11:45:00.000Z")).toBe(
       "/api/space/sun/aia193/512.jpg?t=2026-10-13T11%3A45%3A00.000Z",
     );
@@ -58,6 +59,7 @@ describe("createApiClient", () => {
       "/api/space/aurora",
       "/api/space/aurora/2026-10-13T11%3A50%3A00.000Z",
       "/api/space/sun",
+      "/api/space/sun/c2/movie?from=2026-10-06T12%3A00%3A00.000Z&to=2026-10-13T12%3A00%3A00.000Z&size=512",
     ]);
   });
   it("throws ApiRequestError with the body's error message", async () => {
