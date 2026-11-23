@@ -167,3 +167,14 @@ refetch shows Updating… and ✓ Updated), the open bar, magnitude (M6+), depth
 window (30 days ending 31 July 2019 on the West Coast), how length, From and To interact (From
 moved to 4 July makes it Custom), long windows and the raised floor (2015–2024, global), Reset,
 and Hide markers.
+
+## Two groups, clearly told apart (2026-11-24)
+
+Quick tours and Deep dives were easy to overlook as small grey headings. Each group now sits in
+its own section of the Help menu under a bold heading in its own colour, with a line saying what
+it is ("The app at a glance, page by page." and "One part of the app, every control in detail,
+with examples set as you go.") and a rule down its side: the accent for quick tours, the alert
+orange for deep dives (`--tour-quick`, `--tour-deep`). The tour card carries a badge in the same
+colour ("Quick tour" or "Deep dive"), and a tour step that links to a deep dive names the Help
+menu's Deep dives group with that badge, so the reader recognises it there. The names live in
+`GROUP_NAMES`.
