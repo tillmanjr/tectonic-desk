@@ -7,6 +7,7 @@ import type { EventFilter } from "./filters.js";
 import type { Zone } from "./format.js";
 import type { Mark, MarksStore } from "./marks.js";
 import type { NoticeStore } from "./notice.js";
+import type { PinsStore } from "./pins.js";
 import type { Section } from "./section.js";
 import type { SettingsStore } from "./settings.js";
 import type { SpaceRange, SpaceStore } from "./space.js";
@@ -26,6 +27,8 @@ export const SET_FILTER: InjectionKey<(f: EventFilter) => void> = Symbol("setFil
 export const VOLCANOES: InjectionKey<VolcanoStore> = Symbol("volcanoes");
 /** Reader-tunable settings (card rows for now). */
 export const SETTINGS: InjectionKey<SettingsStore> = Symbol("settings");
+/** The reader's map pins, one per map view, kept in localStorage. */
+export const PINS: InjectionKey<PinsStore> = Symbol("pins");
 /** The one-line app notice; `post` from anywhere, rendered once by `App.vue`. */
 export const NOTICE: InjectionKey<NoticeStore> = Symbol("notice");
 /** The cross-section line in the route (`?section=`), or null. */

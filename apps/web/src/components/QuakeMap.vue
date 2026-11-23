@@ -7,6 +7,7 @@ import {
   API,
   CATALOG,
   CLOCK,
+  PINS,
   SECTION,
   SELECT,
   SET_SECTION,
@@ -31,6 +32,7 @@ const mv = useMapView({
   animate: () => props.animate,
   section: useInjected(SECTION),
   setSection: useInjected(SET_SECTION),
+  pins: useInjected(PINS),
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });
 </script>

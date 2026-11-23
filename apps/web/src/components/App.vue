@@ -41,6 +41,7 @@ import {
   SET_SECTION,
   SET_SPACE_RANGE,
   SET_VOLCANO_FILTER,
+  PINS,
   SETTINGS,
   SPACE,
   STATUS,
@@ -55,6 +56,7 @@ import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
 import { parseSection, sectionQuery, type Section } from "../lib/section.js";
+import { createPins } from "../lib/pins.js";
 import { createSettings } from "../lib/settings.js";
 import {
   createSpaceStore,
@@ -77,6 +79,7 @@ const clock = inject(CLOCK, null) ?? createClock();
 const theme = inject(THEME, null) ?? createTheme();
 const settings = inject(SETTINGS, null) ?? createSettings();
 const marks = inject(MARKS, null) ?? createMarks();
+const pins = inject(PINS, null) ?? createPins();
 const notice = createNotice();
 const now = (): Date => clock.now.value;
 const catalog = createCatalog(api, now);
@@ -93,6 +96,7 @@ provide(CLOCK, clock);
 provide(THEME, theme);
 provide(SETTINGS, settings);
 provide(MARKS, marks);
+provide(PINS, pins);
 provide(NOTICE, notice);
 provide(CATALOG, catalog);
 provide(STATUS, status);

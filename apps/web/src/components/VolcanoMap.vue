@@ -5,6 +5,7 @@ import VolcanoLegendRows from "./VolcanoLegendRows.vue";
 import {
   API,
   CATALOG,
+  PINS,
   SECTION,
   SELECT_VOLCANO,
   SET_SECTION,
@@ -27,6 +28,7 @@ const mv = useMapView({
   animate: () => props.animate,
   section: useInjected(SECTION),
   setSection: useInjected(SET_SECTION),
+  pins: useInjected(PINS),
 });
 const v = useVolcanoLayer({ store, mv });
 </script>
