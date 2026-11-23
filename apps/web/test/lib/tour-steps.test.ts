@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import {
   EXAMPLE_MEASURES,
   EARTHQUAKES,
+  EXAMPLE_EVENT,
   EXAMPLE_SECTIONS,
+  MECHANISM,
   MAP_TOOLS,
   ORIENTATION,
   TOURS,
@@ -94,8 +96,8 @@ describe("tour content", () => {
     for (const id of ["detail", "mechanism", "impact", "mark"]) await run(EARTHQUAKES, id, ctx);
     await run(EARTHQUAKES, "shakemap", ctx);
     await run(EARTHQUAKES, "mechanisms", ctx);
-    expect(ctx.selectLargest).toHaveBeenCalledTimes(5);
-    expect(ctx.selectLargest).toHaveBeenCalledWith({ mechanism: true });
+    expect(ctx.go).toHaveBeenCalledTimes(5);
+    expect(ctx.go).toHaveBeenCalledWith(EXAMPLE_EVENT.url);
     expect(vi.mocked(ctx.setSwitch).mock.calls).toEqual([
       ["refine.earthquakes", true],
       ["refine.earthquakes", false],
@@ -105,6 +107,15 @@ describe("tour content", () => {
       ["map.mech", false],
     ]);
     expect(EARTHQUAKES.pageFor("space")).toBe("earthquakes");
+  });
+
+  it("opens the example event on every step of the mechanism side path, offered from the Mechanism step", async () => {
+    const ctx = fakeContext(null);
+    for (const s of MECHANISM.steps) await s.enter?.(ctx);
+    expect(ctx.go).toHaveBeenCalledTimes(MECHANISM.steps.length);
+    expect(MECHANISM.sidePath).toBe(true);
+    expect(MECHANISM.pageFor("active")).toBe("earthquakes");
+    expect(EARTHQUAKES.steps.find((s) => s.detour !== undefined)?.id).toBe("mechanism");
   });
 
   it("does nothing to a map that is not there", async () => {

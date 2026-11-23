@@ -10,18 +10,17 @@ import { domSwitches, type Switches } from "./tour-target.js";
  * ends, and the reader's progress through each tour, kept in localStorage.
  */
 
-export type TourId = "orientation" | "map" | "earthquakes";
+export type TourId = "orientation" | "map" | "earthquakes" | "mechanism";
 
 /** What a step acts through, built by `App.vue`; `map` resolves once a map is on screen. */
 export interface TourStage {
   page: () => Page;
   goPage: (p: Page) => Promise<void>;
-  /**
-   * Selects the largest event in the window, or with `mechanism` the largest with a moment
-   * tensor or focal mechanism (none when the window has none).
-   */
-  selectLargest: (opts?: { mechanism?: boolean }) => void;
+  /** Selects the largest event in the window (none when the window is empty). */
+  selectLargest: () => void;
   clearSelection: () => void;
+  /** Replaces the route with a path and query of the app's own, as a pasted link would open it. */
+  go: (url: string) => Promise<void>;
   setSection: (s: Section | null) => void;
   /** The route as it stands, for `restore`. */
   location: () => string;
@@ -51,6 +50,8 @@ export interface TourStep {
   enter?: (ctx: StepContext) => void | Promise<void>;
   /** Undoes what `enter` showed, when moving to another step of the same tour. */
   leave?: (ctx: StepContext) => void | Promise<void>;
+  /** An optional side path from this step: another tour, taken from a button on the card. */
+  detour?: { tour: TourId; label: string };
 }
 
 export interface Tour {
@@ -60,6 +61,8 @@ export interface Tour {
   /** The page the tour runs on, given the page in force. */
   pageFor: (current: Page) => Page;
   steps: readonly TourStep[];
+  /** Reached from another tour's step; optional, so it never keeps the Help button lit. */
+  sidePath?: boolean;
 }
 
 export interface TourRecord {
@@ -80,7 +83,7 @@ export interface TourProgressDocument {
 }
 
 export const TOUR_KEY = "tectonic.tour";
-const TOUR_IDS: readonly TourId[] = ["orientation", "map", "earthquakes"];
+const TOUR_IDS: readonly TourId[] = ["orientation", "map", "earthquakes", "mechanism"];
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
@@ -195,6 +198,8 @@ export interface ActiveTour {
   tour: Tour;
   index: number;
   step: TourStep;
+  /** The tour a side path was taken from, which its end returns to; null on a main tour. */
+  parent: Tour | null;
 }
 
 export interface TourRunner {
@@ -209,6 +214,8 @@ export interface TourRunner {
   next: () => Promise<void>;
   back: () => Promise<void>;
   goTo: (index: number) => Promise<void>;
+  /** Takes the step's side path; its last step, or Back from its first, returns here. */
+  detour: () => Promise<void>;
   /** Leaves the tour where it stands, saving the step, and gives the reader's view back. */
   exit: () => Promise<void>;
   /** `MapShell` hands its map over while mounted. */
@@ -260,7 +267,11 @@ export function createTour(
   opts: { mapWaitMs?: number; switches?: Switches } = {},
 ): TourRunner {
   const mapWaitMs = opts.mapWaitMs ?? MAP_WAIT_MS;
-  const current = shallowRef<{ tour: Tour; index: number } | null>(null);
+  interface Frame {
+    tour: Tour;
+    index: number;
+  }
+  const current = shallowRef<(Frame & { parent: Frame | null }) | null>(null);
   const map = shallowRef<MapView | null>(null);
   let waiting: ((mv: MapView | null) => void)[] = [];
   /** Restores for the maps a tour has touched; a map that unmounted takes its state with it. */
@@ -303,10 +314,15 @@ export function createTour(
     },
   };
 
-  async function enter(tour: Tour, index: number, from: number | null): Promise<void> {
+  async function enter(
+    tour: Tour,
+    index: number,
+    from: number | null,
+    parent: Frame | null,
+  ): Promise<void> {
     const mine = ++seq;
     const prev = from === null ? undefined : tour.steps[from];
-    current.value = { tour, index };
+    current.value = { tour, index, parent };
     progress.record(tour.id, index, false, tour.steps[index]?.id);
     if (prev?.leave !== undefined && from !== index) await prev.leave(ctx);
     if (mine !== seq) return;
@@ -314,6 +330,12 @@ export function createTour(
     if (want !== stage.page()) await stage.goPage(want);
     if (mine !== seq) return;
     await tour.steps[index]?.enter?.(ctx);
+  }
+
+  /** Leaves a side path for the step it was taken from, with that step set up again. */
+  async function rejoin(from: Frame, parent: Frame, done: boolean): Promise<void> {
+    progress.record(from.tour.id, done ? 0 : from.index, done);
+    await enter(parent.tour, parent.index, null, null);
   }
 
   async function end(done: boolean): Promise<void> {
@@ -339,9 +361,15 @@ export function createTour(
     active: computed(() => {
       const c = current.value;
       const step = c?.tour.steps[c.index];
-      return c === null || step === undefined ? null : { ...c, step };
+      if (c === null || step === undefined) return null;
+      return { tour: c.tour, index: c.index, step, parent: c.parent?.tour ?? null };
     }),
-    unseen: computed(() => hasUnseen(progress.doc.value, tours)),
+    unseen: computed(() =>
+      hasUnseen(
+        progress.doc.value,
+        tours.filter((t) => t.sidePath !== true),
+      ),
+    ),
     resumable: computed(() => {
       const last = progress.doc.value.last;
       if (last === null) return null;
@@ -358,23 +386,32 @@ export function createTour(
       if (was !== null && was.tour.id !== id) await end(false);
       origin ??= stage.location();
       const index = Math.max(0, Math.min(step, tour.steps.length - 1));
-      await enter(tour, index, was?.tour.id === id ? was.index : null);
+      await enter(tour, index, was?.tour.id === id ? was.index : null, null);
     },
     async next() {
       const c = current.value;
       if (c === null) return;
-      if (c.index >= c.tour.steps.length - 1) await end(true);
-      else await enter(c.tour, c.index + 1, c.index);
+      if (c.index < c.tour.steps.length - 1) await enter(c.tour, c.index + 1, c.index, c.parent);
+      else if (c.parent !== null) await rejoin(c, c.parent, true);
+      else await end(true);
     },
     async back() {
       const c = current.value;
-      if (c === null || c.index === 0) return;
-      await enter(c.tour, c.index - 1, c.index);
+      if (c === null) return;
+      if (c.index > 0) await enter(c.tour, c.index - 1, c.index, c.parent);
+      else if (c.parent !== null) await rejoin(c, c.parent, false);
     },
     async goTo(index) {
       const c = current.value;
       if (c === null || index < 0 || index >= c.tour.steps.length) return;
-      await enter(c.tour, index, c.index);
+      await enter(c.tour, index, c.index, c.parent);
+    },
+    async detour() {
+      const c = current.value;
+      const to = c?.tour.steps[c.index]?.detour;
+      const side = to === undefined ? undefined : byId(to.tour);
+      if (c === null || side === undefined) return;
+      await enter(side, 0, null, { tour: c.tour, index: c.index });
     },
     exit: () => end(false),
     attachMap(mv) {

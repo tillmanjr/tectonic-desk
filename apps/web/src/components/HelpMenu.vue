@@ -75,9 +75,9 @@ onUnmounted(() => {
         Resume {{ tour.resumable.value.tour.title }} at step
         {{ tour.resumable.value.step + 1 }}
       </button>
-      <div v-for="t in tour.tours" :key="t.id" class="htour">
+      <div v-for="t in tour.tours" :key="t.id" class="htour" :class="{ hside: t.sidePath }">
         <div class="htitle">
-          <b>{{ t.title }}</b>
+          <b>{{ t.title }}<small v-if="t.sidePath" class="hsidetag"> · side path</small></b>
           <span class="hstate">{{
             stateText(tourState(tour.progress.doc.value, t.id), t.steps.length)
           }}</span>

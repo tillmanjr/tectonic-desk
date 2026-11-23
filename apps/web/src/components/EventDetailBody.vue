@@ -144,7 +144,7 @@ function describe(m: ApiMechanism): string {
       <p v-else class="note">
         USGS has not published a moment tensor or focal mechanism for this event.
       </p>
-      <div v-if="derived.others.length > 0">
+      <div v-if="derived.others.length > 0" data-tour="mech.others">
         <h3>Other solutions</h3>
         <div class="other-solutions">
           <template v-for="m in derived.others" :key="m.id">

@@ -254,6 +254,76 @@ function runner(page: Page = "earthquakes", mapWaitMs = 50) {
   return { log, stage, state, progress, tour };
 }
 
+describe("side paths", () => {
+  function withSide(): Tour[] {
+    const main: Tour = {
+      id: "earthquakes",
+      title: "Main",
+      blurb: "",
+      pageFor: (p: Page) => p,
+      steps: [
+        { id: "m0", title: "M0", body: "", targets: [] },
+        {
+          id: "m1",
+          title: "M1",
+          body: "",
+          targets: [],
+          detour: { tour: "mechanism", label: "Deeper" },
+          leave: () => undefined,
+        },
+        { id: "m2", title: "M2", body: "", targets: [], detour: { tour: "map", label: "Gone" } },
+      ],
+    };
+    const side: Tour = {
+      id: "mechanism",
+      title: "Side",
+      blurb: "",
+      sidePath: true,
+      pageFor: (p: Page) => p,
+      steps: [
+        { id: "s0", title: "S0", body: "", targets: [] },
+        { id: "s1", title: "S1", body: "", targets: [] },
+      ],
+    };
+    return [main, side];
+  }
+
+  it("takes a side path and comes back at its end or from its first step", async () => {
+    const { stage } = fakeStage();
+    const progress = createTourProgress(null, () => NOW);
+    const tour = createTour(withSide(), progress, stage);
+    await tour.detour();
+    await tour.start("earthquakes");
+    await tour.detour();
+    expect(tour.active.value?.tour.id).toBe("earthquakes");
+    await tour.next();
+    await tour.detour();
+    expect(tour.active.value).toMatchObject({ index: 0, parent: { id: "earthquakes" } });
+    expect(tour.active.value?.tour.id).toBe("mechanism");
+    await tour.next();
+    await tour.goTo(0);
+    await tour.back();
+    expect(tour.active.value).toMatchObject({ index: 1, parent: null });
+    expect(progress.doc.value.tours.mechanism).toMatchObject({ step: 0, done: false });
+    await tour.detour();
+    await tour.next();
+    await tour.next();
+    expect(tour.active.value?.tour.id).toBe("earthquakes");
+    expect(progress.doc.value.tours.mechanism).toMatchObject({ done: true });
+    await tour.next();
+    await tour.detour();
+    expect(tour.active.value?.step.id).toBe("m2");
+    await tour.exit();
+  });
+
+  it("leaves side paths out of what keeps the Help button lit", () => {
+    const progress = createTourProgress(null, () => NOW);
+    const tour = createTour(withSide(), progress, fakeStage().stage);
+    for (const id of ["m0", "m1", "m2"]) progress.record("earthquakes", 0, false, id);
+    expect(tour.unseen.value).toBe(false);
+  });
+});
+
 describe("tour switches", () => {
   function switchTour(): Tour {
     return {

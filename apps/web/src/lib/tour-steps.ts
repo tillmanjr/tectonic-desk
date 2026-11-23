@@ -43,9 +43,18 @@ async function hideSection(ctx: StepContext): Promise<void> {
   const mv = await ctx.map();
   mv?.reset();
 }
-/** Opens the largest event with a mechanism, for the steps that read its panel or its ShakeMap. */
-function selectExample(ctx: StepContext): void {
-  ctx.selectLargest({ mechanism: true });
+/**
+ * The event the Earthquakes tour reads: the M6.2 of 20 December 2021, 7 km N of Petrolia, at the
+ * Mendocino triple junction, with a moment tensor, a reviewed ShakeMap, DYFI and a PAGER alert.
+ * The window is its first month, on the West Coast map, so its aftershocks show around it.
+ */
+export const EXAMPLE_EVENT = {
+  id: "nc73666231",
+  url: "/earthquakes/wc?since=2021-12-20&until=2022-01-19&event=nc73666231",
+};
+/** Opens the example event in its window; selecting it zooms the map to it. */
+async function showExample(ctx: StepContext): Promise<void> {
+  await ctx.go(EXAMPLE_EVENT.url);
 }
 
 export const ORIENTATION: Tour = {
@@ -265,7 +274,7 @@ export const EARTHQUAKES: Tour = {
     {
       id: "intro",
       title: "The Earthquakes page",
-      body: "The catalogue on its own, with room for the table and the charts. Everything on it reads one window of the USGS ComCat catalogue, refined below; this tour opens an event and walks from the map down to the statistics.",
+      body: "The catalogue on its own, with room for the table and the charts. Everything on it reads one window of the USGS ComCat catalogue, refined below. Partway through, this tour opens a well-recorded event on the West Coast and walks from its panel and map down to the statistics.",
       targets: [],
     },
     {
@@ -295,31 +304,32 @@ export const EARTHQUAKES: Tour = {
     {
       id: "detail",
       title: "An event",
-      body: "The largest event in the window with a mechanism: origin time in UTC and your zone, epicentre, depth and its class, and the event id. Pick any event from the map, a card or the table to open it here.",
+      body: "The M6.2 of 20 December 2021, 7 km north of Petrolia at the Mendocino triple junction, in a window of its first month on the West Coast map: origin time in UTC and your zone, epicentre, depth and its class, and the event id. Pick any event from the map, a card or the table to open it here.",
       targets: ["detail"],
-      enter: selectExample,
+      enter: showExample,
     },
     {
       id: "mechanism",
       title: "Mechanism",
       body: "The preferred moment tensor or first-motion solution as a lower-hemisphere, equal-area beachball with the T and P axes, both nodal planes (strike / dip / rake) and the faulting style. A low double-couple percentage is flagged, and planes rebuilt from the P and T axes say so. Other agencies' solutions follow.",
       targets: ["detail.mechanism"],
-      enter: selectExample,
+      enter: showExample,
+      detour: { tour: "mechanism", label: "A deeper look at the focal mechanism" },
     },
     {
       id: "impact",
       title: "Impact and sequence",
       body: "Significance, Did You Feel It? reports and maximum intensity, the ShakeMap maximum MMI, the PAGER alert and the tsunami flag; then the events that followed within 150 km, or the larger event this one followed.",
       targets: ["detail.impact"],
-      enter: selectExample,
+      enter: showExample,
     },
     {
       id: "shakemap",
       title: "ShakeMap",
-      body: "The selected event's USGS ShakeMap as Modified Mercalli intensity bands, from ground-motion models with site amplification and constrained by stations and felt reports. Point at a band for its intensity; the legend gives the scale. USGS publishes one for most M5.5+ events.",
+      body: "The selected event's USGS ShakeMap as Modified Mercalli intensity bands, from ground-motion models with site amplification and constrained by stations and felt reports. Petrolia's reached VII near the coast. Point at a band for its intensity; the legend gives the scale. USGS publishes one for most M5.5+ events, and for smaller ones in well-instrumented networks like this.",
       targets: ["map.shake", "map.stage"],
-      enter: (ctx) => {
-        selectExample(ctx);
+      enter: async (ctx) => {
+        await showExample(ctx);
         ctx.setSwitch("map.shake", true);
       },
       leave: (ctx) => {
@@ -376,7 +386,7 @@ export const EARTHQUAKES: Tour = {
       title: "Mark it",
       body: "Keep the event in your marks, in a group of your own, to reopen it later, stack it beside others or compare them pairwise.",
       targets: ["detail.mark"],
-      enter: selectExample,
+      enter: showExample,
     },
     {
       id: "done",
@@ -387,4 +397,63 @@ export const EARTHQUAKES: Tour = {
   ],
 };
 
-export const TOURS: readonly Tour[] = [ORIENTATION, MAP_TOOLS, EARTHQUAKES];
+export const MECHANISM: Tour = {
+  id: "mechanism",
+  title: "Focal mechanism",
+  blurb: "A side path from the Earthquakes tour: reading a beachball, part by part.",
+  sidePath: true,
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "sphere",
+      title: "The focal sphere",
+      body: "Picture a small sphere around the hypocentre: every ray leaving the source pierces it. The beachball is its lower half seen from above, in an equal-area (Schmidt) projection, so north is up, the centre points straight down and the rim is horizontal. The lower half is drawn because rays to distant stations leave the source downward.",
+      targets: ["mech.ball"],
+      enter: showExample,
+    },
+    {
+      id: "quadrants",
+      title: "Compression and dilatation",
+      body: "The first P-wave motion is a push away from the source (compressional, up on a vertical seismometer) in two opposite quadrants and a pull back towards it (dilatational) in the other two. The compressional quadrants are shaded. The tension axis T lies at the centre of the shaded quadrants and the pressure axis P at the centre of the white ones.",
+      targets: ["mech.ball"],
+      enter: showExample,
+    },
+    {
+      id: "planes",
+      title: "Nodal planes",
+      body: "The two great circles between the quadrants are the nodal planes, where the first motion changes sign. One is the fault and the other the auxiliary plane; the radiation pattern alone cannot tell them apart, so the aftershocks, a mapped fault or a finite-fault model decide. Each is strike / dip / rake in the Aki & Richards convention: the strike has the plane dipping to its right, the dip is from horizontal, and the rake is the slip direction of the hanging wall within the plane.",
+      targets: ["mech.planes"],
+      enter: showExample,
+    },
+    {
+      id: "axes",
+      title: "P and T axes",
+      body: "The pressure and tension axes bisect the quadrants, at 45° to both planes, and are given by azimuth and plunge. They approximate the directions of greatest and least compressive stress only loosely: slip on a weak, pre-existing fault need not be optimally oriented in the stress field.",
+      targets: ["mech.axes"],
+      enter: showExample,
+    },
+    {
+      id: "style",
+      title: "Faulting style",
+      body: "Read from the rake. Near +90° is reverse (thrust where the plane dips 35° or less): P near horizontal and a shaded centre. Near −90° is normal: T near horizontal and a white centre. Near 0° or 180° is strike-slip: steep planes crossing near the centre. Anything between is oblique. For strike-slip the panel gives the sense of slip on each plane; which one applies depends on which plane faulted.",
+      targets: ["mech.style", "mech.ball"],
+      enter: showExample,
+    },
+    {
+      id: "moment",
+      title: "Size and double couple",
+      body: "For a moment tensor: the scalar moment M0 gives Mw = (2/3)(log10 M0 − 9.1) with M0 in N·m, and the centroid depth is where the inversion places the moment release, which can differ from the hypocentre where rupture began. The double-couple percentage says how much of the tensor a pure shear dislocation explains. Well below 100 % (flagged under 50 %) the planes are less diagnostic: a complex or multi-fault rupture, volume change, or simply a poorly constrained inversion.",
+      targets: ["mech.moment"],
+      enter: showExample,
+    },
+    {
+      id: "others",
+      title: "Other solutions",
+      body: "Agencies and methods differ: W-phase, body-wave and regional waveform inversions, and first-motion polarities. The preferred solution is drawn above; comparing the others' planes shows how well the mechanism is constrained. Close agreement is a robust result.",
+      targets: ["mech.others"],
+      enter: showExample,
+    },
+  ],
+};
+
+export const TOURS: readonly Tour[] = [ORIENTATION, MAP_TOOLS, EARTHQUAKES, MECHANISM];

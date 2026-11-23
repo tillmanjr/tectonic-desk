@@ -67,7 +67,6 @@ import {
   spaceRangeQuery,
   type SpaceRange,
 } from "../lib/space.js";
-import { hasSolution } from "../lib/stats.js";
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
 import { createTour, createTourProgress, TOUR, TOUR_PROGRESS } from "../lib/tour.js";
@@ -252,11 +251,10 @@ function setSection(s: Section | null): void {
 }
 provide(SET_SECTION, setSection);
 
-/** The largest event in the window the catalogue holds, for the tours' detail steps. */
-function largestEvent(mechanism: boolean): string | null {
+/** The largest event in the window the catalogue holds, for the orientation's detail step. */
+function largestEvent(): string | null {
   let best: { id: string; mag: number } | null = null;
   for (const e of catalog.filtered.value) {
-    if (mechanism && !hasSolution(e)) continue;
     if (e.mag !== null && (best === null || e.mag > best.mag)) best = { id: e.id, mag: e.mag };
   }
   return best?.id ?? null;
@@ -266,8 +264,11 @@ const tour = createTour(TOURS, inject(TOUR_PROGRESS, null) ?? createTourProgress
   goPage: async (p) => {
     await router.replace({ path: pagePath(p, routeRegion.value), query: withoutSelection() });
   },
-  selectLargest: (opts) => {
-    select(largestEvent(opts?.mechanism === true));
+  selectLargest: () => {
+    select(largestEvent());
+  },
+  go: async (url) => {
+    await router.replace(url);
   },
   clearSelection: () => {
     select(null);
