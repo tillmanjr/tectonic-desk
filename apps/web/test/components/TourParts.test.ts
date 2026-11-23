@@ -47,7 +47,7 @@ const TOURS: Tour[] = [
     id: "mechanism",
     title: "Side",
     blurb: "A side path.",
-    sidePath: true,
+    deep: { area: "Area" },
     pageFor: (p) => p,
     steps: [{ id: "s", title: "Ess", body: "Aside.", targets: [] }],
   },
@@ -266,9 +266,12 @@ describe("TourCard", () => {
     await tour.start("map");
     await nextTick();
     expect(w.find(".tourdetour").text()).toBe("Look closer →");
+    expect(w.find(".tourmore").text()).toBe(
+      "It is also in the Help menu, under Deep dives, as Area: Side.",
+    );
     await w.find(".tourdetour").trigger("click");
     await flushPromises();
-    expect(w.find(".tourpath").text()).toBe("Two › Side · 1 of 1");
+    expect(w.find(".tourpath").text()).toBe("Two › Area: Side · 1 of 1");
     expect(w.find(".tourbtn").attributes("disabled")).toBeUndefined();
     expect(w.find(".tourbtn.primary").text()).toBe("Back to Two");
     expect(w.find(".tourdetour").exists()).toBe(false);
@@ -309,7 +312,8 @@ describe("HelpMenu", () => {
       "Not started",
       "Not started",
     ]);
-    expect(w.find(".htour.hside .hsidetag").text()).toBe("· side path");
+    expect(w.find(".hdeephead").text()).toBe("Deep dives");
+    expect(w.find(".htour.hdeep b").text()).toBe("Area: Side");
     expect(w.find(".hblurb").text()).toBe("The first tour.");
     w.find(".hblurb").element.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     await nextTick();

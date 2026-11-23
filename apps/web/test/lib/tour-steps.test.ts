@@ -6,6 +6,8 @@ import {
   EXAMPLE_SECTIONS,
   EXAMPLE_VOLCANO,
   MECHANISM,
+  REFINE_QUAKES,
+  REFINE_URLS,
   SPACE,
   SPACE_HISTORY,
   SPACE_WEEK,
@@ -118,9 +120,14 @@ describe("tour content", () => {
     const ctx = fakeContext(null);
     for (const s of MECHANISM.steps) await s.enter?.(ctx);
     expect(ctx.go).toHaveBeenCalledTimes(MECHANISM.steps.length);
-    expect(MECHANISM.sidePath).toBe(true);
+    expect(MECHANISM.deep).toEqual({ area: "Earthquake detail" });
     expect(MECHANISM.pageFor("active")).toBe("earthquakes");
-    expect(EARTHQUAKES.steps.find((s) => s.detour !== undefined)?.id).toBe("mechanism");
+    expect(
+      EARTHQUAKES.steps.flatMap((s) => (s.detour === undefined ? [] : [[s.id, s.detour.tour]])),
+    ).toEqual([
+      ["refine", "refine-quakes"],
+      ["mechanism", "mechanism"],
+    ]);
   });
 
   it("opens the volcano refine bar and the example volcano, and closes the bar after", async () => {
@@ -151,6 +158,33 @@ describe("tour content", () => {
     expect(ctx.go).toHaveBeenCalledWith(EXAMPLE_EVENT.window);
     expect(ctx.setSection).toHaveBeenCalledWith(EXAMPLE_SECTIONS.regional);
     expect(EXAMPLE_EVENT.url.startsWith(EXAMPLE_EVENT.window)).toBe(true);
+  });
+
+  it("sets an example for each control of the earthquake refine bar, folded or open", async () => {
+    const ctx = fakeContext(null);
+    for (const s of REFINE_QUAKES.steps) await run(REFINE_QUAKES, s.id, ctx);
+    expect(vi.mocked(ctx.go).mock.calls.map(([u]) => u)).toEqual([
+      REFINE_URLS.base,
+      REFINE_URLS.base,
+      REFINE_URLS.status,
+      REFINE_URLS.base,
+      REFINE_URLS.magnitude,
+      REFINE_URLS.depth,
+      REFINE_URLS.window,
+      REFINE_URLS.custom,
+      REFINE_URLS.long,
+      REFINE_URLS.long,
+      REFINE_URLS.base,
+    ]);
+    const calls = vi.mocked(ctx.setSwitch).mock.calls;
+    expect(calls.slice(0, 4).map(([, on]) => on)).toEqual([false, false, false, true]);
+    expect(calls.slice(-3)).toEqual([
+      ["refine.earthquakes", true],
+      ["refine.earthquakes.hide", true],
+      ["refine.earthquakes.hide", false],
+    ]);
+    expect(REFINE_QUAKES.deep).toEqual({ area: "Refine" });
+    expect(REFINE_QUAKES.pageFor("space")).toBe("earthquakes");
   });
 
   it("does nothing to a map that is not there", async () => {

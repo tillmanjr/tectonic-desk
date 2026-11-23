@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useInjected } from "../lib/keys.js";
-import { TOUR } from "../lib/tour.js";
+import { TOUR, tourTitle } from "../lib/tour.js";
 import {
   dockOf,
   inView,
@@ -57,11 +57,18 @@ const spot = computed(() => {
   };
 });
 
+/** The deep dive a step's link leads to, by name, so the card can say where else to find it. */
+const detourDeep = computed(() => {
+  const to = active.value?.step.detour?.tour;
+  const t = tour.tours.find((x) => x.id === to);
+  return t?.deep === undefined ? null : tourTitle(t);
+});
+
 /** Next, or on the last step Done, or the way back from a side path. */
 const nextLabel = computed(() => {
   const a = active.value;
   if (a === null || a.index < a.tour.steps.length - 1) return "Next";
-  return a.parent === null ? "Done" : `Back to ${a.parent.title}`;
+  return a.parent === null ? "Done" : `Back to ${tourTitle(a.parent)}`;
 });
 
 function track(): void {
@@ -142,8 +149,9 @@ onUnmounted(stop);
     >
       <header class="tourhead">
         <span class="tourpath"
-          ><template v-if="active.parent !== null">{{ active.parent.title }} › </template
-          >{{ active.tour.title }} · {{ active.index + 1 }} of {{ active.tour.steps.length }}</span
+          ><template v-if="active.parent !== null">{{ tourTitle(active.parent) }} › </template
+          >{{ tourTitle(active.tour) }} · {{ active.index + 1 }} of
+          {{ active.tour.steps.length }}</span
         >
         <button type="button" class="tourexit" @click="tour.exit()">Exit tour</button>
       </header>
@@ -169,6 +177,9 @@ onUnmounted(stop);
       >
         {{ active.step.detour.label }} →
       </button>
+      <p v-if="detourDeep !== null" class="tourmore">
+        It is also in the Help menu, under Deep dives, as {{ detourDeep }}.
+      </p>
       <footer class="tourfoot">
         <div class="tourdots">
           <button

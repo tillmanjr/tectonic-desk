@@ -146,3 +146,24 @@ readout, the forecast, the flares, the aurora, and the long history. It shows a 
 (`SPACE_WEEK`), where flares and alerts are present, then 11 years (`SPACE_HISTORY`) for GFZ Kp,
 Kyoto Dst and the sunspot number with the cycle minima. The Sun overlay stacks above the tour, so
 the tour does not open it; the Sun step invites the reader to.
+
+## Deep dives (2026-11-24)
+
+The tours stay general; a deep dive covers one part of the app control by control. Decisions:
+
+- **Their own section, never pushed.** Deep dives (`deep: { area }` on a tour) are listed under
+  Deep dives in the Help menu, after the tours, named "Area: Title" (`tourTitle`). They do not keep
+  the Help button lit and "Continue to" never leads into one. The matching tour step links to its
+  deep dive (`detour`), and the card adds that it is also in the Help menu under Deep dives.
+- **They operate the controls.** Each step sets a real example (through `go` and `setSwitch`), so
+  the reader sees its effect; the reader's own view comes back at the end. States that cannot be
+  staged honestly, such as "Not updated" (a failed fetch), are described in words.
+- **The pattern first.** This round adds the section, "Refine: Earthquakes", and moves the focal
+  mechanism path in as "Earthquake detail: Focal mechanism". A catalogue of further deep dives
+  follows for approval.
+
+Refine: Earthquakes (12 steps, `REFINE_URLS`): the folded bar, the status feedback (a real
+refetch shows Updating… and ✓ Updated), the open bar, magnitude (M6+), depth (70–300 km), the
+window (30 days ending 31 July 2019 on the West Coast), how length, From and To interact (From
+moved to 4 July makes it Custom), long windows and the raised floor (2015–2024, global), Reset,
+and Hide markers.

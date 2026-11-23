@@ -306,6 +306,7 @@ export const EARTHQUAKES: Tour = {
       title: "Refine",
       body: "The window runs from 30 days to the whole catalogue since 1900, or between any two dates; magnitude and depth narrow it further. A long window raises the marker floor so the page stays responsive, and says so here; the time chart still counts every event, and the map's Density toggle shades where the rest fall.",
       targets: ["refine.earthquakes"],
+      detour: { tour: "refine-quakes", label: "Every control of this bar, in detail" },
       enter: (ctx) => {
         ctx.setSwitch("refine.earthquakes", true);
       },
@@ -416,8 +417,8 @@ export const EARTHQUAKES: Tour = {
 export const MECHANISM: Tour = {
   id: "mechanism",
   title: "Focal mechanism",
-  blurb: "A side path from the Earthquakes tour: reading a beachball, part by part.",
-  sidePath: true,
+  blurb: "Reading a beachball, part by part, on the Petrolia moment tensor.",
+  deep: { area: "Earthquake detail" },
   pageFor: () => "earthquakes",
   steps: [
     {
@@ -819,6 +820,126 @@ export const SPACE: Tour = {
   ],
 };
 
+/** Where Refine: Earthquakes shows its examples. */
+export const REFINE_URLS = {
+  base: "/earthquakes",
+  status: "/earthquakes?minMag=5.5",
+  magnitude: "/earthquakes?minMag=6",
+  depth: "/earthquakes?minDepth=70&maxDepth=300",
+  /** Thirty days ending 31 July 2019 on the West Coast: the "30 days" length, with Ridgecrest. */
+  window: "/earthquakes/wc?since=2019-07-01&until=2019-07-31",
+  /** From moved to the M6.4 foreshock's day: a custom window. */
+  custom: "/earthquakes/wc?since=2019-07-04&until=2019-07-31",
+  /** Ten years of the global catalogue: more than the page draws, so the floor is raised. */
+  long: "/earthquakes?since=2015-01-01&until=2024-12-31",
+};
+/** Opens a page of Refine: Earthquakes with the bar open or folded. */
+function refineAt(url: string, open: boolean): (ctx: StepContext) => Promise<void> {
+  return async (ctx) => {
+    await ctx.go(url);
+    ctx.setSwitch("refine.earthquakes", open);
+  };
+}
+
+export const REFINE_QUAKES: Tour = {
+  id: "refine-quakes",
+  title: "Earthquakes",
+  blurb: "The earthquake refine bar, control by control, with examples set as you go.",
+  deep: { area: "Refine" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "The earthquake refine bar",
+      body: "It decides which earthquakes the map, the catalogue table and the charts show; the summary tiles and the major-event cards keep to the region's preset window. Each step sets an example so you see its effect, and your own refinements come back when this ends.",
+      targets: [],
+      enter: refineAt(REFINE_URLS.base, false),
+    },
+    {
+      id: "folded",
+      title: "Folded",
+      body: "Folded, the bar is one line saying what is in force, with the values you set picked out from the defaults. Click anywhere on it to open it; open, its first line folds it again. The ⓘ restates what it governs.",
+      targets: ["refine.earthquakes"],
+      enter: refineAt(REFINE_URLS.base, false),
+    },
+    {
+      id: "status",
+      title: "Status",
+      body: "After a change the head line says where the page stands. Updating…, with a spinner, while the data is fetched (the map dims its markers meanwhile); ✓ Updated for a moment once everything shown reflects your refinements; Not updated when the fetch failed, so the page still shows what it had before. Point at Not updated for the reason; the error banner above offers Retry. Here the minimum magnitude just went to 5.5.",
+      targets: ["refine.earthquakes.head"],
+      enter: refineAt(REFINE_URLS.status, false),
+    },
+    {
+      id: "open",
+      title: "Open",
+      body: "Open, the inputs: magnitude, depth, the window and Reset. A value takes effect when you leave its field or press Enter, and the address keeps every one, so a copied link opens the same refinement.",
+      targets: ["refine.earthquakes"],
+      enter: refineAt(REFINE_URLS.base, true),
+    },
+    {
+      id: "magnitude",
+      title: "Magnitude",
+      body: "A range in whatever magnitude type the authoritative network reports (Mw, ML, mb, Md …). The minimum cannot go below the region's floor, the magnitude its catalogue is collected at (M4.5 globally, M2.5 on the West Coast); leave the maximum empty for no upper bound. Here M6 and above.",
+      targets: ["refine.mag"],
+      enter: refineAt(REFINE_URLS.magnitude, true),
+    },
+    {
+      id: "depth",
+      title: "Depth",
+      body: "Hypocentral depth in km below sea level, as reported; either side may stay empty. Here 70 to 300 km, the intermediate-depth class: the slabs beneath the subduction zones. Shallow events can carry small negative depths, above the datum.",
+      targets: ["refine.depth"],
+      enter: refineAt(REFINE_URLS.depth, true),
+    },
+    {
+      id: "window",
+      title: "Window",
+      body: "Calendar days, inclusive at both ends, in UTC or your browser's zone (Settings switches them). The length menu runs from 30 days to everything since 1900; From and To are the first and last day. Here 30 days ending 31 July 2019 on the West Coast, which takes in the Ridgecrest sequence.",
+      targets: ["refine.window"],
+      enter: refineAt(REFINE_URLS.window, true),
+    },
+    {
+      id: "interplay",
+      title: "Length, From and To together",
+      body: "Picking a length moves From back from To. Changing To keeps a preset length, so From moves with it. Changing From keeps To and makes the window Custom, as here: From moved to 4 July, the day of the M6.4 foreshock. Picking a length again leaves Custom.",
+      targets: ["refine.span", "refine.dates"],
+      enter: refineAt(REFINE_URLS.custom, true),
+    },
+    {
+      id: "long",
+      title: "Long windows",
+      body: "A long window can hold more events than the page draws at once (2,000). The marker floor is then raised to the lowest whole magnitude that fits, and this note says so: the markers, the table and the magnitude charts show the larger events, while the time chart still counts every one and the map's Density toggle shades where the rest fall. Here ten years of the global catalogue.",
+      targets: ["refine.note"],
+      enter: refineAt(REFINE_URLS.long, true),
+    },
+    {
+      id: "reset",
+      title: "Reset",
+      body: "Back to the region's floor, no maximum, no depth bounds and the default 30-day window. It stays grey while nothing is refined.",
+      targets: ["refine.reset"],
+      enter: refineAt(REFINE_URLS.long, true),
+    },
+    {
+      id: "hide",
+      title: "Hide markers",
+      body: "Takes the earthquakes off the map without touching the refinements: the table, the cards and the charts carry on, and on Active Earth the volcanoes stay. It lasts while you are on the page and is not kept in the address.",
+      targets: ["refine.earthquakes.hide", "map.stage"],
+      enter: async (ctx) => {
+        await refineAt(REFINE_URLS.base, true)(ctx);
+        ctx.setSwitch("refine.earthquakes.hide", true);
+      },
+      leave: (ctx) => {
+        ctx.setSwitch("refine.earthquakes.hide", false);
+      },
+    },
+    {
+      id: "done",
+      title: "That's the refine bar",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
+
 export const TOURS: readonly Tour[] = [
   ORIENTATION,
   MAP_TOOLS,
@@ -827,4 +948,5 @@ export const TOURS: readonly Tour[] = [
   VOLCANOES,
   MARKS,
   SPACE,
+  REFINE_QUAKES,
 ];

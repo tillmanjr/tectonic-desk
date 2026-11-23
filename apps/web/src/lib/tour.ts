@@ -11,7 +11,14 @@ import { domSwitches, type Switches } from "./tour-target.js";
  */
 
 export type TourId =
-  "orientation" | "map" | "earthquakes" | "mechanism" | "volcanoes" | "marks" | "space";
+  | "orientation"
+  | "map"
+  | "earthquakes"
+  | "mechanism"
+  | "volcanoes"
+  | "marks"
+  | "space"
+  | "refine-quakes";
 
 /** What a step acts through, built by `App.vue`; `map` resolves once a map is on screen. */
 export interface TourStage {
@@ -68,9 +75,17 @@ export interface Tour {
   /** The page the tour runs on, given the page in force. */
   pageFor: (current: Page) => Page;
   steps: readonly TourStep[];
-  /** Reached from another tour's step; optional, so it never keeps the Help button lit. */
-  sidePath?: boolean;
+  /**
+   * A deep dive: one part of the app covered control by control, filed under `area` in the Help
+   * menu and reachable from a tour step's `detour`. Optional reading, so it never keeps the Help
+   * button lit and is never offered by "Continue to".
+   */
+  deep?: { area: string };
 }
+
+/** A tour's name as the Help menu and the card give it: a deep dive's carries its area. */
+export const tourTitle = (t: Tour): string =>
+  t.deep === undefined ? t.title : `${t.deep.area}: ${t.title}`;
 
 export interface TourRecord {
   /** The step reached, from 0. */
@@ -105,6 +120,7 @@ const TOUR_IDS: readonly TourId[] = [
   "volcanoes",
   "marks",
   "space",
+  "refine-quakes",
 ];
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
@@ -394,7 +410,7 @@ export function createTour(
     const c = current.value;
     if (c?.parent !== null || c.index < c.tour.steps.length - 1) return null;
     const after = tours.slice(tours.indexOf(c.tour) + 1);
-    return after.find((t) => t.sidePath !== true && hasUnseen(progress.doc.value, [t])) ?? null;
+    return after.find((t) => t.deep === undefined && hasUnseen(progress.doc.value, [t])) ?? null;
   });
 
   async function end(done: boolean): Promise<void> {
@@ -428,7 +444,7 @@ export function createTour(
     unseen: computed(() =>
       hasUnseen(
         progress.doc.value,
-        tours.filter((t) => t.sidePath !== true),
+        tours.filter((t) => t.deep === undefined),
       ),
     ),
     resumable: computed(() => {
