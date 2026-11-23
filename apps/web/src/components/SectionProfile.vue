@@ -27,6 +27,7 @@ import {
   type SurfacePoint,
 } from "../lib/section.js";
 import { useSectionTool } from "../lib/section-tool.js";
+import { vHint } from "../lib/hint.js";
 
 /**
  * Depth against distance along the section line, at a chosen vertical exaggeration, for the
@@ -310,9 +311,13 @@ const selectedId = catalog.selectedId;
         @keydown.enter="select(m.p.id)"
       >
         <circle v-if="m.p.id === selectedId" class="ring" :cx="m.x" :cy="m.y" :r="m.r + 3" />
-        <circle :cx="m.x" :cy="m.y" :r="m.r" :style="{ fill: depthColor(m.p.depthKm) }">
-          <title>{{ m.title }}</title>
-        </circle>
+        <circle
+          v-hint="m.title"
+          :cx="m.x"
+          :cy="m.y"
+          :r="m.r"
+          :style="{ fill: depthColor(m.p.depthKm) }"
+        />
       </g>
     </svg>
     <p class="cap" :class="{ note: data.empty }">{{ data.caption }}</p>

@@ -3340,6 +3340,24 @@ table.matrix {
   color: var(--muted);
   font-size: 13px;
 }
+/* The reset sits quietly at the menu's foot. */
+.hreset {
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
+  text-align: right;
+}
+.hreset button {
+  border: 0;
+  background: none;
+  padding: 2px 4px;
+  color: var(--muted);
+  font: 12px var(--f-ui);
+  cursor: pointer;
+}
+.hreset button:hover,
+.hreset .yes {
+  text-decoration: underline;
+}
 /* A side path sits under the tour it leaves from. */
 .htour.hside {
   margin-left: 14px;

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from "vue";
+import ConfirmButton from "./ConfirmButton.vue";
+import { vHint } from "../lib/hint.js";
 import { useInjected } from "../lib/keys.js";
 import { TOUR, tourState, type TourId, type TourState } from "../lib/tour.js";
 
@@ -48,6 +50,11 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="help" data-tour="help" @keydown="onKey">
     <button
+      v-hint="
+        tour.unseen.value
+          ? 'Help: quick tours of the app, with steps you have not seen yet'
+          : 'Help: quick tours of the app'
+      "
       type="button"
       class="help-btn"
       :class="{ fresh: tour.unseen.value }"
@@ -55,11 +62,6 @@ onUnmounted(() => {
       :aria-expanded="open"
       aria-controls="help-menu"
       aria-label="Help"
-      :title="
-        tour.unseen.value
-          ? 'Help: quick tours of the app, with steps you have not seen yet'
-          : 'Help: quick tours of the app'
-      "
       @click="open = !open"
     >
       ?
@@ -104,6 +106,10 @@ onUnmounted(() => {
             </li>
           </ol>
         </details>
+      </div>
+      <!-- Out of the way at the foot: for demos, back to a first visit. -->
+      <div class="hreset">
+        <ConfirmButton label="Reset tour progress" @confirm="tour.reset()" />
       </div>
     </div>
   </div>

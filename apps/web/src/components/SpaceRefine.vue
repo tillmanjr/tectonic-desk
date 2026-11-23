@@ -4,6 +4,7 @@ import { CLOCK, SET_SPACE_RANGE, SPACE, useInjected, ZONE } from "../lib/keys.js
 import { isWindowId, MAX_RANGE_MS, rangeBounds, WINDOWS, type SpaceRange } from "../lib/space.js";
 import { aggregateNote } from "../lib/space-chart.js";
 import { fromInputValue, toInputValue } from "../lib/space-format.js";
+import { vHint } from "../lib/hint.js";
 
 /**
  * The window in force: a length ending now, or a fixed range typed into the from and to
@@ -76,10 +77,10 @@ function live(): void {
       @change="changeEnd('to')"
     />
     <button
+      v-hint="'Back to a window ending now'"
       type="button"
       class="fclear"
       :disabled="range.kind === 'window'"
-      title="Back to a window ending now"
       @click="live"
     >
       Live

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RowData } from "../lib/space-chart.js";
+import { vHint } from "../lib/hint.js";
 
 /** One row of the stack: its own y axis, reference lines, Kp bars, flare bands and series lines. */
 defineProps<{ row: RowData; left: number; right: number }>();
@@ -37,15 +38,14 @@ defineProps<{ row: RowData; left: number; right: number }>();
     <rect
       v-for="b in row.bands"
       :key="b.key"
+      v-hint="b.label"
       class="flareband"
       :class="{ hl: b.hl }"
       :x="b.x"
       :y="row.top"
       :width="b.w"
       :height="row.bottom - row.top"
-    >
-      <title>{{ b.label }}</title>
-    </rect>
+    />
     <rect
       v-for="bar in row.bars"
       :key="bar.key"

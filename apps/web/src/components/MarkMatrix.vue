@@ -5,6 +5,7 @@ import { MARKS_NAV, useInjected, VOLCANOES, ZONE } from "../lib/keys.js";
 import type { MarkView } from "../lib/marks.js";
 import { kmText, nodeLines, pointOf, staircase } from "../lib/matrix.js";
 import { eruptionAnchor } from "../lib/volcanoes.js";
+import { vHint } from "../lib/hint.js";
 
 /**
  * A group's marks compared pairwise as connected vertices: the top nodes are all marks but the
@@ -59,13 +60,13 @@ const grid = computed(() => staircase(points.value, zone.value));
                 <span v-if="c !== null" class="card">
                   <span class="chart">
                     <span class="h"></span>
-                    <span class="h arrow" title="the mark at the left"
+                    <span v-hint="'the mark at the left'" class="h arrow"
                       ><MatrixArrow dir="left"
                     /></span>
-                    <span class="h dh" title="change from the left mark to the top mark"
+                    <span v-hint="'change from the left mark to the top mark'" class="h dh"
                       >Δ <MatrixArrow dir="left" small /><MatrixArrow dir="up" small
                     /></span>
-                    <span class="h arrow" title="the mark at the top"
+                    <span v-hint="'the mark at the top'" class="h arrow"
                       ><MatrixArrow dir="up"
                     /></span>
                     <template v-for="r in c.rows" :key="r.label">

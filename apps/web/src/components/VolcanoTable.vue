@@ -128,7 +128,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
 </script>
 
 <template>
-  <div class="panel tablepanel">
+  <div class="panel tablepanel" data-tour="volcanoes.table">
     <h2 class="withfilter">
       Volcanoes
       <span v-if="activeCols.size > 0"

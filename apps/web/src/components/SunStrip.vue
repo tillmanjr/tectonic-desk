@@ -3,6 +3,7 @@ import { SUN_FRAMES, type SunKey } from "@tectonic/shared";
 import { computed } from "vue";
 import { fmtClock } from "../lib/format.js";
 import { API, SPACE, useInjected, ZONE } from "../lib/keys.js";
+import { vHint } from "../lib/hint.js";
 
 /**
  * The latest Sun: seven thumbnails from SDO and SOHO under the tiles, each with its channel and
@@ -37,9 +38,9 @@ const thumbs = computed(() => {
     <button
       v-for="t in thumbs ?? []"
       :key="t.key"
+      v-hint="t.note"
       type="button"
       class="sunthumb"
-      :title="t.note"
       @click="emit('open', t.key)"
     >
       <img :src="t.src" :alt="`${t.title}, ${t.when}`" loading="lazy" width="512" height="512" />

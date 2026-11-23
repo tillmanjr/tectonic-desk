@@ -5,6 +5,7 @@ import MarkThumb from "./MarkThumb.vue";
 import { fmtStamp } from "../lib/format.js";
 import { MARKS, MARKS_NAV, useInjected, ZONE } from "../lib/keys.js";
 import { NAME_MAX, type Mark } from "../lib/marks.js";
+import { vHint } from "../lib/hint.js";
 
 /** One marked view in the overlay list: order buttons, thumbnail, editable name, facts, group chips, open and delete. */
 const props = defineProps<{ mark: Mark; group: string; first: boolean; last: boolean }>();
@@ -75,7 +76,7 @@ function onKey(e: KeyboardEvent): void {
         @keydown="onKey"
         @blur="commit"
       />
-      <button v-else type="button" class="mname" title="Rename" @click="edit">
+      <button v-else v-hint="'Rename'" type="button" class="mname" @click="edit">
         {{ mark.name }}
       </button>
       <div class="mfacts">
@@ -99,9 +100,9 @@ function onKey(e: KeyboardEvent): void {
     </div>
     <div class="mactions">
       <button
+        v-hint="'Select it in the view you were in'"
         type="button"
         class="openhere"
-        title="Select it in the view you were in"
         @click="nav.openHere(mark)"
       >
         Open here

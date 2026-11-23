@@ -68,7 +68,9 @@ describe("MagnitudeTimeChart", () => {
     const w = mountWith(MagnitudeTimeChart, ctx);
     expect(w.findAll("rect.bin")).toHaveLength(2);
     expect(w.findAll("circle.binmax")).toHaveLength(1);
-    expect(w.find("circle.binmax title").text()).toBe("1964: 3,910 events, largest M8.4");
+    expect(w.find("circle.binmax").attributes("data-hint")).toBe(
+      "1964: 3,910 events, largest M8.4",
+    );
     expect(w.findAll("g.era")).toHaveLength(3);
     expect(w.findAll("g.era text").map((t) => t.text())).toEqual(["WWSSN", "PDE", "GCMT"]);
     expect(w.findAll(".axis")).toHaveLength(3);
@@ -87,7 +89,9 @@ describe("MagnitudeTimeChart", () => {
       const api = raisedApi();
       vi.mocked(api.summary).mockResolvedValue({ ...RAISED_SUMMARY, by });
       const w = mountWith(MagnitudeTimeChart, await makeContext({ api, range: century }));
-      expect(w.find("circle.binmax title").text()).toBe(`${label}: 3,910 events, largest M8.4`);
+      expect(w.find("circle.binmax").attributes("data-hint")).toBe(
+        `${label}: 3,910 events, largest M8.4`,
+      );
       expect(w.find(".cap").text()).toContain(`events per ${by} at M4.5+`);
       expect(Number(w.find("rect.bin").attributes("width"))).toBeGreaterThanOrEqual(1);
     }

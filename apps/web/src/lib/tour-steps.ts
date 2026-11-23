@@ -52,6 +52,15 @@ export const EXAMPLE_EVENT = {
   id: "nc73666231",
   url: "/earthquakes/wc?since=2021-12-20&until=2022-01-19&event=nc73666231",
 };
+/**
+ * The volcano the Volcanoes tour reads: Kīlauea, with a USGS status history and its notices, a
+ * long GVP eruption record and a continuing eruption. Selecting it zooms the map to it.
+ */
+export const EXAMPLE_VOLCANO = { number: 332010, url: "/volcanoes/global?volcano=332010" };
+async function showVolcano(ctx: StepContext): Promise<void> {
+  await ctx.go(EXAMPLE_VOLCANO.url);
+}
+
 /** Opens the example event in its window; selecting it zooms the map to it. */
 async function showExample(ctx: StepContext): Promise<void> {
   await ctx.go(EXAMPLE_EVENT.url);
@@ -456,4 +465,108 @@ export const MECHANISM: Tour = {
   ],
 };
 
-export const TOURS: readonly Tour[] = [ORIENTATION, MAP_TOOLS, EARTHQUAKES, MECHANISM];
+export const VOLCANOES: Tour = {
+  id: "volcanoes",
+  title: "Volcanoes",
+  blurb: "Agency status, the GVP record, a volcano in depth, the table and the charts.",
+  pageFor: () => "volcanoes",
+  steps: [
+    {
+      id: "intro",
+      title: "The Volcanoes page",
+      body: "The Smithsonian Global Volcanism Program's Holocene volcanoes, with the current alert levels of the USGS and GeoNet and the GVP/USGS weekly activity report. Each agency's scale is shown as published; they are not interchangeable. Partway through, this tour opens Kīlauea.",
+      targets: [],
+    },
+    {
+      id: "summary",
+      title: "Summary",
+      body: "USGS volcanoes above Normal / Green, New Zealand volcanoes at GeoNet Volcanic Alert Level 1 or above, eruptions the GVP lists as continuing, new activity in the latest weekly report, and agency level or colour changes in the last 7 days.",
+      targets: ["summary"],
+    },
+    {
+      id: "cards",
+      title: "Elevated or changed",
+      body: "One card per monitored volcano that is above normal or changed level in the last 7 days: the agency's level and aviation colour, since when, and the synopsis from its latest notice. A volcano that returned to normal says so.",
+      targets: ["volcano.cards"],
+    },
+    {
+      id: "refine",
+      title: "Refine",
+      body: "Tectonic setting, volcano type, the age of the last eruption and the current status narrow the map, the table and the charts; the summary and the cards always cover the whole region. Hide markers takes the volcanoes off the map without changing the rest.",
+      targets: ["refine.volcanoes"],
+      enter: (ctx) => {
+        ctx.setSwitch("refine.volcanoes", true);
+      },
+      leave: (ctx) => {
+        ctx.setSwitch("refine.volcanoes", false);
+      },
+    },
+    {
+      id: "map",
+      title: "The map",
+      body: "Triangles coloured by the age of the last eruption: since 1950, 1500 to 1949, earlier Holocene, or undated. A ring in the aviation colour marks an agency alert above normal, and a dot above the triangle an eruption the GVP lists as continuing. Point at a volcano for its type, last eruption and status; click it to open it.",
+      targets: ["map.stage", "map.legend"],
+    },
+    {
+      id: "record",
+      title: "A volcano",
+      body: "Kīlauea, from the GVP record: primary type, tectonic setting, summit elevation and position, dominant rock type, the last eruption and its evidence, and a link to its GVP page, followed by the GVP summary.",
+      targets: ["volcano.record"],
+      enter: showVolcano,
+    },
+    {
+      id: "status",
+      title: "Status",
+      body: "Every agency level this site has recorded for the volcano, newest first, each with its aviation colour, when it was seen, the synopsis of the notice and a link to it, then the volcano's entries in the weekly report. A volcano neither agency monitors has no level here.",
+      targets: ["volcano.status"],
+      enter: showVolcano,
+    },
+    {
+      id: "eruptions",
+      title: "Eruptions",
+      body: "The GVP eruption record since 1800 as a strip: bar height is the VEI, an open bar an eruption still continuing, a dashed one a queried date or size. The list gives the latest eruptions with their dates and VEI.",
+      targets: ["volcano.eruptions"],
+      enter: showVolcano,
+    },
+    {
+      id: "nearby",
+      title: "Earthquakes nearby",
+      body: "Earthquakes of the loaded window within 50 km, the largest first, each timed against the onset of the volcano's latest eruption; click one to open it. The earthquake window and floor come from the earthquake refine bar, so a global window at M4.5 may hold none.",
+      targets: ["volcano.nearby"],
+      enter: showVolcano,
+    },
+    {
+      id: "table",
+      title: "Volcano table",
+      body: "Every volcano the refine bar leaves: name, country, type, last eruption, status and elevation. Click a heading to sort, open a column's filter, and click a row to open the volcano.",
+      targets: ["volcanoes.table"],
+    },
+    {
+      id: "decades",
+      title: "Eruption starts per decade",
+      body: "Eruption onsets since 1800 among the volcanoes shown. The rise toward the present is mostly better observation and reporting, not more volcanism.",
+      targets: ["chart.decades"],
+    },
+    {
+      id: "vei",
+      title: "VEI distribution",
+      body: "Eruptions by Volcanic Explosivity Index, with those lacking a VEI and those with a queried one counted in the caption. Prehistoric records favour large eruptions, which are the ones that leave deposits.",
+      targets: ["chart.vei"],
+    },
+    {
+      id: "mark",
+      title: "Mark it",
+      body: "Keep the volcano in your marks, beside events and other volcanoes, to reopen or compare later.",
+      targets: ["volcano.mark"],
+      enter: showVolcano,
+    },
+    {
+      id: "done",
+      title: "That's the volcanoes",
+      body: "Every step of this tour stays in the Help menu.",
+      targets: ["help"],
+    },
+  ],
+};
+
+export const TOURS: readonly Tour[] = [ORIENTATION, MAP_TOOLS, EARTHQUAKES, MECHANISM, VOLCANOES];

@@ -34,7 +34,13 @@ function close(): void {
 </script>
 
 <template>
-  <aside class="detail vdetail" :class="{ open }" aria-label="Volcano detail" :aria-hidden="!open">
+  <aside
+    class="detail vdetail"
+    data-tour="volcano.detail"
+    :class="{ open }"
+    aria-label="Volcano detail"
+    :aria-hidden="!open"
+  >
     <div class="hd">
       <div>
         <div class="mag">{{ v === null ? store.selectedNumber.value : v.name }}</div>
@@ -47,7 +53,7 @@ function close(): void {
         ×
       </button>
     </div>
-    <MarkButton :subject="subject" />
+    <MarkButton :subject="subject" data-tour="volcano.mark" />
     <div class="bd">
       <VolcanoDetailBody
         v-if="store.selectedNumber.value !== null"

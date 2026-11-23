@@ -8,7 +8,7 @@ import { API, CLOCK, MARKS, SETTINGS, THEME } from "../../src/lib/keys.js";
 import { createMarks } from "../../src/lib/marks.js";
 import { createSettings } from "../../src/lib/settings.js";
 import { createTourProgress, TOUR_PROGRESS } from "../../src/lib/tour.js";
-import { EXAMPLE_EVENT, TOURS } from "../../src/lib/tour-steps.js";
+import { EXAMPLE_EVENT, EXAMPLE_VOLCANO, TOURS } from "../../src/lib/tour-steps.js";
 import { createAppRouter } from "../../src/router.js";
 import { fakeApi, listOf } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
@@ -199,6 +199,20 @@ describe("quick tours in the app", () => {
     expect(m.wrapper.find(".help-btn").classes()).toContain("fresh");
     expect(await walk(m, 3)).toEqual([]);
     expect(m.wrapper.find(".tourpath").text()).toBe("Focal mechanism · 7 of 7");
+    m.wrapper.unmount();
+  });
+
+  it("walks the volcanoes tour on Kīlauea and gives the reader's view back", async () => {
+    const m = await mountApp("/active");
+    expect(await walk(m, 4)).toEqual([]);
+    expect(m.router.currentRoute.value.fullPath).toBe(EXAMPLE_VOLCANO.url);
+    await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".filters.refine.volcanoes").classes()).toContain("expanded");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".filters.refine.volcanoes").classes()).not.toContain("expanded");
+    expect(m.router.currentRoute.value.fullPath).toBe("/active");
     m.wrapper.unmount();
   });
 

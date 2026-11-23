@@ -2,6 +2,7 @@
 import { computed, nextTick, onUnmounted, ref } from "vue";
 import { MARKS, MARKS_NAV, useInjected } from "../lib/keys.js";
 import { defaultName, MARK_TERMS, NAME_MAX, type MarkSubject } from "../lib/marks.js";
+import { vHint } from "../lib/hint.js";
 
 /** The row under a panel header that names and saves a mark of the current view. */
 const props = defineProps<{ subject: MarkSubject | null }>();
@@ -79,17 +80,17 @@ onUnmounted(() => {
     </template>
     <template v-else-if="subject !== null">
       <button
+        v-hint="title"
         type="button"
         class="mark"
         :class="{ marked: count > 0 }"
-        :title="title"
         @click="begin(subject)"
       >
         {{ count > 0 ? "★" : "☆" }} {{ MARK_TERMS.verb }}
       </button>
       <span v-if="flash" class="flash">Marked</span>
     </template>
-    <button v-else type="button" class="mark" disabled :title="title">
+    <button v-else v-hint="title" type="button" class="mark" disabled>
       ☆ {{ MARK_TERMS.verb }}
     </button>
   </div>

@@ -4,7 +4,9 @@ import {
   EARTHQUAKES,
   EXAMPLE_EVENT,
   EXAMPLE_SECTIONS,
+  EXAMPLE_VOLCANO,
   MECHANISM,
+  VOLCANOES,
   MAP_TOOLS,
   ORIENTATION,
   TOURS,
@@ -116,6 +118,18 @@ describe("tour content", () => {
     expect(MECHANISM.sidePath).toBe(true);
     expect(MECHANISM.pageFor("active")).toBe("earthquakes");
     expect(EARTHQUAKES.steps.find((s) => s.detour !== undefined)?.id).toBe("mechanism");
+  });
+
+  it("opens the volcano refine bar and the example volcano, and closes the bar after", async () => {
+    const ctx = fakeContext(null);
+    for (const s of VOLCANOES.steps) await run(VOLCANOES, s.id, ctx);
+    expect(ctx.go).toHaveBeenCalledTimes(5);
+    expect(ctx.go).toHaveBeenCalledWith(EXAMPLE_VOLCANO.url);
+    expect(vi.mocked(ctx.setSwitch).mock.calls).toEqual([
+      ["refine.volcanoes", true],
+      ["refine.volcanoes", false],
+    ]);
+    expect(VOLCANOES.pageFor("space")).toBe("volcanoes");
   });
 
   it("does nothing to a map that is not there", async () => {

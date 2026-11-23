@@ -4,6 +4,7 @@ import { computed } from "vue";
 import ChartAxes from "./ChartAxes.vue";
 import { ticksOf, type Tick } from "../lib/charts.js";
 import { useInjected, VOLCANOES } from "../lib/keys.js";
+import { vHint } from "../lib/hint.js";
 
 const W = 520;
 const H = 180;
@@ -68,7 +69,7 @@ const data = computed<Data>(() => {
 </script>
 
 <template>
-  <div class="panel chart">
+  <div class="panel chart" data-tour="chart.vei">
     <h2>VEI distribution</h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(H)}`">
       <template v-if="data.bars.length > 0">
@@ -82,15 +83,14 @@ const data = computed<Data>(() => {
         <rect
           v-for="b in data.bars"
           :key="b.bin"
+          v-hint="`VEI ${b.bin}: ${String(b.n)}`"
           :x="b.x"
           :y="b.y"
           :width="BAR"
           :height="b.h"
           :style="{ fill: b.bin === '?' ? 'var(--muted)' : 'var(--vc-recent)' }"
           fill-opacity="0.85"
-        >
-          <title>VEI {{ b.bin }}: {{ b.n }}</title>
-        </rect>
+        />
       </template>
     </svg>
     <div class="cap">{{ data.caption }}</div>
