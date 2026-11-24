@@ -753,6 +753,7 @@ export const SPACE: Tour = {
       title: "Window",
       body: "From 6 hours to everything since 1932, or between two moments. Up to 25 hours every sample shows; longer windows are averaged into buckets (the note says how wide), taking the maximum for indices and fluxes and the minimum for Dst and Bz, so storms are not smoothed away.",
       targets: ["space.window"],
+      detour: { tour: "refine-space", label: "The window, in detail" },
       enter: week,
     },
     {
