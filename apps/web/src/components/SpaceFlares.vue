@@ -74,7 +74,7 @@ function frame(f: ApiSpaceFlare): void {
 </script>
 
 <template>
-  <div class="panel spacepanel flares">
+  <div class="panel spacepanel flares" data-tour="space.flares">
     <h2>Flares<span>GOES X-ray</span></h2>
     <p v-if="rows.length === 0" class="cap note">No flares in this window.</p>
     <table v-else class="spacetable">

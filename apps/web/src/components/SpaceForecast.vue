@@ -40,7 +40,7 @@ const kp = (v: number | null): string => (v === null ? "—" : fmtKp(v));
 </script>
 
 <template>
-  <div class="panel spacepanel forecast">
+  <div class="panel spacepanel forecast" data-tour="space.forecast">
     <h2>Forecast<span>NOAA scales</span></h2>
     <p v-if="rows.length === 0" class="cap note">No forecast yet.</p>
     <table v-else class="spacetable">

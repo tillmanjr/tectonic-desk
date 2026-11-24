@@ -51,7 +51,7 @@ const power = (gw: number | null): string =>
 </script>
 
 <template>
-  <section class="panel aurora">
+  <section class="panel aurora" data-tour="space.aurora">
     <h2>Aurora oval<span>OVATION Prime</span></h2>
     <p v-if="frame === null && store.error.value !== null" class="cap bad">
       {{ store.error.value }}

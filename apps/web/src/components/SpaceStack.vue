@@ -325,7 +325,7 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
 </script>
 
 <template>
-  <div class="panel chart spacestack">
+  <div class="panel chart spacestack" data-tour="space.stack">
     <h2>Series<span>one time axis</span></h2>
     <svg
       v-if="data !== null"

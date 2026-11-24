@@ -137,3 +137,12 @@ On the last step of a main tour the card offers "Continue to …", the next main
 with a step not yet seen (side paths are skipped). Going on marks the tour done and starts the next
 one (at the step it was left on, if partway) without giving the view back in between; the reader's
 view comes back when the last tour ends.
+
+## Space weather tour (2026-11-24)
+
+Twelve steps on the Space page, the last tour in the list: the status line (with the L1
+spacecraft), the window and its bucketing, the tiles, the Sun strip, the alerts, the stack and its
+readout, the forecast, the flares, the aurora, and the long history. It shows a fixed 7-day window
+(`SPACE_WEEK`), where flares and alerts are present, then 11 years (`SPACE_HISTORY`) for GFZ Kp,
+Kyoto Dst and the sunspot number with the cycle minima. The Sun overlay stacks above the tour, so
+the tour does not open it; the Sun step invites the reader to.

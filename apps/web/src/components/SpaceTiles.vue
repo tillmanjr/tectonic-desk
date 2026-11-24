@@ -146,7 +146,7 @@ const tiles = computed<Tile[]>(() => {
 </script>
 
 <template>
-  <section class="stats space" aria-label="Space weather summary">
+  <section class="stats space" aria-label="Space weather summary" data-tour="space.tiles">
     <div v-for="t in tiles" :key="t.id" class="stat" :class="t.id">
       <div class="k">{{ t.k }}</div>
       <div class="v num">

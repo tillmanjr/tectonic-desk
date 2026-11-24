@@ -6,6 +6,9 @@ import {
   EXAMPLE_SECTIONS,
   EXAMPLE_VOLCANO,
   MECHANISM,
+  SPACE,
+  SPACE_HISTORY,
+  SPACE_WEEK,
   VOLCANOES,
   MAP_TOOLS,
   ORIENTATION,
@@ -130,6 +133,15 @@ describe("tour content", () => {
       ["refine.volcanoes", false],
     ]);
     expect(VOLCANOES.pageFor("space")).toBe("volcanoes");
+  });
+
+  it("shows the space page over a week, then over eleven years", async () => {
+    const ctx = fakeContext(null);
+    for (const s of SPACE.steps) await s.enter?.(ctx);
+    const urls = vi.mocked(ctx.go).mock.calls.map(([u]) => u);
+    expect(urls.filter((u) => u === SPACE_WEEK)).toHaveLength(10);
+    expect(urls.at(-1)).toBe(SPACE_HISTORY);
+    expect(SPACE.pageFor("active")).toBe("space");
   });
 
   it("does nothing to a map that is not there", async () => {

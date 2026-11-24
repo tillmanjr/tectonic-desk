@@ -10,7 +10,8 @@ import { domSwitches, type Switches } from "./tour-target.js";
  * ends, and the reader's progress through each tour, kept in localStorage.
  */
 
-export type TourId = "orientation" | "map" | "earthquakes" | "mechanism" | "volcanoes" | "marks";
+export type TourId =
+  "orientation" | "map" | "earthquakes" | "mechanism" | "volcanoes" | "marks" | "space";
 
 /** What a step acts through, built by `App.vue`; `map` resolves once a map is on screen. */
 export interface TourStage {
@@ -103,6 +104,7 @@ const TOUR_IDS: readonly TourId[] = [
   "mechanism",
   "volcanoes",
   "marks",
+  "space",
 ];
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
