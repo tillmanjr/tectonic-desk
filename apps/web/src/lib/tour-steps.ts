@@ -782,6 +782,7 @@ export const SPACE: Tour = {
       title: "Now",
       body: "The latest reading of each headline series over a sparkline of the window: the NOAA G, R and S scales for today, Kp, the interplanetary field Bz and Bt (GSM), solar wind speed and density, the GOES X-ray flux with its flare class, and the ≥10 MeV proton flux.",
       targets: ["space.tiles"],
+      detour: { tour: "space-tiles", label: "Each tile, in detail" },
       enter: week,
     },
     {
