@@ -10,16 +10,8 @@ import { domSwitches, type Switches } from "./tour-target.js";
  * ends, and the reader's progress through each tour, kept in localStorage.
  */
 
-export type TourId =
-  | "orientation"
-  | "map"
-  | "earthquakes"
-  | "mechanism"
-  | "volcanoes"
-  | "marks"
-  | "space"
-  | "refine-quakes"
-  | "map-nav";
+/** A tour's stable id, kept in the reader's progress; an id no tour has any more is ignored. */
+export type TourId = string;
 
 /** What a step acts through, built by `App.vue`; `map` resolves once a map is on screen. */
 export interface TourStage {
@@ -118,21 +110,9 @@ export interface TourDemo {
 }
 
 export const TOUR_KEY = "tectonic.tour";
-const TOUR_IDS: readonly TourId[] = [
-  "orientation",
-  "map",
-  "earthquakes",
-  "mechanism",
-  "volcanoes",
-  "marks",
-  "space",
-  "refine-quakes",
-  "map-nav",
-];
-
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
-const isTourId = (v: unknown): v is TourId => TOUR_IDS.some((id) => id === v);
+const isTourId = (v: unknown): v is TourId => typeof v === "string" && v !== "";
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
 
 function parseRecord(v: unknown): TourRecord | null {
