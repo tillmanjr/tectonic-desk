@@ -188,6 +188,7 @@ export const MAP_TOOLS: Tour = {
       title: "Reference layers",
       body: "PB2002 plate boundaries coloured by class, teeth on the overriding plate along subduction zones, and the OVATION aurora forecast on the night side. In the West Coast view the Quaternary faults join them, by age of last deformation.",
       targets: ["map.layers"],
+      detour: { tour: "map-layers", label: "Every layer and the legend, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv === null) return;
