@@ -1,4 +1,4 @@
-import { REFINE_SPACE, REFINE_VOLCANOES } from "./deep/refine.js";
+import { REFINE_SPACE, REFINE_TABLES, REFINE_VOLCANOES } from "./deep/refine.js";
 import type { Tour } from "./tour.js";
 import {
   EARTHQUAKES,
@@ -27,6 +27,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   REFINE_QUAKES,
   REFINE_VOLCANOES,
   REFINE_SPACE,
+  REFINE_TABLES,
   MAP_NAV,
   MECHANISM,
 ];
