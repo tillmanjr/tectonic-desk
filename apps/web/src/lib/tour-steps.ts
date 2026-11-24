@@ -545,6 +545,7 @@ export const VOLCANOES: Tour = {
       title: "Status",
       body: "Every agency level this site has recorded for the volcano, newest first, each with its aviation colour, when it was seen, the synopsis of the notice and a link to it, then the volcano's entries in the weekly report. A volcano neither agency monitors has no level here.",
       targets: ["volcano.status"],
+      detour: { tour: "volcano-status", label: "Agency scales and the status history, in detail" },
       enter: showVolcano,
     },
     {
