@@ -346,6 +346,23 @@ describe("quick tours in the app", () => {
     m.wrapper.unmount();
   });
 
+  it("walks Map: Navigation and header and puts the lock, theater and zoom back", async () => {
+    const m = await mountApp("/active");
+    expect(await walk(m, 8)).toEqual([]);
+    await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".maplock").attributes("aria-pressed")).toBe("false");
+    await m.wrapper.findAll(".tourdot")[9]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".mapcard").classes()).toContain("theater");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".mapcard").classes()).not.toContain("theater");
+    expect(m.wrapper.find(".maplock").attributes("aria-pressed")).toBe("true");
+    expect(m.router.currentRoute.value.fullPath).toBe("/active");
+    m.wrapper.unmount();
+  });
+
   it("leaves the Space page for the map tour and comes back to it", async () => {
     const m = await mountApp("/space");
     await startFromHelp(m, 1);

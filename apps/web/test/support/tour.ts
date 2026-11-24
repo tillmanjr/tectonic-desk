@@ -19,7 +19,7 @@ export function fakeMap(global = true): MapView {
     setTransform: (t: ZoomTransform) => {
       transform.value = t;
     },
-    view: computed(() => ({ frame: { global } })),
+    view: computed(() => ({ frame: { global, width: 960, height: 500 } })),
     zoomTo: vi.fn(),
     reset: vi.fn(),
     showPlates: ref(true),

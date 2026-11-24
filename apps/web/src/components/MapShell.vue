@@ -250,7 +250,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
     <slot name="bar"></slot>
     <div class="mapstage" data-tour="map.stage">
       <div class="mapwrap">
-        <span class="mapcount" aria-live="polite">{{ countLine }}</span>
+        <span class="mapcount" aria-live="polite" data-tour="map.count">{{ countLine }}</span>
         <button
           v-hint="
             mv.theater.value

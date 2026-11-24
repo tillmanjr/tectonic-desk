@@ -1,3 +1,4 @@
+import { zoomIdentity } from "d3-zoom";
 import { DEFAULT_HALF_KM, type Section } from "./section.js";
 import type { MapView } from "./mapview.js";
 import type { MarkDraft } from "./marks.js";
@@ -167,6 +168,7 @@ export const MAP_TOOLS: Tour = {
       title: "The toolbar",
       body: "Everything that changes what the map draws, or what you can do on it, sits on this bar. Each control explains itself when you rest the pointer on it (or hold a finger on it) for a second.",
       targets: ["map.tools"],
+      detour: { tour: "map-nav", label: "The header and getting around the map, in detail" },
     },
     {
       id: "lock",
@@ -940,6 +942,131 @@ export const REFINE_QUAKES: Tour = {
   ],
 };
 
+/**
+ * Zooms the map to `times` presses of the + button from the whole region, about its centre, in one
+ * move (presses in a row would interrupt each other's animation).
+ */
+async function zoomIn(ctx: StepContext, times: number): Promise<void> {
+  const mv = await ctx.map();
+  if (mv === null) return;
+  const { width, height } = mv.view.value.frame;
+  mv.setTransform(
+    zoomIdentity
+      .translate(width / 2, height / 2)
+      .scale(ZOOM_STEP ** times)
+      .translate(-width / 2, -height / 2),
+  );
+}
+/** The + button's factor. */
+const ZOOM_STEP = 1.8;
+
+export const MAP_NAV: Tour = {
+  id: "map-nav",
+  title: "Navigation and header",
+  blurb: "The map's header, the lock, zooming and panning, readouts, theater mode and the legend.",
+  deep: { area: "Map" },
+  pageFor: (p) => (p === "space" ? "active" : p),
+  steps: [
+    {
+      id: "intro",
+      title: "Getting around the map",
+      body: "Every page but Space has a map with the same header and the same ways of moving about. Each step here does what it describes; the map comes back as you had it when this ends.",
+      targets: [],
+    },
+    {
+      id: "header",
+      title: "The header",
+      body: "From the left: the page's own layers (Focal mechanisms, ShakeMap, Density when a long window raised the floor), the reference layers (plate boundaries, subduction teeth, aurora, and on the West Coast the Quaternary faults), the Field select, the tools (Section, Measure, Pin), then zoom in, zoom out, Reset and Animate. Rest on any control for a second, or hold a finger on it, for what it does. On a narrow screen the header wraps onto more lines.",
+      targets: ["map.tools"],
+    },
+    {
+      id: "locked",
+      title: "Locked",
+      body: "The map starts locked, so the page scrolls past it: the wheel and a one-finger drag move the page, not the map. On a touch screen two fingers still pan and pinch it. The lock is drawn crossed through while locked.",
+      targets: ["map.lock"],
+      enter: (ctx) => {
+        ctx.setSwitch("map.lock", true);
+      },
+    },
+    {
+      id: "unlocked",
+      title: "Unlocked",
+      body: "Unlocked, the wheel zooms about the pointer and a drag pans; the lock turns solid. Lock it again before scrolling on past the map. It is unlocked now.",
+      tryIt: "Wheel over the map, then drag it.",
+      targets: ["map.lock", "map.stage"],
+      enter: (ctx) => {
+        ctx.setSwitch("map.lock", false);
+      },
+    },
+    {
+      id: "zoom",
+      title: "Zoom",
+      body: "The + and − buttons zoom by 1.8× about the centre, locked or not, from the whole region (1×) to 40×; Reset returns to the whole region. Here two steps in.",
+      targets: ["map.zoom"],
+      enter: (ctx) => zoomIn(ctx, 2),
+    },
+    {
+      id: "markers",
+      title: "Markers as you zoom",
+      body: "Epicentres and beachballs are sized from the magnitude floor at the whole-region view and grow more slowly than the map (roughly as the 0.44 power of the zoom), so clusters pull apart as you zoom in; subduction teeth keep their size on screen. On a touch screen every marker keeps a minimum size a finger can hit.",
+      targets: ["map.stage"],
+      enter: (ctx) => zoomIn(ctx, 3),
+    },
+    {
+      id: "select",
+      title: "Selecting moves the map",
+      body: "Selecting an earthquake or a volcano, from the map, a card, a table or a mark, zooms the map to it (6× globally, 3× on the West Coast). Here the largest earthquake in the window.",
+      targets: ["map.stage"],
+      enter: (ctx) => {
+        ctx.selectLargest();
+      },
+      leave: (ctx) => {
+        ctx.clearSelection();
+      },
+    },
+    {
+      id: "readouts",
+      title: "Readouts",
+      body: "Point at an epicentre, a volcano, a plate boundary, a fault trace or a ShakeMap band for its readout beside the pointer; click an epicentre or a volcano to open it. On touch, tap it.",
+      targets: ["map.stage"],
+      enter: async (ctx) => {
+        const mv = await ctx.map();
+        mv?.reset();
+      },
+    },
+    {
+      id: "count",
+      title: "What the map holds",
+      body: "Top left, how many markers are drawn out of how many the window holds, and the floor when a long window raised it. While data is being fetched a chip beside it says what, and the markers dim until it lands.",
+      targets: ["map.count"],
+    },
+    {
+      id: "theater",
+      title: "Theater mode",
+      body: "The corner button gives the map and its header the whole window, cropping the map on its long side; it unlocks while in theater, so drag to see the rest. The legend steps aside. The same button, or Esc, brings the page back. It is in theater now.",
+      targets: ["map.theater", "map.stage"],
+      enter: (ctx) => {
+        ctx.setSwitch("map.theater", true);
+      },
+      leave: (ctx) => {
+        ctx.setSwitch("map.theater", false);
+      },
+    },
+    {
+      id: "legend",
+      title: "Legend",
+      body: "Under the map: the depth classes, the magnitude sizes at the floor in force, and a row for every layer that is on, with its source and scale.",
+      targets: ["map.legend"],
+    },
+    {
+      id: "done",
+      title: "That's the map",
+      body: "The tools on the header (Section, Measure, Pin, Field) each have a step in the Map tools tour.",
+      targets: ["help"],
+    },
+  ],
+};
+
 export const TOURS: readonly Tour[] = [
   ORIENTATION,
   MAP_TOOLS,
@@ -949,4 +1076,5 @@ export const TOURS: readonly Tour[] = [
   MARKS,
   SPACE,
   REFINE_QUAKES,
+  MAP_NAV,
 ];
