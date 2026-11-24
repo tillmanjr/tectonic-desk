@@ -73,11 +73,11 @@ function setup() {
 }
 
 /** A target element with a fixed box. */
-function target(name: string, top: number, left = 10) {
+function target(name: string, top: number, left = 10, width = 100) {
   const e = document.createElement("div");
   e.dataset.tour = name;
   e.getBoundingClientRect = () =>
-    ({ left, top, right: left + 100, bottom: top + 40, width: 100, height: 40 }) as DOMRect;
+    ({ left, top, right: left + width, bottom: top + 40, width, height: 40 }) as DOMRect;
   const scroll = vi.fn();
   e.scrollIntoView = scroll;
   document.body.append(e);
@@ -103,7 +103,7 @@ describe("TourCard", () => {
     const { tour, mountIt } = setup();
     const w = mountIt(TourCard);
     expect(w.find(".tour").exists()).toBe(false);
-    const t1 = target("t1", 900);
+    const t1 = target("t1", 900, 10, 40);
     await tour.start("orientation");
     await nextTick();
     await nextTick();
@@ -116,6 +116,7 @@ describe("TourCard", () => {
     expect(w.find(".tourbtn").attributes("disabled")).toBeDefined();
     expect(document.activeElement?.textContent.trim()).toBe("Next");
     expect(w.find(".tourspot").attributes("style")).toContain("left: 4px; top: 894px");
+    expect(w.find(".tourspot").classes()).toContain("small");
     expect(w.find(".tourcard").classes()).toContain("bottom");
     expect(t1.scroll).toHaveBeenCalledWith({ block: "center", behavior: "smooth" });
     vi.advanceTimersByTime(TRACK_MS * 2);
@@ -208,6 +209,7 @@ describe("TourCard", () => {
     await nextTick();
     await nextTick();
     expect(near.scroll).not.toHaveBeenCalled();
+    expect(w.find(".tourspot").classes()).not.toContain("small");
     expect(w.find(".tourcard").classes()).toContain("bottom");
     near.el.remove();
     const far = target("t1", 2000);

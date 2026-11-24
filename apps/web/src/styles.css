@@ -3603,8 +3603,31 @@ table.matrix {
   height: 28px;
   cursor: pointer;
 }
+/* A small control pulses inside its spotlight so the eye finds it. */
+.tourspot.small {
+  animation: tourpulse 1.4s ease-in-out infinite;
+}
+@keyframes tourpulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px var(--accent),
+      0 0 0 200vmax rgb(0 0 0 / 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px var(--accent),
+      0 0 0 200vmax rgb(0 0 0 / 0.55);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .tourspot {
     transition: none;
+  }
+  .tourspot.small {
+    animation: none;
+    box-shadow:
+      0 0 0 4px var(--accent),
+      0 0 0 200vmax rgb(0 0 0 / 0.55);
   }
 }
