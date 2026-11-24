@@ -8,6 +8,7 @@ import {
   manualHash,
   parseManualHash,
   takenCount,
+  TOURS_CHAPTER,
 } from "../../src/lib/manual.js";
 import { createTourProgress, type Tour } from "../../src/lib/tour.js";
 import { TOURS } from "../../src/lib/tour-catalog.js";
@@ -36,6 +37,7 @@ describe("the Field manual's chapters", () => {
     const chapters = chaptersOf(TOURS);
     expect(chapters.map((c) => c.id)).toEqual([
       INTRO_CHAPTER,
+      TOURS_CHAPTER,
       "refine",
       "map",
       "earthquake-detail",
@@ -45,20 +47,22 @@ describe("the Field manual's chapters", () => {
       "space",
       "settings",
     ]);
-    const [intro, refine] = chapters;
-    expect(intro.tours.every((t) => t.deep === undefined)).toBe(true);
+    const [intro, quick, refine] = chapters;
+    expect(intro.tours).toEqual([]);
     expect(intro.introducedBy).toBeNull();
+    expect(quick?.tours.length).toBeGreaterThan(0);
+    expect(quick?.tours.every((t) => t.deep === undefined)).toBe(true);
     expect(refine?.introducedBy).toBe("earthquakes");
     expect(chapters.reduce((n, c) => n + c.tours.length, 0)).toBe(TOURS.length);
     // Every introducing tour is a quick tour the catalogue has.
-    for (const c of chapters.slice(1)) {
+    for (const c of chapters.slice(2)) {
       expect(TOURS.find((t) => t.id === c.introducedBy)?.deep).toBeUndefined();
       expect(c.blurb).not.toBe("");
     }
   });
 
   it("files an area it has no words for under its own name", () => {
-    const [, odd] = chaptersOf([tour("q"), tour("d", "Odd corner")]);
+    const [, , odd] = chaptersOf([tour("q"), tour("d", "Odd corner")]);
     expect(odd).toMatchObject({
       id: "odd-corner",
       title: "Odd corner",

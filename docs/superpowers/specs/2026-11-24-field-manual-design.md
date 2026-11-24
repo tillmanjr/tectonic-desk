@@ -45,3 +45,8 @@ The glossary (later chapter), search (mockup E), and the annotated-desk view (mo
   missing runner. The list opens rightwards for a mark in the left half of the window.
 - The deep dives' closing steps now point at the Field manual (`data-tour="manual"`), and the Settings deep dive gains a
   step on the marks.
+- Revised the same day at the reader's request, to read more like a bound manual: the manual sits on its own lifted sheet,
+  ruled under its title, with a gutter and a rule between the contents and the page. The introduction is split in two,
+  1 Introduction (prose, ending in a link onward) and 2 Introductory tours (the quick tours as cards), and the deep-dive
+  chapters follow from 3. Every page is the same height for a given width: all chapters are laid in one grid cell, the one
+  on view visible and the rest `visibility: hidden` and `inert`, so the page takes the height of the longest.

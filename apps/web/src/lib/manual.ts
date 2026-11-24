@@ -2,8 +2,8 @@ import type { ComputedRef, InjectionKey } from "vue";
 import type { Tour, TourId, TourProgressDocument } from "./tour.js";
 
 /**
- * The Field manual: the deep dives filed in chapters, one to each part of the desk, after an
- * introduction that holds the quick tours. A chapter and a card are named in the address's hash,
+ * The Field manual: an introduction, the quick tours as the introductory tours, then the deep
+ * dives filed in chapters, one to each part of the desk. A chapter and a card are named in the address's hash,
  * `#<chapter>` or `#<chapter>/<tour id>`, so the way back from a deep dive lands on its card.
  */
 
@@ -18,6 +18,7 @@ export interface Chapter {
 }
 
 export const INTRO_CHAPTER = "intro";
+export const TOURS_CHAPTER = "tours";
 
 /** A deep dive area as a chapter id: lower case, every run of anything else one hyphen. */
 export const areaSlug = (area: string): string =>
@@ -73,7 +74,10 @@ const AREAS: Record<string, { blurb: string; introducedBy: TourId }> = {
 /** The introduction, always first, then the chapters after it. */
 export type Chapters = [Chapter, ...Chapter[]];
 
-/** The introduction, then a chapter to each deep dive area in the order the catalogue gives them. */
+/**
+ * The introduction (prose, no tours), the introductory tours (the quick tours), then a chapter to
+ * each deep dive area in the order the catalogue gives them.
+ */
 export function chaptersOf(tours: readonly Tour[]): Chapters {
   const quick = tours.filter((t) => t.deep === undefined);
   const out: Chapters = [
@@ -81,7 +85,15 @@ export function chaptersOf(tours: readonly Tour[]): Chapters {
       id: INTRO_CHAPTER,
       title: "Introduction to Tectonic Desk",
       blurb:
-        "What the desk is for, how its four pages fit together, and the quick tours that walk through each.",
+        "What the desk is for, how its four pages fit together, and how this manual is laid out.",
+      introducedBy: null,
+      tours: [],
+    },
+    {
+      id: TOURS_CHAPTER,
+      title: "Introductory tours",
+      blurb:
+        "The quick tours: each walks one page, or one side of the desk, from start to finish in a few minutes. Start with Orientation.",
       introducedBy: null,
       tours: quick,
     },

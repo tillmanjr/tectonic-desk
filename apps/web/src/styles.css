@@ -3633,25 +3633,40 @@ table.matrix {
   background: var(--tour-deep);
   color: var(--panel);
 }
+/* The manual sits on its own sheet, lifted off the page: a bound book's page, ruled under its title. */
 .manual {
-  padding: 4px 0 24px;
+  margin: 8px 0 24px;
+  padding: 20px 24px 28px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow:
+    0 1px 0 var(--line),
+    0 10px 30px rgb(0 0 0 / 0.14);
 }
 .manual .mtitle {
-  margin: 4px 0 14px;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ink);
   font: 700 28px var(--f-ui);
+  letter-spacing: 0.01em;
 }
 .manual .mbody {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  align-items: flex-start;
+  gap: 24px 0;
+  align-items: stretch;
 }
+/* The contents, ruled off from the page by a gutter and a line. */
 .manual .mtoc {
   flex: 1 1 200px;
   max-width: 240px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding-right: 18px;
+  margin-right: 22px;
+  border-right: 1px solid var(--line);
 }
 .manual .mtoc button {
   display: flex;
@@ -3667,10 +3682,10 @@ table.matrix {
   cursor: pointer;
 }
 .manual .mtoc button:hover {
-  background: var(--panel);
+  background: var(--bg);
 }
 .manual .mtoc button[aria-current="page"] {
-  background: var(--panel);
+  background: var(--bg);
   box-shadow: inset 3px 0 0 var(--tour-deep);
   font-weight: 600;
 }
@@ -3678,12 +3693,22 @@ table.matrix {
   font: 12px var(--f-data);
   color: var(--muted);
 }
-.manual .mchapter {
+/* Every chapter shares one cell, so the page holds the height of the longest at any width. */
+.manual .mstack {
   flex: 999 1 560px;
+  min-width: 0;
+  display: grid;
+}
+.manual .mchapter {
+  grid-area: 1 / 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-self: start;
+}
+.manual .mchapter:not(.current) {
+  visibility: hidden;
 }
 .manual .mhead {
   display: flex;
@@ -3734,6 +3759,18 @@ table.matrix {
   margin: 0;
   color: var(--muted);
 }
+.manual .mnext {
+  padding: 6px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: none;
+  color: var(--accent);
+  font: 600 15px var(--f-ui);
+  cursor: pointer;
+}
+.manual .mnext:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
 .manual .mdiamond {
   color: var(--tour-deep);
 }
@@ -3747,7 +3784,7 @@ table.matrix {
   flex-direction: column;
   gap: 8px;
   padding: 12px 14px;
-  background: var(--panel);
+  background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
@@ -3803,9 +3840,16 @@ table.matrix {
 .manual .mstate.partway {
   color: var(--tour-deep);
 }
-@media (max-width: 600px) {
+@media (max-width: 900px) {
+  .manual {
+    padding: 14px 14px 20px;
+  }
   .manual .mtoc {
     max-width: none;
+    padding: 0 0 12px;
+    margin: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
   .manual .mpages {
     grid-template-columns: 1fr;

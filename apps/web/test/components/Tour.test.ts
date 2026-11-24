@@ -475,7 +475,13 @@ describe("the Field manual in the app", () => {
     const m = await mountApp("/manual#map/map-fields", fakeApi(), createMarks(null), progress);
     expect(m.wrapper.find('[data-tour="manual"]').attributes("aria-current")).toBe("page");
     expect(m.wrapper.find(".pages:not(.manualnav) [aria-current]").exists()).toBe(false);
-    expect(m.wrapper.find(".mchapter h2").text()).toBe("3 · Map");
+    expect(m.wrapper.find(".mchapter.current h2").text()).toBe("4 · Map");
+    // Every chapter is laid in the page, the rest hidden and inert, so the page keeps the height
+    // of the longest.
+    const laid = m.wrapper.findAll(".mstack .mchapter");
+    expect(laid.length).toBe(10);
+    expect(laid.filter((c) => c.attributes("inert") !== undefined).length).toBe(9);
+    expect(m.wrapper.find(".mchapter.current").attributes("aria-hidden")).toBeUndefined();
     expect(m.wrapper.find(".mtoc [aria-current]").text()).toContain("Map");
     expect(m.wrapper.find(".mtoc [aria-current] .mcount").text()).toBe("1/9");
     const card = m.wrapper.find("#card-map-fields");
@@ -487,7 +493,9 @@ describe("the Field manual in the app", () => {
     expect(m.wrapper.find("#card-map-layers .mstate").text()).toBe("✓ Taken");
     expect(m.wrapper.find("#card-map-layers .mtake").text()).toBe("Again");
     expect(m.wrapper.find("#card-map-pin .mtake").text()).toBe("Take it");
-    expect(m.wrapper.find(".mintro").text()).toBe("Introduced in the quick tour Map tools");
+    expect(m.wrapper.find(".mchapter.current .mintro").text()).toBe(
+      "Introduced in the quick tour Map tools",
+    );
     await card.find(".mtake").trigger("click");
     await flushPromises();
     expect(m.wrapper.find(".tourpath").text()).toBe("Map: Fields · 3 of 6");
@@ -499,15 +507,24 @@ describe("the Field manual in the app", () => {
     await m.wrapper.findAll(".mtoc button")[0]?.trigger("click");
     await flushPromises();
     expect(m.router.currentRoute.value.fullPath).toBe("/manual#intro");
-    expect(m.wrapper.find(".mchapter h2").text()).toBe("1 · Introduction to Tectonic Desk");
-    expect(m.wrapper.find(".mintro").exists()).toBe(false);
+    expect(m.wrapper.find(".mchapter.current h2").text()).toBe("1 · Introduction to Tectonic Desk");
+    expect(m.wrapper.find(".mchapter.current .mintro").exists()).toBe(false);
+    expect(m.wrapper.findAll(".mstack .mchapter").length).toBe(10);
     expect(m.wrapper.findAll(".mpages dt").map((d) => d.text())).toEqual([
       "Active Earth",
       "Earthquakes",
       "Volcanoes",
       "Space",
     ]);
-    expect(m.wrapper.findAll(".mancard .tourkind").length).toBe(6);
+    expect(m.wrapper.find(".mchapter.current .mcount").exists()).toBe(false);
+    expect(m.wrapper.find(".mtoc button:first-child .mcount").exists()).toBe(false);
+    // On to the introductory tours: the quick tours as cards, on the shared page.
+    await m.wrapper.find(".mnext").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#tours");
+    expect(m.wrapper.find(".mchapter.current h2").text()).toBe("2 · Introductory tours");
+    expect(m.wrapper.find(".mchapter.current .mcount").text()).toBe("6 quick tours · 0 taken");
+    expect(m.wrapper.findAll(".mchapter.current .mancard .tourkind").length).toBe(6);
     m.wrapper.unmount();
   });
 
@@ -517,7 +534,7 @@ describe("the Field manual in the app", () => {
     await flushPromises();
     expect(m.router.currentRoute.value.fullPath).toBe("/manual#intro");
     expect(m.wrapper.find('[data-tour="regions"]').attributes("aria-hidden")).toBe("true");
-    await m.wrapper.findAll(".mtoc button")[2]?.trigger("click");
+    await m.wrapper.findAll(".mtoc button")[3]?.trigger("click");
     await flushPromises();
     await m.wrapper.find("#card-map-pin .mtake").trigger("click");
     await flushPromises();
@@ -545,7 +562,7 @@ describe("the Field manual in the app", () => {
     expect(m.router.currentRoute.value.fullPath).toBe("/volcanoes/wc");
     await m.router.push("/manual#map");
     await flushPromises();
-    await m.wrapper.find(".mintro").trigger("click");
+    await m.wrapper.find(".mchapter.current .mintro").trigger("click");
     await flushPromises();
     expect(m.wrapper.find(".tourpath").text()).toContain("Map tools · ");
     await m.wrapper.find(".tourexit").trigger("click");
