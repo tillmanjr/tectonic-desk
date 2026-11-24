@@ -413,6 +413,7 @@ export const EARTHQUAKES: Tour = {
       title: "Depth distribution",
       body: "Depth against magnitude, with the 70 and 300 km boundaries between the shallow, intermediate and deep classes; the West Coast view stops at 35 km, where its seismicity is crustal.",
       targets: ["chart.depth"],
+      detour: { tour: "chart-depth", label: "Reading this chart, in detail" },
     },
     {
       id: "mark",

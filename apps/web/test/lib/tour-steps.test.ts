@@ -135,6 +135,7 @@ describe("tour content", () => {
       ["table", "refine-tables"],
       ["magtime", "chart-magtime"],
       ["fm", "chart-fm"],
+      ["depth", "chart-depth"],
     ]);
   });
 
