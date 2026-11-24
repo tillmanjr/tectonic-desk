@@ -46,6 +46,12 @@ const missing = computed(
     box.value === null &&
     misses.value >= MISS_AFTER,
 );
+/** Below this size, in css pixels each way, a spotlit control pulses so it is not missed. */
+const SMALL_SPOT_PX = 64;
+const small = computed(() => {
+  const b = box.value;
+  return b !== null && b.right - b.left < SMALL_SPOT_PX && b.bottom - b.top < SMALL_SPOT_PX;
+});
 const spot = computed(() => {
   const b = box.value;
   if (b === null) return null;
@@ -137,7 +143,13 @@ onUnmounted(stop);
 
 <template>
   <div v-if="active !== null" class="tour">
-    <div v-if="spot !== null" class="tourspot" :style="spot" aria-hidden="true"></div>
+    <div
+      v-if="spot !== null"
+      class="tourspot"
+      :class="{ small }"
+      :style="spot"
+      aria-hidden="true"
+    ></div>
     <div v-else class="tourdim" aria-hidden="true"></div>
     <section
       ref="card"
