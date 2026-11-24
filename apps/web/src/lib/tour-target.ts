@@ -101,11 +101,14 @@ export interface Switches {
   set: (name: string, on: boolean) => void;
 }
 
-/** The control behind a name: a checkbox, or an element with `aria-expanded`, at or inside it. */
+/**
+ * The control behind a name: a checkbox, or an element with `aria-expanded` or `aria-pressed`, at
+ * or inside it.
+ */
 function switchControl(name: string, root: ParentNode): HTMLElement | null {
   const el = root.querySelector(`[data-tour~="${name}"]`);
   if (!(el instanceof HTMLElement)) return null;
-  const sel = 'input[type="checkbox"], [aria-expanded]';
+  const sel = 'input[type="checkbox"], [aria-expanded], [aria-pressed]';
   const control = el.matches(sel) ? el : el.querySelector(sel);
   return control instanceof HTMLElement ? control : null;
 }
@@ -113,7 +116,7 @@ function switchControl(name: string, root: ParentNode): HTMLElement | null {
 function isOn(control: HTMLElement): boolean {
   return control instanceof HTMLInputElement
     ? control.checked
-    : control.getAttribute("aria-expanded") === "true";
+    : (control.getAttribute("aria-expanded") ?? control.getAttribute("aria-pressed")) === "true";
 }
 
 export function domSwitches(root: ParentNode = document): Switches {
