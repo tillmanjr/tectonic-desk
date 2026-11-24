@@ -72,3 +72,55 @@ export const VOLCANO_STATUS: Tour = {
     },
   ],
 };
+
+export const VOLCANO_ERUPTIONS: Tour = {
+  id: "volcano-eruptions",
+  title: "Eruption record",
+  blurb:
+    "The GVP record: last eruption and evidence, the strip since 1800, VEI and the eruption list.",
+  deep: { area: "Volcano detail" },
+  pageFor: () => "volcanoes",
+  steps: [
+    {
+      id: "intro",
+      title: "The eruption record",
+      body: "The panel's record comes from the Smithsonian Global Volcanism Program's Volcanoes of the World. The steps read Kīlauea, one of the most frequently erupting volcanoes in it.",
+      targets: ["volcano.record"],
+      enter: kilauea,
+    },
+    {
+      id: "last",
+      title: "Last eruption and evidence",
+      body: "At the top: the year of the latest dated eruption and the GVP's evidence for activity, from eruptions observed in historical time to dated deposits or none at all, then the GVP's own summary of the volcano. The last eruption's age sets the triangle's colour on the map.",
+      targets: ["volcano.record"],
+      enter: kilauea,
+    },
+    {
+      id: "strip",
+      title: "The strip since 1800",
+      body: "Each eruption since 1800 as a bar at its start year; the height is its Volcanic Explosivity Index. An open bar is an eruption still continuing, a dashed one has a VEI the GVP marks uncertain. Point at a bar for its start, VEI and whether it continues. The caption counts them and the earlier ones.",
+      targets: ["volcano.eruptions"],
+      enter: kilauea,
+    },
+    {
+      id: "vei",
+      title: "VEI",
+      body: "The Volcanic Explosivity Index of Newhall and Self (1982), 0 to 8, a log scale of erupted volume and plume height: each step is about ten times more tephra. Effusive basaltic eruptions like most of Kīlauea's sit at 0 to 1 however long they last.",
+      targets: ["volcano.eruptions"],
+      enter: kilauea,
+    },
+    {
+      id: "list",
+      title: "The list",
+      body: "The latest eight eruptions: the start date to the precision the GVP has it, with its modifier or uncertainty, the end year or continuing, the VEI, and the activity type when it is not a confirmed eruption.",
+      targets: ["volcano.eruptions"],
+      enter: kilauea,
+    },
+    {
+      id: "done",
+      title: "That's the eruption record",
+      body: "The GVP number in the record links to the volcano's full page at the Smithsonian.",
+      targets: ["help"],
+    },
+  ],
+};
