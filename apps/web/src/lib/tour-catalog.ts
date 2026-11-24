@@ -1,3 +1,4 @@
+import { MARKS_GROUPS } from "./deep/marks.js";
 import { VOLCANO_ERUPTIONS, VOLCANO_NEARBY, VOLCANO_STATUS } from "./deep/volcano.js";
 import { CHART_DEPTH, CHART_FM, CHART_MAGTIME } from "./deep/charts.js";
 import { QUAKE_IMPACT, QUAKE_ORIGIN } from "./deep/quake.js";
@@ -58,6 +59,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   VOLCANO_STATUS,
   VOLCANO_ERUPTIONS,
   VOLCANO_NEARBY,
+  MARKS_GROUPS,
   MECHANISM,
 ];
 

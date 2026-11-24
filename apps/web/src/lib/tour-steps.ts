@@ -67,7 +67,7 @@ async function showVolcano(ctx: StepContext): Promise<void> {
 }
 
 /** Opens the example event in its window; selecting it zooms the map to it. */
-async function showExample(ctx: StepContext): Promise<void> {
+export async function showExample(ctx: StepContext): Promise<void> {
   await ctx.go(EXAMPLE_EVENT.url);
 }
 
@@ -648,7 +648,7 @@ export const EXAMPLE_MARKS: readonly MarkDraft[] = [
 ];
 
 /** Opens the marks overlay over the example event, on a group and in a mode, with the examples in. */
-async function showMarks(
+export async function showMarks(
   ctx: StepContext,
   mode: "list" | "panels" | "matrix",
   all = false,
@@ -691,6 +691,7 @@ export const MARKS: Tour = {
       title: "Groups",
       body: "All your marks, then each group with its count, in an order you set. New group adds one; the file controls at the foot export and import them. A mark can sit in any number of groups.",
       targets: ["marks.rail"],
+      detour: { tour: "marks-groups", label: "Marking and groups, in detail" },
       enter: (ctx) => showMarks(ctx, "list", true),
     },
     {
