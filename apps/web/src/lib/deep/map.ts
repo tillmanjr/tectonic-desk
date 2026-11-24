@@ -1,4 +1,5 @@
 import type { StepContext, Tour } from "../tour.js";
+import { hideSection, showSection } from "../tour-steps.js";
 
 /**
  * Deep dives of the Map area, one per layer or tool. Steps switch layers and tools on through the
@@ -133,6 +134,97 @@ export const MAP_FIELDS: Tour = {
       id: "done",
       title: "That's the fields",
       body: "The sources are credited in full at the foot of the page.",
+      targets: ["help"],
+    },
+  ],
+};
+
+/** The West Coast map with the example section across the Mendocino triple junction. */
+async function sectionOn(ctx: StepContext): Promise<void> {
+  await ctx.go(WEST_COAST);
+  await showSection(ctx);
+}
+
+export const MAP_SECTION: Tour = {
+  id: "map-section",
+  title: "Cross-section",
+  blurb: "Drawing a section line, its corridor, and reading the profile under the map.",
+  deep: { area: "Map" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Cross-sections",
+      body: "A section line on the map plots the events near it against depth along the line, under the map on the Earthquakes and Active Earth pages. The steps draw one across the Mendocino triple junction; yours comes back at the end.",
+      targets: [],
+      enter: async (ctx) => {
+        await ctx.go(WEST_COAST);
+      },
+    },
+    {
+      id: "place",
+      title: "Placing a line",
+      body: "Section arms the tool: click the map for A, then for A′. A drag between the clicks still pans the map, and a click more than 3 px from where it was pressed counts as a pan, not a point. Esc or Section again stands the tool down. It is armed now.",
+      tryIt: "Click two points on the map.",
+      targets: ["map.section", "map.stage"],
+      enter: async (ctx) => {
+        await ctx.go(WEST_COAST);
+        const mv = await ctx.map();
+        if (mv !== null && !mv.section.armed.value) mv.section.toggle();
+      },
+      leave: async (ctx) => {
+        const mv = await ctx.map();
+        mv?.section.cancel();
+      },
+    },
+    {
+      id: "line",
+      title: "The line and its corridor",
+      body: "A great circle from A to A′, with the corridor shaded either side. Drag either end to move it; the profile follows when you let go.",
+      tryIt: "Drag A′ along the coast.",
+      targets: ["map.stage"],
+      enter: sectionOn,
+    },
+    {
+      id: "title",
+      title: "The profile's title",
+      body: "The line's azimuth from A to A′, its length and how many events fall inside the corridor.",
+      targets: ["section.title"],
+      enter: sectionOn,
+    },
+    {
+      id: "profile",
+      title: "Reading the profile",
+      body: "Distance along the line across, depth down, at true scale unless exaggerated: each event projected onto the line at its hypocentral depth, coloured by depth class and sized by magnitude; click one to open it. Above, the topography and bathymetry along the line from SRTM15+, land and water filled and closed along sea level.",
+      targets: ["section.profile"],
+      enter: sectionOn,
+    },
+    {
+      id: "width",
+      title: "Corridor width",
+      body: "How far either side of the line an event may lie and still be plotted, from 5 to 500 km. A wider corridor gathers more events and blurs structure that changes along strike.",
+      targets: ["section.width"],
+      enter: sectionOn,
+    },
+    {
+      id: "ve",
+      title: "Vertical exaggeration",
+      body: "×1 is true scale, ×2 and ×4 stretch the depth axis. The plot stops at 480 px tall; events deeper than fit are counted in the caption under it.",
+      targets: ["section.ve", "section.caption"],
+      enter: sectionOn,
+    },
+    {
+      id: "kept",
+      title: "Kept, and Clear",
+      body: "The line lives in the address, so it survives switching page or region and travels in a copied link. Clear takes it away.",
+      targets: ["section.clear"],
+      enter: sectionOn,
+      leave: hideSection,
+    },
+    {
+      id: "done",
+      title: "That's the cross-section",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
       targets: ["help"],
     },
   ],
