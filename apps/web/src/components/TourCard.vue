@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 import { useInjected } from "../lib/keys.js";
-import { TOUR, tourTitle } from "../lib/tour.js";
+import { groupOf, TOUR, tourTitle } from "../lib/tour.js";
 import {
   dockOf,
   inView,
@@ -148,6 +148,9 @@ onUnmounted(stop);
       aria-describedby="tour-body"
     >
       <header class="tourhead">
+        <span class="tourkind" :class="groupOf(active.tour)">{{
+          groupOf(active.tour) === "deep" ? "Deep dive" : "Quick tour"
+        }}</span>
         <span class="tourpath"
           ><template v-if="active.parent !== null">{{ tourTitle(active.parent) }} › </template
           >{{ tourTitle(active.tour) }} · {{ active.index + 1 }} of
@@ -178,7 +181,8 @@ onUnmounted(stop);
         {{ active.step.detour.label }} →
       </button>
       <p v-if="detourDeep !== null" class="tourmore">
-        It is also in the Help menu, under Deep dives, as {{ detourDeep }}.
+        Also in the Help menu under <span class="tourkind deep">Deep dives</span> as
+        {{ detourDeep }}.
       </p>
       <footer class="tourfoot">
         <div class="tourdots">

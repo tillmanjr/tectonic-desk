@@ -3309,13 +3309,6 @@ table.matrix {
   width: min(340px, calc(100vw - 32px));
   gap: 10px;
 }
-.helpmenu .hhead {
-  margin: 0;
-  font: 600 13px var(--f-ui);
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
 .helpmenu .hresume {
   text-align: left;
   font: 600 14px var(--f-ui);
@@ -3358,20 +3351,64 @@ table.matrix {
 .hreset .yes {
   text-decoration: underline;
 }
-/* Deep dives follow the tours under their own heading, a little quieter. */
+/* The Help menu's two groups, each under its own heading and colour. */
+:root {
+  --tour-quick: var(--accent);
+  --tour-deep: var(--av-orange);
+}
 .helpmenu {
   max-height: min(78vh, 720px);
   overflow-y: auto;
 }
-.helpmenu .hdeephead {
+.hgroup {
+  border-left: 3px solid var(--tour-quick);
+  padding: 2px 0 4px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hgroup.deep {
+  border-left-color: var(--tour-deep);
   margin-top: 6px;
 }
-.htour.hdeep {
-  border-top-style: dashed;
+.hgrouphead {
+  margin: 0;
+  font: 700 17px var(--f-ui);
+  color: var(--tour-quick);
+  letter-spacing: 0.01em;
+}
+.hgroup.deep .hgrouphead {
+  color: var(--tour-deep);
+}
+.hgroupsub {
+  margin: -6px 0 0;
+  font: 13px var(--f-ui);
+  color: var(--muted);
+}
+/* The kind of tour, on the card and in the card's pointer to the Help menu. */
+.tourkind {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font: 700 11px var(--f-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--panel);
+  background: var(--tour-quick);
+  white-space: nowrap;
+}
+.tourkind.deep {
+  background: var(--tour-deep);
+}
+.tourcard .tourhead {
+  justify-content: flex-start;
+}
+.tourcard .tourhead .tourexit {
+  margin-left: auto;
 }
 .tourcard .tourmore {
-  margin-top: 0;
-  font-size: 12px;
+  margin-top: 2px;
+  font-size: 13px;
   color: var(--muted);
 }
 .tourdetour {

@@ -83,6 +83,11 @@ export interface Tour {
   deep?: { area: string };
 }
 
+/** The two kinds of tour, as the Help menu heads them and the card badges them. */
+export const GROUP_NAMES = { quick: "Quick tours", deep: "Deep dives" } as const;
+/** Which group a tour belongs to. */
+export const groupOf = (t: Tour): "quick" | "deep" => (t.deep === undefined ? "quick" : "deep");
+
 /** A tour's name as the Help menu and the card give it: a deep dive's carries its area. */
 export const tourTitle = (t: Tour): string =>
   t.deep === undefined ? t.title : `${t.deep.area}: ${t.title}`;
