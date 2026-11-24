@@ -229,3 +229,93 @@ export const MAP_SECTION: Tour = {
     },
   ],
 };
+
+/** Tokyo to Buenos Aires: about 165° apart, so the chord dips into the inner core. */
+export const DEEP_MEASURE: [[number, number], [number, number]] = [
+  [139.69, 35.69],
+  [-58.38, -34.6],
+];
+
+/** The global map with the example measurement on it. */
+async function measured(ctx: StepContext): Promise<void> {
+  await ctx.go("/earthquakes");
+  const mv = await ctx.map();
+  if (mv === null) return;
+  const [a, b] = DEEP_MEASURE;
+  mv.measure.clear();
+  mv.measure.toggle();
+  mv.measure.place(a);
+  mv.measure.place(b);
+}
+
+export const MAP_MEASURE: Tour = {
+  id: "map-measure",
+  title: "Measure",
+  blurb: "Distances over the surface and straight through the Earth, and what the label reads.",
+  deep: { area: "Map" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Measure",
+      body: "Measure gives the distance between two points over the surface and straight through the Earth, with how deep that straight line goes. The steps measure from Tokyo to Buenos Aires.",
+      targets: [],
+      enter: async (ctx) => {
+        await ctx.go("/earthquakes");
+      },
+    },
+    {
+      id: "place",
+      title: "Placing the ends",
+      body: "Measure arms the tool: click the map for one end and again for the other. Between the clicks the label already reads to the pointer. As with sections, a click that ends a pan is not a point. It is armed now.",
+      tryIt: "Click two points on the map.",
+      targets: ["map.measure", "map.stage"],
+      enter: async (ctx) => {
+        await ctx.go("/earthquakes");
+        const mv = await ctx.map();
+        if (mv === null) return;
+        mv.measure.clear();
+        mv.measure.toggle();
+      },
+      leave: async (ctx) => {
+        const mv = await ctx.map();
+        mv?.measure.clear();
+      },
+    },
+    {
+      id: "surface",
+      title: "Over the surface",
+      body: "The first line of the label: Δ, the angle between the two points at the Earth's centre, and the great-circle distance along the surface, which the dashed line follows.",
+      targets: ["map.stage"],
+      enter: measured,
+    },
+    {
+      id: "chord",
+      title: "Through the Earth",
+      body: "The second line: the chord, the straight line between the two points through the Earth (2R sin Δ/2), how deep its midpoint dips below the surface (R(1 − cos Δ/2)), and the PREM layer at that depth: crust, upper mantle, transition zone, lower mantle, outer core or inner core. From Tokyo to Buenos Aires it reaches the inner core.",
+      targets: ["map.stage"],
+      enter: measured,
+    },
+    {
+      id: "drag",
+      title: "Moving the ends",
+      body: "Drag either diamond to move that end; the label follows as you drag, and turns to sit below the line near the top of the map.",
+      tryIt: "Drag the Buenos Aires end up the coast.",
+      targets: ["map.stage"],
+      enter: measured,
+    },
+    {
+      id: "accuracy",
+      title: "Accuracy, and clearing",
+      body: "The Earth is taken as a sphere of radius 6371 km, which puts the surface distance within about 0.5 % of the WGS84 geodesic. A measurement is kept only while you are on the page, not in the address; Measure again clears it.",
+      targets: ["map.measure"],
+      enter: measured,
+    },
+    {
+      id: "done",
+      title: "That's measuring",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
