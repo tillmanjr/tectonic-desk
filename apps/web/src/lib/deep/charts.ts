@@ -4,6 +4,8 @@ import type { StepContext, Tour } from "../tour.js";
 
 /** July 2019 on the West Coast at M3+: the Ridgecrest sequence, within what the page draws. */
 export const RIDGECREST_WINDOW = "/earthquakes/wc?since=2019-07-01&until=2019-07-31&minMag=3";
+/** The West Coast's default window. */
+const WEST_COAST_RECENT = "/earthquakes/wc";
 /** Thirty years of the global catalogue across the completeness breaks of 1964, 1973 and 1976. */
 export const ERAS_WINDOW = "/earthquakes?since=1955-01-01&until=1985-12-31";
 
@@ -110,6 +112,50 @@ export const CHART_FM: Tour = {
     {
       id: "done",
       title: "That's frequency–magnitude",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
+
+export const CHART_DEPTH: Tour = {
+  id: "chart-depth",
+  title: "Depth distribution",
+  blurb: "Depth against magnitude: the depth classes, slabs at depth, and the crustal West Coast.",
+  deep: { area: "Charts" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Depth distribution",
+      body: "Each event of the window by magnitude across and hypocentral depth down, coloured by depth class. Point at one for it, click to open it. The steps read the global window, then the West Coast.",
+      targets: ["chart.depth"],
+      enter: at("/earthquakes"),
+    },
+    {
+      id: "classes",
+      title: "Depth classes",
+      body: "Dashed lines at 70 and 300 km divide shallow, intermediate and deep events, the classes that colour every marker in the app. Globally the axis runs to 700 km: events below the shallow band are in subducting slabs, the deepest beneath Tonga–Fiji, the Kurils and South America. The caption counts each class.",
+      targets: ["chart.depth"],
+      enter: at("/earthquakes"),
+    },
+    {
+      id: "crustal",
+      title: "The West Coast",
+      body: "On the West Coast the axis stops at 35 km, without the class lines, and the caption calls the seismicity crustal. The rare deeper events, in the subducting Juan de Fuca and Gorda slabs beneath Puget Sound and Mendocino, sit on the bottom edge. Events reported above the datum have small negative depths, plot above zero, and are counted in the caption.",
+      targets: ["chart.depth"],
+      enter: at(WEST_COAST_RECENT),
+    },
+    {
+      id: "missing",
+      title: "Depths not reported",
+      body: "Events without a reported depth cannot be placed and are left off; the caption says how many.",
+      targets: ["chart.depth"],
+      enter: at(WEST_COAST_RECENT),
+    },
+    {
+      id: "done",
+      title: "That's the depth chart",
       body: "Every deep dive is in the Help menu, under Deep dives.",
       targets: ["help"],
     },
