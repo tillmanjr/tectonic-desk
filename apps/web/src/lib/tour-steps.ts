@@ -5,8 +5,9 @@ import type { MarkDraft } from "./marks.js";
 import type { StepContext, Tour } from "./tour.js";
 
 /**
- * The tours' content. Steps reach the app only through `data-tour` names and the stage, and a
- * test walks every step against the mounted app, so a renamed or removed control fails the build.
+ * The tours' content, and the examples and helpers the deep dives under `deep/` share. Steps reach
+ * the app only through `data-tour` names and the stage, and a test walks every step against the
+ * mounted app, so a renamed or removed control fails the build. `tour-catalog.ts` lists them all.
  */
 
 type LonLat = [number, number];
@@ -504,6 +505,7 @@ export const VOLCANOES: Tour = {
       title: "Refine",
       body: "Tectonic setting, volcano type, the age of the last eruption and the current status narrow the map, the table and the charts; the summary and the cards always cover the whole region. Hide markers takes the volcanoes off the map without changing the rest.",
       targets: ["refine.volcanoes"],
+      detour: { tour: "refine-volcanoes", label: "Every control of this bar, in detail" },
       enter: (ctx) => {
         ctx.setSwitch("refine.volcanoes", true);
       },
@@ -1066,15 +1068,3 @@ export const MAP_NAV: Tour = {
     },
   ],
 };
-
-export const TOURS: readonly Tour[] = [
-  ORIENTATION,
-  MAP_TOOLS,
-  EARTHQUAKES,
-  MECHANISM,
-  VOLCANOES,
-  MARKS,
-  SPACE,
-  REFINE_QUAKES,
-  MAP_NAV,
-];
