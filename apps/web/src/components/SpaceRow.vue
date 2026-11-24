@@ -7,7 +7,7 @@ defineProps<{ row: RowData; left: number; right: number }>();
 </script>
 
 <template>
-  <g class="srow" :class="row.id">
+  <g class="srow" :class="row.id" :data-tour="`space.row.${row.id}`">
     <line class="rowbase" :x1="left" :x2="right" :y1="row.bottom" :y2="row.bottom" />
     <text class="rowlabel" :x="left + 4" :y="row.top + 9">
       {{ row.label

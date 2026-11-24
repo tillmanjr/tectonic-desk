@@ -806,6 +806,7 @@ export const SPACE: Tour = {
       title: "The stack",
       body: "Seven rows on one time axis: Kp (G1 marked at 5), Dst, hemispheric power, Bz and Bt, speed and density, the X-ray flux with the M and X thresholds, and the ≥10 and ≥100 MeV protons with the S levels. Point anywhere for every row's value at that moment; flares shade the X-ray row and alerts tick the top.",
       targets: ["space.stack"],
+      detour: { tour: "space-stack", label: "Each row, in detail" },
       enter: week,
     },
     {
