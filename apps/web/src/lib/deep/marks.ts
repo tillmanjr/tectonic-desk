@@ -74,3 +74,48 @@ export const MARKS_GROUPS: Tour = {
     },
   ],
 };
+
+export const MARKS_PANELS: Tour = {
+  id: "marks-panels",
+  title: "Stacked panels",
+  blurb: "Every mark of a group as its full panel, one under another.",
+  deep: { area: "Marks" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Show events",
+      body: "Show events, at the head of a group, stacks the full panel of every mark in it, so a group reads as one long record. The steps use the Tour examples group.",
+      targets: ["marks.grouphead"],
+      enter: list(false),
+    },
+    {
+      id: "panels",
+      title: "The stack",
+      body: "Each mark's panel in the group's order: an earthquake's origin, mechanism, impact and sequence, a volcano's GVP record, status, eruptions and nearby earthquakes, each read fresh, so it shows the latest the sources hold.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "panels"),
+    },
+    {
+      id: "open",
+      title: "From a panel",
+      body: "Each panel has its mark's name and Open here, which selects it on the page underneath (moving to Active Earth when that page cannot show it) and closes the marks.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "panels"),
+    },
+    {
+      id: "back",
+      title: "Back to the list",
+      body: "Back to list returns to the group's marks; × closes the marks and leaves the page underneath as it was.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "panels"),
+    },
+    {
+      id: "done",
+      title: "That's stacked panels",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};
