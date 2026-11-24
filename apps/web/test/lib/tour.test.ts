@@ -143,11 +143,11 @@ describe("example marks", () => {
 
 describe("continuing to the next tour", () => {
   function three(): Tour[] {
-    const one = (id: TourId, title: string, sidePath = false): Tour => ({
+    const one = (id: TourId, title: string, deep = false): Tour => ({
       id,
       title,
       blurb: "",
-      sidePath,
+      ...(deep ? { deep: { area: "Area" } } : {}),
       pageFor: (p: Page) => p,
       steps: [
         { id: "a", title: "A", body: "", targets: [] },
@@ -367,7 +367,7 @@ describe("side paths", () => {
       id: "mechanism",
       title: "Side",
       blurb: "",
-      sidePath: true,
+      deep: { area: "Area" },
       pageFor: (p: Page) => p,
       steps: [
         { id: "s0", title: "S0", body: "", targets: [] },

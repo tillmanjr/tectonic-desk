@@ -7,7 +7,7 @@ import { createClock } from "../../src/lib/clock.js";
 import { API, CLOCK, MARKS, SETTINGS, THEME } from "../../src/lib/keys.js";
 import { createMarks, type MarkDraft } from "../../src/lib/marks.js";
 import { createSettings } from "../../src/lib/settings.js";
-import { createTourProgress, TOUR_PROGRESS } from "../../src/lib/tour.js";
+import { createTourProgress, TOUR_PROGRESS, tourTitle } from "../../src/lib/tour.js";
 import {
   DEMO_GROUP_NAME,
   EXAMPLE_EVENT,
@@ -17,7 +17,7 @@ import {
   TOURS,
 } from "../../src/lib/tour-steps.js";
 import { createAppRouter } from "../../src/router.js";
-import { fakeApi, listOf } from "../support/api.js";
+import { fakeApi, listOf, raisedApi } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
 import { event, mech } from "../support/events.js";
 import { fakeTheme, NOW } from "../support/mount.js";
@@ -54,9 +54,13 @@ async function mountApp(
 
 type Mounted = Awaited<ReturnType<typeof mountApp>>;
 
+/** Starts `TOURS[index]` from its entry in the Help menu, found by its name. */
 async function startFromHelp(m: Mounted, index: number): Promise<void> {
+  const t = TOURS[index];
+  if (t === undefined) throw new Error(`no tour ${String(index)}`);
   await m.wrapper.find(".help-btn").trigger("click");
-  await m.wrapper.findAll(".htour")[index]?.find(".tourbtn.primary").trigger("click");
+  const entry = m.wrapper.findAll(".htour").find((e) => e.find("b").text() === tourTitle(t));
+  await entry?.find(".tourbtn.primary").trigger("click");
   await flushPromises();
 }
 
@@ -72,7 +76,7 @@ async function walk(m: Mounted, tourIndex: number): Promise<string[]> {
   const missing: string[] = [];
   for (const [i, step] of tour.steps.entries()) {
     expect(m.wrapper.find(".tourpath").text()).toBe(
-      `${tour.title} · ${String(i + 1)} of ${String(tour.steps.length)}`,
+      `${tourTitle(tour)} · ${String(i + 1)} of ${String(tour.steps.length)}`,
     );
     expect(m.wrapper.find(".tourcard h2").text()).toBe(step.title);
     for (const n of missingTargets(step.targets)) missing.push(`${step.id}: ${n}`);
@@ -189,7 +193,7 @@ describe("quick tours in the app", () => {
     const missing: string[] = [];
     for (const [i, step] of side.steps.entries()) {
       expect(m.wrapper.find(".tourpath").text()).toBe(
-        `Earthquakes › Focal mechanism · ${String(i + 1)} of ${String(side.steps.length)}`,
+        `Earthquakes › Earthquake detail: Focal mechanism · ${String(i + 1)} of ${String(side.steps.length)}`,
       );
       for (const n of missingTargets(step.targets)) missing.push(`${step.id}: ${n}`);
       if (i < side.steps.length - 1) {
@@ -218,7 +222,7 @@ describe("quick tours in the app", () => {
     const m = await mountApp("/earthquakes", exampleApi());
     expect(m.wrapper.find(".help-btn").classes()).toContain("fresh");
     expect(await walk(m, 3)).toEqual([]);
-    expect(m.wrapper.find(".tourpath").text()).toBe("Focal mechanism · 7 of 7");
+    expect(m.wrapper.find(".tourpath").text()).toBe("Earthquake detail: Focal mechanism · 7 of 7");
     m.wrapper.unmount();
   });
 
@@ -300,6 +304,45 @@ describe("quick tours in the app", () => {
     await m.wrapper.find(".tourexit").trigger("click");
     await flushPromises();
     expect(m.router.currentRoute.value.fullPath).toBe("/active");
+    m.wrapper.unmount();
+  });
+
+  it("walks Refine: Earthquakes and gives the reader's refinements back", async () => {
+    // A catalogue that overflows the page's budget, so the long-window note shows.
+    const m = await mountApp("/earthquakes?minMag=5", raisedApi());
+    expect(await walk(m, 7)).toEqual([]);
+    await m.wrapper.findAll(".tourdot")[10]?.trigger("click");
+    await flushPromises();
+    const hide = m.wrapper.find<HTMLInputElement>('[data-tour~="refine.earthquakes.hide"] input');
+    expect(hide.element.checked).toBe(true);
+    await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
+    await flushPromises();
+    expect(hide.element.checked).toBe(false);
+    expect(m.wrapper.find<HTMLSelectElement>(".fspan").element.value).toBe("");
+    await m.wrapper.findAll(".tourdot")[6]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find<HTMLSelectElement>(".fspan").element.value).toBe("0");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/earthquakes?minMag=5");
+    expect(m.wrapper.find(".filters.refine").classes()).not.toContain("expanded");
+    m.wrapper.unmount();
+  });
+
+  it("reaches Refine: Earthquakes from the Earthquakes tour's refine step, and comes back", async () => {
+    const m = await mountApp("/earthquakes");
+    await startFromHelp(m, 2);
+    await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourmore").text()).toContain("as Refine: Earthquakes");
+    await m.wrapper.find(".tourdetour").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourpath").text()).toBe("Earthquakes › Refine: Earthquakes · 1 of 12");
+    await m.wrapper.findAll(".tourbtn")[0]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourcard h2").text()).toBe("Refine");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
     m.wrapper.unmount();
   });
 

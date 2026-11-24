@@ -72,6 +72,7 @@ function onHeadKey(ev: KeyboardEvent): void {
   >
     <div
       v-hint="expanded ? 'Fold the inputs away' : 'Open the inputs'"
+      :data-tour="`refine.${dataset}.head`"
       class="rhead"
       role="button"
       tabindex="0"
@@ -105,6 +106,7 @@ function onHeadKey(ev: KeyboardEvent): void {
         `Takes the ${dataset} markers off the map without changing the refinements; the table, cards and charts are unaffected.`
       "
       class="rhide"
+      :data-tour="`refine.${dataset}.hide`"
       ><input type="checkbox" :checked="hidden" @change="onHide" /> Hide markers</label
     >
   </section>

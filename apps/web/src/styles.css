@@ -3358,13 +3358,20 @@ table.matrix {
 .hreset .yes {
   text-decoration: underline;
 }
-/* A side path sits under the tour it leaves from. */
-.htour.hside {
-  margin-left: 14px;
+/* Deep dives follow the tours under their own heading, a little quieter. */
+.helpmenu {
+  max-height: min(78vh, 720px);
+  overflow-y: auto;
+}
+.helpmenu .hdeephead {
+  margin-top: 6px;
+}
+.htour.hdeep {
   border-top-style: dashed;
 }
-.hsidetag {
-  font-weight: 400;
+.tourcard .tourmore {
+  margin-top: 0;
+  font-size: 12px;
   color: var(--muted);
 }
 .tourdetour {

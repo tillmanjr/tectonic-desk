@@ -3,7 +3,7 @@ import { onUnmounted, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import { vHint } from "../lib/hint.js";
 import { useInjected } from "../lib/keys.js";
-import { TOUR, tourState, type TourId, type TourState } from "../lib/tour.js";
+import { TOUR, tourState, tourTitle, type TourId, type TourState } from "../lib/tour.js";
 
 /** The header's Help menu: the quick tours, each with its progress, and every step to start at. */
 const tour = useInjected(TOUR);
@@ -23,6 +23,11 @@ function begin(id: TourId, step: number): void {
   open.value = false;
   void tour.start(id, step);
 }
+/** The tours, then the deep dives under their own heading. */
+const parts = [
+  { head: "", tours: tour.tours.filter((t) => t.deep === undefined) },
+  { head: "Deep dives", tours: tour.tours.filter((t) => t.deep !== undefined) },
+];
 /** Starts a tour where the reader left it, or from the top. */
 function resume(id: TourId): void {
   const s = tourState(tour.progress.doc.value, id);
@@ -74,39 +79,47 @@ onUnmounted(() => {
         class="hresume"
         @click="begin(tour.resumable.value.tour.id, tour.resumable.value.step)"
       >
-        Resume {{ tour.resumable.value.tour.title }} at step
+        Resume {{ tourTitle(tour.resumable.value.tour) }} at step
         {{ tour.resumable.value.step + 1 }}
       </button>
-      <div v-for="t in tour.tours" :key="t.id" class="htour" :class="{ hside: t.sidePath }">
-        <div class="htitle">
-          <b>{{ t.title }}<small v-if="t.sidePath" class="hsidetag"> · side path</small></b>
-          <span class="hstate">{{
-            stateText(tourState(tour.progress.doc.value, t.id), t.steps.length)
-          }}</span>
+      <template v-for="part in parts" :key="part.head">
+        <p v-if="part.head !== ''" class="hhead hdeephead">{{ part.head }}</p>
+        <div
+          v-for="t in part.tours"
+          :key="t.id"
+          class="htour"
+          :class="{ hdeep: t.deep !== undefined }"
+        >
+          <div class="htitle">
+            <b>{{ tourTitle(t) }}</b>
+            <span class="hstate">{{
+              stateText(tourState(tour.progress.doc.value, t.id), t.steps.length)
+            }}</span>
+          </div>
+          <p class="hblurb">{{ t.blurb }}</p>
+          <div class="hacts">
+            <button type="button" class="tourbtn primary" @click="resume(t.id)">
+              {{ primaryText(tourState(tour.progress.doc.value, t.id)) }}
+            </button>
+            <button
+              v-if="tourState(tour.progress.doc.value, t.id).kind === 'partway'"
+              type="button"
+              class="tourbtn"
+              @click="begin(t.id, 0)"
+            >
+              Restart
+            </button>
+          </div>
+          <details class="hsteps">
+            <summary>Steps</summary>
+            <ol>
+              <li v-for="(s, i) in t.steps" :key="s.id">
+                <button type="button" @click="begin(t.id, i)">{{ s.title }}</button>
+              </li>
+            </ol>
+          </details>
         </div>
-        <p class="hblurb">{{ t.blurb }}</p>
-        <div class="hacts">
-          <button type="button" class="tourbtn primary" @click="resume(t.id)">
-            {{ primaryText(tourState(tour.progress.doc.value, t.id)) }}
-          </button>
-          <button
-            v-if="tourState(tour.progress.doc.value, t.id).kind === 'partway'"
-            type="button"
-            class="tourbtn"
-            @click="begin(t.id, 0)"
-          >
-            Restart
-          </button>
-        </div>
-        <details class="hsteps">
-          <summary>Steps</summary>
-          <ol>
-            <li v-for="(s, i) in t.steps" :key="s.id">
-              <button type="button" @click="begin(t.id, i)">{{ s.title }}</button>
-            </li>
-          </ol>
-        </details>
-      </div>
+      </template>
       <!-- Out of the way at the foot: for demos, back to a first visit. -->
       <div class="hreset">
         <ConfirmButton label="Reset tour progress" @confirm="tour.reset()" />
