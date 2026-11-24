@@ -1043,8 +1043,8 @@ export const MAP_NAV: Tour = {
     {
       id: "theater",
       title: "Theater mode",
-      body: "The corner button gives the map and its header the whole window, cropping the map on its long side; it unlocks while in theater, so drag to see the rest. The legend steps aside. The same button, or Esc, brings the page back. It is in theater now.",
-      targets: ["map.theater", "map.stage"],
+      body: "This button, in the map's bottom-right corner, gives the map and its header the whole window, cropping the map on its long side; it unlocks while in theater, so drag to see the rest. The legend steps aside. The same button, or Esc, brings the page back. It is in theater now.",
+      targets: ["map.theater"],
       enter: (ctx) => {
         ctx.setSwitch("map.theater", true);
       },
