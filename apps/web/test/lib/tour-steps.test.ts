@@ -15,8 +15,8 @@ import {
   VOLCANOES,
   MAP_TOOLS,
   ORIENTATION,
-  TOURS,
 } from "../../src/lib/tour-steps.js";
+import { TOURS } from "../../src/lib/tour-catalog.js";
 import type { StepContext, Tour } from "../../src/lib/tour.js";
 import { fakeContext, fakeMap } from "../support/tour.js";
 
