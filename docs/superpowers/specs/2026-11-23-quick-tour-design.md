@@ -192,3 +192,31 @@ Switches now also cover controls with `aria-pressed` (the lock, theater). The ru
 back before the maps' own restore, since they read the page and the page lags the model until it
 redraws, and in the reverse of the order they were first changed, since leaving theater hands the
 lock back as it was before theater.
+
+## The deep dive catalogue (2026-11-24)
+
+Thirty-two deep dives, each its own pull request in one stack, listed in `tour-catalog.ts` by area
+and written in `src/lib/deep/<area>.ts`:
+
+- Refine: Earthquakes, Volcanoes, Space window, Table filters.
+- Map: Navigation and header, Reference layers and legend, Fields, Cross-section, Measure, Pin,
+  ShakeMap layer, Animate, Density and the raised floor.
+- Earthquake detail: Origin and catalogue record, Impact and sequence, Focal mechanism.
+- Charts: Magnitude through time, Frequency–magnitude, Depth distribution.
+- Volcano detail: Agency status and scales, Eruption record, Earthquakes nearby.
+- Marks: Marking and groups, Stacked panels, Reading Compare, Export and import.
+- Space: The tiles, The stack row by row, Flares and alerts, Aurora frames and playback, Sun
+  pictures and movies, Long history.
+- Settings: Time zone, theme and hints.
+
+Each is linked from the matching quick-tour step. Where a deep dive cannot stage what it explains
+it says so and invites the reader instead: the Sun overlay stacks above the tour, the pin and the
+tables' column filters belong to the reader, and a sequence block appears only for a live M6.5+
+mainshock, so Sequence is part of Impact rather than a deep dive of its own. Examples were chosen
+to show each feature on real data: the Ridgecrest month at M3+ (1,108 events, the sequence
+caption, a b-value from M3), 1955 to 1985 for the completeness breaks, Kilauea in 2018 for nearby
+earthquakes, Tokyo to Buenos Aires for a chord into the inner core.
+
+Testing: `Tour.test.ts` walks every entry of `DEEP_DIVES` against the full app and fails on a
+missing target; `tour-steps.test.ts` runs every step with and without a map on screen. A separate
+way to browse the deep dives, beyond the Help menu, is to be designed next.
