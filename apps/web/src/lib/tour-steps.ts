@@ -349,6 +349,7 @@ export const EARTHQUAKES: Tour = {
       title: "ShakeMap",
       body: "The selected event's USGS ShakeMap as Modified Mercalli intensity bands, from ground-motion models with site amplification and constrained by stations and felt reports. Petrolia's reached VII near the coast. Point at a band for its intensity; the legend gives the scale. USGS publishes one for most M5.5+ events, and for smaller ones in well-instrumented networks like this.",
       targets: ["map.shake", "map.stage"],
+      detour: { tour: "map-shake", label: "The ShakeMap layer, in detail" },
       enter: async (ctx) => {
         await showExample(ctx);
         ctx.setSwitch("map.shake", true);
