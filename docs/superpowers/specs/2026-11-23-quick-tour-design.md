@@ -178,3 +178,17 @@ orange for deep dives (`--tour-quick`, `--tour-deep`). The tour card carries a b
 colour ("Quick tour" or "Deep dive"), and a tour step that links to a deep dive names the Help
 menu's Deep dives group with that badge, so the reader recognises it there. The names live in
 `GROUP_NAMES`.
+
+## Map: Navigation and header (2026-11-24)
+
+A deep dive linked from the Map tools tour's first step, on whichever map page the reader is on
+(Active Earth from Space): the header's layout, the map locked and unlocked (the steps flip the
+lock), the zoom buttons and range (two presses, set in one move since presses in a row interrupt
+each other's animation), how markers grow with zoom, selecting the largest event to show the map
+moving to it, the readouts, the count line and loading chip, theater mode (switched on), and the
+legend.
+
+Switches now also cover controls with `aria-pressed` (the lock, theater). The runner gives them
+back before the maps' own restore, since they read the page and the page lags the model until it
+redraws, and in the reverse of the order they were first changed, since leaving theater hands the
+lock back as it was before theater.

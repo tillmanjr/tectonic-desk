@@ -18,7 +18,8 @@ export type TourId =
   | "volcanoes"
   | "marks"
   | "space"
-  | "refine-quakes";
+  | "refine-quakes"
+  | "map-nav";
 
 /** What a step acts through, built by `App.vue`; `map` resolves once a map is on screen. */
 export interface TourStage {
@@ -126,6 +127,7 @@ const TOUR_IDS: readonly TourId[] = [
   "marks",
   "space",
   "refine-quakes",
+  "map-nav",
 ];
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
@@ -424,12 +426,15 @@ export function createTour(
     seq++;
     current.value = null;
     progress.record(c.tour.id, done ? 0 : c.index, done);
-    for (const restore of restores.values()) restore();
-    restores.clear();
-    for (const [name, was] of switched) {
+    // Switches first: they read the page, which lags the model until it redraws, so they must
+    // act before the map's own restore changes what they show. Last changed, first put back: one
+    // switch can carry another's state (leaving theater gives the lock back as it was).
+    for (const [name, was] of [...switched].reverse()) {
       if (switches.get(name) === !was) switches.set(name, was);
     }
     switched.clear();
+    for (const restore of restores.values()) restore();
+    restores.clear();
     const back = origin;
     origin = null;
     if (back !== null && back !== stage.location()) await stage.restore(back);
