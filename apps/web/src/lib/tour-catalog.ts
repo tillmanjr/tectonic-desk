@@ -1,3 +1,4 @@
+import { SETTINGS_DIVE } from "./deep/settings.js";
 import {
   SPACE_AURORA,
   SPACE_FLARES,
@@ -77,6 +78,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   SPACE_AURORA,
   SPACE_SUN,
   SPACE_HISTORY_DIVE,
+  SETTINGS_DIVE,
   MECHANISM,
 ];
 
