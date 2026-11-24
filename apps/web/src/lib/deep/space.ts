@@ -372,7 +372,7 @@ export const SPACE_HISTORY_DIVE: Tour = {
     {
       id: "cycles",
       title: "Solar cycles",
-      body: "In windows over two years, a dashed line marks the month of each solar cycle's minimum, labelled with the number of the cycle it begins. Here the minimum of December 2019 that began Cycle 25, with Cycle 24's maximum of April 2014 near the window's start.",
+      body: "In windows over two years, a dashed line marks the month of each solar cycle's minimum, labelled with the number of the cycle it begins. Here the minimum of December 2019 that began Cycle 25, with the decline of Cycle 24 before it and Cycle 25's rise after.",
       targets: ["space.stack"],
       enter: async (ctx) => {
         await ctx.go(SPACE_HISTORY);
