@@ -77,3 +77,63 @@ export const MAP_LAYERS: Tour = {
     },
   ],
 };
+
+/** Opens a map page with a field under it. */
+function fieldAt(url: string, field: "none" | "gravity" | "magnetic") {
+  return async (ctx: StepContext): Promise<void> => {
+    await ctx.go(url);
+    const mv = await ctx.map();
+    if (mv !== null) mv.field.value = field;
+  };
+}
+
+export const MAP_FIELDS: Tour = {
+  id: "map-fields",
+  title: "Fields",
+  blurb: "The gravity and magnetic anomaly grids under the map: sources, ramps and the legend.",
+  deep: { area: "Map" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Fields",
+      body: "The Field select lays one potential-field anomaly grid under everything else on the map, between the basemap and the faults, boundaries and markers. One at a time, or none. Your own choice comes back at the end.",
+      targets: ["map.field"],
+      enter: fieldAt("/earthquakes", "none"),
+    },
+    {
+      id: "gravity",
+      title: "Gravity, global",
+      body: "The free-air gravity anomaly: Scripps marine gravity v33 (Sandwell et al. 2019) at sea, EGM2008 over land, a 6′ grid, clipped at ±120 mGal. Blue is a mass deficit (the trenches), red an excess (the outer rises, seamounts and young ridges).",
+      targets: ["map.field", "map.stage"],
+      enter: fieldAt("/earthquakes", "gravity"),
+    },
+    {
+      id: "residual",
+      title: "Gravity, West Coast",
+      body: "On the West Coast map the isostatic residual instead: USGS DDS-9 (Simpson and Jachens), a 4 km grid, Airy–Heiskanen compensation at 2.67 g/cm³, so the long-wavelength effect of topography is taken out and shallower density contrasts stand out. Conterminous US only, free-air offshore, clipped at ±80 mGal.",
+      targets: ["map.field", "map.stage"],
+      enter: fieldAt(WEST_COAST, "gravity"),
+    },
+    {
+      id: "magnetic",
+      title: "Magnetic",
+      body: "The total-field magnetic anomaly of EMAG2v3 (Meyer, Chulliat and Saltus 2017), on a 6′ grid upward-continued to 4 km above the geoid. Its ramp is equalised: colours follow rank rather than value, so the detail spreads across the whole ramp and the ticks are unevenly spaced.",
+      targets: ["map.field", "map.stage"],
+      enter: fieldAt(WEST_COAST, "magnetic"),
+    },
+    {
+      id: "legend",
+      title: "Its legend row",
+      body: "The legend gains the field's ramp with its ticks and units, the source and grid, and whether the ramp is equalised. If the field file cannot be read, the select says unavailable and the next choice tries again.",
+      targets: ["map.legend"],
+      enter: fieldAt(WEST_COAST, "magnetic"),
+    },
+    {
+      id: "done",
+      title: "That's the fields",
+      body: "The sources are credited in full at the foot of the page.",
+      targets: ["help"],
+    },
+  ],
+};

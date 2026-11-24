@@ -207,6 +207,7 @@ export const MAP_TOOLS: Tour = {
       title: "Fields",
       body: "A potential-field anomaly under everything: free-air gravity (isostatic residual onshore in the West Coast view) or the EMAG2v3 magnetic anomaly. Gravity is on now; the legend gives the source and the ramp.",
       targets: ["map.field", "map.stage"],
+      detour: { tour: "map-fields", label: "The fields and their sources, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv !== null) mv.field.value = "gravity";
