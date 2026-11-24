@@ -78,3 +78,83 @@ export const SPACE_TILES: Tour = {
     },
   ],
 };
+
+export const SPACE_STACK: Tour = {
+  id: "space-stack",
+  title: "The stack, row by row",
+  blurb: "Each row of the stack: what it plots, its reference lines, and the readout across them.",
+  deep: { area: "Space" },
+  pageFor: () => "space",
+  steps: [
+    {
+      id: "intro",
+      title: "The stack",
+      body: "Seven rows on one time axis, so a storm can be followed from the Sun to the ground: X-ray and protons at the Sun, the solar wind and its field at L1, Kp, Dst and the auroral power at Earth. The steps use a 7-day window.",
+      targets: ["space.stack"],
+      enter: week,
+    },
+    {
+      id: "kp",
+      title: "Kp",
+      body: "SWPC's Kp as a bar over each three-hour window, coloured by the G level it reaches, with a line at 5 for G1. The current window's bar revises until the window closes.",
+      targets: ["space.row.kp"],
+      enter: week,
+    },
+    {
+      id: "dst",
+      title: "Dst",
+      body: "The disturbance storm-time index in nT, hourly, from Kyoto's real-time quicklook relayed by SWPC: the strength of the ring current. A storm drives it negative, to −50 nT for a moderate one, −100 for intense, past −250 for a great storm, and it recovers over days.",
+      targets: ["space.row.dst"],
+      enter: week,
+    },
+    {
+      id: "power",
+      title: "Hemispheric power",
+      body: "The energy OVATION Prime puts into each hemisphere's aurora, north and south, in GW. It rises within an hour of a southward turn of Bz.",
+      targets: ["space.row.power"],
+      enter: week,
+    },
+    {
+      id: "mag",
+      title: "Bz and Bt",
+      body: "The interplanetary field at L1 in GSM coordinates: Bz with a line at zero, Bt as its envelope. Southward, negative Bz held for hours is what drives a storm; watch Kp and Dst answer it.",
+      targets: ["space.row.mag"],
+      enter: week,
+    },
+    {
+      id: "wind",
+      title: "Speed and density",
+      body: "Solar wind speed on the left axis in km/s and proton density on the right in /cm³. A CME's shock arrives as a jump in both; a coronal hole stream as a slow rise in speed with density falling.",
+      targets: ["space.row.wind"],
+      enter: week,
+    },
+    {
+      id: "xray",
+      title: "X-ray",
+      body: "The GOES long (0.1–0.8 nm) and short (0.05–0.4 nm) channels on a log scale, with lines at M1 (R1) and X1 (R3). The window's flares shade the row from start to end.",
+      targets: ["space.row.xray"],
+      enter: week,
+    },
+    {
+      id: "protons",
+      title: "Protons",
+      body: "The ≥10 and ≥100 MeV integral fluxes in pfu on a log scale, with lines at the S1, S2 and S3 thresholds of the ≥10 MeV flux.",
+      targets: ["space.row.protons"],
+      enter: week,
+    },
+    {
+      id: "readout",
+      title: "The readout",
+      body: "Point anywhere on the stack: a line drops through every row and each row gives its value at that moment, so you can read the delay from a shock at L1 to the Kp it raises. Triangles along the top are SWPC alerts; point at one for it.",
+      tryIt: "Run the pointer along the stack.",
+      targets: ["space.stack"],
+      enter: week,
+    },
+    {
+      id: "done",
+      title: "That's the stack",
+      body: "Space: Long history covers the rows a window past 93 days keeps.",
+      targets: ["help"],
+    },
+  ],
+};

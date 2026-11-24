@@ -1,4 +1,4 @@
-import { SPACE_TILES } from "./deep/space.js";
+import { SPACE_STACK, SPACE_TILES } from "./deep/space.js";
 import { MARKS_COMPARE, MARKS_GROUPS, MARKS_IO, MARKS_PANELS } from "./deep/marks.js";
 import { VOLCANO_ERUPTIONS, VOLCANO_NEARBY, VOLCANO_STATUS } from "./deep/volcano.js";
 import { CHART_DEPTH, CHART_FM, CHART_MAGTIME } from "./deep/charts.js";
@@ -65,6 +65,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   MARKS_COMPARE,
   MARKS_IO,
   SPACE_TILES,
+  SPACE_STACK,
   MECHANISM,
 ];
 
