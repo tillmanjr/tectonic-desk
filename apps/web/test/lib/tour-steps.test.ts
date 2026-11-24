@@ -129,6 +129,7 @@ describe("tour content", () => {
       ["refine", "refine-quakes"],
       ["detail", "quake-origin"],
       ["mechanism", "mechanism"],
+      ["impact", "quake-impact"],
       ["shakemap", "map-shake"],
       ["profile", "map-section"],
       ["table", "refine-tables"],
