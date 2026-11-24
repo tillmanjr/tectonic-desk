@@ -151,6 +151,15 @@ describe("quick tours in the app", () => {
     const m = await mountApp("/active/wc", exampleApi());
     const missing = await walk(m, 2);
     expect(missing).toEqual([]);
+    await m.wrapper.findAll(".tourdot")[9]?.trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourcard h2").text()).toBe("Cross-section profile");
+    expect(m.router.currentRoute.value.query.event).toBeUndefined();
+    expect(m.router.currentRoute.value.query.section).toBeDefined();
+    expect(m.wrapper.find(".detail").classes()).not.toContain("open");
+    // The Mark step opens the event again.
+    await m.wrapper.findAll(".tourdot")[14]?.trigger("click");
+    await flushPromises();
     expect(m.router.currentRoute.value.fullPath).toBe(EXAMPLE_EVENT.url);
     await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
     await flushPromises();
