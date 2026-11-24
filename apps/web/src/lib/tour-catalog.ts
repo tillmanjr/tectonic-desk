@@ -1,4 +1,4 @@
-import { VOLCANO_STATUS } from "./deep/volcano.js";
+import { VOLCANO_ERUPTIONS, VOLCANO_STATUS } from "./deep/volcano.js";
 import { CHART_DEPTH, CHART_FM, CHART_MAGTIME } from "./deep/charts.js";
 import { QUAKE_IMPACT, QUAKE_ORIGIN } from "./deep/quake.js";
 import {
@@ -56,6 +56,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   CHART_FM,
   CHART_DEPTH,
   VOLCANO_STATUS,
+  VOLCANO_ERUPTIONS,
   MECHANISM,
 ];
 

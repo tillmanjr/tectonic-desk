@@ -553,6 +553,7 @@ export const VOLCANOES: Tour = {
       title: "Eruptions",
       body: "The GVP eruption record since 1800 as a strip: bar height is the VEI, an open bar an eruption still continuing, a dashed one a queried date or size. The list gives the latest eruptions with their dates and VEI.",
       targets: ["volcano.eruptions"],
+      detour: { tour: "volcano-eruptions", label: "The eruption record, in detail" },
       enter: showVolcano,
     },
     {
