@@ -270,3 +270,55 @@ export const SPACE_AURORA: Tour = {
     },
   ],
 };
+
+export const SPACE_SUN: Tour = {
+  id: "space-sun",
+  title: "Sun pictures and movies",
+  blurb: "The seven SDO and SOHO views, and the large view's movies, stills and generated movies.",
+  deep: { area: "Space" },
+  pageFor: () => "space",
+  steps: [
+    {
+      id: "intro",
+      title: "The Sun",
+      body: "The latest frames from NASA's Solar Dynamics Observatory and the ESA/NASA SOHO coronagraphs, relayed by this site as the observatories publish them, each with the time it was taken.",
+      targets: ["space.sun"],
+      enter: week,
+    },
+    {
+      id: "sdo",
+      title: "SDO",
+      body: "AIA at 193 Å: the corona at about 1.2 MK, coronal holes dark and active regions bright. At 304 Å: the chromosphere and transition region at about 50 000 K, prominences and filaments. At 171 Å: the quiet corona and its loops at 0.6 MK. HMI's intensitygram is visible light, with the sunspots; its magnetogram the line-of-sight field, white toward us and black away.",
+      targets: ["space.sun"],
+      enter: week,
+    },
+    {
+      id: "soho",
+      title: "SOHO LASCO",
+      body: "The coronagraphs block the disk to see the faint corona: C2 from 1.5 to 6 solar radii, where CMEs leave the Sun, and C3 from 3.7 to 30. A halo CME, spreading all round the occulting disk, is heading toward or away from us.",
+      targets: ["space.sun"],
+      enter: week,
+    },
+    {
+      id: "large",
+      title: "The large view",
+      body: "Click a picture to open it large on the observatory's latest movie: 48 hours for SDO, about four days for LASCO, 512 px; Higher resolution gives the 1024 px version and Still the latest frame, and Animation goes back to the movie. Its caption says when the movie's span differs from the page's window. ← and → step through the seven, the filmstrip picks one, and Esc or a click outside closes it.",
+      tryIt: "Open a picture; Esc brings you back to this tour.",
+      targets: ["space.sun"],
+      enter: week,
+    },
+    {
+      id: "generate",
+      title: "A movie for your window",
+      body: "When the latest movie does not cover the page's window, Generate animation for this window asks Helioviewer.org to build one for it, up to 300 frames (at most the last 30 days of it), after a dialog warning it may take from seconds to minutes; the ⓘ beside it explains. The SDO archive reaches back to 2010, LASCO's to 1997; a built movie is kept for six hours and shows under Generated.",
+      targets: ["space.sun"],
+      enter: week,
+    },
+    {
+      id: "done",
+      title: "That's the Sun",
+      body: "The credits for every picture and movie are at the foot of the page and in the large view.",
+      targets: ["help"],
+    },
+  ],
+};
