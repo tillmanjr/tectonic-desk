@@ -16,7 +16,7 @@ import {
   MAP_TOOLS,
   ORIENTATION,
 } from "../../src/lib/tour-steps.js";
-import { TOURS } from "../../src/lib/tour-catalog.js";
+import { DEEP_DIVES, TOURS } from "../../src/lib/tour-catalog.js";
 import type { StepContext, Tour } from "../../src/lib/tour.js";
 import { fakeContext, fakeMap } from "../support/tour.js";
 
@@ -214,6 +214,16 @@ describe("tour content", () => {
     expect(MAP_NAV.pageFor("space")).toBe("active");
     expect(MAP_NAV.pageFor("volcanoes")).toBe("volcanoes");
     expect(MAP_TOOLS.steps[0]?.detour?.tour).toBe("map-nav");
+  });
+
+  it("runs every deep dive's steps with a map on screen and without one", async () => {
+    for (const deep of DEEP_DIVES) {
+      for (const mv of [fakeMap(), null]) {
+        const ctx = fakeContext(mv);
+        for (const s of deep.steps) await run(deep, s.id, ctx);
+      }
+    }
+    expect(DEEP_DIVES.every((d) => d.deep !== undefined)).toBe(true);
   });
 
   it("does nothing to a map that is not there", async () => {
