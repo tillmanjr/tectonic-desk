@@ -171,3 +171,59 @@ export const REFINE_SPACE: Tour = {
     },
   ],
 };
+
+export const REFINE_TABLES: Tour = {
+  id: "refine-tables",
+  title: "Table filters",
+  blurb: "Sorting the catalogue and volcano tables, and narrowing them by column.",
+  deep: { area: "Refine" },
+  pageFor: () => "active",
+  steps: [
+    {
+      id: "intro",
+      title: "The tables' own filters",
+      body: "Each table can be narrowed further, column by column, after the refine bar has done its work. These filters touch only their table: the map, the charts and the other table carry on. They are not kept in the address, and changing region clears them.",
+      targets: [],
+    },
+    {
+      id: "sort",
+      title: "Sorting",
+      body: "Click a heading to sort by it, largest or latest first (the location from A); click it again to reverse. A table opens sorted by time, newest first.",
+      targets: ["quakes.heads"],
+    },
+    {
+      id: "open",
+      title: "Opening the filters",
+      body: "Filter opens a row of inputs under the headings: the catalogue takes a date range for time and a range each for magnitude and depth, in calendar days of the zone in force. It is open now.",
+      tryIt: "Set a minimum magnitude here: the table narrows, the map does not.",
+      targets: ["quakes.filter", "quakes.frow"],
+      enter: (ctx) => {
+        ctx.setSwitch("quakes.filter", true);
+      },
+    },
+    {
+      id: "state",
+      title: "What is filtered",
+      body: "While a column is filtered its heading is marked, the title counts how many of the window's events remain and says filtered, and Clear all appears beside Filter. Folding the row keeps the filters; Clear all drops them.",
+      targets: ["quakes.table"],
+      enter: (ctx) => {
+        ctx.setSwitch("quakes.filter", true);
+      },
+    },
+    {
+      id: "volcanoes",
+      title: "The volcano table",
+      body: "The same, for volcanoes: the name contains some text, a country, a type, a range of years for the last eruption and a range of elevations. It sorts by any heading the same way.",
+      targets: ["volcanoes.filter", "volcanoes.frow"],
+      enter: (ctx) => {
+        ctx.setSwitch("volcanoes.filter", true);
+      },
+    },
+    {
+      id: "done",
+      title: "That's the table filters",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
