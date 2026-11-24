@@ -713,6 +713,7 @@ export const MARKS: Tour = {
       title: "Stacked panels",
       body: "Every mark of the group as its full panel, one under another: origin, mechanism, impact and sequence for an event, the GVP record, status and eruptions for a volcano.",
       targets: ["marks.main"],
+      detour: { tour: "marks-panels", label: "Stacked panels, in detail" },
       enter: (ctx) => showMarks(ctx, "panels"),
     },
     {
