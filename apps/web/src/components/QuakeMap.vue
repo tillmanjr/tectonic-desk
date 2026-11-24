@@ -56,6 +56,7 @@ const shake = useShakeLayer({ api, catalog, mv });
         v-hint="
           'Shades grid cells by the number of events in the window at the requested magnitude, including those below the raised marker floor. Offered only when a long window raised the floor.'
         "
+        data-tour="map.density"
         ><input v-model="q.showDensity.value" type="checkbox" /> Density</label
       >
       <label

@@ -1,5 +1,6 @@
 import {
   MAP_ANIMATE,
+  MAP_DENSITY,
   MAP_FIELDS,
   MAP_LAYERS,
   MAP_MEASURE,
@@ -45,6 +46,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   MAP_PIN,
   MAP_SHAKE,
   MAP_ANIMATE,
+  MAP_DENSITY,
   MECHANISM,
 ];
 
