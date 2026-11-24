@@ -1,5 +1,5 @@
 import type { StepContext, Tour } from "../tour.js";
-import { hideSection, showSection } from "../tour-steps.js";
+import { EXAMPLE_EVENT, hideSection, showSection } from "../tour-steps.js";
 
 /**
  * Deep dives of the Map area, one per layer or tool. Steps switch layers and tools on through the
@@ -380,6 +380,76 @@ export const MAP_PIN: Tour = {
       id: "done",
       title: "That's the pin",
       body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
+
+/** The Petrolia event selected, with its ShakeMap on or off. */
+function petrolia(shake: boolean) {
+  return async (ctx: StepContext): Promise<void> => {
+    await ctx.go(EXAMPLE_EVENT.url);
+    ctx.setSwitch("map.shake", shake);
+  };
+}
+
+export const MAP_SHAKE: Tour = {
+  id: "map-shake",
+  title: "ShakeMap layer",
+  blurb: "A selected event's USGS ShakeMap on the map: bands, readout, legend and versions.",
+  deep: { area: "Map" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "ShakeMap",
+      body: "The USGS ShakeMap of the selected event: the estimated shaking intensity, on the Modified Mercalli scale, at every point around it. The steps use the 2021 Petrolia M6.2.",
+      targets: [],
+      enter: petrolia(false),
+    },
+    {
+      id: "toggle",
+      title: "The toggle",
+      body: "It acts on the selected event only. Its note says why there is nothing to draw: no event selected, still loading, none published for this event, or unavailable when USGS could not be reached. USGS publishes one for most M5.5+ events worldwide, and for smaller ones where networks are dense.",
+      targets: ["map.shake"],
+      enter: petrolia(false),
+    },
+    {
+      id: "bands",
+      title: "The bands",
+      body: "The product's medium-resolution intensity grid, contoured at the half levels and coloured as USGS colours them. ShakeMap combines ground-motion models, site amplification from Vs30 and the station recordings and felt reports it has. The dashed outline is the edge of the grid; nothing is estimated outside it.",
+      targets: ["map.shake", "map.stage"],
+      enter: petrolia(true),
+    },
+    {
+      id: "readout",
+      title: "The readout",
+      body: "Point anywhere inside the grid for the intensity there and what it means, as in MMI 6.4 · VI, strong shaking, light damage. Markers and boundaries keep their own readouts on top.",
+      tryIt: "Point at the bands near the coast.",
+      targets: ["map.stage"],
+      enter: petrolia(true),
+    },
+    {
+      id: "legend",
+      title: "Its legend row",
+      body: "The intensity key from I to X+, and who made the map: the contributing network, the version, whether a seismologist has reviewed it, and its maximum intensity.",
+      targets: ["map.legend"],
+      enter: petrolia(true),
+    },
+    {
+      id: "versions",
+      title: "Versions",
+      body: "A ShakeMap is revised for hours after an event, as recordings and felt reports arrive: new versions, automatic until reviewed. This site reads it again at most every ten minutes, so a fresh event's map firms up as you watch.",
+      targets: ["map.shake"],
+      enter: petrolia(true),
+      leave: (ctx) => {
+        ctx.setSwitch("map.shake", false);
+      },
+    },
+    {
+      id: "done",
+      title: "That's ShakeMap",
+      body: "The event panel's Impact section gives the maximum intensity too, beside the felt reports and PAGER.",
       targets: ["help"],
     },
   ],
