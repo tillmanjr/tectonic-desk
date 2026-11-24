@@ -328,6 +328,7 @@ export const EARTHQUAKES: Tour = {
       title: "An event",
       body: "The M6.2 of 20 December 2021, 7 km north of Petrolia at the Mendocino triple junction, in a window of its first month on the West Coast map: origin time in UTC and your zone, epicentre, depth and its class, and the event id. Pick any event from the map, a card or the table to open it here.",
       targets: ["detail"],
+      detour: { tour: "quake-origin", label: "The panel's record, in detail" },
       enter: showExample,
     },
     {

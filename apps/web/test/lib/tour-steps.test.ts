@@ -127,6 +127,7 @@ describe("tour content", () => {
       EARTHQUAKES.steps.flatMap((s) => (s.detour === undefined ? [] : [[s.id, s.detour.tour]])),
     ).toEqual([
       ["refine", "refine-quakes"],
+      ["detail", "quake-origin"],
       ["mechanism", "mechanism"],
       ["shakemap", "map-shake"],
       ["profile", "map-section"],
