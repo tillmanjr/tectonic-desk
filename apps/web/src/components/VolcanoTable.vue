@@ -141,6 +141,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
       >
       <span v-else>{{ store.filtered.value.length }} in this view · tap a row for detail</span>
       <TableFilterHead
+        data-tour="volcanoes.filter"
         :open="open"
         :active="activeCols.size"
         @toggle="open = !open"
@@ -151,7 +152,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
       <div class="tablewrap">
         <table class="cat">
           <thead>
-            <tr>
+            <tr data-tour="volcanoes.heads">
               <th
                 v-for="c in COLS"
                 :key="c.key"
@@ -162,7 +163,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
                 {{ c.label }}
               </th>
             </tr>
-            <tr v-if="open" class="frow">
+            <tr v-if="open" class="frow" data-tour="volcanoes.frow">
               <th>
                 <input
                   ref="nameEl"

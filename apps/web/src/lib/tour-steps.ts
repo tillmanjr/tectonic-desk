@@ -382,6 +382,7 @@ export const EARTHQUAKES: Tour = {
       title: "Catalogue",
       body: "Every event in the window. Click a heading to sort, open a column's filter for a range or a text match (independent of the refine bar, and cleared when the region changes), and click a row to open the event.",
       targets: ["quakes.table"],
+      detour: { tour: "refine-tables", label: "Sorting and the column filters, in detail" },
     },
     {
       id: "magtime",
