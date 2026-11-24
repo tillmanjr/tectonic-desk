@@ -64,3 +64,54 @@ export const CHART_MAGTIME: Tour = {
     },
   ],
 };
+
+export const CHART_FM: Tour = {
+  id: "chart-fm",
+  title: "Frequency–magnitude",
+  blurb: "The Gutenberg–Richter plot: cumulative counts, the b-value, Mc and its caveats.",
+  deep: { area: "Charts" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Frequency–magnitude",
+      body: "How the window's events are spread over magnitude, on a log count axis: a Gutenberg–Richter plot. The steps read it on July 2019 on the West Coast at M3 and above, the Ridgecrest sequence.",
+      targets: ["chart.fm"],
+      enter: at(RIDGECREST_WINDOW),
+    },
+    {
+      id: "counts",
+      title: "Cumulative and incremental",
+      body: "The line and dots are cumulative, N(≥M), the number of events at or above each magnitude; the grey bars behind are the counts in each 0.1 bin. A straight cumulative line is the Gutenberg–Richter law, log N = a − bM.",
+      targets: ["chart.fm"],
+      enter: at(RIDGECREST_WINDOW),
+    },
+    {
+      id: "b",
+      title: "The b-value",
+      body: "The dashed fit and its label: b by Aki's (1965) maximum-likelihood estimator, b = log10 e / (mean M − (Mc − ΔM/2)) with 0.1 bins, and its uncertainty by Shi and Bolt (1982). Tectonic seismicity sits near 1; swarms and volcanic sequences tend higher, highly stressed crust lower.",
+      targets: ["chart.fm"],
+      enter: at(RIDGECREST_WINDOW),
+    },
+    {
+      id: "mc",
+      title: "Mc",
+      body: "The fit starts at the completeness magnitude Mc, taken rather than estimated: the filter minimum when you set one (here M3), else the region's catalogue floor, or the raised floor of a long window. The caption says which. Where the catalogue is incomplete above that, b reads low.",
+      targets: ["chart.fm"],
+      enter: at(RIDGECREST_WINDOW),
+    },
+    {
+      id: "caveats",
+      title: "Caveats",
+      body: "Networks report different magnitude types (the caption lists those in the window) and sequences are not declustered, so a big aftershock sequence dominates the fit, as Ridgecrest does here. Read it as a description of the window, not a hazard estimate.",
+      targets: ["chart.fm"],
+      enter: at(RIDGECREST_WINDOW),
+    },
+    {
+      id: "done",
+      title: "That's frequency–magnitude",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};

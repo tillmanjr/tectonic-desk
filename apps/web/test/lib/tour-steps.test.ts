@@ -134,6 +134,7 @@ describe("tour content", () => {
       ["profile", "map-section"],
       ["table", "refine-tables"],
       ["magtime", "chart-magtime"],
+      ["fm", "chart-fm"],
     ]);
   });
 

@@ -1,4 +1,4 @@
-import { CHART_MAGTIME } from "./deep/charts.js";
+import { CHART_FM, CHART_MAGTIME } from "./deep/charts.js";
 import { QUAKE_IMPACT, QUAKE_ORIGIN } from "./deep/quake.js";
 import {
   MAP_ANIMATE,
@@ -52,6 +52,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   QUAKE_ORIGIN,
   QUAKE_IMPACT,
   CHART_MAGTIME,
+  CHART_FM,
   MECHANISM,
 ];
 
