@@ -128,6 +128,7 @@ describe("tour content", () => {
     ).toEqual([
       ["refine", "refine-quakes"],
       ["mechanism", "mechanism"],
+      ["table", "refine-tables"],
     ]);
   });
 
