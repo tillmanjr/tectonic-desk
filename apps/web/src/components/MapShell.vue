@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { computed, inject, onBeforeUnmount, onMounted, watch } from "vue";
 import MapAurora from "./MapAurora.vue";
 import MapBasemap from "./MapBasemap.vue";
@@ -240,6 +241,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         Reset
       </button>
       <slot name="actions"></slot>
+      <DiveMark area="Map" />
     </div>
     <PinBar
       v-if="mv.pin.open.value"

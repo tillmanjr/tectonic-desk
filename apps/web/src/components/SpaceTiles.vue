@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import type { ApiSpaceReading, ApiSpaceScales, SpaceSeries } from "@tectonic/shared";
 import { computed } from "vue";
 import { SPACE, useInjected } from "../lib/keys.js";
@@ -147,6 +148,7 @@ const tiles = computed<Tile[]>(() => {
 
 <template>
   <section class="stats space" aria-label="Space weather summary" data-tour="space.tiles">
+    <DiveMark area="Space" dive="space-tiles" />
     <div
       v-for="t in tiles"
       :key="t.id"

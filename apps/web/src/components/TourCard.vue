@@ -63,11 +63,10 @@ const spot = computed(() => {
   };
 });
 
-/** The deep dive a step's link leads to, by name, so the card can say where else to find it. */
+/** The Field manual chapter of the deep dive a step's link leads to, so the card can say where else to find it. */
 const detourDeep = computed(() => {
   const to = active.value?.step.detour?.tour;
-  const t = tour.tours.find((x) => x.id === to);
-  return t?.deep === undefined ? null : tourTitle(t);
+  return tour.tours.find((x) => x.id === to)?.deep?.area ?? null;
 });
 
 /** Next, or on the last step Done, or the way back from a side path. */
@@ -193,7 +192,7 @@ onUnmounted(stop);
         {{ active.step.detour.label }} →
       </button>
       <p v-if="detourDeep !== null" class="tourmore">
-        Also in the Help menu under <span class="tourkind deep">Deep dives</span> as
+        Also in the <span class="tourkind deep">Field manual</span>, in the chapter
         {{ detourDeep }}.
       </p>
       <footer class="tourfoot">

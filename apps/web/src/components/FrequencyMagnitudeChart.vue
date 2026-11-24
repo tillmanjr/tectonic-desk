@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { scaleLinear, scaleLog } from "d3-scale";
 import { computed } from "vue";
 import ChartAxes from "./ChartAxes.vue";
@@ -65,7 +66,7 @@ const data = computed(() => {
 
 <template>
   <div class="panel chart" data-tour="chart.fm">
-    <h2>Frequency–magnitude</h2>
+    <h2>Frequency–magnitude<DiveMark area="Charts" dive="chart-fm" /></h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(H)}`">
       <template v-if="data !== null">
         <ChartAxes

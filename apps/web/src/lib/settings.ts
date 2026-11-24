@@ -3,9 +3,11 @@ import { ref, type Ref } from "vue";
 export interface Settings {
   /** Rows of major-event and volcano cards shown before "… N more": alone on a page, or with the other dataset. */
   cardRows: { alone: number; combined: number };
+  /** Whether the parts of the desk carry their ◆ deep-dive marks. */
+  diveMarks: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { cardRows: { alone: 3, combined: 1 } };
+export const DEFAULT_SETTINGS: Settings = { cardRows: { alone: 3, combined: 1 }, diveMarks: true };
 export const SETTINGS_KEY = "tectonic.settings";
 const MAX_ROWS = 20;
 
@@ -32,6 +34,7 @@ export function parseSettings(raw: string | null): Settings {
       alone: rowsOr(cr.alone, DEFAULT_SETTINGS.cardRows.alone),
       combined: rowsOr(cr.combined, DEFAULT_SETTINGS.cardRows.combined),
     },
+    diveMarks: typeof root.diveMarks === "boolean" ? root.diveMarks : DEFAULT_SETTINGS.diveMarks,
   };
 }
 
@@ -48,7 +51,7 @@ function readRaw(storage: StorageLike | null): string | null {
   }
 }
 
-/** Reader-tunable settings, persisted in localStorage; no editor yet. */
+/** Reader-tunable settings, persisted in localStorage; the ◆ marks switch is in the settings menu. */
 export function createSettings(storage: StorageLike | null = localStorage): SettingsStore {
   const current = ref<Settings>(parseSettings(readRaw(storage)));
   return {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import type { ApiEventDetail } from "@tectonic/shared";
 import { computed, onMounted, onUnmounted, shallowRef, watch } from "vue";
 import EventDetailBody from "./EventDetailBody.vue";
@@ -77,6 +78,7 @@ onUnmounted(() => {
           >
         </div>
       </div>
+      <DiveMark area="Earthquake detail" />
       <button type="button" class="close" aria-label="Close detail" @click="close">×</button>
     </div>
     <MarkButton :subject="subject" data-tour="detail.mark" />

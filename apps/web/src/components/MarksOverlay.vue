@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import MarkMatrix from "./MarkMatrix.vue";
@@ -102,7 +103,7 @@ onUnmounted(() => {
   <div class="marks-scrim" @click="nav.close()"></div>
   <section class="marks" role="dialog" aria-modal="true" aria-labelledby="marks-title">
     <div class="marks-head">
-      <h2 id="marks-title">{{ MARK_TERMS.title }}</h2>
+      <h2 id="marks-title">{{ MARK_TERMS.title }}<DiveMark area="Marks" /></h2>
       <button
         ref="closeBtn"
         type="button"

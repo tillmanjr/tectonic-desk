@@ -1,6 +1,6 @@
 import type { StepContext, Tour } from "../tour.js";
 
-/** The settings and the app-wide conventions: time zone, theme, hints and the Help menu. */
+/** The settings and the app-wide conventions: time zone, theme, hints, the ◆ marks and where help lives. */
 
 const openSettings = (ctx: StepContext): void => {
   ctx.setSwitch("settings", true);
@@ -10,14 +10,14 @@ export const SETTINGS_DIVE: Tour = {
   id: "settings",
   title: "Time zone, theme and hints",
   blurb:
-    "UTC or local time, the theme, how hints appear with a mouse, a keyboard or a finger, and Help.",
+    "UTC or local time, the theme, the ◆ marks, how hints appear with a mouse, a keyboard or a finger, and where help lives.",
   deep: { area: "Settings" },
   pageFor: (p) => (p === "space" ? "active" : p),
   steps: [
     {
       id: "intro",
       title: "Settings",
-      body: "The ⚙ at the top right holds the two settings that apply to every page. It is open now.",
+      body: "The ⚙ at the top right holds the settings that apply to every page. It is open now.",
       targets: ["settings"],
       enter: openSettings,
     },
@@ -36,6 +36,13 @@ export const SETTINGS_DIVE: Tour = {
       enter: openSettings,
     },
     {
+      id: "marks",
+      title: "Deep dive marks",
+      body: "A small orange ◆ on a part of the desk (a refine bar, the map's header, a panel, the charts, the Space rows) lists the deep dives about that part. It fades once you have taken all of them. Deep dive marks turns them off, and on again; the choice is kept in this browser.",
+      targets: ["settings"],
+      enter: openSettings,
+    },
+    {
       id: "hints",
       title: "Hints",
       body: "Almost every control explains itself. With a mouse, rest on it for a second and the hint appears below the pointer; with the keyboard, it appears under the control you move to. On a touch screen, hold a finger on the control for half a second: the hint shows above it, and lifting the finger does not press it. A tap on an ⓘ or a label shows its hint at once; the next touch dismisses it.",
@@ -50,15 +57,15 @@ export const SETTINGS_DIVE: Tour = {
     },
     {
       id: "help",
-      title: "Help",
-      body: "The ? holds the quick tours and these deep dives, each with how far you got. It stands out in colour while a quick tour has a step you have not seen, and Reset tour progress at its foot starts everything afresh.",
-      targets: ["help"],
+      title: "Help and the Field manual",
+      body: "The ? holds the quick tours, each with how far you got; it stands out in colour while one has a step you have not seen, and Reset tour progress at its foot starts everything afresh. The Field manual, at the end of the page links, holds every deep dive, a chapter to each part of the desk, with the quick tours in its introduction.",
+      targets: ["help", "manual"],
     },
     {
       id: "done",
       title: "That's every deep dive",
-      body: "Each one stays in the Help menu, under Deep dives, for when you need it again.",
-      targets: ["help"],
+      body: "Each one stays in the Field manual for when you need it again.",
+      targets: ["manual"],
     },
   ],
 };

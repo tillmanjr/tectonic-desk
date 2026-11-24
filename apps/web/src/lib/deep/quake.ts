@@ -57,7 +57,7 @@ export const QUAKE_ORIGIN: Tour = {
       id: "done",
       title: "That's the panel's record",
       body: "The mechanism, impact and sequence each have their own deep dive under Earthquake detail.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -118,7 +118,7 @@ export const QUAKE_IMPACT: Tour = {
       id: "done",
       title: "That's impact",
       body: "The USGS event page, at the foot of the panel, has the full products.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };

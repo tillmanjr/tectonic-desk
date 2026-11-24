@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { computed, ref } from "vue";
 import { CLOCK, SET_SPACE_RANGE, SPACE, useInjected, ZONE } from "../lib/keys.js";
 import { isWindowId, MAX_RANGE_MS, rangeBounds, WINDOWS, type SpaceRange } from "../lib/space.js";
@@ -54,6 +55,7 @@ function live(): void {
 <template>
   <section class="filters spacebar" aria-label="Space weather window" data-tour="space.window">
     <span class="ftitle">Window</span>
+    <DiveMark area="Refine" dive="refine-space" />
     <select
       class="fspan"
       data-tour="space.span"

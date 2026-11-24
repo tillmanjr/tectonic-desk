@@ -1,9 +1,14 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { defineComponent, h, nextTick, provide, type Component } from "vue";
+import { computed, defineComponent, h, nextTick, provide, type Component } from "vue";
+import DiveMark from "../../src/components/DiveMark.vue";
 import HelpMenu from "../../src/components/HelpMenu.vue";
 import TourCard from "../../src/components/TourCard.vue";
 import TourOffer from "../../src/components/TourOffer.vue";
+import TourReturn from "../../src/components/TourReturn.vue";
+import { SETTINGS } from "../../src/lib/keys.js";
+import { MANUAL, type ManualNav } from "../../src/lib/manual.js";
+import { createSettings } from "../../src/lib/settings.js";
 import {
   createTour,
   createTourProgress,
@@ -268,10 +273,8 @@ describe("TourCard", () => {
     await tour.start("map");
     await nextTick();
     expect(w.find(".tourdetour").text()).toBe("Look closer →");
-    expect(w.find(".tourmore").text()).toBe(
-      "Also in the Help menu under Deep dives as Area: Side.",
-    );
-    expect(w.find(".tourmore .tourkind.deep").text()).toBe("Deep dives");
+    expect(w.find(".tourmore").text()).toBe("Also in the Field manual, in the chapter Area.");
+    expect(w.find(".tourmore .tourkind.deep").text()).toBe("Field manual");
     expect(w.find(".tourhead .tourkind").text()).toBe("Quick tour");
     await w.find(".tourdetour").trigger("click");
     await flushPromises();
@@ -312,13 +315,11 @@ describe("HelpMenu", () => {
     await w.find(".help-btn").trigger("click");
     expect(w.find(".help-btn").attributes("aria-expanded")).toBe("true");
     expect(w.find(".hresume").exists()).toBe(false);
-    expect(w.findAll(".hstate").map((s) => s.text())).toEqual([
-      "Not started",
-      "Not started",
-      "Not started",
-    ]);
-    expect(w.findAll(".hgrouphead").map((h) => h.text())).toEqual(["Quick tours", "Deep dives"]);
-    expect(w.find(".hgroup.deep .htour b").text()).toBe("Area: Side");
+    expect(w.findAll(".hstate").map((s) => s.text())).toEqual(["Not started", "Not started"]);
+    expect(w.findAll(".hgrouphead").map((h) => h.text())).toEqual(["Quick tours"]);
+    expect(w.findAll(".htour b").map((b) => b.text())).toEqual(["One", "Two"]);
+    // Outside the app there is no manual to open.
+    expect(w.find(".hmanual").exists()).toBe(false);
     expect(w.find(".hgroup.quick .hgroupsub").text()).toContain("at a glance");
     expect(w.find(".hblurb").text()).toBe("The first tour.");
     w.find(".hblurb").element.dispatchEvent(new Event("pointerdown", { bubbles: true }));
@@ -370,11 +371,7 @@ describe("HelpMenu", () => {
     await flushPromises();
     expect(tour.active.value).toBeNull();
     expect(progress.doc.value).toMatchObject({ offerDismissed: false, tours: {}, seen: {} });
-    expect(w.findAll(".hstate").map((s) => s.text())).toEqual([
-      "Not started",
-      "Not started",
-      "Not started",
-    ]);
+    expect(w.findAll(".hstate").map((s) => s.text())).toEqual(["Not started", "Not started"]);
     expect(w.find(".help-btn").classes()).toContain("fresh");
     w.unmount();
   });
@@ -385,11 +382,7 @@ describe("HelpMenu", () => {
     progress.record("orientation", 1, false);
     const w = mountIt(HelpMenu);
     await w.find(".help-btn").trigger("click");
-    expect(w.findAll(".hstate").map((s) => s.text())).toEqual([
-      "Step 2 of 3",
-      "Done",
-      "Not started",
-    ]);
+    expect(w.findAll(".hstate").map((s) => s.text())).toEqual(["Step 2 of 3", "Done"]);
     expect(w.find(".hresume").text()).toBe("Resume One at step 2");
     expect(w.findAll(".htour")[1]?.find(".tourbtn.primary").text()).toBe("Take again");
     await w.find(".hresume").trigger("click");
@@ -525,5 +518,188 @@ describe("TourOffer", () => {
     early.unmount();
     vi.advanceTimersByTime(OFFER_DELAY_MS);
     expect(s.progress.doc.value.offerDismissed).toBe(false);
+  });
+});
+
+/** The runner, a manual whose actions are spies, and settings, as the app provides them. */
+function inApp() {
+  const base = setup();
+  const settings = createSettings(null);
+  const manual: ManualNav = {
+    open: computed(() => false),
+    at: computed(() => ({ chapter: "intro", card: null })),
+    show: vi.fn(),
+    take: vi.fn(),
+  };
+  const mountApp = (c: Component, props: Record<string, unknown> = {}) =>
+    mount(
+      defineComponent({
+        setup() {
+          provide(TOUR, base.tour);
+          provide(MANUAL, manual);
+          provide(SETTINGS, settings);
+          return () => h(c, props);
+        },
+      }),
+      { attachTo: document.body },
+    );
+  return { ...base, settings, manual, mountApp };
+}
+
+describe("HelpMenu in the app", () => {
+  it("opens the Field manual from its foot", async () => {
+    const { manual, mountApp } = inApp();
+    const w = mountApp(HelpMenu);
+    await w.find(".help-btn").trigger("click");
+    expect(w.find(".hmanual").text()).toContain("Open the Field manual");
+    await w.find(".hmanual").trigger("click");
+    expect(manual.show).toHaveBeenCalledWith();
+    expect(w.find(".helpmenu").exists()).toBe(false);
+    w.unmount();
+  });
+});
+
+describe("DiveMark", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("renders nothing outside the app, for an area without deep dives, or with the marks off", () => {
+    const { mountIt, mountApp, settings } = inApp();
+    expect(mountIt(DiveMark, { area: "Area" }).find(".divemark").exists()).toBe(false);
+    expect(mountApp(DiveMark, { area: "Nowhere" }).find(".divemark").exists()).toBe(false);
+    settings.set({ ...settings.current.value, diveMarks: false });
+    expect(mountApp(DiveMark, { area: "Area" }).find(".divemark").exists()).toBe(false);
+  });
+
+  it("shows by default where no settings are given", () => {
+    const { tour, manual } = inApp();
+    const w = mount(DiveMark, {
+      props: { area: "Area" },
+      global: { provide: { [TOUR]: tour, [MANUAL]: manual } },
+      attachTo: document.body,
+    });
+    expect(w.find(".divemark").exists()).toBe(true);
+  });
+
+  it("lists its area's deep dives with their state, takes one, and leads to the chapter", async () => {
+    const { tour, progress, manual, mountApp } = inApp();
+    const w = mountApp(DiveMark, { area: "Area", dive: "mechanism" });
+    const btn = w.find(".divebtn");
+    expect(btn.attributes("aria-label")).toBe("Deep dives on Area");
+    expect(btn.attributes("data-hint")).toBe("Deep dives on Area: 0 of 1 taken");
+    expect(w.find(".divemark").classes()).not.toContain("taken");
+    await btn.trigger("click");
+    expect(btn.attributes("aria-expanded")).toBe("true");
+    expect(w.find(".diverow").text()).toBe("○Side1");
+    expect(w.find(".diverow").classes()).toContain("here");
+    expect(w.find(".divecount").text()).toBe("0 of 1");
+    await w.find(".diverow").trigger("click");
+    await flushPromises();
+    expect(w.find(".divepop").exists()).toBe(false);
+    expect(tour.active.value?.tour.id).toBe("mechanism");
+    await tour.exit();
+    progress.record("mechanism", 0, false);
+    await btn.trigger("click");
+    expect(w.find(".diverow").text()).toBe("◐Side1 of 1");
+    await w.find(".diverow").trigger("click");
+    await flushPromises();
+    expect(tour.active.value?.index).toBe(0);
+    await tour.next();
+    await nextTick();
+    expect(w.find(".divemark").classes()).toContain("taken");
+    await btn.trigger("click");
+    expect(w.find(".diverow").text()).toBe("✓Side1");
+    await w.find(".divechapter").trigger("click");
+    expect(manual.show).toHaveBeenCalledWith("area");
+    expect(w.find(".divepop").exists()).toBe(false);
+    w.unmount();
+  });
+
+  it("closes on Escape or a press outside, keeps its keys from the bar around it, and tidies up", async () => {
+    const { mountApp } = inApp();
+    const outer = vi.fn();
+    const w = mountApp(
+      defineComponent({
+        setup: () => () => h("div", { onKeydown: outer }, [h(DiveMark, { area: "Area" })]),
+      }),
+    );
+    await w.find(".divebtn").trigger("click");
+    w.find(".divepop").element.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    await nextTick();
+    expect(w.find(".divepop").exists()).toBe(true);
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    await nextTick();
+    expect(w.find(".divepop").exists()).toBe(false);
+    await w.find(".divebtn").trigger("click");
+    await w.find(".divepop").trigger("keydown", { key: "x" });
+    expect(w.find(".divepop").exists()).toBe(true);
+    await w.find(".divepop").trigger("keydown", { key: "Escape" });
+    expect(w.find(".divepop").exists()).toBe(false);
+    expect(outer).not.toHaveBeenCalled();
+    await w.find(".divebtn").trigger("click");
+    w.unmount();
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+  });
+});
+
+describe("TourReturn", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+  const FROM = { view: "/active", returnTo: "/manual#area/mechanism" };
+
+  it("shows only after a tour taken from the manual, and goes back on Enter or its button", async () => {
+    const { tour, stage, mountIt } = setup();
+    const w = mountIt(TourReturn);
+    expect(w.find(".tourreturn").exists()).toBe(false);
+    await tour.start("mechanism", 0, FROM);
+    await tour.next();
+    await flushPromises();
+    expect(w.find(".tourreturn").exists()).toBe(true);
+    expect(document.activeElement?.textContent).toContain("Back to the Field manual");
+    // Enter on the focused button is the button's own click, not a second go.
+    document.activeElement?.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+    );
+    expect(stage.go).not.toHaveBeenCalled();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "x" }));
+    expect(w.find(".tourreturn").exists()).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    await flushPromises();
+    expect(stage.go).toHaveBeenCalledWith("/manual#area/mechanism");
+    expect(w.find(".tourreturn").exists()).toBe(false);
+    await tour.start("mechanism", 0, FROM);
+    await tour.exit();
+    await flushPromises();
+    await w.find(".tourreturn .tourbtn.primary").trigger("click");
+    await flushPromises();
+    expect(stage.go).toHaveBeenCalledTimes(2);
+    w.unmount();
+  });
+
+  it("stays on Escape or its button, and stops listening once gone", async () => {
+    const { tour, stage, mountIt } = setup();
+    const w = mountIt(TourReturn);
+    await tour.start("mechanism", 0, FROM);
+    await tour.exit();
+    await flushPromises();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await flushPromises();
+    expect(w.find(".tourreturn").exists()).toBe(false);
+    await tour.start("mechanism", 0, FROM);
+    await tour.exit();
+    await flushPromises();
+    await w.findAll(".tourreturn .tourbtn")[1]?.trigger("click");
+    await flushPromises();
+    expect(w.find(".tourreturn").exists()).toBe(false);
+    expect(stage.go).not.toHaveBeenCalled();
+    await tour.start("mechanism", 0, FROM);
+    await tour.exit();
+    await flushPromises();
+    w.unmount();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    await flushPromises();
+    expect(stage.go).not.toHaveBeenCalled();
   });
 });

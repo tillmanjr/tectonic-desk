@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from "vue";
+import { inject, onUnmounted, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import { vHint } from "../lib/hint.js";
 import { useInjected } from "../lib/keys.js";
+import { MANUAL } from "../lib/manual.js";
 import {
   GROUP_NAMES,
   TOUR,
@@ -12,8 +13,12 @@ import {
   type TourState,
 } from "../lib/tour.js";
 
-/** The header's Help menu: the quick tours, each with its progress, and every step to start at. */
+/**
+ * The header's Help menu: the quick tours, each with its progress and every step to start at, and
+ * the way into the Field manual, where the deep dives are.
+ */
 const tour = useInjected(TOUR);
+const manual = inject(MANUAL, null);
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
 
@@ -30,21 +35,11 @@ function begin(id: TourId, step: number): void {
   open.value = false;
   void tour.start(id, step);
 }
-/** The tours, then the deep dives under their own heading. */
-const parts = [
-  {
-    kind: "quick",
-    head: GROUP_NAMES.quick,
-    sub: "The app at a glance, page by page.",
-    tours: tour.tours.filter((t) => t.deep === undefined),
-  },
-  {
-    kind: "deep",
-    head: GROUP_NAMES.deep,
-    sub: "One part of the app, every control in detail, with examples set as you go.",
-    tours: tour.tours.filter((t) => t.deep !== undefined),
-  },
-];
+const quick = tour.tours.filter((t) => t.deep === undefined);
+function openManual(): void {
+  open.value = false;
+  manual?.show();
+}
 /** Starts a tour where the reader left it, or from the top. */
 function resume(id: TourId): void {
   const s = tourState(tour.progress.doc.value, id);
@@ -98,10 +93,10 @@ onUnmounted(() => {
         Resume {{ tourTitle(tour.resumable.value.tour) }} at step
         {{ tour.resumable.value.step + 1 }}
       </button>
-      <section v-for="part in parts" :key="part.kind" class="hgroup" :class="part.kind">
-        <h3 class="hgrouphead">{{ part.head }}</h3>
-        <p class="hgroupsub">{{ part.sub }}</p>
-        <div v-for="t in part.tours" :key="t.id" class="htour">
+      <section class="hgroup quick">
+        <h3 class="hgrouphead">{{ GROUP_NAMES.quick }}</h3>
+        <p class="hgroupsub">The app at a glance, page by page.</p>
+        <div v-for="t in quick" :key="t.id" class="htour">
           <div class="htitle">
             <b>{{ tourTitle(t) }}</b>
             <span class="hstate">{{
@@ -132,6 +127,10 @@ onUnmounted(() => {
           </details>
         </div>
       </section>
+      <button v-if="manual !== null" type="button" class="hmanual" @click="openManual">
+        <span class="tourkind deep">{{ GROUP_NAMES.deep }}</span> Open the Field manual
+        <span class="hgroupsub">Every part of the desk, control by control.</span>
+      </button>
       <!-- Out of the way at the foot: for demos, back to a first visit. -->
       <div class="hreset">
         <ConfirmButton label="Reset tour progress" @confirm="tour.reset()" />

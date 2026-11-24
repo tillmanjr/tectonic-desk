@@ -669,3 +669,55 @@ describe("createTour", () => {
     expect(tour.resumable.value).toBeNull();
   });
 });
+
+describe("tours taken from the Field manual", () => {
+  const FROM = { view: "/active/wc?event=us1", returnTo: "/manual#map/map" };
+
+  it("runs in the reader's last view, gives it back, then offers the way back to the manual", async () => {
+    const { stage, state, tour } = runner();
+    state.location = "/manual#map";
+    await tour.start("map", 0, FROM);
+    expect(stage.restore).toHaveBeenCalledWith("/active/wc?event=us1");
+    expect(tour.returning.value).toBeNull();
+    await tour.next();
+    await tour.next();
+    expect(tour.active.value).toBeNull();
+    expect(state.location).toBe("/active/wc?event=us1");
+    expect(tour.returning.value).toBe("/manual#map/map");
+    await tour.goBack();
+    expect(stage.go).toHaveBeenLastCalledWith("/manual#map/map");
+    expect(tour.returning.value).toBeNull();
+    // Nothing to go back to: no move.
+    stage.go.mockClear();
+    await tour.goBack();
+    expect(stage.go).not.toHaveBeenCalled();
+  });
+
+  it("stays in the view on request, and offers nothing for a tour started elsewhere", async () => {
+    const { stage, tour } = runner();
+    await tour.start("map", 0, FROM);
+    await tour.exit();
+    expect(tour.returning.value).toBe("/manual#map/map");
+    tour.stay();
+    expect(tour.returning.value).toBeNull();
+    await tour.start("map");
+    await tour.exit();
+    expect(tour.returning.value).toBeNull();
+    // A new start clears a pending offer; a reset drops it too.
+    await tour.start("map", 0, FROM);
+    await tour.exit();
+    await tour.start("orientation");
+    expect(tour.returning.value).toBeNull();
+    await tour.exit();
+    await tour.start("map", 0, FROM);
+    await tour.reset();
+    expect(tour.returning.value).toBeNull();
+    // Taken again mid-tour, the view the tour started in is kept.
+    stage.restore.mockClear();
+    await tour.start("map");
+    await tour.start("map", 0, FROM);
+    expect(stage.restore).not.toHaveBeenCalled();
+    await tour.exit();
+    expect(tour.returning.value).toBe("/manual#map/map");
+  });
+});
