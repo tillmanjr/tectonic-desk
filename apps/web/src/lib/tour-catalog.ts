@@ -1,4 +1,4 @@
-import { REFINE_VOLCANOES } from "./deep/refine.js";
+import { REFINE_SPACE, REFINE_VOLCANOES } from "./deep/refine.js";
 import type { Tour } from "./tour.js";
 import {
   EARTHQUAKES,
@@ -23,7 +23,13 @@ export const QUICK_TOURS: readonly Tour[] = [
 ];
 
 /** The deep dives, grouped by area in the order the Help menu lists them. */
-export const DEEP_DIVES: readonly Tour[] = [REFINE_QUAKES, REFINE_VOLCANOES, MAP_NAV, MECHANISM];
+export const DEEP_DIVES: readonly Tour[] = [
+  REFINE_QUAKES,
+  REFINE_VOLCANOES,
+  REFINE_SPACE,
+  MAP_NAV,
+  MECHANISM,
+];
 
 /** Every tour, quick tours first. */
 export const TOURS: readonly Tour[] = [...QUICK_TOURS, ...DEEP_DIVES];
