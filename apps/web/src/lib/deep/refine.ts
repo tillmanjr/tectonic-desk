@@ -99,3 +99,75 @@ export const REFINE_VOLCANOES: Tour = {
     },
   ],
 };
+
+/** Where Refine: Space window shows its examples. */
+export const SPACE_REFINE_URLS = {
+  day: "/space?window=24h",
+  month: "/space?window=30d",
+  /** Three days fixed at the start of November 2026, inside this site's own record. */
+  fixed: "/space?from=2026-11-01T00:00Z&to=2026-11-04T00:00Z",
+  year: "/space?window=1y",
+};
+const spaceAt =
+  (url: string) =>
+  async (ctx: StepContext): Promise<void> => {
+    await ctx.go(url);
+  };
+
+export const REFINE_SPACE: Tour = {
+  id: "refine-space",
+  title: "Space window",
+  blurb: "The Space page's window: lengths, buckets, a fixed range, Live, and the long history.",
+  deep: { area: "Refine" },
+  pageFor: () => "space",
+  steps: [
+    {
+      id: "intro",
+      title: "The Space window",
+      body: "One window for the whole Space page: the tiles' sparklines, the alerts, the stack and the flares all read it. The Sun pictures and the aurora oval are always the latest, whatever the window. Each step sets an example; your own window comes back when this ends.",
+      targets: [],
+      enter: spaceAt(SPACE_REFINE_URLS.day),
+    },
+    {
+      id: "length",
+      title: "Length",
+      body: "From 6 hours to everything since 1932. A length ends now and moves with the clock: the page reads it again every minute (every 10 minutes past 93 days). Here the last 24 hours.",
+      targets: ["space.span"],
+      enter: spaceAt(SPACE_REFINE_URLS.day),
+    },
+    {
+      id: "buckets",
+      title: "Buckets",
+      body: "Up to 25 hours every sample is drawn. A longer window is drawn as about 1,500 points per series, each a bucket of samples: the largest for Kp, the fluxes and the indices, the smallest for Dst and Bz so storms are not averaged away, and the mean for the rest. The note says how wide a bucket is. Here 30 days.",
+      targets: ["space.bucket", "space.span"],
+      enter: spaceAt(SPACE_REFINE_URLS.month),
+    },
+    {
+      id: "fixed",
+      title: "From and To",
+      body: "Set From and To, to the minute in your zone or UTC, and the window is fixed: it no longer moves or rereads, and the length reads Custom. It may span up to 100 years. Here three days at the start of November 2026.",
+      targets: ["space.dates"],
+      enter: spaceAt(SPACE_REFINE_URLS.fixed),
+    },
+    {
+      id: "live",
+      title: "Live",
+      body: "While the window is fixed, Live goes back to the length you had before, ending now.",
+      targets: ["space.live"],
+      enter: spaceAt(SPACE_REFINE_URLS.fixed),
+    },
+    {
+      id: "long",
+      title: "Past 93 days",
+      body: "Beyond 93 days the minute-scale rows, the alerts and the flares give way: the stack keeps Kp, Dst and the Sun (sunspots and the 10.7 cm flux) from the long records of GFZ Potsdam and Kyoto, and this note says so. Here one year.",
+      targets: ["space.span", "space.longnote"],
+      enter: spaceAt(SPACE_REFINE_URLS.year),
+    },
+    {
+      id: "done",
+      title: "That's the Space window",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};

@@ -21,6 +21,7 @@ import { fakeApi, listOf, raisedApi } from "../support/api.js";
 import { stubCanvas } from "../support/canvas.js";
 import { event, mech } from "../support/events.js";
 import { fakeTheme, NOW } from "../support/mount.js";
+import { spaceWindow } from "../support/space.js";
 import { stubWorld } from "../support/world.js";
 
 async function mountApp(
@@ -377,6 +378,11 @@ describe("quick tours in the app", () => {
       });
       const api: ApiClient = {
         ...raisedApi([quake]),
+        // The window asked for, bucketed past 25 hours as the server does.
+        spaceWindow: vi.fn((from: string, to: string) => {
+          const long = Date.parse(to) - Date.parse(from) > 25 * 3_600_000;
+          return Promise.resolve(spaceWindow({ from, to, bucketSeconds: long ? 3600 : null }));
+        }),
         event: vi.fn().mockResolvedValue({
           ...quake,
           firstSeen: "2026-10-12T05:00:00.000Z",

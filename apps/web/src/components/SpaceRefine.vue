@@ -54,7 +54,13 @@ function live(): void {
 <template>
   <section class="filters spacebar" aria-label="Space weather window" data-tour="space.window">
     <span class="ftitle">Window</span>
-    <select class="fspan" :value="selectValue" aria-label="Window length" @change="pickWindow">
+    <select
+      class="fspan"
+      data-tour="space.span"
+      :value="selectValue"
+      aria-label="Window length"
+      @change="pickWindow"
+    >
       <option value="" disabled>Custom</option>
       <option v-for="w in WINDOWS" :key="w.id" :value="w.id">{{ w.label }}</option>
     </select>
@@ -63,6 +69,7 @@ function live(): void {
       ref="fromEl"
       type="datetime-local"
       class="fdate"
+      data-tour="space.dates"
       :value="toInputValue(bounds.from, zone)"
       aria-label="From"
       @change="changeEnd('from')"
@@ -72,6 +79,7 @@ function live(): void {
       ref="toEl"
       type="datetime-local"
       class="fdate"
+      data-tour="space.dates"
       :value="toInputValue(bounds.to, zone)"
       aria-label="To"
       @change="changeEnd('to')"
@@ -80,11 +88,12 @@ function live(): void {
       v-hint="'Back to a window ending now'"
       type="button"
       class="fclear"
+      data-tour="space.live"
       :disabled="range.kind === 'window'"
       @click="live"
     >
       Live
     </button>
-    <span v-if="bucketNote !== ''" class="fnote">{{ bucketNote }}</span>
+    <span v-if="bucketNote !== ''" class="fnote" data-tour="space.bucket">{{ bucketNote }}</span>
   </section>
 </template>
