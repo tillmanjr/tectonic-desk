@@ -171,3 +171,48 @@ export const MARKS_COMPARE: Tour = {
     },
   ],
 };
+
+export const MARKS_IO: Tour = {
+  id: "marks-io",
+  title: "Export and import",
+  blurb: "Saving every mark and group to a file, and reading one back by merging or replacing.",
+  deep: { area: "Marks" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Marks as a file",
+      body: "Marks live in this browser only. Export and Import, at the foot of the groups rail, carry them to another browser or keep a copy.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "export",
+      title: "Export",
+      body: "Downloads every mark and every group as one JSON file named for today, such as tectonic-marks-2026-11-24.json; each mark keeps its name, its view and the facts it was marked with.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "import",
+      title: "Import",
+      body: "Import asks for a marks file and says what it holds, so many marks and groups, before doing anything. A file that is not a marks file is refused and nothing changes.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "merge",
+      title: "Merge or replace",
+      body: "Merge adds what the file has that is missing here, marks, groups and memberships, and keeps the names and order of everything already here; it reports what it added. Replace swaps all your marks and groups for the file's, after a yes. Cancel leaves both alone.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "done",
+      title: "That's export and import",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};

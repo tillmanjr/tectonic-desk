@@ -729,6 +729,7 @@ export const MARKS: Tour = {
       title: "Export and import",
       body: "Export writes every mark and group to a JSON file; import reads one back, either merged into what is here (adding what is missing) or replacing it, after saying what the file holds.",
       targets: ["marks.io"],
+      detour: { tour: "marks-io", label: "Export and import, in detail" },
       enter: (ctx) => showMarks(ctx, "list"),
     },
     {
