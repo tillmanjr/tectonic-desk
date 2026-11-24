@@ -525,3 +525,82 @@ export const MAP_ANIMATE: Tour = {
     },
   ],
 };
+
+/** Ten years of the global catalogue: more events than the page draws, so the floor is raised. */
+export const DENSE_WINDOW = "/earthquakes?since=2015-01-01&until=2024-12-31";
+
+function dense(shade: boolean) {
+  return async (ctx: StepContext): Promise<void> => {
+    await ctx.go(DENSE_WINDOW);
+    ctx.setSwitch("map.density", shade);
+  };
+}
+
+export const MAP_DENSITY: Tour = {
+  id: "map-density",
+  title: "Density and the raised floor",
+  blurb:
+    "What the page does when a window holds more events than it draws, and the density shading.",
+  deep: { area: "Map" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "More events than fit",
+      body: "The page draws at most 2,000 events at once. A window that holds more keeps every one in its counts, but draws only the larger ones and offers to shade where the rest fall. The steps load ten years of the global catalogue, 2015 to 2024.",
+      targets: [],
+      enter: dense(false),
+    },
+    {
+      id: "floor",
+      title: "The raised floor",
+      body: "The marker floor rises to M5, M6 or M7, the lowest at which the window fits, and the refine bar says so: how many events the window holds at the magnitude you asked for, and how many the markers, the table and the magnitude charts show at the raised floor.",
+      targets: ["refine.note"],
+      enter: dense(false),
+    },
+    {
+      id: "count",
+      title: "The count line",
+      body: "Over the map, how many markers are drawn out of how many the window holds, and the floor the markers are at.",
+      targets: ["map.count"],
+      enter: dense(false),
+    },
+    {
+      id: "density",
+      title: "Density",
+      body: "Offered only while the floor is raised: it shades grid cells by how many events fall in each at the magnitude you asked for, those below the marker floor included, on a log scale, so the full pattern of seismicity shows under the larger events. It is on now.",
+      targets: ["map.density", "map.stage"],
+      enter: dense(true),
+    },
+    {
+      id: "legend",
+      title: "Its legend row",
+      body: "The cell size, the magnitude counted, and the range from one event to the busiest cell.",
+      targets: ["map.legend"],
+      enter: dense(true),
+      leave: (ctx) => {
+        ctx.setSwitch("map.density", false);
+      },
+    },
+    {
+      id: "chart",
+      title: "Magnitude through time",
+      body: "With the floor raised the time chart still covers every event: it switches from one dot per event to counts per time bin, with each bin's largest event marked.",
+      targets: ["chart.magtime"],
+      enter: dense(false),
+    },
+    {
+      id: "fit",
+      title: "Getting every event back",
+      body: "Shorten the window or raise the minimum magnitude until the window fits, and the floor comes back down to what you asked for; the note and the Density toggle go with it.",
+      targets: ["refine.earthquakes"],
+      enter: dense(false),
+    },
+    {
+      id: "done",
+      title: "That's the raised floor",
+      body: "Refine: Earthquakes covers the window and magnitude controls themselves.",
+      targets: ["help"],
+    },
+  ],
+};
