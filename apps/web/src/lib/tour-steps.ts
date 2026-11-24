@@ -838,6 +838,7 @@ export const SPACE: Tour = {
       title: "Since 1932",
       body: "Eleven years, one solar cycle. Past 93 days the stack keeps Kp, Dst and the Sun: GFZ's definitive Kp as a step over SWPC's bars (dashed while preliminary), Kyoto's hourly Dst, and the daily sunspot number with the 10.7 cm flux, with the solar-cycle minima marked. Pick Since 1932 for all of it.",
       targets: ["space.stack"],
+      detour: { tour: "space-history", label: "The long history, in detail" },
       enter: async (ctx) => {
         await ctx.go(SPACE_HISTORY);
       },

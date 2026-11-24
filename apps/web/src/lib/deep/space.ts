@@ -1,5 +1,8 @@
 import type { StepContext, Tour } from "../tour.js";
-import { SPACE_WEEK } from "../tour-steps.js";
+import { SPACE_HISTORY, SPACE_WEEK } from "../tour-steps.js";
+
+/** The whole record, since 1932. */
+export const SPACE_ALL = "/space?window=all";
 
 /** Deep dives of the Space page, over a 7-day window unless a step needs another. */
 
@@ -318,6 +321,76 @@ export const SPACE_SUN: Tour = {
       id: "done",
       title: "That's the Sun",
       body: "The credits for every picture and movie are at the foot of the page and in the large view.",
+      targets: ["help"],
+    },
+  ],
+};
+
+export const SPACE_HISTORY_DIVE: Tour = {
+  id: "space-history",
+  title: "Long history",
+  blurb: "Windows past 93 days: GFZ Kp since 1932, Kyoto Dst since 1957, the Sun, and the cycles.",
+  deep: { area: "Space" },
+  pageFor: () => "space",
+  steps: [
+    {
+      id: "intro",
+      title: "Long windows",
+      body: "Past 93 days the page turns to the long records: the stack keeps three rows, Kp, Dst and the Sun, and the alerts and flares step aside, as the note says. The steps show 11 years, one solar cycle, then everything since 1932.",
+      targets: ["space.longnote"],
+      enter: async (ctx) => {
+        await ctx.go(SPACE_HISTORY);
+      },
+    },
+    {
+      id: "kp",
+      title: "Kp from GFZ",
+      body: "GFZ Potsdam's Kp, the definitive index since 1932, as a step line over SWPC's own bars where the two overlap. Its newest stretch is preliminary until GFZ publishes the definitive values, and is drawn dashed until then. Each point is the largest Kp in its bucket, so storms keep their height.",
+      targets: ["space.row.kp"],
+      enter: async (ctx) => {
+        await ctx.go(SPACE_HISTORY);
+      },
+    },
+    {
+      id: "dst",
+      title: "Dst from Kyoto",
+      body: "The World Data Center for Geomagnetism in Kyoto's hourly Dst since 1957, with SWPC's relay of its real-time quicklook for the newest hours. Each point is the lowest Dst in its bucket, so a storm's depth is kept.",
+      targets: ["space.row.dst"],
+      enter: async (ctx) => {
+        await ctx.go(SPACE_HISTORY);
+      },
+    },
+    {
+      id: "sun",
+      title: "The Sun",
+      body: "The daily sunspot number on the left axis and the 10.7 cm radio flux in solar flux units on the right, both from GFZ: the two standard measures of solar activity, rising and falling together over the cycle.",
+      targets: ["space.row.sun"],
+      enter: async (ctx) => {
+        await ctx.go(SPACE_HISTORY);
+      },
+    },
+    {
+      id: "cycles",
+      title: "Solar cycles",
+      body: "In windows over two years, a dashed line marks the month of each solar cycle's minimum, labelled with the number of the cycle it begins. Here the minimum of December 2019 that began Cycle 25, with Cycle 24's maximum of April 2014 near the window's start.",
+      targets: ["space.stack"],
+      enter: async (ctx) => {
+        await ctx.go(SPACE_HISTORY);
+      },
+    },
+    {
+      id: "all",
+      title: "Since 1932",
+      body: "Since 1932 shows the whole record, Cycles 17 to 25, each bucket a few weeks wide: the great storms of March 1989 and October 2003 stand out in Kp and Dst.",
+      targets: ["space.stack"],
+      enter: async (ctx) => {
+        await ctx.go(SPACE_ALL);
+      },
+    },
+    {
+      id: "done",
+      title: "That's the long history",
+      body: "The sources and their licences are credited at the foot of the page.",
       targets: ["help"],
     },
   ],
