@@ -1,3 +1,4 @@
+import { QUAKE_ORIGIN } from "./deep/quake.js";
 import {
   MAP_ANIMATE,
   MAP_DENSITY,
@@ -47,6 +48,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   MAP_SHAKE,
   MAP_ANIMATE,
   MAP_DENSITY,
+  QUAKE_ORIGIN,
   MECHANISM,
 ];
 

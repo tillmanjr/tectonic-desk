@@ -112,7 +112,7 @@ function describe(m: ApiMechanism): string {
       <button type="button" class="retry" @click="retry">Retry</button>
     </div>
     <template v-else-if="detail !== null">
-      <dl class="kv">
+      <dl class="kv" data-tour="detail.origin">
         <dt>Origin time</dt>
         <dd>{{ fmtStamp(derived.d.time, zone, { seconds: true }) }}</dd>
         <dt></dt>
@@ -186,7 +186,7 @@ function describe(m: ApiMechanism): string {
           <a href="#" class="parent" @click.prevent="select(derived.parent.id)">Open that event</a>
         </p>
       </div>
-      <div>
+      <div data-tour="detail.catalog">
         <h3>Catalog</h3>
         <dl class="kv">
           <dt>Review status</dt>
@@ -199,7 +199,7 @@ function describe(m: ApiMechanism): string {
           <dd>{{ fmtStamp(derived.d.lastSeen, zone) }}</dd>
         </dl>
       </div>
-      <p>
+      <p data-tour="detail.usgs">
         <a
           :href="`https://earthquake.usgs.gov/earthquakes/eventpage/${derived.d.id}`"
           target="_blank"
