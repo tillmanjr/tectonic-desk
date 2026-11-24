@@ -61,3 +61,64 @@ export const QUAKE_ORIGIN: Tour = {
     },
   ],
 };
+
+export const QUAKE_IMPACT: Tour = {
+  id: "quake-impact",
+  title: "Impact and sequence",
+  blurb:
+    "Significance, felt reports, intensity, PAGER, the tsunami flag, and aftershock sequences.",
+  deep: { area: "Earthquake detail" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Impact",
+      body: "What the event did, as USGS records it, under Impact in the event panel; then how the panel and the cards follow a sequence. The first steps read the 2021 Petrolia M6.2.",
+      targets: ["detail.impact"],
+      enter: petrolia,
+    },
+    {
+      id: "significance",
+      title: "Significance",
+      body: "USGS's significance number, from 0 to beyond 1,000, which combines magnitude, the maximum felt intensity, the number of felt reports and the PAGER estimate. Above about 600 an event is treated as significant.",
+      targets: ["detail.impact"],
+      enter: petrolia,
+    },
+    {
+      id: "felt",
+      title: "Felt reports and intensity",
+      body: "Did You Feel It?: how many people reported, and the highest community intensity (CDI) from their reports. Beside it the highest Modified Mercalli intensity the ShakeMap estimates; the two can differ, as reports come only from where people are.",
+      targets: ["detail.impact"],
+      enter: petrolia,
+    },
+    {
+      id: "pager",
+      title: "PAGER",
+      body: "The USGS PAGER alert, green, yellow, orange or red, from the estimated fatalities and economic losses, whichever is higher, coloured as USGS colours it.",
+      targets: ["detail.impact"],
+      enter: petrolia,
+    },
+    {
+      id: "tsunami",
+      title: "Tsunami flag",
+      body: "Set when the National or Pacific Tsunami Warning Center issued information for the event. It means only that a message exists; it is not itself a warning, and many flagged events produce no tsunami.",
+      targets: ["detail.impact"],
+      enter: petrolia,
+    },
+    {
+      id: "sequence",
+      title: "Sequences",
+      body: "An M6.5 or larger event is treated as a mainshock: the panel counts the later events of the region's preset window within 150 km, with the largest, under Sequence, and an event that follows one names it with a link. The major-event cards say the same in a line. Petrolia (M6.2) is below the threshold; the cards show any sequence in the current window.",
+      targets: ["quakes.cards"],
+      enter: async (ctx) => {
+        await ctx.go("/earthquakes");
+      },
+    },
+    {
+      id: "done",
+      title: "That's impact",
+      body: "The USGS event page, at the foot of the panel, has the full products.",
+      targets: ["help"],
+    },
+  ],
+};

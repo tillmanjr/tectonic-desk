@@ -344,6 +344,7 @@ export const EARTHQUAKES: Tour = {
       title: "Impact and sequence",
       body: "Significance, Did You Feel It? reports and maximum intensity, the ShakeMap maximum MMI, the PAGER alert and the tsunami flag; then the events that followed within 150 km, or the larger event this one followed.",
       targets: ["detail.impact"],
+      detour: { tour: "quake-impact", label: "Impact and sequences, in detail" },
       enter: showExample,
     },
     {
