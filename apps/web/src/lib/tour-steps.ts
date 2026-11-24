@@ -399,6 +399,7 @@ export const EARTHQUAKES: Tour = {
       title: "Magnitude through time",
       body: "Each event against its origin time, with the completeness breaks of 1964, 1973 and 1976 marked when the window reaches back that far. When the floor is raised it switches to per-bin counts and maxima, so the whole window still shows.",
       targets: ["chart.magtime"],
+      detour: { tour: "chart-magtime", label: "Reading this chart, in detail" },
     },
     {
       id: "fm",
