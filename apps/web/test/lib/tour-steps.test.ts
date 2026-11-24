@@ -133,6 +133,7 @@ describe("tour content", () => {
       ["shakemap", "map-shake"],
       ["profile", "map-section"],
       ["table", "refine-tables"],
+      ["magtime", "chart-magtime"],
     ]);
   });
 
