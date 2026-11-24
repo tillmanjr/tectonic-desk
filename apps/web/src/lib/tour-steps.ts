@@ -561,6 +561,7 @@ export const VOLCANOES: Tour = {
       title: "Earthquakes nearby",
       body: "Earthquakes of the loaded window within 50 km, the largest first, each timed against the onset of the volcano's latest eruption; click one to open it. The earthquake window and floor come from the earthquake refine bar, so a global window at M4.5 may hold none.",
       targets: ["volcano.nearby"],
+      detour: { tour: "volcano-nearby", label: "Earthquakes nearby, in detail" },
       enter: showVolcano,
     },
     {

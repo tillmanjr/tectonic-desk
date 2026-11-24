@@ -124,3 +124,60 @@ export const VOLCANO_ERUPTIONS: Tour = {
     },
   ],
 };
+
+/** Kīlauea in May to August 2018: the summit collapse and the lower East Rift Zone eruption. */
+export const KILAUEA_2018 = "/volcanoes/global?since=2018-05-01&until=2018-08-31&volcano=332010";
+
+export const VOLCANO_NEARBY: Tour = {
+  id: "volcano-nearby",
+  title: "Earthquakes nearby",
+  blurb:
+    "The earthquakes within 50 km of a volcano, which window they come from, and their timing.",
+  deep: { area: "Volcano detail" },
+  pageFor: () => "volcanoes",
+  steps: [
+    {
+      id: "intro",
+      title: "Earthquakes nearby",
+      body: "At the foot of the volcano panel, the earthquakes within 50 km of the summit, the largest three with a count of all of them. The steps read Kīlauea in 2018.",
+      targets: ["volcano.nearby"],
+      enter: async (ctx) => {
+        await ctx.go(KILAUEA_2018);
+      },
+    },
+    {
+      id: "window",
+      title: "Which earthquakes",
+      body: "Those of the earthquake window and refinements in force, set from the Earthquakes or Active Earth refine bar and kept in the address across pages. Here May to August 2018, the summit collapse and the lower East Rift Zone eruption, with the M6.9 of 4 May and the repeated M5 collapse events.",
+      targets: ["volcano.nearby"],
+      enter: async (ctx) => {
+        await ctx.go(KILAUEA_2018);
+      },
+    },
+    {
+      id: "timing",
+      title: "Timing",
+      body: "Each is timed against the onset of the volcano's latest eruption in the GVP record, so earlier windows read as before onset; in the onset day, month or year when the GVP dates it only that finely. A volcano with no dated eruption gives how long ago instead.",
+      targets: ["volcano.nearby"],
+      enter: async (ctx) => {
+        await ctx.go(KILAUEA_2018);
+      },
+    },
+    {
+      id: "open",
+      title: "Opening one",
+      body: "Click an earthquake to open it; its panel takes the volcano panel's place, and the map moves to it.",
+      tryIt: "Open the largest.",
+      targets: ["volcano.nearby"],
+      enter: async (ctx) => {
+        await ctx.go(KILAUEA_2018);
+      },
+    },
+    {
+      id: "done",
+      title: "That's earthquakes nearby",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
