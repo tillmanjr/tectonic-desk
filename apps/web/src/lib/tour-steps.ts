@@ -721,6 +721,7 @@ export const MARKS: Tour = {
       title: "Compare",
       body: "Each pair once, in a staircase: a card reads from the mark on its left to the mark above it, with the distance between them, the time from one to the other, and the change in magnitude and depth where both are events. A volcano is dated from the onset of its latest eruption.",
       targets: ["marks.main"],
+      detour: { tour: "marks-compare", label: "Reading Compare, in detail" },
       enter: (ctx) => showMarks(ctx, "matrix"),
     },
     {

@@ -119,3 +119,55 @@ export const MARKS_PANELS: Tour = {
     },
   ],
 };
+
+export const MARKS_COMPARE: Tour = {
+  id: "marks-compare",
+  title: "Reading Compare",
+  blurb: "The pairwise staircase: how to read a card, its Δ, and the distance between marks.",
+  deep: { area: "Marks" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Compare",
+      body: "Compare, at the head of a group of two or more, sets every mark against every other once. Resting on it says how many and warns when the grid will be wider than the window. The steps compare Petrolia, Ridgecrest and Kīlauea.",
+      targets: ["marks.grouphead"],
+      enter: list(false),
+    },
+    {
+      id: "staircase",
+      title: "The staircase",
+      body: "The marks run down the left and across the top in the group's order, and each pair gets one card where its row and column meet, so the grid steps down like a staircase and no pair appears twice.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "card",
+      title: "Reading a card",
+      body: "Read a card from the mark at its left to the mark above it, as the arrows in its head say. Each row gives the left mark's value, the change Δ, and the top mark's value: time, magnitude and depth.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "delta",
+      title: "The signs",
+      body: "Δ is the top mark relative to the left one: a negative time means the top mark came earlier, +0.6 that it is 0.6 larger, −68 km that it is 68 km shallower. Under each card, how far apart the two are, over the surface.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "volcano",
+      title: "Volcanoes in a comparison",
+      body: "A volcano is dated from the onset of its latest eruption and has no magnitude or depth, so those rows show a dash; its distance still counts.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "done",
+      title: "That's Compare",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};
