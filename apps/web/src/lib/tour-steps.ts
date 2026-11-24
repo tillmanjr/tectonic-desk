@@ -829,6 +829,7 @@ export const SPACE: Tour = {
       title: "Aurora",
       body: "The OVATION Prime forecast as the chance of aurora over each hemisphere, seen from above with noon at the top and the night side shaded, and the hemispheric power. Three days of frames are kept: scrub back or Play them, and the stack marks the time of a past frame.",
       targets: ["space.aurora"],
+      detour: { tour: "space-aurora", label: "The aurora oval, in detail" },
       enter: week,
     },
     {

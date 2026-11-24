@@ -59,12 +59,14 @@ const power = (gw: number | null): string =>
     <p v-if="frame === null" class="cap note">No aurora frames yet.</p>
     <div v-else class="auroragrid">
       <AuroraMap
+        data-tour="space.aurora.maps"
         hemisphere="north"
         :bands="store.bands.value"
         :forecast="frame.forecast"
         :land="land"
       />
       <AuroraMap
+        data-tour="space.aurora.maps"
         hemisphere="south"
         :bands="store.bands.value"
         :forecast="frame.forecast"
@@ -72,20 +74,20 @@ const power = (gw: number | null): string =>
       />
       <div class="aurorainfo">
         <p v-if="store.error.value !== null" class="cap bad">{{ store.error.value }}</p>
-        <p class="times">
+        <p class="times" data-tour="space.aurora.times">
           Observed {{ fmtClock(frame.observed, zone) }} · forecast for
           {{ fmtClock(frame.forecast, zone) }}
         </p>
-        <p class="power">
+        <p class="power" data-tour="space.aurora.times">
           Hemispheric power N {{ power(frame.powerNorth) }} · S {{ power(frame.powerSouth) }}
         </p>
-        <ul class="aulegend" aria-label="chance of aurora">
+        <ul class="aulegend" aria-label="chance of aurora" data-tour="space.aurora.legend">
           <li v-for="t in AURORA_THRESHOLDS" :key="t">
             <i :class="`au-${String(t)}`"></i>{{ t }}%
           </li>
           <li class="cap">chance of aurora</li>
         </ul>
-        <div class="scrub">
+        <div class="scrub" data-tour="space.aurora.scrub">
           <input
             ref="slider"
             type="range"
