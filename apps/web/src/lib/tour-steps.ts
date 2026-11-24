@@ -233,6 +233,7 @@ export const MAP_TOOLS: Tour = {
       body: "The angular distance and the great-circle distance between two points, and the chord straight through the Earth with how deep it dips and which PREM layer it reaches.",
       tryIt: "Drag either end; Measure again clears it.",
       targets: ["map.measure", "map.stage"],
+      detour: { tour: "map-measure", label: "Measuring, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv === null) return;

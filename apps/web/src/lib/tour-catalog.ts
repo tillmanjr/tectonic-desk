@@ -1,4 +1,4 @@
-import { MAP_FIELDS, MAP_LAYERS, MAP_SECTION } from "./deep/map.js";
+import { MAP_FIELDS, MAP_LAYERS, MAP_MEASURE, MAP_SECTION } from "./deep/map.js";
 import { REFINE_SPACE, REFINE_TABLES, REFINE_VOLCANOES } from "./deep/refine.js";
 import type { Tour } from "./tour.js";
 import {
@@ -33,6 +33,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   MAP_LAYERS,
   MAP_FIELDS,
   MAP_SECTION,
+  MAP_MEASURE,
   MECHANISM,
 ];
 
