@@ -70,7 +70,8 @@ import {
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
 import { createTour, createTourProgress, TOUR, TOUR_PROGRESS } from "../lib/tour.js";
-import { DEMO_GROUP_NAME, EXAMPLE_MARKS, TOURS } from "../lib/tour-steps.js";
+import { TOURS } from "../lib/tour-catalog.js";
+import { DEMO_GROUP_NAME, EXAMPLE_MARKS } from "../lib/tour-steps.js";
 import {
   createVolcanoStore,
   parseVolcanoFilter,

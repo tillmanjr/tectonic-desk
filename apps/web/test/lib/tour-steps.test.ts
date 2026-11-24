@@ -5,6 +5,7 @@ import {
   EXAMPLE_EVENT,
   EXAMPLE_SECTIONS,
   EXAMPLE_VOLCANO,
+  MAP_NAV,
   MECHANISM,
   REFINE_QUAKES,
   REFINE_URLS,
@@ -14,8 +15,8 @@ import {
   VOLCANOES,
   MAP_TOOLS,
   ORIENTATION,
-  TOURS,
 } from "../../src/lib/tour-steps.js";
+import { DEEP_DIVES, TOURS } from "../../src/lib/tour-catalog.js";
 import type { StepContext, Tour } from "../../src/lib/tour.js";
 import { fakeContext, fakeMap } from "../support/tour.js";
 
@@ -126,7 +127,15 @@ describe("tour content", () => {
       EARTHQUAKES.steps.flatMap((s) => (s.detour === undefined ? [] : [[s.id, s.detour.tour]])),
     ).toEqual([
       ["refine", "refine-quakes"],
+      ["detail", "quake-origin"],
       ["mechanism", "mechanism"],
+      ["impact", "quake-impact"],
+      ["shakemap", "map-shake"],
+      ["profile", "map-section"],
+      ["table", "refine-tables"],
+      ["magtime", "chart-magtime"],
+      ["fm", "chart-fm"],
+      ["depth", "chart-depth"],
     ]);
   });
 
@@ -185,6 +194,49 @@ describe("tour content", () => {
     ]);
     expect(REFINE_QUAKES.deep).toEqual({ area: "Refine" });
     expect(REFINE_QUAKES.pageFor("space")).toBe("earthquakes");
+  });
+
+  it("locks, unlocks, zooms, selects and goes to theater on the map, putting theater back after", async () => {
+    const mv = fakeMap();
+    const reset = vi.fn();
+    mv.reset = reset;
+    const ctx = fakeContext(mv);
+    await run(MAP_NAV, "zoom", ctx);
+    expect(mv.transform.value.k).toBeCloseTo(1.8 ** 2);
+    for (const s of MAP_NAV.steps) await run(MAP_NAV, s.id, ctx);
+    expect(vi.mocked(ctx.setSwitch).mock.calls).toEqual([
+      ["map.lock", true],
+      ["map.lock", false],
+      ["map.theater", true],
+      ["map.theater", false],
+    ]);
+    expect(mv.transform.value.k).toBeCloseTo(1.8 ** 3);
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(ctx.selectLargest).toHaveBeenCalled();
+    expect(ctx.clearSelection).toHaveBeenCalled();
+    const none = fakeContext(null);
+    await run(MAP_NAV, "zoom", none);
+    await run(MAP_NAV, "readouts", none);
+    expect(MAP_NAV.deep).toEqual({ area: "Map" });
+    expect(MAP_NAV.pageFor("space")).toBe("active");
+    expect(MAP_NAV.pageFor("volcanoes")).toBe("volcanoes");
+    expect(MAP_TOOLS.steps[0]?.detour?.tour).toBe("map-nav");
+  });
+
+  it("runs every deep dive's steps with a map on screen and without one", async () => {
+    for (const deep of DEEP_DIVES) {
+      for (const mv of [fakeMap(), null]) {
+        const ctx = fakeContext(mv);
+        for (const s of deep.steps) await run(deep, s.id, ctx);
+      }
+    }
+    expect(DEEP_DIVES.every((d) => d.deep !== undefined)).toBe(true);
+    // Every deep dive runs on a page that has what it shows, wherever it is started.
+    for (const deep of DEEP_DIVES) {
+      for (const from of ["space", "volcanoes"] as const) {
+        expect(["earthquakes", "volcanoes", "active", "space"]).toContain(deep.pageFor(from));
+      }
+    }
   });
 
   it("does nothing to a map that is not there", async () => {

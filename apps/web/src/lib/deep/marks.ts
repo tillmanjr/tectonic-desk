@@ -1,0 +1,218 @@
+import type { StepContext, Tour } from "../tour.js";
+import { showExample, showMarks } from "../tour-steps.js";
+
+/**
+ * Deep dives of marks, over the Marks tour's three examples (Petrolia, Ridgecrest, Kīlauea) in a
+ * Tour examples group the runner takes out again at the end.
+ */
+
+const list = (all: boolean) => (ctx: StepContext) => showMarks(ctx, "list", all);
+
+export const MARKS_GROUPS: Tour = {
+  id: "marks-groups",
+  title: "Marking and groups",
+  blurb: "Marking an event or volcano, the groups rail, chips, ordering, and opening a mark again.",
+  deep: { area: "Marks" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Marks",
+      body: "Marks keep events and volcanoes with the view you found them in, in this browser. For these steps three examples are added in a group called Tour examples, and taken out again at the end; anything you mark yourself stays.",
+      targets: [],
+      enter: showExample,
+    },
+    {
+      id: "mark",
+      title: "Marking",
+      body: "☆ Mark, under the name in every event and volcano panel, asks for a name, the headline and place to start with; Enter saves, Esc cancels. It saves the view with the mark: page, region, window and selection. Once marked the star fills, and resting on it says how many times; the same event can be marked again from another view.",
+      tryIt: "Mark this event.",
+      targets: ["detail.mark"],
+      enter: showExample,
+    },
+    {
+      id: "rail",
+      title: "The groups rail",
+      body: "All your marks first, then each group with its count, in the order you set. + New group asks for a name; Enter adds it.",
+      targets: ["marks.rail"],
+      enter: list(true),
+    },
+    {
+      id: "chips",
+      title: "Chips",
+      body: "Every group appears as a chip on every mark: press one to put the mark in that group or take it out. A mark can be in any number of groups, or none.",
+      targets: ["marks.row"],
+      enter: list(true),
+    },
+    {
+      id: "group",
+      title: "A group",
+      body: "In a group, click its name to rename it, and use ▲ ▼ to move it up or down the rail. Delete group asks yes or no first, and leaves the marks themselves in All.",
+      targets: ["marks.grouphead"],
+      enter: list(false),
+    },
+    {
+      id: "order",
+      title: "Order within a group",
+      body: "Each mark has its own ▲ ▼ to set its place in the group; Show events and Compare follow that order.",
+      targets: ["marks.row"],
+      enter: list(false),
+    },
+    {
+      id: "open",
+      title: "Opening a mark again",
+      body: "Open here selects the mark's event or volcano on the page you are on, moving to Active Earth when that page cannot show it. Open view goes back to the view it was marked in, window and all. Click a mark's name to rename it; Delete asks first.",
+      targets: ["marks.row"],
+      enter: list(false),
+    },
+    {
+      id: "done",
+      title: "That's marking",
+      body: "Stacked panels, Compare and export each have a deep dive under Marks.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};
+
+export const MARKS_PANELS: Tour = {
+  id: "marks-panels",
+  title: "Stacked panels",
+  blurb: "Every mark of a group as its full panel, one under another.",
+  deep: { area: "Marks" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Show events",
+      body: "Show events, at the head of a group, stacks the full panel of every mark in it, so a group reads as one long record. The steps use the Tour examples group.",
+      targets: ["marks.grouphead"],
+      enter: list(false),
+    },
+    {
+      id: "panels",
+      title: "The stack",
+      body: "Each mark's panel in the group's order: an earthquake's origin, mechanism, impact and sequence, a volcano's GVP record, status, eruptions and nearby earthquakes, each read fresh, so it shows the latest the sources hold.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "panels"),
+    },
+    {
+      id: "open",
+      title: "From a panel",
+      body: "Each panel has its mark's name and Open here, which selects it on the page underneath (moving to Active Earth when that page cannot show it) and closes the marks.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "panels"),
+    },
+    {
+      id: "back",
+      title: "Back to the list",
+      body: "Back to list returns to the group's marks; × closes the marks and leaves the page underneath as it was.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "panels"),
+    },
+    {
+      id: "done",
+      title: "That's stacked panels",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};
+
+export const MARKS_COMPARE: Tour = {
+  id: "marks-compare",
+  title: "Reading Compare",
+  blurb: "The pairwise staircase: how to read a card, its Δ, and the distance between marks.",
+  deep: { area: "Marks" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Compare",
+      body: "Compare, at the head of a group of two or more, sets every mark against every other once. Resting on it says how many and warns when the grid will be wider than the window. The steps compare Petrolia, Ridgecrest and Kīlauea.",
+      targets: ["marks.grouphead"],
+      enter: list(false),
+    },
+    {
+      id: "staircase",
+      title: "The staircase",
+      body: "The marks run down the left and across the top in the group's order, and each pair gets one card where its row and column meet, so the grid steps down like a staircase and no pair appears twice.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "card",
+      title: "Reading a card",
+      body: "Read a card from the mark at its left to the mark above it, as the arrows in its head say. Each row gives the left mark's value, the change Δ, and the top mark's value: time, magnitude and depth.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "delta",
+      title: "The signs",
+      body: "Δ is the top mark relative to the left one: a negative time means the top mark came earlier, +0.6 that it is 0.6 larger, −68 km that it is 68 km shallower. Under each card, how far apart the two are, over the surface.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "volcano",
+      title: "Volcanoes in a comparison",
+      body: "A volcano is dated from the onset of its latest eruption and has no magnitude or depth, so those rows show a dash; its distance still counts.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "done",
+      title: "That's Compare",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};
+
+export const MARKS_IO: Tour = {
+  id: "marks-io",
+  title: "Export and import",
+  blurb: "Saving every mark and group to a file, and reading one back by merging or replacing.",
+  deep: { area: "Marks" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Marks as a file",
+      body: "Marks live in this browser only. Export and Import, at the foot of the groups rail, carry them to another browser or keep a copy.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "export",
+      title: "Export",
+      body: "Downloads every mark and every group as one JSON file named for today, such as tectonic-marks-2026-11-24.json; each mark keeps its name, its view and the facts it was marked with.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "import",
+      title: "Import",
+      body: "Import asks for a marks file and says what it holds, so many marks and groups, before doing anything. A file that is not a marks file is refused and nothing changes.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "merge",
+      title: "Merge or replace",
+      body: "Merge adds what the file has that is missing here, marks, groups and memberships, and keeps the names and order of everything already here; it reports what it added. Replace swaps all your marks and groups for the file's, after a yes. Cancel leaves both alone.",
+      targets: ["marks.io"],
+      enter: list(true),
+    },
+    {
+      id: "done",
+      title: "That's export and import",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};

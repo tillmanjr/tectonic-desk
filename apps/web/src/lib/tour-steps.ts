@@ -1,11 +1,13 @@
+import { zoomIdentity } from "d3-zoom";
 import { DEFAULT_HALF_KM, type Section } from "./section.js";
 import type { MapView } from "./mapview.js";
 import type { MarkDraft } from "./marks.js";
 import type { StepContext, Tour } from "./tour.js";
 
 /**
- * The tours' content. Steps reach the app only through `data-tour` names and the stage, and a
- * test walks every step against the mounted app, so a renamed or removed control fails the build.
+ * The tours' content, and the examples and helpers the deep dives under `deep/` share. Steps reach
+ * the app only through `data-tour` names and the stage, and a test walks every step against the
+ * mounted app, so a renamed or removed control fails the build. `tour-catalog.ts` lists them all.
  */
 
 type LonLat = [number, number];
@@ -32,14 +34,14 @@ const scale = (mv: MapView): "global" | "regional" =>
   mv.view.value.frame.global ? "global" : "regional";
 
 /** Draws the example section for the map's scale and zooms to it. */
-async function showSection(ctx: StepContext): Promise<void> {
+export async function showSection(ctx: StepContext): Promise<void> {
   const mv = await ctx.map();
   if (mv === null) return;
   const s = EXAMPLE_SECTIONS[scale(mv)];
   ctx.setSection(s);
   mv.zoomTo((s.a[0] + s.b[0]) / 2, (s.a[1] + s.b[1]) / 2);
 }
-async function hideSection(ctx: StepContext): Promise<void> {
+export async function hideSection(ctx: StepContext): Promise<void> {
   ctx.setSection(null);
   const mv = await ctx.map();
   mv?.reset();
@@ -65,7 +67,7 @@ async function showVolcano(ctx: StepContext): Promise<void> {
 }
 
 /** Opens the example event in its window; selecting it zooms the map to it. */
-async function showExample(ctx: StepContext): Promise<void> {
+export async function showExample(ctx: StepContext): Promise<void> {
   await ctx.go(EXAMPLE_EVENT.url);
 }
 
@@ -146,6 +148,7 @@ export const ORIENTATION: Tour = {
       title: "Settings",
       body: "UTC or your browser's time zone for every date and time, and a light or dark theme.",
       targets: ["settings"],
+      detour: { tour: "settings", label: "Settings and hints, in detail" },
     },
     {
       id: "help",
@@ -167,6 +170,7 @@ export const MAP_TOOLS: Tour = {
       title: "The toolbar",
       body: "Everything that changes what the map draws, or what you can do on it, sits on this bar. Each control explains itself when you rest the pointer on it (or hold a finger on it) for a second.",
       targets: ["map.tools"],
+      detour: { tour: "map-nav", label: "The header and getting around the map, in detail" },
     },
     {
       id: "lock",
@@ -185,6 +189,7 @@ export const MAP_TOOLS: Tour = {
       title: "Reference layers",
       body: "PB2002 plate boundaries coloured by class, teeth on the overriding plate along subduction zones, and the OVATION aurora forecast on the night side. In the West Coast view the Quaternary faults join them, by age of last deformation.",
       targets: ["map.layers"],
+      detour: { tour: "map-layers", label: "Every layer and the legend, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv === null) return;
@@ -197,12 +202,14 @@ export const MAP_TOOLS: Tour = {
       title: "Earthquake layers",
       body: "Beachballs in place of dots for events with a mechanism, the selected event's ShakeMap intensity, density shading when a long window raises the floor, and Animate to replay the window.",
       targets: ["map.page"],
+      detour: { tour: "map-animate", label: "Replaying the window, in detail" },
     },
     {
       id: "field",
       title: "Fields",
       body: "A potential-field anomaly under everything: free-air gravity (isostatic residual onshore in the West Coast view) or the EMAG2v3 magnetic anomaly. Gravity is on now; the legend gives the source and the ramp.",
       targets: ["map.field", "map.stage"],
+      detour: { tour: "map-fields", label: "The fields and their sources, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv !== null) mv.field.value = "gravity";
@@ -218,6 +225,7 @@ export const MAP_TOOLS: Tour = {
       body: "Click two points to draw a section line; the events within its corridor plot at true scale under the map, with the relief along the line. Here, a line across the subduction zone, zoomed in.",
       tryIt: "Drag either end of the line and watch the profile follow.",
       targets: ["map.section", "map.stage"],
+      detour: { tour: "map-section", label: "Cross-sections and the profile, in detail" },
       enter: showSection,
       leave: hideSection,
     },
@@ -227,6 +235,7 @@ export const MAP_TOOLS: Tour = {
       body: "The angular distance and the great-circle distance between two points, and the chord straight through the Earth with how deep it dips and which PREM layer it reaches.",
       tryIt: "Drag either end; Measure again clears it.",
       targets: ["map.measure", "map.stage"],
+      detour: { tour: "map-measure", label: "Measuring, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv === null) return;
@@ -247,6 +256,7 @@ export const MAP_TOOLS: Tour = {
       body: "One pin of your own per map view, named if you like and kept in this browser, with the last 24 placements under Recent. Hold the pin for a moment to lift and move it.",
       tryIt: "Click the map to drop the pin.",
       targets: ["map.pin", "map.pinbar", "map.stage"],
+      detour: { tour: "map-pin", label: "Your pin, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv !== null && !mv.pin.open.value) mv.pin.toggle();
@@ -319,6 +329,7 @@ export const EARTHQUAKES: Tour = {
       title: "An event",
       body: "The M6.2 of 20 December 2021, 7 km north of Petrolia at the Mendocino triple junction, in a window of its first month on the West Coast map: origin time in UTC and your zone, epicentre, depth and its class, and the event id. Pick any event from the map, a card or the table to open it here.",
       targets: ["detail"],
+      detour: { tour: "quake-origin", label: "The panel's record, in detail" },
       enter: showExample,
     },
     {
@@ -334,6 +345,7 @@ export const EARTHQUAKES: Tour = {
       title: "Impact and sequence",
       body: "Significance, Did You Feel It? reports and maximum intensity, the ShakeMap maximum MMI, the PAGER alert and the tsunami flag; then the events that followed within 150 km, or the larger event this one followed.",
       targets: ["detail.impact"],
+      detour: { tour: "quake-impact", label: "Impact and sequences, in detail" },
       enter: showExample,
     },
     {
@@ -341,6 +353,7 @@ export const EARTHQUAKES: Tour = {
       title: "ShakeMap",
       body: "The selected event's USGS ShakeMap as Modified Mercalli intensity bands, from ground-motion models with site amplification and constrained by stations and felt reports. Petrolia's reached VII near the coast. Point at a band for its intensity; the legend gives the scale. USGS publishes one for most M5.5+ events, and for smaller ones in well-instrumented networks like this.",
       targets: ["map.shake", "map.stage"],
+      detour: { tour: "map-shake", label: "The ShakeMap layer, in detail" },
       enter: async (ctx) => {
         await showExample(ctx);
         ctx.setSwitch("map.shake", true);
@@ -367,6 +380,7 @@ export const EARTHQUAKES: Tour = {
       body: "With a section line on the map, the events within its corridor plot here against distance along the line and depth, at true scale, over the relief along it. Exaggerate the vertical ×2 or ×4, widen or narrow the corridor, or clear the line from the title.",
       tryIt: "Drag an end of the line on the map; the profile follows.",
       targets: ["section.profile"],
+      detour: { tour: "map-section", label: "Cross-sections and the profile, in detail" },
       // The profile does not depend on the selection, and the event panel would cover it.
       enter: async (ctx) => {
         await ctx.go(EXAMPLE_EVENT.window);
@@ -379,24 +393,28 @@ export const EARTHQUAKES: Tour = {
       title: "Catalogue",
       body: "Every event in the window. Click a heading to sort, open a column's filter for a range or a text match (independent of the refine bar, and cleared when the region changes), and click a row to open the event.",
       targets: ["quakes.table"],
+      detour: { tour: "refine-tables", label: "Sorting and the column filters, in detail" },
     },
     {
       id: "magtime",
       title: "Magnitude through time",
       body: "Each event against its origin time, with the completeness breaks of 1964, 1973 and 1976 marked when the window reaches back that far. When the floor is raised it switches to per-bin counts and maxima, so the whole window still shows.",
       targets: ["chart.magtime"],
+      detour: { tour: "chart-magtime", label: "Reading this chart, in detail" },
     },
     {
       id: "fm",
       title: "Frequency–magnitude",
       body: "Cumulative N(≥M) over incremental counts, with b from the Aki (1965) maximum-likelihood estimator and the Shi & Bolt (1982) uncertainty above Mc. Magnitude types are mixed and sequences are not declustered, so read it as descriptive.",
       targets: ["chart.fm"],
+      detour: { tour: "chart-fm", label: "Reading this chart, in detail" },
     },
     {
       id: "depth",
       title: "Depth distribution",
       body: "Depth against magnitude, with the 70 and 300 km boundaries between the shallow, intermediate and deep classes; the West Coast view stops at 35 km, where its seismicity is crustal.",
       targets: ["chart.depth"],
+      detour: { tour: "chart-depth", label: "Reading this chart, in detail" },
     },
     {
       id: "mark",
@@ -502,6 +520,7 @@ export const VOLCANOES: Tour = {
       title: "Refine",
       body: "Tectonic setting, volcano type, the age of the last eruption and the current status narrow the map, the table and the charts; the summary and the cards always cover the whole region. Hide markers takes the volcanoes off the map without changing the rest.",
       targets: ["refine.volcanoes"],
+      detour: { tour: "refine-volcanoes", label: "Every control of this bar, in detail" },
       enter: (ctx) => {
         ctx.setSwitch("refine.volcanoes", true);
       },
@@ -527,6 +546,7 @@ export const VOLCANOES: Tour = {
       title: "Status",
       body: "Every agency level this site has recorded for the volcano, newest first, each with its aviation colour, when it was seen, the synopsis of the notice and a link to it, then the volcano's entries in the weekly report. A volcano neither agency monitors has no level here.",
       targets: ["volcano.status"],
+      detour: { tour: "volcano-status", label: "Agency scales and the status history, in detail" },
       enter: showVolcano,
     },
     {
@@ -534,6 +554,7 @@ export const VOLCANOES: Tour = {
       title: "Eruptions",
       body: "The GVP eruption record since 1800 as a strip: bar height is the VEI, an open bar an eruption still continuing, a dashed one a queried date or size. The list gives the latest eruptions with their dates and VEI.",
       targets: ["volcano.eruptions"],
+      detour: { tour: "volcano-eruptions", label: "The eruption record, in detail" },
       enter: showVolcano,
     },
     {
@@ -541,6 +562,7 @@ export const VOLCANOES: Tour = {
       title: "Earthquakes nearby",
       body: "Earthquakes of the loaded window within 50 km, the largest first, each timed against the onset of the volcano's latest eruption; click one to open it. The earthquake window and floor come from the earthquake refine bar, so a global window at M4.5 may hold none.",
       targets: ["volcano.nearby"],
+      detour: { tour: "volcano-nearby", label: "Earthquakes nearby, in detail" },
       enter: showVolcano,
     },
     {
@@ -627,7 +649,7 @@ export const EXAMPLE_MARKS: readonly MarkDraft[] = [
 ];
 
 /** Opens the marks overlay over the example event, on a group and in a mode, with the examples in. */
-async function showMarks(
+export async function showMarks(
   ctx: StepContext,
   mode: "list" | "panels" | "matrix",
   all = false,
@@ -670,6 +692,7 @@ export const MARKS: Tour = {
       title: "Groups",
       body: "All your marks, then each group with its count, in an order you set. New group adds one; the file controls at the foot export and import them. A mark can sit in any number of groups.",
       targets: ["marks.rail"],
+      detour: { tour: "marks-groups", label: "Marking and groups, in detail" },
       enter: (ctx) => showMarks(ctx, "list", true),
     },
     {
@@ -691,6 +714,7 @@ export const MARKS: Tour = {
       title: "Stacked panels",
       body: "Every mark of the group as its full panel, one under another: origin, mechanism, impact and sequence for an event, the GVP record, status and eruptions for a volcano.",
       targets: ["marks.main"],
+      detour: { tour: "marks-panels", label: "Stacked panels, in detail" },
       enter: (ctx) => showMarks(ctx, "panels"),
     },
     {
@@ -698,6 +722,7 @@ export const MARKS: Tour = {
       title: "Compare",
       body: "Each pair once, in a staircase: a card reads from the mark on its left to the mark above it, with the distance between them, the time from one to the other, and the change in magnitude and depth where both are events. A volcano is dated from the onset of its latest eruption.",
       targets: ["marks.main"],
+      detour: { tour: "marks-compare", label: "Reading Compare, in detail" },
       enter: (ctx) => showMarks(ctx, "matrix"),
     },
     {
@@ -705,6 +730,7 @@ export const MARKS: Tour = {
       title: "Export and import",
       body: "Export writes every mark and group to a JSON file; import reads one back, either merged into what is here (adding what is missing) or replacing it, after saying what the file holds.",
       targets: ["marks.io"],
+      detour: { tour: "marks-io", label: "Export and import, in detail" },
       enter: (ctx) => showMarks(ctx, "list"),
     },
     {
@@ -749,6 +775,7 @@ export const SPACE: Tour = {
       title: "Window",
       body: "From 6 hours to everything since 1932, or between two moments. Up to 25 hours every sample shows; longer windows are averaged into buckets (the note says how wide), taking the maximum for indices and fluxes and the minimum for Dst and Bz, so storms are not smoothed away.",
       targets: ["space.window"],
+      detour: { tour: "refine-space", label: "The window, in detail" },
       enter: week,
     },
     {
@@ -756,6 +783,7 @@ export const SPACE: Tour = {
       title: "Now",
       body: "The latest reading of each headline series over a sparkline of the window: the NOAA G, R and S scales for today, Kp, the interplanetary field Bz and Bt (GSM), solar wind speed and density, the GOES X-ray flux with its flare class, and the ≥10 MeV proton flux.",
       targets: ["space.tiles"],
+      detour: { tour: "space-tiles", label: "Each tile, in detail" },
       enter: week,
     },
     {
@@ -765,6 +793,7 @@ export const SPACE: Tour = {
       tryIt:
         "Click a picture: it opens large on the latest movie, with a higher resolution and the still, and, when that movie does not cover the window, a movie generated for it.",
       targets: ["space.sun"],
+      detour: { tour: "space-sun", label: "The pictures and movies, in detail" },
       enter: week,
     },
     {
@@ -779,6 +808,7 @@ export const SPACE: Tour = {
       title: "The stack",
       body: "Seven rows on one time axis: Kp (G1 marked at 5), Dst, hemispheric power, Bz and Bt, speed and density, the X-ray flux with the M and X thresholds, and the ≥10 and ≥100 MeV protons with the S levels. Point anywhere for every row's value at that moment; flares shade the X-ray row and alerts tick the top.",
       targets: ["space.stack"],
+      detour: { tour: "space-stack", label: "Each row, in detail" },
       enter: week,
     },
     {
@@ -793,6 +823,7 @@ export const SPACE: Tour = {
       title: "Flares",
       body: "The window's flares from the GOES X-ray flux, by class and peak time. Point at one to light its band on the stack; click it to frame the stack on the flare.",
       targets: ["space.flares"],
+      detour: { tour: "space-flares", label: "Flares and alerts, in detail" },
       enter: week,
     },
     {
@@ -800,6 +831,7 @@ export const SPACE: Tour = {
       title: "Aurora",
       body: "The OVATION Prime forecast as the chance of aurora over each hemisphere, seen from above with noon at the top and the night side shaded, and the hemispheric power. Three days of frames are kept: scrub back or Play them, and the stack marks the time of a past frame.",
       targets: ["space.aurora"],
+      detour: { tour: "space-aurora", label: "The aurora oval, in detail" },
       enter: week,
     },
     {
@@ -807,6 +839,7 @@ export const SPACE: Tour = {
       title: "Since 1932",
       body: "Eleven years, one solar cycle. Past 93 days the stack keeps Kp, Dst and the Sun: GFZ's definitive Kp as a step over SWPC's bars (dashed while preliminary), Kyoto's hourly Dst, and the daily sunspot number with the 10.7 cm flux, with the solar-cycle minima marked. Pick Since 1932 for all of it.",
       targets: ["space.stack"],
+      detour: { tour: "space-history", label: "The long history, in detail" },
       enter: async (ctx) => {
         await ctx.go(SPACE_HISTORY);
       },
@@ -940,13 +973,127 @@ export const REFINE_QUAKES: Tour = {
   ],
 };
 
-export const TOURS: readonly Tour[] = [
-  ORIENTATION,
-  MAP_TOOLS,
-  EARTHQUAKES,
-  MECHANISM,
-  VOLCANOES,
-  MARKS,
-  SPACE,
-  REFINE_QUAKES,
-];
+/**
+ * Zooms the map to `times` presses of the + button from the whole region, about its centre, in one
+ * move (presses in a row would interrupt each other's animation).
+ */
+async function zoomIn(ctx: StepContext, times: number): Promise<void> {
+  const mv = await ctx.map();
+  if (mv === null) return;
+  const { width, height } = mv.view.value.frame;
+  mv.setTransform(
+    zoomIdentity
+      .translate(width / 2, height / 2)
+      .scale(ZOOM_STEP ** times)
+      .translate(-width / 2, -height / 2),
+  );
+}
+/** The + button's factor. */
+const ZOOM_STEP = 1.8;
+
+export const MAP_NAV: Tour = {
+  id: "map-nav",
+  title: "Navigation and header",
+  blurb: "The map's header, the lock, zooming and panning, readouts, theater mode and the legend.",
+  deep: { area: "Map" },
+  pageFor: (p) => (p === "space" ? "active" : p),
+  steps: [
+    {
+      id: "intro",
+      title: "Getting around the map",
+      body: "Every page but Space has a map with the same header and the same ways of moving about. Each step here does what it describes; the map comes back as you had it when this ends.",
+      targets: [],
+    },
+    {
+      id: "header",
+      title: "The header",
+      body: "From the left: the page's own layers (Focal mechanisms, ShakeMap, Density when a long window raised the floor), the reference layers (plate boundaries, subduction teeth, aurora, and on the West Coast the Quaternary faults), the Field select, the tools (Section, Measure, Pin), then zoom in, zoom out, Reset and Animate. Rest on any control for a second, or hold a finger on it, for what it does. On a narrow screen the header wraps onto more lines.",
+      targets: ["map.tools"],
+    },
+    {
+      id: "locked",
+      title: "Locked",
+      body: "The map starts locked, so the page scrolls past it: the wheel and a one-finger drag move the page, not the map. On a touch screen two fingers still pan and pinch it. The lock is drawn crossed through while locked.",
+      targets: ["map.lock"],
+      enter: (ctx) => {
+        ctx.setSwitch("map.lock", true);
+      },
+    },
+    {
+      id: "unlocked",
+      title: "Unlocked",
+      body: "Unlocked, the wheel zooms about the pointer and a drag pans; the lock turns solid. Lock it again before scrolling on past the map. It is unlocked now.",
+      tryIt: "Wheel over the map, then drag it.",
+      targets: ["map.lock", "map.stage"],
+      enter: (ctx) => {
+        ctx.setSwitch("map.lock", false);
+      },
+    },
+    {
+      id: "zoom",
+      title: "Zoom",
+      body: "The + and − buttons zoom by 1.8× about the centre, locked or not, from the whole region (1×) to 40×; Reset returns to the whole region. Here two steps in.",
+      targets: ["map.zoom"],
+      enter: (ctx) => zoomIn(ctx, 2),
+    },
+    {
+      id: "markers",
+      title: "Markers as you zoom",
+      body: "Epicentres and beachballs are sized from the magnitude floor at the whole-region view and grow more slowly than the map (roughly as the 0.44 power of the zoom), so clusters pull apart as you zoom in; subduction teeth keep their size on screen. On a touch screen every marker keeps a minimum size a finger can hit.",
+      targets: ["map.stage"],
+      enter: (ctx) => zoomIn(ctx, 3),
+    },
+    {
+      id: "select",
+      title: "Selecting moves the map",
+      body: "Selecting an earthquake or a volcano, from the map, a card, a table or a mark, zooms the map to it (6× globally, 3× on the West Coast). Here the largest earthquake in the window.",
+      targets: ["map.stage"],
+      enter: (ctx) => {
+        ctx.selectLargest();
+      },
+      leave: (ctx) => {
+        ctx.clearSelection();
+      },
+    },
+    {
+      id: "readouts",
+      title: "Readouts",
+      body: "Point at an epicentre, a volcano, a plate boundary, a fault trace or a ShakeMap band for its readout beside the pointer; click an epicentre or a volcano to open it. On touch, tap it.",
+      targets: ["map.stage"],
+      enter: async (ctx) => {
+        const mv = await ctx.map();
+        mv?.reset();
+      },
+    },
+    {
+      id: "count",
+      title: "What the map holds",
+      body: "Top left, how many markers are drawn out of how many the window holds, and the floor when a long window raised it. While data is being fetched a chip beside it says what, and the markers dim until it lands.",
+      targets: ["map.count"],
+    },
+    {
+      id: "theater",
+      title: "Theater mode",
+      body: "This button, in the map's bottom-right corner, gives the map and its header the whole window, cropping the map on its long side; it unlocks while in theater, so drag to see the rest. The legend steps aside. The same button, or Esc, brings the page back. It is in theater now.",
+      targets: ["map.theater"],
+      enter: (ctx) => {
+        ctx.setSwitch("map.theater", true);
+      },
+      leave: (ctx) => {
+        ctx.setSwitch("map.theater", false);
+      },
+    },
+    {
+      id: "legend",
+      title: "Legend",
+      body: "Under the map: the depth classes, the magnitude sizes at the floor in force, and a row for every layer that is on, with its source and scale.",
+      targets: ["map.legend"],
+    },
+    {
+      id: "done",
+      title: "That's the map",
+      body: "The tools on the header (Section, Measure, Pin, Field) each have a step in the Map tools tour.",
+      targets: ["help"],
+    },
+  ],
+};

@@ -102,6 +102,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
       >
       <span v-else>{{ events.length }} events · tap a row for detail</span>
       <TableFilterHead
+        data-tour="quakes.filter"
         :open="open"
         :active="activeCols.size"
         @toggle="open = !open"
@@ -112,7 +113,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
       <div class="tablewrap">
         <table class="cat">
           <thead>
-            <tr>
+            <tr data-tour="quakes.heads">
               <th
                 v-for="c in COLS"
                 :key="c.key"
@@ -126,7 +127,7 @@ const ariaSort = (k: SortKey): "ascending" | "descending" | undefined =>
                 >
               </th>
             </tr>
-            <tr v-if="open" class="frow">
+            <tr v-if="open" class="frow" data-tour="quakes.frow">
               <th>
                 <span class="dates">
                   <input

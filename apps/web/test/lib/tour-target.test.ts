@@ -69,7 +69,8 @@ describe("tour targets", () => {
       <label data-tour="mech"><input type="checkbox"> Mechanisms</label>
       <input data-tour="bare" type="checkbox" checked>
       <section data-tour="bar"><div class="head" aria-expanded="false"></div></section>
-      <p data-tour="plain">text</p>`;
+      <p data-tour="plain">text</p>
+      <button data-tour="lock" aria-pressed="true"></button>`;
     const head = document.querySelector<HTMLElement>(".head");
     head?.addEventListener("click", () => {
       head.setAttribute("aria-expanded", String(head.getAttribute("aria-expanded") !== "true"));
@@ -79,6 +80,7 @@ describe("tour targets", () => {
     expect(sw.get("bare")).toBe(true);
     expect(sw.get("bar")).toBe(false);
     expect(sw.get("plain")).toBeNull();
+    expect(sw.get("lock")).toBe(true);
     expect(sw.get("nothing")).toBeNull();
     sw.set("mech", true);
     sw.set("bar", true);

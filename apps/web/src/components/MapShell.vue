@@ -105,7 +105,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
         data-tour="map.layers"
         ><input v-model="mv.showAurora.value" type="checkbox" /> Aurora</label
       >
-      <div v-if="mv.hasFaults.value" class="layerpick" data-tour="map.layers">
+      <div v-if="mv.hasFaults.value" class="layerpick" data-tour="map.layers map.faults">
         <label
           v-hint="
             'Draws USGS Quaternary Fault and Fold Database traces, styled by age of most recent deformation and by location certainty. Hover a trace for its name and slip sense.'
@@ -250,7 +250,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
     <slot name="bar"></slot>
     <div class="mapstage" data-tour="map.stage">
       <div class="mapwrap">
-        <span class="mapcount" aria-live="polite">{{ countLine }}</span>
+        <span class="mapcount" aria-live="polite" data-tour="map.count">{{ countLine }}</span>
         <button
           v-hint="
             mv.theater.value

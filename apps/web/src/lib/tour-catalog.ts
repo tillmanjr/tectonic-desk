@@ -1,0 +1,86 @@
+import { SETTINGS_DIVE } from "./deep/settings.js";
+import {
+  SPACE_AURORA,
+  SPACE_FLARES,
+  SPACE_HISTORY_DIVE,
+  SPACE_STACK,
+  SPACE_SUN,
+  SPACE_TILES,
+} from "./deep/space.js";
+import { MARKS_COMPARE, MARKS_GROUPS, MARKS_IO, MARKS_PANELS } from "./deep/marks.js";
+import { VOLCANO_ERUPTIONS, VOLCANO_NEARBY, VOLCANO_STATUS } from "./deep/volcano.js";
+import { CHART_DEPTH, CHART_FM, CHART_MAGTIME } from "./deep/charts.js";
+import { QUAKE_IMPACT, QUAKE_ORIGIN } from "./deep/quake.js";
+import {
+  MAP_ANIMATE,
+  MAP_DENSITY,
+  MAP_FIELDS,
+  MAP_LAYERS,
+  MAP_MEASURE,
+  MAP_PIN,
+  MAP_SECTION,
+  MAP_SHAKE,
+} from "./deep/map.js";
+import { REFINE_SPACE, REFINE_TABLES, REFINE_VOLCANOES } from "./deep/refine.js";
+import type { Tour } from "./tour.js";
+import {
+  EARTHQUAKES,
+  MAP_NAV,
+  MAP_TOOLS,
+  MARKS,
+  MECHANISM,
+  ORIENTATION,
+  REFINE_QUAKES,
+  SPACE,
+  VOLCANOES,
+} from "./tour-steps.js";
+
+/** The quick tours in the order "Continue to" takes them. */
+export const QUICK_TOURS: readonly Tour[] = [
+  ORIENTATION,
+  MAP_TOOLS,
+  EARTHQUAKES,
+  VOLCANOES,
+  MARKS,
+  SPACE,
+];
+
+/** The deep dives, grouped by area in the order the Help menu lists them. */
+export const DEEP_DIVES: readonly Tour[] = [
+  REFINE_QUAKES,
+  REFINE_VOLCANOES,
+  REFINE_SPACE,
+  REFINE_TABLES,
+  MAP_NAV,
+  MAP_LAYERS,
+  MAP_FIELDS,
+  MAP_SECTION,
+  MAP_MEASURE,
+  MAP_PIN,
+  MAP_SHAKE,
+  MAP_ANIMATE,
+  MAP_DENSITY,
+  QUAKE_ORIGIN,
+  QUAKE_IMPACT,
+  CHART_MAGTIME,
+  CHART_FM,
+  CHART_DEPTH,
+  VOLCANO_STATUS,
+  VOLCANO_ERUPTIONS,
+  VOLCANO_NEARBY,
+  MARKS_GROUPS,
+  MARKS_PANELS,
+  MARKS_COMPARE,
+  MARKS_IO,
+  SPACE_TILES,
+  SPACE_STACK,
+  SPACE_FLARES,
+  SPACE_AURORA,
+  SPACE_SUN,
+  SPACE_HISTORY_DIVE,
+  SETTINGS_DIVE,
+  MECHANISM,
+];
+
+/** Every tour, quick tours first. */
+export const TOURS: readonly Tour[] = [...QUICK_TOURS, ...DEEP_DIVES];

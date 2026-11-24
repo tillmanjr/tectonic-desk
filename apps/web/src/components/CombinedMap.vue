@@ -75,6 +75,7 @@ const countLine = computed(
         v-hint="
           'Shades grid cells by the number of events in the window at the requested magnitude, including those below the raised marker floor. Offered only when a long window raised the floor.'
         "
+        data-tour="map.density"
         ><input v-model="q.showDensity.value" type="checkbox" /> Density</label
       >
       <label
@@ -91,7 +92,7 @@ const countLine = computed(
         v-hint="'Replay the loaded window on the map, step by step'"
         type="button"
         class="zbtn"
-        data-tour="map.page"
+        data-tour="map.page map.animate"
         style="width: auto; padding: 0 8px"
         :aria-pressed="q.anim.active.value"
         @click="q.anim.active.value ? q.anim.close() : q.openAnimation()"
