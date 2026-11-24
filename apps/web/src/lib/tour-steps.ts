@@ -201,6 +201,7 @@ export const MAP_TOOLS: Tour = {
       title: "Earthquake layers",
       body: "Beachballs in place of dots for events with a mechanism, the selected event's ShakeMap intensity, density shading when a long window raises the floor, and Animate to replay the window.",
       targets: ["map.page"],
+      detour: { tour: "map-animate", label: "Replaying the window, in detail" },
     },
     {
       id: "field",

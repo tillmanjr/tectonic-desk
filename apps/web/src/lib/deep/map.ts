@@ -454,3 +454,74 @@ export const MAP_SHAKE: Tour = {
     },
   ],
 };
+
+/** The Petrolia sequence's first month on the West Coast, with the replay open or closed. */
+function replay(open: boolean) {
+  return async (ctx: StepContext): Promise<void> => {
+    await ctx.go(EXAMPLE_EVENT.window);
+    ctx.setSwitch("map.animate", open);
+  };
+}
+
+export const MAP_ANIMATE: Tour = {
+  id: "map-animate",
+  title: "Animate",
+  blurb: "Replaying the window on the map: the clock, stepping, playing and the speed.",
+  deep: { area: "Map" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Replaying a window",
+      body: "Animate replays the loaded window on the map, so a sequence unfolds in the order it happened. The steps replay the first month after the 2021 Petrolia M6.2.",
+      targets: ["map.animate"],
+      enter: replay(false),
+    },
+    {
+      id: "open",
+      title: "The replay bar",
+      body: "Animate opens a bar under the header and the map shows only the events up to its clock, which starts at the beginning of the window. The refine bar, the table and the charts are not replayed.",
+      targets: ["map.animate", "map.animbar"],
+      enter: replay(true),
+    },
+    {
+      id: "clock",
+      title: "Clock and count",
+      body: "Where the replay stands, in your zone or UTC, and how many of the window's events are on the map by then.",
+      targets: ["anim.clock"],
+      enter: replay(true),
+    },
+    {
+      id: "step",
+      title: "Stepping",
+      body: "◀ and ▶ move the clock one step back or on. A step is a day for windows up to 120 days, a 30-day month up to 15 years, and a year beyond that; here a day.",
+      tryIt: "Step on a few days and watch the aftershocks gather.",
+      targets: ["anim.controls"],
+      enter: replay(true),
+    },
+    {
+      id: "play",
+      title: "Playing, and its speed",
+      body: "Start plays the steps one after another, Pause holds it, and it stops at the end of the window. Seconds per day (or month, or year) sets how fast: smaller is quicker.",
+      tryIt: "Start it.",
+      targets: ["anim.speed", "anim.controls"],
+      enter: replay(true),
+    },
+    {
+      id: "close",
+      title: "Closing it",
+      body: "Close, or Animate again, ends the replay and every event in the window comes back to the map.",
+      targets: ["map.animbar"],
+      enter: replay(true),
+      leave: (ctx) => {
+        ctx.setSwitch("map.animate", false);
+      },
+    },
+    {
+      id: "done",
+      title: "That's the replay",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
