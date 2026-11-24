@@ -792,6 +792,7 @@ export const SPACE: Tour = {
       tryIt:
         "Click a picture: it opens large on the latest movie, with a higher resolution and the still, and, when that movie does not cover the window, a movie generated for it.",
       targets: ["space.sun"],
+      detour: { tour: "space-sun", label: "The pictures and movies, in detail" },
       enter: week,
     },
     {
