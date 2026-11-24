@@ -9,6 +9,7 @@ import {
   TOUR_KEY,
   tourState,
   type Tour,
+  type TourId,
 } from "../../src/lib/tour.js";
 import type { Page } from "../../src/router.js";
 import { fakeMap, fakeStage, fakeSwitches } from "../support/tour.js";
@@ -32,14 +33,14 @@ function memory(initial: string | null = null) {
 
 describe("parseTourProgress", () => {
   it("reads nothing, bad JSON or a non-object as a fresh start", () => {
-    const fresh = { offerDismissed: false, last: null, tours: {}, seen: {} };
+    const fresh = { offerDismissed: false, last: null, tours: {}, seen: {}, demo: null };
     expect(parseTourProgress(null)).toEqual(fresh);
     expect(parseTourProgress("{")).toEqual(fresh);
     expect(parseTourProgress("3")).toEqual(fresh);
     expect(parseTourProgress(JSON.stringify({ tours: 5 }))).toEqual(fresh);
   });
 
-  it("keeps well-formed records of known tours and drops the rest", () => {
+  it("keeps well-formed records and drops malformed ones", () => {
     const raw = JSON.stringify({
       offerDismissed: true,
       last: "map",
@@ -52,8 +53,10 @@ describe("parseTourProgress", () => {
     expect(parseTourProgress(raw)).toEqual({
       offerDismissed: true,
       last: "map",
-      tours: { map: { step: 3, done: false, at: AT } },
+      // A tour no longer in the app keeps its record; nothing looks it up.
+      tours: { map: { step: 3, done: false, at: AT }, nope: { step: 0, done: true, at: AT } },
       seen: {},
+      demo: null,
     });
     for (const bad of [
       null,
@@ -61,8 +64,8 @@ describe("parseTourProgress", () => {
       { step: 1, done: "no", at: AT },
       { step: 1, done: false, at: 5 },
     ]) {
-      const doc = parseTourProgress(JSON.stringify({ last: "space", tours: { map: bad } }));
-      expect(doc).toEqual({ offerDismissed: false, last: null, tours: {}, seen: {} });
+      const doc = parseTourProgress(JSON.stringify({ last: 5, tours: { map: bad } }));
+      expect(doc).toEqual({ offerDismissed: false, last: null, tours: {}, seen: {}, demo: null });
     }
   });
 });
@@ -81,6 +84,7 @@ describe("createTourProgress", () => {
       last: "map",
       tours: { map: { step: 2, done: false, at: AT } },
       seen: {},
+      demo: null,
     });
     p.dismissOffer();
     p.dismissOffer();
@@ -122,12 +126,88 @@ describe("createTourProgress", () => {
   });
 });
 
+describe("example marks", () => {
+  it("keeps the example marks' ids, drops a malformed record, and survives a reset", () => {
+    const p = createTourProgress(null, () => NOW);
+    p.setDemo({ group: "g", marks: ["a", "b"] });
+    p.reset();
+    expect(p.doc.value.demo).toEqual({ group: "g", marks: ["a", "b"] });
+    p.setDemo(null);
+    expect(p.doc.value.demo).toBeNull();
+    const read = (demo: unknown) => parseTourProgress(JSON.stringify({ demo })).demo;
+    expect(read({ group: "g", marks: ["a", 3] })).toEqual({ group: "g", marks: ["a"] });
+    expect(read({ group: 1, marks: [] })).toBeNull();
+    expect(read({ group: "g", marks: "a" })).toBeNull();
+    expect(read("x")).toBeNull();
+  });
+});
+
+describe("continuing to the next tour", () => {
+  function three(): Tour[] {
+    const one = (id: TourId, title: string, deep = false): Tour => ({
+      id,
+      title,
+      blurb: "",
+      ...(deep ? { deep: { area: "Area" } } : {}),
+      pageFor: (p: Page) => p,
+      steps: [
+        { id: "a", title: "A", body: "", targets: [] },
+        {
+          id: "b",
+          title: "B",
+          body: "",
+          targets: [],
+          leave: () => undefined,
+        },
+      ],
+    });
+    return [
+      one("orientation", "One"),
+      one("mechanism", "Side", true),
+      one("map", "Two"),
+      one("earthquakes", "Three"),
+    ];
+  }
+
+  it("offers the next main tour with unseen steps on a last step, and goes on keeping the view", async () => {
+    const { stage } = fakeStage();
+    const progress = createTourProgress(null, () => NOW);
+    const tour = createTour(three(), progress, stage);
+    expect(tour.following.value).toBeNull();
+    await tour.continueOn();
+    await tour.start("orientation");
+    expect(tour.following.value).toBeNull();
+    await tour.next();
+    expect(tour.following.value?.id).toBe("map");
+    progress.record("map", 1, false, "a");
+    progress.record("map", 1, false, "b");
+    expect(tour.following.value?.id).toBe("earthquakes");
+    progress.record("earthquakes", 1, false, "a");
+    await tour.continueOn();
+    expect(tour.active.value?.tour.id).toBe("earthquakes");
+    expect(tour.active.value?.index).toBe(1);
+    expect(progress.doc.value.tours.orientation?.done).toBe(true);
+    expect(stage.restore).not.toHaveBeenCalled();
+    expect(tour.following.value).toBeNull();
+    await tour.exit();
+    expect(stage.clearDemoMarks).toHaveBeenCalled();
+    // A tour taken before, with a step added since, starts again from the top.
+    const fresh = createTourProgress(null, () => NOW);
+    fresh.record("map", 1, true, "a");
+    const again = createTour(three(), fresh, fakeStage().stage);
+    await again.start("orientation", 1);
+    await again.continueOn();
+    expect(again.active.value?.tour.id).toBe("map");
+    expect(again.active.value?.index).toBe(0);
+  });
+});
+
 describe("seen steps", () => {
-  it("reads the steps shown per tour, keeping only strings of known tours", () => {
+  it("reads the steps shown per tour, keeping only the strings", () => {
     const doc = parseTourProgress(
-      JSON.stringify({ seen: { map: ["a", 3, "b"], orientation: "a", space: ["x"] } }),
+      JSON.stringify({ seen: { map: ["a", 3, "b"], orientation: "a", nowhere: ["x"] } }),
     );
-    expect(doc.seen).toEqual({ map: ["a", "b"] });
+    expect(doc.seen).toEqual({ map: ["a", "b"], nowhere: ["x"] });
   });
 
   it("marks a step shown once, and says whether any step of the tours is unseen", () => {
@@ -288,7 +368,7 @@ describe("side paths", () => {
       id: "mechanism",
       title: "Side",
       blurb: "",
-      sidePath: true,
+      deep: { area: "Area" },
       pageFor: (p: Page) => p,
       steps: [
         { id: "s0", title: "S0", body: "", targets: [] },
@@ -476,8 +556,7 @@ describe("createTour", () => {
     await tour.back();
     await tour.goTo(0);
     await tour.exit();
-    // @ts-expect-error an id that no tour has
-    await tour.start("space");
+    await tour.start("nowhere");
     expect(tour.active.value).toBeNull();
     expect(progress.doc.value.tours).toEqual({});
     expect(tour.resumable.value).toBeNull();

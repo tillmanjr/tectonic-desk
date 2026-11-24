@@ -242,9 +242,9 @@ const selectedId = catalog.selectedId;
     data-tour="section.profile"
   >
     <h2 class="withfilter">
-      <span class="stitle">{{ data.title }}</span>
+      <span class="stitle" data-tour="section.title">{{ data.title }}</span>
       <span class="sctl">
-        <label
+        <label data-tour="section.width"
           >corridor ±
           <input
             ref="halfEl"
@@ -258,7 +258,7 @@ const selectedId = catalog.selectedId;
           />
           km</label
         >
-        <label
+        <label data-tour="section.ve"
           >vertical ×
           <select
             ref="veEl"
@@ -269,7 +269,9 @@ const selectedId = catalog.selectedId;
             <option v-for="v in VE_CHOICES" :key="v" :value="String(v)">{{ v }}</option>
           </select></label
         >
-        <button type="button" class="sclear" @click="tool.clear()">Clear</button>
+        <button type="button" class="sclear" data-tour="section.clear" @click="tool.clear()">
+          Clear
+        </button>
       </span>
     </h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(data.H)}`" class="sectionsvg">
@@ -320,6 +322,6 @@ const selectedId = catalog.selectedId;
         />
       </g>
     </svg>
-    <p class="cap" :class="{ note: data.empty }">{{ data.caption }}</p>
+    <p class="cap" :class="{ note: data.empty }" data-tour="section.caption">{{ data.caption }}</p>
   </div>
 </template>

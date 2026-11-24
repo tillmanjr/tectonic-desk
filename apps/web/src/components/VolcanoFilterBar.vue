@@ -64,6 +64,7 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
         'Tectonic setting from the GVP volcano record, grouped as subduction zone, rift zone or intraplate; the crustal-type qualifier is folded in.'
       "
       class="fsel"
+      data-tour="refine.v.setting"
       >Setting
       <select :value="store.filter.value.setting ?? ''" @change="change('setting', $event)">
         <option value="">any</option>
@@ -75,6 +76,7 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
         'GVP primary volcano type, grouped (stratovolcanoes, shields, calderas, cones and maars, domes, complexes, fissure vents, submarine).'
       "
       class="fsel"
+      data-tour="refine.v.type"
       >Type
       <select :value="store.filter.value.type ?? ''" @change="change('type', $event)">
         <option value="">any</option>
@@ -86,6 +88,7 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
         'Age class of the most recent GVP-dated eruption: since 1950, 1500 to 1949, earlier Holocene, or Holocene with no dated eruption.'
       "
       class="fsel"
+      data-tour="refine.v.age"
       >Last eruption
       <select :value="store.filter.value.age ?? ''" @change="change('age', $event)">
         <option value="">any</option>
@@ -97,6 +100,7 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
         'Current status: an elevated USGS or GeoNet alert level (agency scales kept separate), an eruption GVP lists as continuing, or any volcano USGS or GeoNet monitors.'
       "
       class="fsel"
+      data-tour="refine.v.status"
       >Status
       <select :value="store.filter.value.status ?? ''" @change="change('status', $event)">
         <option value="">any</option>
@@ -107,6 +111,7 @@ function change(key: keyof VolcanoFilter, ev: Event): void {
       v-hint="'Clear every volcano refinement'"
       type="button"
       class="fclear"
+      data-tour="refine.v.reset"
       :disabled="!active"
       @click="setFilter(EMPTY_VOLCANO_FILTER)"
     >

@@ -51,6 +51,7 @@ function toggle(key: string): void {
     label="Alerts · SWPC messages"
     :count="cards.length"
     :rows="props.rows"
+    tour="space.alerts"
   >
     <p v-if="cards.length === 0" class="note">No alerts in this window.</p>
     <button

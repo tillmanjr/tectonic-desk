@@ -60,7 +60,7 @@ onUnmounted(() => {
     aria-label="Event detail"
     :aria-hidden="!open"
   >
-    <div class="hd">
+    <div class="hd" data-tour="detail.head">
       <div>
         <div class="mag num">
           <template v-if="head !== null"

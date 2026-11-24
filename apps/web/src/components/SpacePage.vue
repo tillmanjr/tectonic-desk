@@ -39,7 +39,7 @@ const long = computed(() => {
   <SpaceRefine />
   <SpaceTiles />
   <SunStrip @open="sunOpen = $event" />
-  <p v-if="long" class="note longnote">
+  <p v-if="long" class="note longnote" data-tour="space.longnote">
     Flares, alerts and the minute-scale rows need a window of 93 days or less.
   </p>
   <SpaceAlerts v-else :rows="settings.current.value.cardRows.alone" />

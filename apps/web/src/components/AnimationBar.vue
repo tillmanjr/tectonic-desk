@@ -15,14 +15,19 @@ function togglePlay(): void {
 </script>
 
 <template>
-  <div v-if="anim.active.value && anim.cursor.value !== null" class="animbar">
-    <label
+  <div
+    v-if="anim.active.value && anim.cursor.value !== null"
+    class="animbar"
+    data-tour="map.animbar"
+  >
+    <label data-tour="anim.speed"
       >Seconds per {{ anim.unit.value }}
       <input v-model.number="secondsPerUnit" type="number" min="0.1" step="0.5" />
     </label>
     <button
       type="button"
       class="zbtn"
+      data-tour="anim.controls"
       :aria-label="`Back one ${anim.unit.value}`"
       @click="anim.step(-1)"
     >
@@ -31,6 +36,7 @@ function togglePlay(): void {
     <button
       type="button"
       class="zbtn play"
+      data-tour="anim.controls"
       :aria-label="anim.playing.value ? 'Pause' : 'Start'"
       @click="togglePlay"
     >
@@ -39,13 +45,16 @@ function togglePlay(): void {
     <button
       type="button"
       class="zbtn"
+      data-tour="anim.controls"
       :aria-label="`Forward one ${anim.unit.value}`"
       @click="anim.step(1)"
     >
       ▶
     </button>
-    <span class="animclock num">{{ fmtStamp(anim.cursor.value.toISOString(), zone) }}</span>
-    <span class="animcount">{{ shown }} of {{ total }} events</span>
+    <span class="animclock num" data-tour="anim.clock">{{
+      fmtStamp(anim.cursor.value.toISOString(), zone)
+    }}</span>
+    <span class="animcount" data-tour="anim.clock">{{ shown }} of {{ total }} events</span>
     <span class="sp"></span>
     <button type="button" class="zbtn" style="width: auto; padding: 0 8px" @click="anim.close()">
       Close

@@ -32,8 +32,8 @@ const thumbs = computed(() => {
 </script>
 
 <template>
-  <p class="sectionlabel">The Sun · SDO and SOHO</p>
-  <section class="sunstrip" aria-label="Latest Sun frames">
+  <p class="sectionlabel" data-tour="space.sun">The Sun · SDO and SOHO</p>
+  <section class="sunstrip" aria-label="Latest Sun frames" data-tour="space.sun">
     <p v-if="thumbs === null" class="note">No frames yet.</p>
     <button
       v-for="t in thumbs ?? []"

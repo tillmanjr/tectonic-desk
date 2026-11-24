@@ -46,10 +46,46 @@ export function unionBox(els: readonly Element[]): Box | null {
 
 export type Dock = "top" | "bottom";
 
-/** The card docks at the bottom when the target sits in the window's upper half, else at the top. */
-export function dockOf(box: Box | null, viewportHeight: number): Dock {
-  if (box === null) return "bottom";
-  return (box.top + box.bottom) / 2 < viewportHeight / 2 ? "bottom" : "top";
+/** The card's gap from the window edge it docks to, css pixels (as in the stylesheet). */
+export const DOCK_GAP = 16;
+
+/** Where the card sits when docked, in viewport coordinates. */
+export function cardBox(
+  dock: Dock,
+  card: { width: number; height: number },
+  viewport: { width: number; height: number },
+): Box {
+  const left = (viewport.width - card.width) / 2;
+  const top = dock === "top" ? DOCK_GAP : viewport.height - DOCK_GAP - card.height;
+  return { left, top, right: left + card.width, bottom: top + card.height };
+}
+
+const overlaps = (a: Box, b: Box): boolean =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+/**
+ * Where the card docks for a target: it stays where it is unless it would cover the target, so it
+ * does not jump between top and bottom from step to step. When it must move it goes to the other
+ * edge, or, when the target is tall enough to meet the card at either edge, away from the half
+ * the target's centre is in.
+ */
+export function dockOf(
+  box: Box | null,
+  current: Dock,
+  card: { width: number; height: number },
+  viewport: { width: number; height: number },
+): Dock {
+  if (box === null) return current;
+  const spot = {
+    left: box.left - SPOT_PAD,
+    top: box.top - SPOT_PAD,
+    right: box.right + SPOT_PAD,
+    bottom: box.bottom + SPOT_PAD,
+  };
+  if (!overlaps(spot, cardBox(current, card, viewport))) return current;
+  const other: Dock = current === "top" ? "bottom" : "top";
+  if (!overlaps(spot, cardBox(other, card, viewport))) return other;
+  return (box.top + box.bottom) / 2 < viewport.height / 2 ? "bottom" : "top";
 }
 
 /** Whether the box lies wholly inside the window. */
@@ -65,11 +101,14 @@ export interface Switches {
   set: (name: string, on: boolean) => void;
 }
 
-/** The control behind a name: a checkbox, or an element with `aria-expanded`, at or inside it. */
+/**
+ * The control behind a name: a checkbox, or an element with `aria-expanded` or `aria-pressed`, at
+ * or inside it.
+ */
 function switchControl(name: string, root: ParentNode): HTMLElement | null {
   const el = root.querySelector(`[data-tour~="${name}"]`);
   if (!(el instanceof HTMLElement)) return null;
-  const sel = 'input[type="checkbox"], [aria-expanded]';
+  const sel = 'input[type="checkbox"], [aria-expanded], [aria-pressed]';
   const control = el.matches(sel) ? el : el.querySelector(sel);
   return control instanceof HTMLElement ? control : null;
 }
@@ -77,7 +116,7 @@ function switchControl(name: string, root: ParentNode): HTMLElement | null {
 function isOn(control: HTMLElement): boolean {
   return control instanceof HTMLInputElement
     ? control.checked
-    : control.getAttribute("aria-expanded") === "true";
+    : (control.getAttribute("aria-expanded") ?? control.getAttribute("aria-pressed")) === "true";
 }
 
 export function domSwitches(root: ParentNode = document): Switches {

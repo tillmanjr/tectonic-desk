@@ -82,7 +82,7 @@ onUnmounted(clearTimer);
 </script>
 
 <template>
-  <div class="marks-io">
+  <div class="marks-io" data-tour="marks.io">
     <div v-if="picked !== null" class="io-strip">
       <span class="io-facts">{{ picked.name }}: {{ countsText(picked.doc) }}</span>
       <span class="io-actions">

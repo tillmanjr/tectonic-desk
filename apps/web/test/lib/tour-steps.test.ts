@@ -5,12 +5,18 @@ import {
   EXAMPLE_EVENT,
   EXAMPLE_SECTIONS,
   EXAMPLE_VOLCANO,
+  MAP_NAV,
   MECHANISM,
+  REFINE_QUAKES,
+  REFINE_URLS,
+  SPACE,
+  SPACE_HISTORY,
+  SPACE_WEEK,
   VOLCANOES,
   MAP_TOOLS,
   ORIENTATION,
-  TOURS,
 } from "../../src/lib/tour-steps.js";
+import { DEEP_DIVES, TOURS } from "../../src/lib/tour-catalog.js";
 import type { StepContext, Tour } from "../../src/lib/tour.js";
 import { fakeContext, fakeMap } from "../support/tour.js";
 
@@ -115,9 +121,22 @@ describe("tour content", () => {
     const ctx = fakeContext(null);
     for (const s of MECHANISM.steps) await s.enter?.(ctx);
     expect(ctx.go).toHaveBeenCalledTimes(MECHANISM.steps.length);
-    expect(MECHANISM.sidePath).toBe(true);
+    expect(MECHANISM.deep).toEqual({ area: "Earthquake detail" });
     expect(MECHANISM.pageFor("active")).toBe("earthquakes");
-    expect(EARTHQUAKES.steps.find((s) => s.detour !== undefined)?.id).toBe("mechanism");
+    expect(
+      EARTHQUAKES.steps.flatMap((s) => (s.detour === undefined ? [] : [[s.id, s.detour.tour]])),
+    ).toEqual([
+      ["refine", "refine-quakes"],
+      ["detail", "quake-origin"],
+      ["mechanism", "mechanism"],
+      ["impact", "quake-impact"],
+      ["shakemap", "map-shake"],
+      ["profile", "map-section"],
+      ["table", "refine-tables"],
+      ["magtime", "chart-magtime"],
+      ["fm", "chart-fm"],
+      ["depth", "chart-depth"],
+    ]);
   });
 
   it("opens the volcano refine bar and the example volcano, and closes the bar after", async () => {
@@ -130,6 +149,94 @@ describe("tour content", () => {
       ["refine.volcanoes", false],
     ]);
     expect(VOLCANOES.pageFor("space")).toBe("volcanoes");
+  });
+
+  it("shows the space page over a week, then over eleven years", async () => {
+    const ctx = fakeContext(null);
+    for (const s of SPACE.steps) await s.enter?.(ctx);
+    const urls = vi.mocked(ctx.go).mock.calls.map(([u]) => u);
+    expect(urls.filter((u) => u === SPACE_WEEK)).toHaveLength(10);
+    expect(urls.at(-1)).toBe(SPACE_HISTORY);
+    expect(SPACE.pageFor("active")).toBe("space");
+  });
+
+  it("closes the event panel before the cross-section profile, keeping the example's window", async () => {
+    const mv = fakeMap(false);
+    const ctx = fakeContext(mv);
+    await step(EARTHQUAKES, "profile").enter?.(ctx);
+    expect(ctx.go).toHaveBeenCalledWith(EXAMPLE_EVENT.window);
+    expect(ctx.setSection).toHaveBeenCalledWith(EXAMPLE_SECTIONS.regional);
+    expect(EXAMPLE_EVENT.url.startsWith(EXAMPLE_EVENT.window)).toBe(true);
+  });
+
+  it("sets an example for each control of the earthquake refine bar, folded or open", async () => {
+    const ctx = fakeContext(null);
+    for (const s of REFINE_QUAKES.steps) await run(REFINE_QUAKES, s.id, ctx);
+    expect(vi.mocked(ctx.go).mock.calls.map(([u]) => u)).toEqual([
+      REFINE_URLS.base,
+      REFINE_URLS.base,
+      REFINE_URLS.status,
+      REFINE_URLS.base,
+      REFINE_URLS.magnitude,
+      REFINE_URLS.depth,
+      REFINE_URLS.window,
+      REFINE_URLS.custom,
+      REFINE_URLS.long,
+      REFINE_URLS.long,
+      REFINE_URLS.base,
+    ]);
+    const calls = vi.mocked(ctx.setSwitch).mock.calls;
+    expect(calls.slice(0, 4).map(([, on]) => on)).toEqual([false, false, false, true]);
+    expect(calls.slice(-3)).toEqual([
+      ["refine.earthquakes", true],
+      ["refine.earthquakes.hide", true],
+      ["refine.earthquakes.hide", false],
+    ]);
+    expect(REFINE_QUAKES.deep).toEqual({ area: "Refine" });
+    expect(REFINE_QUAKES.pageFor("space")).toBe("earthquakes");
+  });
+
+  it("locks, unlocks, zooms, selects and goes to theater on the map, putting theater back after", async () => {
+    const mv = fakeMap();
+    const reset = vi.fn();
+    mv.reset = reset;
+    const ctx = fakeContext(mv);
+    await run(MAP_NAV, "zoom", ctx);
+    expect(mv.transform.value.k).toBeCloseTo(1.8 ** 2);
+    for (const s of MAP_NAV.steps) await run(MAP_NAV, s.id, ctx);
+    expect(vi.mocked(ctx.setSwitch).mock.calls).toEqual([
+      ["map.lock", true],
+      ["map.lock", false],
+      ["map.theater", true],
+      ["map.theater", false],
+    ]);
+    expect(mv.transform.value.k).toBeCloseTo(1.8 ** 3);
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(ctx.selectLargest).toHaveBeenCalled();
+    expect(ctx.clearSelection).toHaveBeenCalled();
+    const none = fakeContext(null);
+    await run(MAP_NAV, "zoom", none);
+    await run(MAP_NAV, "readouts", none);
+    expect(MAP_NAV.deep).toEqual({ area: "Map" });
+    expect(MAP_NAV.pageFor("space")).toBe("active");
+    expect(MAP_NAV.pageFor("volcanoes")).toBe("volcanoes");
+    expect(MAP_TOOLS.steps[0]?.detour?.tour).toBe("map-nav");
+  });
+
+  it("runs every deep dive's steps with a map on screen and without one", async () => {
+    for (const deep of DEEP_DIVES) {
+      for (const mv of [fakeMap(), null]) {
+        const ctx = fakeContext(mv);
+        for (const s of deep.steps) await run(deep, s.id, ctx);
+      }
+    }
+    expect(DEEP_DIVES.every((d) => d.deep !== undefined)).toBe(true);
+    // Every deep dive runs on a page that has what it shows, wherever it is started.
+    for (const deep of DEEP_DIVES) {
+      for (const from of ["space", "volcanoes"] as const) {
+        expect(["earthquakes", "volcanoes", "active", "space"]).toContain(deep.pageFor(from));
+      }
+    }
   });
 
   it("does nothing to a map that is not there", async () => {

@@ -43,7 +43,13 @@ onUnmounted(() => {
     >
       ⚙
     </button>
-    <div v-if="open" id="settings-menu" class="settings-menu" aria-label="Settings">
+    <div
+      v-if="open"
+      id="settings-menu"
+      class="settings-menu"
+      data-tour="settings"
+      aria-label="Settings"
+    >
       <div class="srow">
         <span class="slabel">Times</span>
         <button

@@ -117,3 +117,106 @@ ends a running tour and returns the stored progress to a first visit: every tour
 step seen (so the Help button stands out again), and the first-visit offer due again. It is there
 for demonstrations. The Help button's own hint uses `v-hint` rather than `title`, so it sits under
 the pointer's arrow like the other hints.
+
+## Marks tour, a steadier card, and going on (2026-11-24)
+
+Ten steps over the Mark button, the header's Marks button, the overlay's groups rail, a mark's row,
+a group's head, stacked panels, Compare and export/import. The list, panels and comparison need
+marks, so the tour adds three examples (Petrolia, Ridgecrest and Kīlauea, `EXAMPLE_MARKS`) in a
+group called Tour examples through the stage's `demoMarks()`, and the runner's end takes them out
+again (`clearDemoMarks()`, after the route is restored so an overlay showing the group has closed).
+Their ids are kept in the progress document (`demo`), so a page left mid-tour has them taken out
+on the next load. A mark the reader makes during the tour stays.
+
+The card no longer re-decides top or bottom on every step: `dockOf` keeps it where it is unless
+its box (the card's measured size, centred, 16 px from the edge) would meet the spotlight, then
+moves it to the other edge, or for a target tall enough to meet both, away from the target's
+half. Walking every tour against the live site, the card now moves at most twice per tour.
+
+On the last step of a main tour the card offers "Continue to …", the next main tour in the list
+with a step not yet seen (side paths are skipped). Going on marks the tour done and starts the next
+one (at the step it was left on, if partway) without giving the view back in between; the reader's
+view comes back when the last tour ends.
+
+## Space weather tour (2026-11-24)
+
+Twelve steps on the Space page, the last tour in the list: the status line (with the L1
+spacecraft), the window and its bucketing, the tiles, the Sun strip, the alerts, the stack and its
+readout, the forecast, the flares, the aurora, and the long history. It shows a fixed 7-day window
+(`SPACE_WEEK`), where flares and alerts are present, then 11 years (`SPACE_HISTORY`) for GFZ Kp,
+Kyoto Dst and the sunspot number with the cycle minima. The Sun overlay stacks above the tour, so
+the tour does not open it; the Sun step invites the reader to.
+
+## Deep dives (2026-11-24)
+
+The tours stay general; a deep dive covers one part of the app control by control. Decisions:
+
+- **Their own section, never pushed.** Deep dives (`deep: { area }` on a tour) are listed under
+  Deep dives in the Help menu, after the tours, named "Area: Title" (`tourTitle`). They do not keep
+  the Help button lit and "Continue to" never leads into one. The matching tour step links to its
+  deep dive (`detour`), and the card adds that it is also in the Help menu under Deep dives.
+- **They operate the controls.** Each step sets a real example (through `go` and `setSwitch`), so
+  the reader sees its effect; the reader's own view comes back at the end. States that cannot be
+  staged honestly, such as "Not updated" (a failed fetch), are described in words.
+- **The pattern first.** This round adds the section, "Refine: Earthquakes", and moves the focal
+  mechanism path in as "Earthquake detail: Focal mechanism". A catalogue of further deep dives
+  follows for approval.
+
+Refine: Earthquakes (12 steps, `REFINE_URLS`): the folded bar, the status feedback (a real
+refetch shows Updating… and ✓ Updated), the open bar, magnitude (M6+), depth (70–300 km), the
+window (30 days ending 31 July 2019 on the West Coast), how length, From and To interact (From
+moved to 4 July makes it Custom), long windows and the raised floor (2015–2024, global), Reset,
+and Hide markers.
+
+## Two groups, clearly told apart (2026-11-24)
+
+Quick tours and Deep dives were easy to overlook as small grey headings. Each group now sits in
+its own section of the Help menu under a bold heading in its own colour, with a line saying what
+it is ("The app at a glance, page by page." and "One part of the app, every control in detail,
+with examples set as you go.") and a rule down its side: the accent for quick tours, the alert
+orange for deep dives (`--tour-quick`, `--tour-deep`). The tour card carries a badge in the same
+colour ("Quick tour" or "Deep dive"), and a tour step that links to a deep dive names the Help
+menu's Deep dives group with that badge, so the reader recognises it there. The names live in
+`GROUP_NAMES`.
+
+## Map: Navigation and header (2026-11-24)
+
+A deep dive linked from the Map tools tour's first step, on whichever map page the reader is on
+(Active Earth from Space): the header's layout, the map locked and unlocked (the steps flip the
+lock), the zoom buttons and range (two presses, set in one move since presses in a row interrupt
+each other's animation), how markers grow with zoom, selecting the largest event to show the map
+moving to it, the readouts, the count line and loading chip, theater mode (switched on), and the
+legend.
+
+Switches now also cover controls with `aria-pressed` (the lock, theater). The runner gives them
+back before the maps' own restore, since they read the page and the page lags the model until it
+redraws, and in the reverse of the order they were first changed, since leaving theater hands the
+lock back as it was before theater.
+
+## The deep dive catalogue (2026-11-24)
+
+Thirty-two deep dives, each its own pull request in one stack, listed in `tour-catalog.ts` by area
+and written in `src/lib/deep/<area>.ts`:
+
+- Refine: Earthquakes, Volcanoes, Space window, Table filters.
+- Map: Navigation and header, Reference layers and legend, Fields, Cross-section, Measure, Pin,
+  ShakeMap layer, Animate, Density and the raised floor.
+- Earthquake detail: Origin and catalogue record, Impact and sequence, Focal mechanism.
+- Charts: Magnitude through time, Frequency–magnitude, Depth distribution.
+- Volcano detail: Agency status and scales, Eruption record, Earthquakes nearby.
+- Marks: Marking and groups, Stacked panels, Reading Compare, Export and import.
+- Space: The tiles, The stack row by row, Flares and alerts, Aurora frames and playback, Sun
+  pictures and movies, Long history.
+- Settings: Time zone, theme and hints.
+
+Each is linked from the matching quick-tour step. Where a deep dive cannot stage what it explains
+it says so and invites the reader instead: the Sun overlay stacks above the tour, the pin and the
+tables' column filters belong to the reader, and a sequence block appears only for a live M6.5+
+mainshock, so Sequence is part of Impact rather than a deep dive of its own. Examples were chosen
+to show each feature on real data: the Ridgecrest month at M3+ (1,108 events, the sequence
+caption, a b-value from M3), 1955 to 1985 for the completeness breaks, Kilauea in 2018 for nearby
+earthquakes, Tokyo to Buenos Aires for a chord into the inner core.
+
+Testing: `Tour.test.ts` walks every entry of `DEEP_DIVES` against the full app and fails on a
+missing target; `tour-steps.test.ts` runs every step with and without a map on screen. A separate
+way to browse the deep dives, beyond the Help menu, is to be designed next.
