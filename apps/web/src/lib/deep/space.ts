@@ -158,3 +158,56 @@ export const SPACE_STACK: Tour = {
     },
   ],
 };
+
+export const SPACE_FLARES: Tour = {
+  id: "space-flares",
+  title: "Flares and alerts",
+  blurb: "The flare list and what a click on a flare does, and SWPC's alerts and their kinds.",
+  deep: { area: "Space" },
+  pageFor: () => "space",
+  steps: [
+    {
+      id: "intro",
+      title: "Flares and alerts",
+      body: "Two records of events in the window: the flares GOES saw, and the messages SWPC issued. Both need a window of 93 days or less. The steps use 7 days.",
+      targets: ["space.flares", "space.alerts"],
+      enter: week,
+    },
+    {
+      id: "flares",
+      title: "The flare list",
+      body: "Each flare in the window from the GOES X-ray flux: its peak time, its class (C, M or X with the multiplier, as M2.4) and how long it lasted, newest first; the longest lists fold behind a more link.",
+      targets: ["space.flares"],
+      enter: week,
+    },
+    {
+      id: "frame",
+      title: "Pointing and clicking",
+      body: "Point at a flare and its band lights on the stack's X-ray row; click it, or press Enter on it, and the window closes in on the flare so the stack shows it and what followed. Back to returns to the window you had.",
+      tryIt: "Click a flare, then go back.",
+      targets: ["space.flares", "space.row.xray"],
+      enter: week,
+    },
+    {
+      id: "alerts",
+      title: "Alerts",
+      body: "SWPC's messages in the window, newest on the left, one card each: its product code, headline, when it was issued and how long ago. The card's edge colour says its kind.",
+      targets: ["space.alerts"],
+      enter: week,
+    },
+    {
+      id: "kinds",
+      title: "Kinds of message",
+      body: "A watch says conditions are expected (a geomagnetic storm watch after a CME leaves the Sun); a warning that they are imminent or under way; an alert that a threshold has been crossed; a summary closes an event with its peak. Click a card for the message in full, as SWPC wrote it.",
+      tryIt: "Open a card.",
+      targets: ["space.alerts"],
+      enter: week,
+    },
+    {
+      id: "done",
+      title: "That's flares and alerts",
+      body: "The stack's alert ticks and flare bands mark the same events on the time axis.",
+      targets: ["help"],
+    },
+  ],
+};

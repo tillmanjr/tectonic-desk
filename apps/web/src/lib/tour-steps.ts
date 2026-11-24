@@ -821,6 +821,7 @@ export const SPACE: Tour = {
       title: "Flares",
       body: "The window's flares from the GOES X-ray flux, by class and peak time. Point at one to light its band on the stack; click it to frame the stack on the flare.",
       targets: ["space.flares"],
+      detour: { tour: "space-flares", label: "Flares and alerts, in detail" },
       enter: week,
     },
     {
