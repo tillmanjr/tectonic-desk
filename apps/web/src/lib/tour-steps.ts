@@ -1,5 +1,6 @@
 import { DEFAULT_HALF_KM, type Section } from "./section.js";
 import type { MapView } from "./mapview.js";
+import type { MarkDraft } from "./marks.js";
 import type { StepContext, Tour } from "./tour.js";
 
 /**
@@ -569,4 +570,151 @@ export const VOLCANOES: Tour = {
   ],
 };
 
-export const TOURS: readonly Tour[] = [ORIENTATION, MAP_TOOLS, EARTHQUAKES, MECHANISM, VOLCANOES];
+/** The group the Marks tour puts its examples in; it is taken out when the tour ends. */
+export const DEMO_GROUP_NAME = "Tour examples";
+
+/** The Marks tour's examples: Petrolia, Ridgecrest and Kīlauea, as the panels would mark them. */
+export const EXAMPLE_MARKS: readonly MarkDraft[] = [
+  {
+    kind: "event",
+    ref: EXAMPLE_EVENT.id,
+    name: "Petrolia 2021",
+    url: EXAMPLE_EVENT.url,
+    frame: "wc",
+    lon: -124.298,
+    lat: 40.3902,
+    headline: "M6.2 mw",
+    sub: "7km N of Petrolia, CA",
+    stamp: "2021-12-20T20:10:31.310Z",
+    mag: 6.2,
+    depthKm: 27.04,
+  },
+  {
+    kind: "event",
+    ref: "ci38457511",
+    name: "Ridgecrest mainshock",
+    url: "/earthquakes/wc?since=2019-07-04&until=2019-08-02&event=ci38457511",
+    frame: "wc",
+    lon: -117.5993,
+    lat: 35.7695,
+    headline: "M7.1 mw",
+    sub: "Ridgecrest Earthquake Sequence",
+    stamp: "2019-07-06T03:19:53.040Z",
+    mag: 7.1,
+    depthKm: 8,
+  },
+  {
+    kind: "volcano",
+    ref: String(EXAMPLE_VOLCANO.number),
+    name: "Kīlauea",
+    url: EXAMPLE_VOLCANO.url,
+    frame: "world",
+    lon: -155.287,
+    lat: 19.421,
+    headline: "Kilauea",
+    sub: "United States · Eastern Pacific Volcanic Regions",
+    stamp: null,
+    mag: null,
+    depthKm: null,
+  },
+];
+
+/** Opens the marks overlay over the example event, on a group and in a mode, with the examples in. */
+async function showMarks(
+  ctx: StepContext,
+  mode: "list" | "panels" | "matrix",
+  all = false,
+): Promise<void> {
+  const group = ctx.demoMarks();
+  const show = mode === "list" ? "" : `&show=${mode}`;
+  await ctx.go(`${EXAMPLE_EVENT.url}&marks=${all ? "all" : group}${show}`);
+}
+
+export const MARKS: Tour = {
+  id: "marks",
+  title: "Marks",
+  blurb: "Keeping events and volcanoes, grouping them, and comparing them side by side.",
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Marks",
+      body: "Marks keep the events and volcanoes you want to come back to, with the view you found them in, in groups of your own. They live in this browser. For this tour three examples go into a group called Tour examples, and come out again when it ends.",
+      targets: [],
+      enter: showExample,
+    },
+    {
+      id: "mark",
+      title: "Marking",
+      body: "Under the name in every event and volcano panel. It asks for a name (the headline and place to start with) and saves the mark with the view you are in: page, region, window and selection. The star fills once it is marked.",
+      tryIt: "Mark this event; it stays in your marks after the tour.",
+      targets: ["detail.mark"],
+      enter: showExample,
+    },
+    {
+      id: "open",
+      title: "Your marks",
+      body: "The header's Marks button, with your count, opens them over whatever page you are on; closing them leaves that page as it was.",
+      targets: ["marks"],
+      enter: showExample,
+    },
+    {
+      id: "rail",
+      title: "Groups",
+      body: "All your marks, then each group with its count, in an order you set. New group adds one; the file controls at the foot export and import them. A mark can sit in any number of groups.",
+      targets: ["marks.rail"],
+      enter: (ctx) => showMarks(ctx, "list", true),
+    },
+    {
+      id: "row",
+      title: "A mark",
+      body: "A thumbnail of where it is, its name (click to rename), the facts it was marked with, when it was marked, and a chip for every group to put it in or take it out. Open here selects it in the page you are on; Open view goes back to the view it was marked in.",
+      targets: ["marks.row"],
+      enter: (ctx) => showMarks(ctx, "list", true),
+    },
+    {
+      id: "group",
+      title: "A group",
+      body: "The example group. Its marks keep their own order (the arrows beside each), and the group can be renamed, moved up or down the list, or deleted without touching the marks. Show events stacks their panels; Compare sets them against each other.",
+      targets: ["marks.grouphead"],
+      enter: (ctx) => showMarks(ctx, "list"),
+    },
+    {
+      id: "panels",
+      title: "Stacked panels",
+      body: "Every mark of the group as its full panel, one under another: origin, mechanism, impact and sequence for an event, the GVP record, status and eruptions for a volcano.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "panels"),
+    },
+    {
+      id: "compare",
+      title: "Compare",
+      body: "Each pair once, in a staircase: a card reads from the mark on its left to the mark above it, with the distance between them, the time from one to the other, and the change in magnitude and depth where both are events. A volcano is dated from the onset of its latest eruption.",
+      targets: ["marks.main"],
+      enter: (ctx) => showMarks(ctx, "matrix"),
+    },
+    {
+      id: "io",
+      title: "Export and import",
+      body: "Export writes every mark and group to a JSON file; import reads one back, either merged into what is here (adding what is missing) or replacing it, after saying what the file holds.",
+      targets: ["marks.io"],
+      enter: (ctx) => showMarks(ctx, "list"),
+    },
+    {
+      id: "done",
+      title: "That's marks",
+      body: "The example group goes when the tour ends; anything you marked yourself stays.",
+      targets: ["help"],
+      enter: showExample,
+    },
+  ],
+};
+
+export const TOURS: readonly Tour[] = [
+  ORIENTATION,
+  MAP_TOOLS,
+  EARTHQUAKES,
+  MECHANISM,
+  VOLCANOES,
+  MARKS,
+];

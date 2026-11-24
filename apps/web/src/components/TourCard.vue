@@ -10,6 +10,7 @@ import {
   TRACK_MS,
   unionBox,
   type Box,
+  type Dock,
 } from "../lib/tour-target.js";
 
 /**
@@ -35,7 +36,9 @@ const stepKey = computed(() => {
   return a === null ? null : { targets: a.step.targets };
 });
 let targets: readonly string[] = [];
-const dock = computed(() => dockOf(box.value, window.innerHeight));
+/** Where the card sits; it moves only when it would cover the step's targets. */
+const dock = ref<Dock>("bottom");
+const card = ref<HTMLElement | null>(null);
 const missing = computed(
   () =>
     active.value !== null &&
@@ -65,6 +68,15 @@ function track(): void {
   const els = targetElements(targets);
   const b = unionBox(els);
   box.value = b;
+  const c = card.value;
+  if (c !== null) {
+    dock.value = dockOf(
+      b,
+      dock.value,
+      { width: c.offsetWidth, height: c.offsetHeight },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+  }
   if (b === null) {
     misses.value++;
     return;
@@ -121,6 +133,7 @@ onUnmounted(stop);
     <div v-if="spot !== null" class="tourspot" :style="spot" aria-hidden="true"></div>
     <div v-else class="tourdim" aria-hidden="true"></div>
     <section
+      ref="card"
       class="tourcard"
       :class="dock"
       role="dialog"
@@ -140,6 +153,14 @@ onUnmounted(stop);
         <b>Try it.</b> {{ active.step.tryIt }}
       </p>
       <p v-if="missing" class="tourmiss">This part is not on screen right now.</p>
+      <button
+        v-if="tour.following.value !== null"
+        type="button"
+        class="tourdetour"
+        @click="tour.continueOn()"
+      >
+        Continue to {{ tour.following.value.title }} →
+      </button>
       <button
         v-if="active.step.detour !== undefined"
         type="button"

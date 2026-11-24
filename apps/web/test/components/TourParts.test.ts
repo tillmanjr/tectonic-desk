@@ -73,11 +73,11 @@ function setup() {
 }
 
 /** A target element with a fixed box. */
-function target(name: string, top: number) {
+function target(name: string, top: number, left = 10) {
   const e = document.createElement("div");
   e.dataset.tour = name;
   e.getBoundingClientRect = () =>
-    ({ left: 10, top, right: 110, bottom: top + 40, width: 100, height: 40 }) as DOMRect;
+    ({ left, top, right: left + 100, bottom: top + 40, width: 100, height: 40 }) as DOMRect;
   const scroll = vi.fn();
   e.scrollIntoView = scroll;
   document.body.append(e);
@@ -116,10 +116,65 @@ describe("TourCard", () => {
     expect(w.find(".tourbtn").attributes("disabled")).toBeDefined();
     expect(document.activeElement?.textContent.trim()).toBe("Next");
     expect(w.find(".tourspot").attributes("style")).toContain("left: 4px; top: 894px");
-    expect(w.find(".tourcard").classes()).toContain("top");
+    expect(w.find(".tourcard").classes()).toContain("bottom");
     expect(t1.scroll).toHaveBeenCalledWith({ block: "center", behavior: "smooth" });
     vi.advanceTimersByTime(TRACK_MS * 2);
     expect(t1.scroll).toHaveBeenCalledTimes(1);
+    w.unmount();
+  });
+
+  it("moves the card only when it would cover the target", async () => {
+    const size = vi
+      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains("tourcard") ? 200 : 0;
+      });
+    const width = vi
+      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains("tourcard") ? 440 : 0;
+      });
+    const { tour, mountIt } = setup();
+    const w = mountIt(TourCard);
+    target("t1", 600, 450);
+    await tour.start("orientation");
+    await nextTick();
+    await nextTick();
+    vi.advanceTimersByTime(TRACK_MS);
+    await nextTick();
+    expect(w.find(".tourcard").classes()).toContain("top");
+    await tour.next();
+    vi.advanceTimersByTime(TRACK_MS * 2);
+    await nextTick();
+    expect(w.find(".tourcard").classes()).toContain("top");
+    size.mockRestore();
+    width.mockRestore();
+    w.unmount();
+  });
+
+  it("lets a lookup that lands after the card has gone pass", async () => {
+    const { tour, mountIt } = setup();
+    const w = mountIt(TourCard);
+    target("t1", 100);
+    const started = tour.start("orientation");
+    // The step's first lookup is queued behind this render; the card goes before it runs.
+    await nextTick();
+    w.unmount();
+    await started;
+    expect(document.querySelector(".tourcard")).toBeNull();
+    await tour.exit();
+  });
+
+  it("offers to go on to the next tour from a last step", async () => {
+    const { tour, mountIt } = setup();
+    const w = mountIt(TourCard);
+    await tour.start("orientation", 2);
+    await nextTick();
+    expect(w.find(".tourdetour").text()).toBe("Continue to Two →");
+    await w.find(".tourdetour").trigger("click");
+    await flushPromises();
+    expect(w.find(".tourpath").text()).toBe("Two · 1 of 1");
+    await tour.exit();
     w.unmount();
   });
 

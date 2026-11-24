@@ -70,7 +70,7 @@ import {
 import { createStatusPoll } from "../lib/status.js";
 import { createTheme } from "../lib/theme.js";
 import { createTour, createTourProgress, TOUR, TOUR_PROGRESS } from "../lib/tour.js";
-import { TOURS } from "../lib/tour-steps.js";
+import { DEMO_GROUP_NAME, EXAMPLE_MARKS, TOURS } from "../lib/tour-steps.js";
 import {
   createVolcanoStore,
   parseVolcanoFilter,
@@ -260,7 +260,32 @@ function largestEvent(): string | null {
   }
   return best?.id ?? null;
 }
-const tour = createTour(TOURS, inject(TOUR_PROGRESS, null) ?? createTourProgress(), {
+const tourProgress = inject(TOUR_PROGRESS, null) ?? createTourProgress();
+/** Takes the tour's example marks out of the reader's marks, if any are in. */
+function clearDemoMarks(): void {
+  const demo = tourProgress.doc.value.demo;
+  if (demo === null) return;
+  for (const id of demo.marks) marks.remove(id);
+  marks.removeGroup(demo.group);
+  tourProgress.setDemo(null);
+}
+/** The example marks' group, made with its marks on first use; a remembered one is reused. */
+function demoMarks(): string {
+  const had = tourProgress.doc.value.demo;
+  if (had !== null && marks.groups.value.some((g) => g.id === had.group)) return had.group;
+  clearDemoMarks();
+  const group = marks.addGroup(DEMO_GROUP_NAME);
+  const ids = EXAMPLE_MARKS.map((draft) => {
+    const m = marks.add(draft);
+    marks.setMember(m.id, group.id, true);
+    return m.id;
+  });
+  tourProgress.setDemo({ group: group.id, marks: ids });
+  return group.id;
+}
+// A page left in the middle of the Marks tour left its examples behind; take them out.
+clearDemoMarks();
+const tour = createTour(TOURS, tourProgress, {
   page: () => page.value,
   goPage: async (p) => {
     await router.replace({ path: pagePath(p, routeRegion.value), query: withoutSelection() });
@@ -279,6 +304,8 @@ const tour = createTour(TOURS, inject(TOUR_PROGRESS, null) ?? createTourProgress
   restore: async (to) => {
     await router.replace(to);
   },
+  demoMarks,
+  clearDemoMarks,
 });
 provide(TOUR, tour);
 /** A plain visit (no query) may be offered the tour; a shared link goes straight to what it names. */

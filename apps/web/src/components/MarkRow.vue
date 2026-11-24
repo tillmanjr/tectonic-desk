@@ -41,7 +41,7 @@ function onKey(e: KeyboardEvent): void {
 </script>
 
 <template>
-  <div class="markrow-item">
+  <div class="markrow-item" data-tour="marks.row">
     <div class="morder">
       <button
         type="button"

@@ -56,6 +56,8 @@ export function fakeStage(page: Page = "earthquakes", location = "/earthquakes?x
       return Promise.resolve();
     }),
     selectLargest: vi.fn(),
+    demoMarks: vi.fn(() => "demo-group"),
+    clearDemoMarks: vi.fn(),
     go: vi.fn((url: string) => {
       state.location = url;
       return Promise.resolve();
