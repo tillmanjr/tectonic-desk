@@ -225,6 +225,12 @@ describe("tour content", () => {
       }
     }
     expect(DEEP_DIVES.every((d) => d.deep !== undefined)).toBe(true);
+    // Every deep dive runs on a page that has what it shows, wherever it is started.
+    for (const deep of DEEP_DIVES) {
+      for (const from of ["space", "volcanoes"] as const) {
+        expect(["earthquakes", "volcanoes", "active", "space"]).toContain(deep.pageFor(from));
+      }
+    }
   });
 
   it("does nothing to a map that is not there", async () => {

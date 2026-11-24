@@ -254,6 +254,7 @@ export const MAP_TOOLS: Tour = {
       body: "One pin of your own per map view, named if you like and kept in this browser, with the last 24 placements under Recent. Hold the pin for a moment to lift and move it.",
       tryIt: "Click the map to drop the pin.",
       targets: ["map.pin", "map.pinbar", "map.stage"],
+      detour: { tour: "map-pin", label: "Your pin, in detail" },
       enter: async (ctx) => {
         const mv = await ctx.map();
         if (mv !== null && !mv.pin.open.value) mv.pin.toggle();

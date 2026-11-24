@@ -319,3 +319,68 @@ export const MAP_MEASURE: Tour = {
     },
   ],
 };
+
+/** The pin bar open on the current map, as the reader would open it. */
+async function pinBar(ctx: StepContext): Promise<void> {
+  const mv = await ctx.map();
+  if (mv !== null && !mv.pin.open.value) mv.pin.toggle();
+}
+
+export const MAP_PIN: Tour = {
+  id: "map-pin",
+  title: "Pin",
+  blurb: "Your own pin on each map view: placing, naming, moving, and the recent placements.",
+  deep: { area: "Map" },
+  pageFor: (p) => (p === "space" ? "active" : p),
+  steps: [
+    {
+      id: "intro",
+      title: "Your pin",
+      body: "One pin of your own on each map view, Global and West Coast, kept in this browser: a field site, a station, home. This deep dive opens the pin bar but leaves your pin to you.",
+      targets: ["map.pin"],
+    },
+    {
+      id: "bar",
+      title: "The pin bar",
+      body: "Pin opens a bar under the header for this view's pin: its coordinates, a name, and what you can do with it. With no pin yet, the map is ready for one straight away. Pin again, or ×, closes the bar.",
+      targets: ["map.pinbar"],
+      enter: pinBar,
+    },
+    {
+      id: "place",
+      title: "Placing it",
+      body: "While placing, a ghost pin follows the pointer and the bar reads its latitude and longitude in signed decimal degrees, four places; click to set it down, Esc to stop. The pin is a magenta teardrop, unlike any other mark on the map, its point on the spot.",
+      tryIt: "Click the map to drop your pin.",
+      targets: ["map.pinbar", "map.stage"],
+      enter: pinBar,
+    },
+    {
+      id: "name",
+      title: "Naming it",
+      body: "Name is optional; it shows with the coordinates when the pointer rests on the pin.",
+      targets: ["map.pinbar"],
+      enter: pinBar,
+    },
+    {
+      id: "move",
+      title: "Moving it",
+      body: "Press and hold the pin for about half a second: it lifts, follows the pointer and sets down where you let go, so a stray drag across the map never moves it. A quick press opens the bar instead. Re-place drops it somewhere new from the bar; Remove takes it off this view.",
+      tryIt: "Hold the pin, then drag it.",
+      targets: ["map.pinbar", "map.stage"],
+      enter: pinBar,
+    },
+    {
+      id: "recent",
+      title: "Recent",
+      body: "Recent lists your last 24 placements, from both views, each with when it was placed, its name, coordinates and view. A pin moved or removed keeps its entry.",
+      targets: ["map.pinbar"],
+      enter: pinBar,
+    },
+    {
+      id: "done",
+      title: "That's the pin",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
