@@ -211,3 +211,62 @@ export const SPACE_FLARES: Tour = {
     },
   ],
 };
+
+export const SPACE_AURORA: Tour = {
+  id: "space-aurora",
+  title: "Aurora frames and playback",
+  blurb: "The OVATION Prime oval: the two polar maps, times and power, the legend, and the frames.",
+  deep: { area: "Space" },
+  pageFor: () => "space",
+  steps: [
+    {
+      id: "intro",
+      title: "The aurora oval",
+      body: "SWPC's OVATION Prime model of where aurora can be seen, over both poles. Unlike the rest of the page it always starts on the latest frame, whatever the window.",
+      targets: ["space.aurora"],
+      enter: week,
+    },
+    {
+      id: "maps",
+      title: "The polar maps",
+      body: "Each hemisphere seen from above the pole, noon at the top and midnight at the bottom, with the night side shaded and the coastlines drawn; the oval sits on the night side and widens toward the equator as activity rises.",
+      targets: ["space.aurora.maps"],
+      enter: week,
+    },
+    {
+      id: "times",
+      title: "Observed and forecast",
+      body: "Each frame is computed from the solar wind observed at L1 and is a forecast for 30 to 90 minutes later, when that wind reaches Earth: both times are given. Under them the hemispheric power, the energy going into each hemisphere's aurora, in GW.",
+      targets: ["space.aurora.times"],
+      enter: week,
+    },
+    {
+      id: "legend",
+      title: "Chance of aurora",
+      body: "The bands are the probability of aurora overhead at each point, at 10, 30, 50, 70 and 90 %. Aurora low on the horizon can be seen a few hundred kilometres equatorward of the band overhead.",
+      targets: ["space.aurora.legend"],
+      enter: week,
+    },
+    {
+      id: "frames",
+      title: "Frames",
+      body: "This site keeps three days of frames. Drag the slider to any of them; Play steps through them half an hour at a time and Pause holds it; Latest goes back to the newest and follows each new frame. While a past frame is shown, a dashed line marks its forecast time on the stack, so it can be read against Kp and Bz.",
+      tryIt: "Play the last three days.",
+      targets: ["space.aurora.scrub"],
+      enter: week,
+    },
+    {
+      id: "map",
+      title: "On the other maps",
+      body: "The same oval can be laid over the earthquake and volcano maps with the Aurora layer, on the night side of the latest frame.",
+      targets: ["space.aurora"],
+      enter: week,
+    },
+    {
+      id: "done",
+      title: "That's the aurora",
+      body: "Every deep dive is in the Help menu, under Deep dives.",
+      targets: ["help"],
+    },
+  ],
+};
