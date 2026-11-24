@@ -34,14 +34,14 @@ const scale = (mv: MapView): "global" | "regional" =>
   mv.view.value.frame.global ? "global" : "regional";
 
 /** Draws the example section for the map's scale and zooms to it. */
-async function showSection(ctx: StepContext): Promise<void> {
+export async function showSection(ctx: StepContext): Promise<void> {
   const mv = await ctx.map();
   if (mv === null) return;
   const s = EXAMPLE_SECTIONS[scale(mv)];
   ctx.setSection(s);
   mv.zoomTo((s.a[0] + s.b[0]) / 2, (s.a[1] + s.b[1]) / 2);
 }
-async function hideSection(ctx: StepContext): Promise<void> {
+export async function hideSection(ctx: StepContext): Promise<void> {
   ctx.setSection(null);
   const mv = await ctx.map();
   mv?.reset();
@@ -223,6 +223,7 @@ export const MAP_TOOLS: Tour = {
       body: "Click two points to draw a section line; the events within its corridor plot at true scale under the map, with the relief along the line. Here, a line across the subduction zone, zoomed in.",
       tryIt: "Drag either end of the line and watch the profile follow.",
       targets: ["map.section", "map.stage"],
+      detour: { tour: "map-section", label: "Cross-sections and the profile, in detail" },
       enter: showSection,
       leave: hideSection,
     },
@@ -372,6 +373,7 @@ export const EARTHQUAKES: Tour = {
       body: "With a section line on the map, the events within its corridor plot here against distance along the line and depth, at true scale, over the relief along it. Exaggerate the vertical ×2 or ×4, widen or narrow the corridor, or clear the line from the title.",
       tryIt: "Drag an end of the line on the map; the profile follows.",
       targets: ["section.profile"],
+      detour: { tour: "map-section", label: "Cross-sections and the profile, in detail" },
       // The profile does not depend on the selection, and the event panel would cover it.
       enter: async (ctx) => {
         await ctx.go(EXAMPLE_EVENT.window);
