@@ -406,6 +406,7 @@ export const EARTHQUAKES: Tour = {
       title: "Frequency–magnitude",
       body: "Cumulative N(≥M) over incremental counts, with b from the Aki (1965) maximum-likelihood estimator and the Shi & Bolt (1982) uncertainty above Mc. Magnitude types are mixed and sequences are not declustered, so read it as descriptive.",
       targets: ["chart.fm"],
+      detour: { tour: "chart-fm", label: "Reading this chart, in detail" },
     },
     {
       id: "depth",
