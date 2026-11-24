@@ -148,6 +148,7 @@ export const ORIENTATION: Tour = {
       title: "Settings",
       body: "UTC or your browser's time zone for every date and time, and a light or dark theme.",
       targets: ["settings"],
+      detour: { tour: "settings", label: "Settings and hints, in detail" },
     },
     {
       id: "help",
