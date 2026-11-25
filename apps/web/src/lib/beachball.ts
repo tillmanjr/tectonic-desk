@@ -49,6 +49,15 @@ function rgb(s: string): Rgb {
 }
 
 /**
+ * The colour of a T or P letter on a mark filled with `ink`: white on a dark ink, the dark theme's
+ * page colour on a light one, so the letter reads in either theme.
+ */
+function letterOn(ink: Rgb): string {
+  const luma = (0.2126 * ink.r + 0.7152 * ink.g + 0.0722 * ink.b) / 255;
+  return luma > 0.5 ? "#0c1216" : "#ffffff";
+}
+
+/**
  * A lower-hemisphere equal-area beachball as a PNG data URL, rendered at
  * twice `px` for sharpness. Compressional quadrants take `fill`, dilatational
  * take `tension`; the rim and the T/P markers take `ink`. Empty string when
@@ -115,7 +124,7 @@ export function beachballUrl(
     const axes = storedAxes(m) ?? axesFromTensor(tensor);
     for (const [label, axis] of axisPairs(axes)) {
       const [east, north] = projectAxis(axis);
-      axisMark(g, n, n / 2 + east * r0, n / 2 - north * r0, label, ink.css, tension.css, true);
+      axisMark(g, n, n / 2 + east * r0, n / 2 - north * r0, label, ink.css, letterOn(ink), true);
     }
   }
   const url = canvas.toDataURL();
@@ -128,7 +137,10 @@ const axisPairs = (axes: { t: Axis; p: Axis }): (readonly ["T" | "P", Axis])[] =
   ["P", axes.p],
 ];
 
-/** A T or P mark: filled in `ink`, or a dashed ring when the near rim of a tilted bowl hides it. */
+/**
+ * A T or P mark with its letter: a disc filled in `ink` with the letter in `paper`, or a dashed
+ * ring with the letter in `ink` when the near rim of a tilted bowl hides it.
+ */
 function axisMark(
   g: CanvasRenderingContext2D,
   n: number,
@@ -195,6 +207,7 @@ export function bowlScene(
   const r0 = n / 2 - 3;
   const fill = rgb3(rgb(colors.fill));
   const tension = rgb(colors.tension);
+  const ink = rgb(colors.ink);
   return {
     tensor,
     axes: storedAxes(m) ?? axesFromTensor(tensor),
@@ -205,8 +218,8 @@ export function bowlScene(
     }),
     fill,
     tension: rgb3(tension),
-    ink: rgb(colors.ink).css,
-    paper: tension.css,
+    ink: ink.css,
+    paper: letterOn(ink),
     n,
     r0,
   };

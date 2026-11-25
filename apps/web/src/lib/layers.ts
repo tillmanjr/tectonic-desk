@@ -16,6 +16,7 @@ import type { Clock } from "./clock.js";
 import { densityLegendFor, type DensityLegend } from "./density.js";
 import { fmtFloor, fmtInt, fmtMag, fmtShort, placeOf, type Zone } from "./format.js";
 import { TIP_LIFT, type MapView } from "./mapview.js";
+import { distanceKm } from "./sequence.js";
 import { hasShakeMap, loadShakeMap, mmiAt, mmiText } from "./shakemap.js";
 import {
   aviationColor,
@@ -128,8 +129,9 @@ export interface ShakeLayer {
 }
 
 /**
- * The selected earthquake's USGS ShakeMap as intensity bands under the markers, with the MMI
- * under the pointer as the map's readout. Loads only while shown, once per event. Call inside setup.
+ * The selected earthquake's USGS ShakeMap as intensity bands under the markers. The map's readout
+ * is the MMI under the pointer and the point's distance from the epicentre. Loads only while
+ * shown, once per event. Call inside setup.
  */
 export function useShakeLayer(o: { api: ApiClient; catalog: Catalog; mv: MapView }): ShakeLayer {
   const { api, catalog, mv } = o;
@@ -185,7 +187,12 @@ export function useShakeLayer(o: { api: ApiClient; catalog: Catalog; mv: MapView
           ? null
           : ([lon, lat]) => {
               const v = mmiAt(m.grid, lon, lat);
-              return v === null ? null : mmiText(v);
+              const text = v === null ? null : mmiText(v);
+              // a response cached before the server sent the epicentre falls back to the loaded event
+              const e = m.epicentre ?? catalog.selected.value;
+              if (text === null || e === null) return text;
+              const km = distanceKm(e, { latitude: lat, longitude: lon });
+              return `${text} · ${fmtInt(Math.round(km))} km from the epicentre`;
             };
     },
     { immediate: true },

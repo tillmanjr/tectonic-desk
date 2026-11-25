@@ -25,6 +25,7 @@ export function shakeMap(over: Partial<ApiShakeMap> = {}): ApiShakeMap {
     mapStatus: "reviewed",
     processed: "2026-10-12T06:00:00.000Z",
     maxMmi: 7.2,
+    epicentre: { longitude: -175.1452, latitude: -18.723 },
     grid: coneGrid(),
     ...over,
   };

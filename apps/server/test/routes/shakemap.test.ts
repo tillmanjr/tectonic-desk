@@ -12,6 +12,7 @@ const MAP: ShakeMap = {
   mapStatus: "reviewed",
   processed: new Date("2026-11-20T01:02:03Z"),
   maxMmi: 7.4,
+  epicentre: { longitude: 10.5, latitude: 20.5 },
   grid: { lon0: 10, lat0: 20, dLon: 1, dLat: 1, nx: 2, ny: 2, mmi: [1, 2, 3, null] },
 };
 
