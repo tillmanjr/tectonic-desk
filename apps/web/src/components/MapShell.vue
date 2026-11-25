@@ -17,7 +17,9 @@ import PinBar from "./PinBar.vue";
 import type { AuroraLegend } from "../lib/aurora-map.js";
 import type { DensityLegend } from "../lib/density.js";
 import { AGE_CODES, FAULT_AGES } from "../lib/faults.js";
+import { meridianLine } from "../lib/centre.js";
 import { FIELD_CHOICES, viewOf } from "../lib/fields.js";
+import { pathOf } from "../lib/geo.js";
 import { fmtClock } from "../lib/format.js";
 import { vHint } from "../lib/hint.js";
 import { AURORA, useInjected, ZONE } from "../lib/keys.js";
@@ -353,6 +355,12 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
               :frame="mv.view.value.frame"
               :path="mv.view.value.path"
               :basemap="mv.basemap.value"
+            />
+            <!-- The centre's meridian, faint, so the reader sees where the map is turned to. -->
+            <path
+              v-if="mv.view.value.frame.global"
+              class="centreline"
+              :d="pathOf(mv.view.value.path, meridianLine(mv.centre.value))"
             />
             <MapField
               v-if="mv.fieldRaster.value !== null"

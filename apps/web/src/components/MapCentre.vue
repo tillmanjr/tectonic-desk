@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { geoGraticule, geoOrthographic, geoPath } from "d3-geo";
-import type { FeatureCollection, LineString } from "geojson";
+import type { FeatureCollection } from "geojson";
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import { loadGlobeLandOnce } from "../lib/basemap-cache.js";
 import {
   CENTRE_NUDGE,
   DEFAULT_CENTRE,
+  HOVER_GRACE_MS,
   fmtLon,
   lonOfOffset,
+  meridianLine,
   offsetOf,
   snapOffset,
   wrapLon,
@@ -18,15 +20,18 @@ import { vHint } from "../lib/hint.js";
 import type { MapView } from "../lib/mapview.js";
 
 /**
- * The global map's Centre control, over the map's bottom-left corner: ‹ › turn it by 15°, the slider runs 180° either side of 150°E
- * with a detent there, ↺ goes back. While the control is in use a small globe turns with it; the map
- * re-projects when the slider is let go.
+ * The global map's Centre control, over the map's bottom-left corner: ‹ › turn it by 15°, the slider
+ * runs 180° either side of 150°E with a detent there, ↺ goes back. While the control is pointed at or
+ * in use a small globe turns with it, and the globe can be dragged left or right itself; the map
+ * re-projects when the slider or the globe is let go.
  */
 const props = defineProps<{ mv: MapView }>();
 const { mv } = props;
 
 /** Globe size in px. */
 const GLOBE = 132;
+/** Degrees a globe drag turns per px: its width spans the visible hemisphere. */
+const DEG_PER_PX = 180 / (GLOBE - 6);
 
 const draft = ref(offsetOf(mv.centre.value));
 watch(mv.centre, (lon) => {
@@ -37,7 +42,24 @@ const draftLon = computed(() => lonOfOffset(draft.value));
 const root = ref<HTMLElement | null>(null);
 const focused = ref(false);
 const pressing = ref(false);
-const shown = computed(() => focused.value || pressing.value);
+const hovering = ref(false);
+const shown = computed(() => focused.value || pressing.value || hovering.value);
+let leaveTimer: ReturnType<typeof setTimeout> | null = null;
+function stopLeave(): void {
+  if (leaveTimer !== null) clearTimeout(leaveTimer);
+  leaveTimer = null;
+}
+function onEnter(): void {
+  stopLeave();
+  hovering.value = true;
+}
+function onLeave(): void {
+  stopLeave();
+  leaveTimer = setTimeout(() => {
+    leaveTimer = null;
+    hovering.value = false;
+  }, HOVER_GRACE_MS);
+}
 // The map card clips its contents, so the globe lives on the body, fixed beside the control: to
 // its right, bottoms level, clear of the hint that opens above or below it.
 const place = ref({ x: 0, y: 0 });
@@ -58,11 +80,6 @@ async function loadLand(): Promise<void> {
   }
 }
 
-function meridian(lon: number): LineString {
-  const coordinates: [number, number][] = [];
-  for (let lat = -90; lat <= 90; lat += 5) coordinates.push([lon, lat]);
-  return { type: "LineString", coordinates };
-}
 const graticule = geoGraticule().step([30, 30])();
 const globe = computed(() => {
   const projection = geoOrthographic()
@@ -79,8 +96,8 @@ const globe = computed(() => {
     sphere: pathOf(path, { type: "Sphere" }),
     graticule: pathOf(path, graticule),
     land: land.value === null ? "" : pathOf(path, land.value),
-    home: pathOf(path, meridian(DEFAULT_CENTRE)),
-    now: pathOf(path, meridian(draftLon.value)),
+    home: pathOf(path, meridianLine(DEFAULT_CENTRE)),
+    now: pathOf(path, meridianLine(draftLon.value)),
   };
 });
 
@@ -102,16 +119,37 @@ function onFocusOut(e: FocusEvent): void {
   if (e.relatedTarget instanceof Node && root.value?.contains(e.relatedTarget) === true) return;
   focused.value = false;
 }
+/** The move handler of a globe drag in progress. */
+const drag = shallowRef<((e: PointerEvent) => void) | null>(null);
 function onPointerUp(): void {
   pressing.value = false;
   document.removeEventListener("pointerup", onPointerUp);
+  const move = drag.value;
+  if (move === null) return;
+  document.removeEventListener("pointermove", move);
+  drag.value = null;
+  commit();
 }
 function onPointerDown(): void {
   pressing.value = true;
   document.addEventListener("pointerup", onPointerUp);
 }
+function onGlobeDown(e: PointerEvent): void {
+  e.preventDefault();
+  const x = e.clientX;
+  const from = draftLon.value;
+  // Dragging the surface right brings the west into the middle.
+  const move = (ev: PointerEvent): void => {
+    const lon = wrapLon(Math.round(from - (ev.clientX - x) * DEG_PER_PX));
+    draft.value = snapOffset(offsetOf(lon));
+  };
+  drag.value = move;
+  document.addEventListener("pointermove", move);
+  onPointerDown();
+}
 onBeforeUnmount(() => {
-  document.removeEventListener("pointerup", onPointerUp);
+  stopLeave();
+  onPointerUp();
 });
 </script>
 
@@ -124,6 +162,8 @@ onBeforeUnmount(() => {
     @focusin="focused = true"
     @focusout="onFocusOut"
     @pointerdown="onPointerDown"
+    @pointerenter="onEnter"
+    @pointerleave="onLeave"
   >
     <span
       v-hint="
@@ -180,10 +220,18 @@ onBeforeUnmount(() => {
       <div
         v-if="shown"
         class="cglobe"
+        :class="{ dragging: drag !== null }"
         :style="{ left: `${String(place.x)}px`, top: `${String(place.y)}px` }"
         aria-hidden="true"
+        @pointerenter="onEnter"
+        @pointerleave="onLeave"
       >
-        <svg :width="GLOBE" :height="GLOBE" :viewBox="`0 0 ${String(GLOBE)} ${String(GLOBE)}`">
+        <svg
+          :width="GLOBE"
+          :height="GLOBE"
+          :viewBox="`0 0 ${String(GLOBE)} ${String(GLOBE)}`"
+          @pointerdown="onGlobeDown"
+        >
           <path class="gsea" :d="globe.sphere" />
           <path class="ggrat" :d="globe.graticule" />
           <path class="gland" :d="globe.land" />
@@ -194,6 +242,7 @@ onBeforeUnmount(() => {
         <span class="gcap"
           ><b>{{ fmtLon(draftLon) }}</b> · default {{ fmtLon(DEFAULT_CENTRE) }}</span
         >
+        <span class="gtip">Drag the globe to turn the map</span>
       </div>
     </Teleport>
   </div>

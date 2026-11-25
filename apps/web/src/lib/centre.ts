@@ -1,3 +1,5 @@
+import type { LineString } from "geojson";
+
 /**
  * The global map's centre longitude: the default, its place in the route (`?lon=`), the slider that
  * runs either side of the default with a detent there, and how a longitude reads.
@@ -9,6 +11,15 @@ export const DEFAULT_CENTRE = 150;
 export const CENTRE_DETENT = 5;
 /** Degrees a ‹ or › press turns the map. */
 export const CENTRE_NUDGE = 15;
+/** How long the centre globe stays after the pointer leaves, so the pointer can cross to it. */
+export const HOVER_GRACE_MS = 300;
+
+/** A meridian, pole to pole, sampled every 5° so projections curve it. */
+export function meridianLine(lon: number): LineString {
+  const coordinates: [number, number][] = [];
+  for (let lat = -90; lat <= 90; lat += 5) coordinates.push([lon, lat]);
+  return { type: "LineString", coordinates };
+}
 
 /** A longitude in (−180, 180]. */
 export function wrapLon(lon: number): number {
