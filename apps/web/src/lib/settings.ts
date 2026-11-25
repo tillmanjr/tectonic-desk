@@ -5,9 +5,17 @@ export interface Settings {
   cardRows: { alone: number; combined: number };
   /** Whether the parts of the desk carry their ◆ deep-dive marks. */
   diveMarks: boolean;
+  /** How the event panel draws its beachball: the flat equal-area plot, or as the inside of a bowl. */
+  beachball: BeachballView;
 }
 
-export const DEFAULT_SETTINGS: Settings = { cardRows: { alone: 3, combined: 1 }, diveMarks: true };
+export type BeachballView = "flat" | "bowl";
+
+export const DEFAULT_SETTINGS: Settings = {
+  cardRows: { alone: 3, combined: 1 },
+  diveMarks: true,
+  beachball: "flat",
+};
 export const SETTINGS_KEY = "tectonic.settings";
 const MAX_ROWS = 20;
 
@@ -35,6 +43,7 @@ export function parseSettings(raw: string | null): Settings {
       combined: rowsOr(cr.combined, DEFAULT_SETTINGS.cardRows.combined),
     },
     diveMarks: typeof root.diveMarks === "boolean" ? root.diveMarks : DEFAULT_SETTINGS.diveMarks,
+    beachball: root.beachball === "bowl" ? "bowl" : DEFAULT_SETTINGS.beachball,
   };
 }
 
@@ -51,7 +60,7 @@ function readRaw(storage: StorageLike | null): string | null {
   }
 }
 
-/** Reader-tunable settings, persisted in localStorage; the ◆ marks switch is in the settings menu. */
+/** Reader-tunable settings, persisted in localStorage; the ◆ marks and beachball switches are in the settings menu. */
 export function createSettings(storage: StorageLike | null = localStorage): SettingsStore {
   const current = ref<Settings>(parseSettings(readRaw(storage)));
   return {

@@ -335,7 +335,7 @@ export const EARTHQUAKES: Tour = {
     {
       id: "mechanism",
       title: "Mechanism",
-      body: "The preferred moment tensor or first-motion solution as a lower-hemisphere, equal-area beachball with the T and P axes, both nodal planes (strike / dip / rake) and the faulting style. A low double-couple percentage is flagged, and planes rebuilt from the P and T axes say so. Other agencies' solutions follow.",
+      body: "The preferred moment tensor or first-motion solution as a lower-hemisphere, equal-area beachball with the T and P axes, both nodal planes (strike / dip / rake) and the faulting style. A low double-couple percentage is flagged, and planes rebuilt from the P and T axes say so. Other agencies' solutions follow. ⚙ Settings can draw the ball as the inside of a bowl instead.",
       targets: ["detail.mechanism"],
       enter: showExample,
       detour: { tour: "mechanism", label: "A deeper look at the focal mechanism" },
@@ -445,6 +445,20 @@ export const MECHANISM: Tour = {
       body: "Picture a small sphere around the hypocentre: every ray leaving the source pierces it. The beachball is its lower half seen from above, in an equal-area (Schmidt) projection, so north is up, the centre points straight down and the rim is horizontal. The lower half is drawn because rays to distant stations leave the source downward.",
       targets: ["mech.ball"],
       enter: showExample,
+    },
+    {
+      id: "bowl",
+      title: "Seen from inside",
+      body: "The plot is the view down into the lower half of the sphere, a bowl, yet a flat disc reads to most eyes as a dome seen from outside, and the correction has to be made in the head. Beachball: Bowl in ⚙ Settings, on for this step, shades the panel's ball as the inside of the sphere, lit from the upper left. It opens tilted 30° from the south and settles to 0°, which is the equal-area plot exactly. The slider tilts it from −60° (seen from the north) to +60°, and ↻ replays the settle. While tilted the plot is not equal-area and the wall under the near rim is hidden; a T or P behind the rim is a dashed ring. Map markers and cards stay flat.",
+      tryIt: "Drag the slider under the ball.",
+      targets: ["mech.ball"],
+      enter: async (ctx) => {
+        await showExample(ctx);
+        ctx.setSwitch("settings.beachball", true);
+      },
+      leave: (ctx) => {
+        ctx.setSwitch("settings.beachball", false);
+      },
     },
     {
       id: "quadrants",

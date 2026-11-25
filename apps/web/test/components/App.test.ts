@@ -167,7 +167,7 @@ describe("App", () => {
     });
     expect(wrapper.find(".mapcount").text()).toBe("Showing 1 of 1 events");
     expect(wrapper.find("th").text()).toBe("Time (UTC)");
-    expect(wrapper.find("button[data-hint^='Show every date']").exists()).toBe(false);
+    expect(wrapper.find("button[data-hint^='Show every date']").isVisible()).toBe(false);
     await wrapper.find(".settings-btn").trigger("click");
     await wrapper.find("button[data-hint^='Show every date']").trigger("click");
     await flushPromises();

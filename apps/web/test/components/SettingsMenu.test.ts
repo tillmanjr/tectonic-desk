@@ -4,10 +4,10 @@ import SettingsMenu from "../../src/components/SettingsMenu.vue";
 import { makeContext, mountWith } from "../support/mount.js";
 
 describe("SettingsMenu", () => {
-  it("opens to the zone, theme and marks controls, emits the zone toggle, and closes on Escape or an outside press", async () => {
+  it("opens to the zone, theme, beachball and marks controls, emits the zone toggle, and closes on Escape or an outside press", async () => {
     const ctx = await makeContext();
     const w = mountWith(SettingsMenu, ctx, { zone: "utc" });
-    expect(w.find(".settings-menu").exists()).toBe(false);
+    expect(w.find(".settings-menu").isVisible()).toBe(false);
     expect(w.find(".settings-btn").attributes("aria-expanded")).toBe("false");
     await w.find(".settings-btn").trigger("click");
     expect(w.find(".settings-btn").attributes("aria-expanded")).toBe("true");
@@ -15,6 +15,7 @@ describe("SettingsMenu", () => {
     expect(rows.map((r) => r.find(".slabel").text())).toEqual([
       "Times",
       "Theme",
+      "Beachball",
       "Deep dive marks",
     ]);
     expect(rows[0]?.find("button").text()).toBe("UTC");
@@ -23,7 +24,15 @@ describe("SettingsMenu", () => {
     expect(rows[1]?.find("button").text()).toBe("Theme: auto");
     await rows[1]?.find("button").trigger("click");
     expect(ctx.theme.mode.value).toBe("light");
-    const marks = rows[2]?.find("button");
+    const ball = rows[2]?.find("button");
+    expect(ball?.text()).toBe("Flat");
+    expect(ball?.attributes("aria-pressed")).toBe("false");
+    await ball?.trigger("click");
+    expect(ctx.settings.current.value.beachball).toBe("bowl");
+    expect(ball?.text()).toBe("Bowl");
+    await ball?.trigger("click");
+    expect(ctx.settings.current.value.beachball).toBe("flat");
+    const marks = rows[3]?.find("button");
     expect(marks?.text()).toBe("On");
     expect(marks?.attributes("aria-pressed")).toBe("true");
     await marks?.trigger("click");
@@ -34,15 +43,15 @@ describe("SettingsMenu", () => {
     // a press inside keeps it open; one outside closes it
     w.find(".settings-menu").element.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     await nextTick();
-    expect(w.find(".settings-menu").exists()).toBe(true);
+    expect(w.find(".settings-menu").isVisible()).toBe(true);
     document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     await nextTick();
-    expect(w.find(".settings-menu").exists()).toBe(false);
+    expect(w.find(".settings-menu").isVisible()).toBe(false);
     await w.find(".settings-btn").trigger("click");
     await w.find(".settings-menu button").trigger("keydown", { key: "Tab" });
-    expect(w.find(".settings-menu").exists()).toBe(true);
+    expect(w.find(".settings-menu").isVisible()).toBe(true);
     await w.find(".settings-menu button").trigger("keydown", { key: "Escape" });
-    expect(w.find(".settings-menu").exists()).toBe(false);
+    expect(w.find(".settings-menu").isVisible()).toBe(false);
     await w.find(".settings-btn").trigger("click");
     w.unmount();
     document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
