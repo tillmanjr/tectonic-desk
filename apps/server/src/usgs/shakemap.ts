@@ -108,8 +108,21 @@ export function parseCoverage(doc: unknown): ShakeGrid {
   };
 }
 
-/** The wire-ready ShakeMap for an event from its product and parsed grid. */
-export function shakeMapOf(eventId: string, p: ShakeProduct, grid: ShakeGrid): ShakeMap {
+/** The epicentre of a detail document, or null when its point lacks a coordinate. */
+export function epicentreOf(detail: DetailDocument): ShakeMap["epicentre"] {
+  const [longitude, latitude] = detail.geometry.coordinates;
+  return typeof longitude === "number" && typeof latitude === "number"
+    ? { longitude, latitude }
+    : null;
+}
+
+/** The wire-ready ShakeMap for an event from its product, parsed grid and epicentre. */
+export function shakeMapOf(
+  eventId: string,
+  p: ShakeProduct,
+  grid: ShakeGrid,
+  epicentre: ShakeMap["epicentre"],
+): ShakeMap {
   return {
     eventId,
     source: p.source,
@@ -117,6 +130,7 @@ export function shakeMapOf(eventId: string, p: ShakeProduct, grid: ShakeGrid): S
     mapStatus: p.mapStatus,
     processed: p.processed,
     maxMmi: p.maxMmi,
+    epicentre,
     grid,
   };
 }

@@ -28,6 +28,8 @@ export interface ShakeMap {
   processed: Date | null;
   /** The product's own maximum intensity, when it states one. */
   maxMmi: number | null;
+  /** The event's epicentre from the same detail document, for distances on the map. */
+  epicentre: { longitude: number; latitude: number } | null;
   grid: ShakeGrid;
 }
 

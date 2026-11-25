@@ -91,7 +91,9 @@ describe("ShakeMap layer", () => {
     const svg = w.find("svg.map");
     const [px, py] = frameFor(GLOBAL).projection([shaken.longitude, shaken.latitude]) ?? [0, 0];
     await svg.trigger("mousemove", { clientX: px, clientY: py });
-    expect(tipText(w)).toBe("MMI 7.2 · VII, very strong shaking, moderate damage");
+    expect(tipText(w)).toBe(
+      "MMI 7.2 · VII, very strong shaking, moderate damage · 0 km from the epicentre",
+    );
     await svg.trigger("mousemove", { clientX: 2, clientY: 2 });
     expect(tipText(w)).toBeNull();
     const [ox, oy] = frameFor(GLOBAL).projection([0, 0]) ?? [0, 0];
@@ -159,12 +161,29 @@ describe("ShakeMap layer", () => {
   });
 
   it("asks the server for a selection the page has not loaded", async () => {
-    const { ctx, w } = await mounted(QuakeMap, apiWith(), "global", "nc269151");
+    const api = apiWith([shaken, plain], {
+      shakemap: vi
+        .fn()
+        .mockResolvedValueOnce(shakeMap({ epicentre: { longitude: -175.1452, latitude: -19.723 } }))
+        .mockResolvedValueOnce(shakeMap({ epicentre: null })),
+    });
+    const { ctx, w } = await mounted(QuakeMap, api, "global", "nc269151");
     expect(toggle(w).classes()).not.toContain("unavailable");
     await toggle(w).get("input").setValue(true);
     await flushPromises();
     expect(ctx.api.shakemap).toHaveBeenCalledWith("nc269151");
     expect(w.find("g.shake").exists()).toBe(true);
+    // the distance is measured from the ShakeMap's own epicentre, a degree south here
+    const svg = w.find("svg.map");
+    const [px, py] = frameFor(GLOBAL).projection([shaken.longitude, shaken.latitude]) ?? [0, 0];
+    await svg.trigger("mousemove", { clientX: px, clientY: py });
+    expect(tipText(w)).toMatch(/ · 11\d km from the epicentre$/);
+    // with no epicentre to measure from, the readout is the intensity alone
+    resetShakeCache();
+    ctx.catalog.selectedId.value = "nc269152";
+    await flushPromises();
+    await svg.trigger("mousemove", { clientX: px, clientY: py });
+    expect(tipText(w)).toMatch(/^MMI [\d.]+ · [^·]+$/);
     w.unmount();
   });
 
@@ -198,7 +217,10 @@ describe("ShakeMap layer", () => {
       latitude: 37.6,
     });
     const api = apiWith([wcEvent], {
-      shakemap: vi.fn().mockResolvedValue(shakeMap({ grid: coneGrid(-122.1, 37.6) })),
+      // a response cached before the server sent the epicentre: measured from the loaded event
+      shakemap: vi
+        .fn()
+        .mockResolvedValue(shakeMap({ grid: coneGrid(-122.1, 37.6), epicentre: null })),
     });
     const { w } = await mounted(QuakeMap, api, "wc", "nc1");
     await toggle(w).get("input").setValue(true);
@@ -209,7 +231,7 @@ describe("ShakeMap layer", () => {
     expect(tipText(w)).toContain("Hayward");
     const [qx, qy] = frameFor(WC).projection([-121.4, 37.0]) ?? [0, 0];
     await svg.trigger("mousemove", { clientX: qx, clientY: qy });
-    expect(tipText(w)).toMatch(/^MMI /);
+    expect(tipText(w)).toMatch(/^MMI .* · 9\d km from the epicentre$/);
     w.unmount();
   });
 

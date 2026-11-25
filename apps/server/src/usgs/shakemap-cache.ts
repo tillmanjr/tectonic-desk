@@ -1,7 +1,7 @@
 import type { ShakeMap } from "@tectonic/shared";
 import type { IngestLogger } from "../ingest/context.js";
 import { UsgsHttpError, type UsgsClient } from "./client.js";
-import { parseCoverage, pickShakeProduct, shakeMapOf } from "./shakemap.js";
+import { epicentreOf, parseCoverage, pickShakeProduct, shakeMapOf } from "./shakemap.js";
 
 /**
  * ShakeMaps read on demand and held in memory: one detail request to find the preferred
@@ -49,7 +49,7 @@ export function createShakeMapCache(opts: ShakeMapCacheOptions): ShakeMapCache {
     const product = pickShakeProduct(detail);
     if (product === null) return null;
     const grid = parseCoverage(await opts.usgs.fetchJson(product.coverageUrl));
-    return shakeMapOf(eventId, product, grid);
+    return shakeMapOf(eventId, product, grid, epicentreOf(detail));
   }
 
   function keep(eventId: string, map: ShakeMap | null): void {
