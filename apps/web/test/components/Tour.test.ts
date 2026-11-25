@@ -372,8 +372,14 @@ describe("quick tours in the app", () => {
     await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
     await flushPromises();
     expect(m.wrapper.find(".maplock").attributes("aria-pressed")).toBe("false");
-    await m.wrapper.findAll(".tourdot")[9]?.trigger("click");
+    // the Centre step turns the global map to the Atlantic; the end of the tour turns it back
+    await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
     await flushPromises();
+    expect(m.router.currentRoute.value.query.lon).toBe("-30");
+    expect(m.wrapper.find(".mapwrap .centrepick .cvalue").text()).toBe("30°W");
+    await m.wrapper.findAll(".tourdot")[10]?.trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.query.lon).toBeUndefined();
     expect(m.wrapper.find(".mapcard").classes()).toContain("theater");
     await m.wrapper.find(".tourexit").trigger("click");
     await flushPromises();

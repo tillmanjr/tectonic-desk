@@ -35,6 +35,10 @@ export const NOTICE: InjectionKey<NoticeStore> = Symbol("notice");
 export const SECTION: InjectionKey<Readonly<Ref<Section | null>>> = Symbol("section");
 /** Writes or clears the section in the route. */
 export const SET_SECTION: InjectionKey<(s: Section | null) => void> = Symbol("setSection");
+/** The global map's centre longitude in the route (`?lon=`), 150°E when absent. */
+export const CENTRE: InjectionKey<Readonly<Ref<number>>> = Symbol("centre");
+/** Writes the global map's centre to the route. */
+export const SET_CENTRE: InjectionKey<(lon: number) => void> = Symbol("setCentre");
 /** The Space page's readings and window. */
 export const SPACE: InjectionKey<SpaceStore> = Symbol("space");
 /** The aurora frames and the one on show. */
