@@ -180,8 +180,19 @@ describe("DetailPanel", () => {
     expect(ctx.select).toHaveBeenCalledWith("main");
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "a" }));
     expect(ctx.select).toHaveBeenCalledTimes(1);
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    const esc = () => new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+    const plain = esc();
+    document.dispatchEvent(plain);
     expect(ctx.select).toHaveBeenCalledWith(null);
+    expect(plain.defaultPrevented).toBe(false);
+    // shown over a theater-mode map, the panel keeps this Escape from the map
+    document.body.classList.add("in-theater");
+    document.documentElement.classList.add("theater-details");
+    const over = esc();
+    document.dispatchEvent(over);
+    expect(over.defaultPrevented).toBe(true);
+    document.body.classList.remove("in-theater");
+    document.documentElement.classList.remove("theater-details");
     vi.mocked(ctx.api.event).mockResolvedValue(detailOf(event({ id: "y" })));
     ctx.catalog.select("y");
     await flushPromises();

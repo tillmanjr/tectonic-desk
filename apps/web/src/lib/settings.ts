@@ -12,6 +12,10 @@ export interface Settings {
   glossaryUnderlines: boolean;
   /** What opens a linked term's glossary entry; off leaves its hint alone. */
   glossaryOpen: GlossaryOpen;
+  /** Whether selecting an event or a volcano pans and zooms the map to it; off leaves the view where the reader put it. */
+  autoZoom: boolean;
+  /** Whether a selected event's or volcano's side panel shows over a map in theater mode. */
+  theaterDetails: boolean;
 }
 
 export type BeachballView = "flat" | "bowl";
@@ -22,6 +26,8 @@ export const DEFAULT_SETTINGS: Settings = {
   beachball: "flat",
   glossaryUnderlines: true,
   glossaryOpen: "dblclick",
+  autoZoom: true,
+  theaterDetails: true,
 };
 const OPENS: readonly GlossaryOpen[] = ["dblclick", "click", "off"];
 const isOpen = (v: unknown): v is GlossaryOpen => OPENS.some((o) => o === v);
@@ -58,6 +64,11 @@ export function parseSettings(raw: string | null): Settings {
         ? root.glossaryUnderlines
         : DEFAULT_SETTINGS.glossaryUnderlines,
     glossaryOpen: isOpen(root.glossaryOpen) ? root.glossaryOpen : DEFAULT_SETTINGS.glossaryOpen,
+    autoZoom: typeof root.autoZoom === "boolean" ? root.autoZoom : DEFAULT_SETTINGS.autoZoom,
+    theaterDetails:
+      typeof root.theaterDetails === "boolean"
+        ? root.theaterDetails
+        : DEFAULT_SETTINGS.theaterDetails,
   };
 }
 
@@ -74,7 +85,7 @@ function readRaw(storage: StorageLike | null): string | null {
   }
 }
 
-/** Reader-tunable settings, persisted in localStorage; the ◆ marks, beachball and glossary switches are in the settings menu. */
+/** Reader-tunable settings, persisted in localStorage; the ◆ marks, beachball, auto-zoom, theater and glossary switches are in the settings menu. */
 export function createSettings(storage: StorageLike | null = localStorage): SettingsStore {
   const current = ref<Settings>(parseSettings(readRaw(storage)));
   return {

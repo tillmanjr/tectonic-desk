@@ -45,6 +45,7 @@ import {
   type PlateSegment,
   type Topo,
 } from "./geo.js";
+import { IN_THEATER } from "./theater.js";
 import type { Tip } from "./tip.js";
 import {
   coarsePointer,
@@ -235,7 +236,8 @@ export function useMapView(opts: MapViewOptions): MapView {
   const theater = ref(false);
   /** Escape stands down a tool in use first; with none, it leaves theater mode. */
   function onEscape(ev: KeyboardEvent): void {
-    if (ev.key !== "Escape") return;
+    // A side panel shown over the theater takes the Escape first (see DetailPanel).
+    if (ev.key !== "Escape" || ev.defaultPrevented) return;
     // Consumed here, so a running tour leaves its own Escape alone.
     ev.preventDefault();
     if (toolBusy.value) {
@@ -303,6 +305,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   let lockBefore = true;
   function toggleTheater(): void {
     theater.value = !theater.value;
+    document.body.classList.toggle(IN_THEATER, theater.value);
     if (theater.value) {
       lockBefore = locked.value;
       locked.value = false;
@@ -616,7 +619,10 @@ export function useMapView(opts: MapViewOptions): MapView {
     document.removeEventListener("mousedown", closePickOnOutside);
     pin.cancel();
     window.removeEventListener("resize", measure);
-    if (theater.value) document.body.style.overflow = "";
+    if (theater.value) {
+      document.body.style.overflow = "";
+      document.body.classList.remove(IN_THEATER);
+    }
     if (hintTimer !== null) clearTimeout(hintTimer);
   });
 

@@ -1648,7 +1648,8 @@ a {
   top: calc(100% + 6px);
   right: 0;
   z-index: 25;
-  min-width: 220px;
+  min-width: 286px;
+  max-width: calc(100vw - 32px);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1667,6 +1668,7 @@ a {
 .settings-menu .slabel {
   font: 600 13px var(--f-ui);
   color: var(--muted);
+  white-space: nowrap;
 }
 .filters .flabel.fdates {
   min-width: 6.6em;
@@ -3298,6 +3300,10 @@ table.matrix {
 .mapcard.theater .map {
   width: 100%;
   height: 100%;
+}
+/* Settings → Theater mode event details: the side panels slide in over the theater. */
+.theater-details body.in-theater .detail {
+  z-index: 36;
 }
 /* The theater toggle: a faded corner button over the map, as video players have it. */
 .mapwrap .theaterbtn {

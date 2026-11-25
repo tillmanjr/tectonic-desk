@@ -574,6 +574,7 @@ describe("the Field manual in the app", () => {
     const m = await mountApp("/earthquakes");
     const root = document.documentElement;
     expect(root.classList.contains("gunder")).toBe(true);
+    expect(root.classList.contains("theater-details")).toBe(true);
     expect(root.dataset.glossaryOpen).toBe("dblclick");
     // a term asks for its entry; anything else sent the same way is ignored
     root.dispatchEvent(new CustomEvent("glossary-open", { bubbles: true, detail: 3 }));
