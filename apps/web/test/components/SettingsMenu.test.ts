@@ -4,7 +4,7 @@ import SettingsMenu from "../../src/components/SettingsMenu.vue";
 import { makeContext, mountWith } from "../support/mount.js";
 
 describe("SettingsMenu", () => {
-  it("opens to the zone, theme, beachball, auto-zoom, marks and glossary controls, emits the zone toggle, and closes on Escape or an outside press", async () => {
+  it("opens to the zone, theme, beachball, auto-zoom, theater details, marks and glossary controls, emits the zone toggle, and closes on Escape or an outside press", async () => {
     const ctx = await makeContext();
     const w = mountWith(SettingsMenu, ctx, { zone: "utc" });
     expect(w.find(".settings-menu").isVisible()).toBe(false);
@@ -17,6 +17,7 @@ describe("SettingsMenu", () => {
       "Theme",
       "Beachball",
       "Auto-zoom event",
+      "Theater mode event details",
       "Deep dive marks",
       "Glossary underlines",
       "Open glossary on",
@@ -43,7 +44,15 @@ describe("SettingsMenu", () => {
     expect(zoom?.text()).toBe("Off");
     await zoom?.trigger("click");
     expect(ctx.settings.current.value.autoZoom).toBe(true);
-    const marks = rows[4]?.find("button");
+    const theater = rows[4]?.find("button");
+    expect(theater?.text()).toBe("On");
+    expect(theater?.attributes("aria-pressed")).toBe("true");
+    await theater?.trigger("click");
+    expect(ctx.settings.current.value.theaterDetails).toBe(false);
+    expect(theater?.text()).toBe("Off");
+    await theater?.trigger("click");
+    expect(ctx.settings.current.value.theaterDetails).toBe(true);
+    const marks = rows[5]?.find("button");
     expect(marks?.text()).toBe("On");
     expect(marks?.attributes("aria-pressed")).toBe("true");
     await marks?.trigger("click");
@@ -51,14 +60,14 @@ describe("SettingsMenu", () => {
     expect(marks?.text()).toBe("Off");
     await marks?.trigger("click");
     expect(ctx.settings.current.value.diveMarks).toBe(true);
-    const under = rows[5]?.find("button");
+    const under = rows[6]?.find("button");
     expect(under?.text()).toBe("On");
     await under?.trigger("click");
     expect(ctx.settings.current.value.glossaryUnderlines).toBe(false);
     expect(under?.text()).toBe("Off");
     await under?.trigger("click");
     expect(ctx.settings.current.value.glossaryUnderlines).toBe(true);
-    const opens = rows[6]?.findAll("button") ?? [];
+    const opens = rows[7]?.findAll("button") ?? [];
     expect(opens.map((b) => b.text())).toEqual(["Double click", "Click", "Off"]);
     expect(opens.map((b) => b.attributes("aria-pressed"))).toEqual(["true", "false", "false"]);
     await opens[2]?.trigger("click");

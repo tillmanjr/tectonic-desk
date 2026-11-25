@@ -8,7 +8,7 @@ import { SETTINGS, useInjected } from "../lib/keys.js";
 
 /**
  * The header's settings menu: the time zone, the theme, the panel's beachball, auto-zoom to a
- * selected event, the ◆ deep dive marks and the glossary's underlines and trigger, behind one button. The menu stays in the page while closed (v-show) so a tour can flip
+ * selected event, its panel in theater mode, the ◆ deep dive marks and the glossary's underlines and trigger, behind one button. The menu stays in the page while closed (v-show) so a tour can flip
  * its switches by name and give them back at the end.
  */
 defineProps<{ zone: Zone }>();
@@ -26,6 +26,10 @@ function toggleBeachball(): void {
 const autoZoom = computed(() => settings.current.value.autoZoom);
 function toggleAutoZoom(): void {
   settings.set({ ...settings.current.value, autoZoom: !autoZoom.value });
+}
+const theaterDetails = computed(() => settings.current.value.theaterDetails);
+function toggleTheaterDetails(): void {
+  settings.set({ ...settings.current.value, theaterDetails: !theaterDetails.value });
 }
 const underlines = computed(() => settings.current.value.glossaryUnderlines);
 function toggleUnderlines(): void {
@@ -63,7 +67,9 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="settings" data-tour="settings" @keydown="onKey">
     <button
-      v-hint="'Settings: time zone, theme, beachball, auto-zoom, deep dive marks and the glossary'"
+      v-hint="
+        'Settings: time zone, theme, beachball, auto-zoom, theater details, deep dive marks and the glossary'
+      "
       type="button"
       class="settings-btn"
       aria-haspopup="true"
@@ -124,6 +130,21 @@ onUnmounted(() => {
           @click="toggleAutoZoom"
         >
           {{ autoZoom ? "On" : "Off" }}
+        </button>
+      </div>
+      <div class="srow">
+        <span class="slabel">Theater mode event details</span>
+        <button
+          v-hint="
+            'Shows the side panel of a selected earthquake or volcano over the map in theater mode; off keeps the theater to the map alone'
+          "
+          type="button"
+          class="theme-btn fixed"
+          data-tour="settings.theater"
+          :aria-pressed="theaterDetails"
+          @click="toggleTheaterDetails"
+        >
+          {{ theaterDetails ? "On" : "Off" }}
         </button>
       </div>
       <div class="srow">

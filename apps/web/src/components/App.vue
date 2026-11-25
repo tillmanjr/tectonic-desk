@@ -65,6 +65,7 @@ import { createNotice } from "../lib/notice.js";
 import { parseSection, sectionQuery, type Section } from "../lib/section.js";
 import { createPins } from "../lib/pins.js";
 import { createSettings } from "../lib/settings.js";
+import { THEATER_DETAILS } from "../lib/theater.js";
 import {
   createSpaceStore,
   parseSpaceRange,
@@ -357,6 +358,7 @@ provide(MANUAL, manual);
 watchEffect(() => {
   const root = document.documentElement;
   root.classList.toggle("gunder", settings.current.value.glossaryUnderlines);
+  root.classList.toggle(THEATER_DETAILS, settings.current.value.theaterDetails);
   root.dataset.glossaryOpen = settings.current.value.glossaryOpen;
 });
 /** A linked term asked for its Glossary entry. */

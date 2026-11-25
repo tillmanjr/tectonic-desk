@@ -10,7 +10,7 @@ export const SETTINGS_DIVE: Tour = {
   id: "settings",
   title: "Time zone, theme and hints",
   blurb:
-    "UTC or local time, the theme, the beachball, auto-zoom, the ◆ marks, the glossary, how hints appear with a mouse, a keyboard or a finger, and where help lives.",
+    "UTC or local time, the theme, the beachball, auto-zoom, theater details, the ◆ marks, the glossary, how hints appear with a mouse, a keyboard or a finger, and where help lives.",
   deep: { area: "Settings" },
   pageFor: (p) => (p === "space" ? "active" : p),
   steps: [
@@ -47,6 +47,13 @@ export const SETTINGS_DIVE: Tour = {
       title: "Auto-zoom event",
       body: "Selecting an earthquake or a volcano, on the map, in a table or from a card, pans and zooms the map to it. Turn Auto-zoom event off to keep the view you have set, say a close look at Iceland's volcanoes: a selection then only opens its panel. The choice is kept in this browser.",
       targets: ["settings.autozoom"],
+      enter: openSettings,
+    },
+    {
+      id: "theater",
+      title: "Theater mode event details",
+      body: "In theater mode the map fills the window. With Theater mode event details on, selecting an earthquake or a volcano there slides its side panel in over the map, and Escape closes the panel before it leaves theater mode. Off keeps the theater to the map alone: the panel waits until you leave. The choice is kept in this browser.",
+      targets: ["settings.theater"],
       enter: openSettings,
     },
     {
