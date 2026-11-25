@@ -1,5 +1,6 @@
 import type { StepContext, Tour } from "../tour.js";
-import { EXAMPLE_EVENT, hideSection, showSection } from "../tour-steps.js";
+import { DEFAULT_CENTRE } from "../centre.js";
+import { EXAMPLE_EVENT, hideSection, showSection, zoomIn } from "../tour-steps.js";
 
 /**
  * Deep dives of the Map area, one per layer or tool. Steps switch layers and tools on through the
@@ -87,6 +88,106 @@ function fieldAt(url: string, field: "none" | "gravity" | "magnetic") {
     if (mv !== null) mv.field.value = field;
   };
 }
+
+/** Opens the global earthquakes map turned to `lon`, at the whole view, with the field given. */
+function turnedTo(lon: number, field: "none" | "gravity" = "none") {
+  return async (ctx: StepContext): Promise<void> => {
+    await ctx.go(lon === DEFAULT_CENTRE ? "/earthquakes" : `/earthquakes?lon=${String(lon)}`);
+    const mv = await ctx.map();
+    if (mv === null) return;
+    mv.reset();
+    mv.field.value = field;
+  };
+}
+
+export const MAP_CENTRE: Tour = {
+  id: "map-centre",
+  title: "Turning the global map",
+  blurb:
+    "The global map's centre longitude: the control, its detent, the globe you can drag, the centre line, and what stays put.",
+  deep: { area: "Map" },
+  pageFor: () => "earthquakes",
+  steps: [
+    {
+      id: "intro",
+      title: "Where the map is centred",
+      body: "The global map is Natural Earth centred on 150°E, which keeps the Pacific rim in one piece; its seam falls at 30°W, down the Atlantic, cutting the Mid-Atlantic Ridge in two. Turning it east or west moves the seam to where you are not looking. The Centre control sits over the map's bottom-left corner, on global views only.",
+      targets: ["map.centre", "map.stage"],
+      enter: turnedTo(DEFAULT_CENTRE),
+    },
+    {
+      id: "atlantic",
+      title: "The Atlantic in the middle",
+      body: "Centred on 30°W, the Mid-Atlantic Ridge runs whole down the middle with Africa and the Americas either side; the seam is now in the Pacific at 150°E, through Japan and eastern Australia.",
+      targets: ["map.centre", "map.stage"],
+      enter: turnedTo(-30),
+    },
+    {
+      id: "slider",
+      title: "The slider",
+      body: "The slider runs 180° either side of 150°E, so the default sits in its middle, marked by a tick. A drag catches there within 5°; the arrow keys step through a degree at a time. The longitude beside it follows as you go, and the map re-projects when you let go.",
+      tryIt: "Drag the slider a little way, then let go.",
+      targets: ["map.centre"],
+      enter: turnedTo(-30),
+    },
+    {
+      id: "nudge",
+      title: "Nudges and back",
+      body: "‹ and › turn the map 15° west or east at a press, wrapping round the antimeridian; ↺ returns to 150°E and is greyed while you are there.",
+      targets: ["map.centre"],
+    },
+    {
+      id: "globe",
+      title: "The globe",
+      body: "Point at the control, or use it, and a small globe opens beside it: the current centre's meridian solid, 150°E dashed, both longitudes under it. It turns with every slider step before the map does. Grab the globe and drag it left or right to turn the map by hand: the surface follows the pointer, so dragging right brings the west into the middle, and its full width is half a turn.",
+      tryIt: "Point at the control, then drag the globe.",
+      targets: ["map.centre"],
+    },
+    {
+      id: "line",
+      title: "The centre line",
+      body: "A faint dashed line runs down the middle of the global map: the meridian it is centred on, here 90°W through the Gulf of Mexico.",
+      targets: ["map.stage"],
+      enter: turnedTo(-90),
+    },
+    {
+      id: "zoom",
+      title: "Your zoom stays",
+      body: "Turning a zoomed-in map keeps the zoom and what is in the middle of the view, so you can move the seam away from where you are looking. A view centred off the globe's outline goes back to the whole map. Here zoomed in twice, then turned from 90°W to 60°W.",
+      targets: ["map.stage"],
+      enter: async (ctx) => {
+        await turnedTo(-90)(ctx);
+        await zoomIn(ctx, 2);
+        const mv = await ctx.map();
+        mv?.setCentre(-60);
+      },
+    },
+    {
+      id: "fields",
+      title: "Fields at 150°E only",
+      body: "The gravity and magnetic grids are rendered ahead of time for the map at 150°E, so anywhere else the Field select is greyed and no grid is drawn. Your choice is kept: gravity is chosen here, and it shows the moment the map is back at 150°E.",
+      targets: ["map.field", "map.centre"],
+      enter: turnedTo(-30, "gravity"),
+      leave: async (ctx) => {
+        const mv = await ctx.map();
+        if (mv !== null) mv.field.value = "none";
+      },
+    },
+    {
+      id: "address",
+      title: "Kept in the address",
+      body: "The centre is in the address as lon= (left out at 150°E), so a copied link opens turned the same way, and it carries across the Active Earth, Earthquakes and Volcanoes pages. The West Coast view has its own projection and ignores it. Mark thumbnails stay at 150°E.",
+      targets: ["map.centre"],
+      enter: turnedTo(-30),
+    },
+    {
+      id: "done",
+      title: "That's turning the map",
+      body: "The map goes back to where you had it when this ends.",
+      targets: ["manual"],
+    },
+  ],
+};
 
 export const MAP_FIELDS: Tour = {
   id: "map-fields",

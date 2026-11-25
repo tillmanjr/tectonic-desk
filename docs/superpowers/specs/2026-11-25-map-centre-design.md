@@ -57,3 +57,8 @@ longitude–latitude rasters for the browser to re-project.
 - `MapCentre.vue` in `MapShell`'s map wrapper; `loadGlobeLandOnce` in `basemap-cache.ts`.
 - The map navigation deep dive gains a Centre step (it turns to 30°W and back); its Selecting step now
   mentions Settings → Auto-zoom event.
+- Tours: a Centre step in the Map tools quick tour (turns to 30°W, the Field select greyed, back on
+  leaving), detouring to the `map-centre` deep dive in the Map chapter: where the map is centred, the
+  Atlantic in the middle, the slider, nudges and ↺, the globe, the centre line, the zoom kept, fields
+  at 150°E only, the address. The step first added to the navigation dive moved there. The glossary
+  gains "Centre longitude".

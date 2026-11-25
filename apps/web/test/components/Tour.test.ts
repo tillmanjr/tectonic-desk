@@ -137,8 +137,18 @@ describe("quick tours in the app", () => {
     expect(missing).toEqual([]);
     expect(m.wrapper.find(".pinbar").exists()).toBe(false);
     expect(m.router.currentRoute.value.query.section).toBeUndefined();
+    // The Centre step turns the global map to the Atlantic, the next turns it back.
+    await m.wrapper.findAll(".tourdot")[6]?.trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.query.lon).toBe("-30");
+    expect(m.wrapper.find(".mapwrap .centrepick .cvalue").text()).toBe("30°W");
+    expect(
+      m.wrapper.get('select[aria-label="Field overlay"]').attributes("disabled"),
+    ).toBeDefined();
     // Back on the measure step, the example line is on the map and the reader enters theater.
-    await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
+    await m.wrapper.findAll(".tourdot")[8]?.trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.query.lon).toBeUndefined();
     await flushPromises();
     expect(m.router.currentRoute.value.query.section).toBeUndefined();
     expect(m.wrapper.find(".measurebtn").attributes("aria-pressed")).toBe("true");
@@ -150,7 +160,7 @@ describe("quick tours in the app", () => {
     expect(m.wrapper.find(".measurebtn").attributes("aria-pressed")).toBe("false");
     expect(plates.element.checked).toBe(false);
     expect(m.router.currentRoute.value.fullPath).toBe("/active");
-    expect(m.progress.doc.value.tours.map).toMatchObject({ step: 7, done: false });
+    expect(m.progress.doc.value.tours.map).toMatchObject({ step: 8, done: false });
     m.wrapper.unmount();
   });
 
@@ -307,7 +317,7 @@ describe("quick tours in the app", () => {
     await flushPromises();
     await m.wrapper.find(".tourdetour").trigger("click");
     await flushPromises();
-    expect(m.wrapper.find(".tourpath").text()).toBe("Map tools · 1 of 12");
+    expect(m.wrapper.find(".tourpath").text()).toBe("Map tools · 1 of 13");
     await m.wrapper.find(".tourexit").trigger("click");
     await flushPromises();
     expect(m.router.currentRoute.value.fullPath).toBe("/active");
@@ -372,14 +382,8 @@ describe("quick tours in the app", () => {
     await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
     await flushPromises();
     expect(m.wrapper.find(".maplock").attributes("aria-pressed")).toBe("false");
-    // the Centre step turns the global map to the Atlantic; the end of the tour turns it back
-    await m.wrapper.findAll(".tourdot")[7]?.trigger("click");
+    await m.wrapper.findAll(".tourdot")[9]?.trigger("click");
     await flushPromises();
-    expect(m.router.currentRoute.value.query.lon).toBe("-30");
-    expect(m.wrapper.find(".mapwrap .centrepick .cvalue").text()).toBe("30°W");
-    await m.wrapper.findAll(".tourdot")[10]?.trigger("click");
-    await flushPromises();
-    expect(m.router.currentRoute.value.query.lon).toBeUndefined();
     expect(m.wrapper.find(".mapcard").classes()).toContain("theater");
     await m.wrapper.find(".tourexit").trigger("click");
     await flushPromises();
@@ -489,7 +493,7 @@ describe("the Field manual in the app", () => {
     expect(laid.filter((c) => c.attributes("inert") !== undefined).length).toBe(9);
     expect(m.wrapper.find(".mchapter.current").attributes("aria-hidden")).toBeUndefined();
     expect(m.wrapper.find(".mtoc [aria-current]").text()).toContain("Map");
-    expect(m.wrapper.find(".mtoc [aria-current] .mcount").text()).toBe("1/9");
+    expect(m.wrapper.find(".mtoc [aria-current] .mcount").text()).toBe("1/10");
     const card = m.wrapper.find("#card-map-fields");
     expect(card.classes()).toContain("focus");
     expect(document.activeElement).toBe(card.find(".mtake").element);

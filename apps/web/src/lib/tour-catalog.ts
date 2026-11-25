@@ -13,6 +13,7 @@ import { CHART_DEPTH, CHART_FM, CHART_MAGTIME } from "./deep/charts.js";
 import { QUAKE_IMPACT, QUAKE_ORIGIN } from "./deep/quake.js";
 import {
   MAP_ANIMATE,
+  MAP_CENTRE,
   MAP_DENSITY,
   MAP_FIELDS,
   MAP_LAYERS,
@@ -54,6 +55,7 @@ export const DEEP_DIVES: readonly Tour[] = [
   MAP_NAV,
   MAP_LAYERS,
   MAP_FIELDS,
+  MAP_CENTRE,
   MAP_SECTION,
   MAP_MEASURE,
   MAP_PIN,

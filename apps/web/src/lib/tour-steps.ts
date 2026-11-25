@@ -163,7 +163,7 @@ export const ORIENTATION: Tour = {
 export const MAP_TOOLS: Tour = {
   id: "map",
   title: "Map tools",
-  blurb: "Layers, fields, sections, measuring, your pin and theater mode.",
+  blurb: "Layers, fields, turning the global map, sections, measuring, your pin and theater mode.",
   pageFor: (p) => (p === "space" ? "active" : p),
   steps: [
     {
@@ -218,6 +218,21 @@ export const MAP_TOOLS: Tour = {
       leave: async (ctx) => {
         const mv = await ctx.map();
         if (mv !== null) mv.field.value = "none";
+      },
+    },
+    {
+      id: "centre",
+      title: "Turning the global map",
+      body: "The global map is centred on 150°E, the Pacific rim together. The Centre control in its bottom-left corner turns it east or west: ‹ and › by 15°, the slider anywhere (it catches at 150°E), ↺ back. Point at it for a globe you can drag too. Here the Atlantic in the middle; the field grids are drawn for 150°E only, so the Field select waits.",
+      targets: ["map.centre", "map.stage"],
+      detour: { tour: "map-centre", label: "Turning the global map, in detail" },
+      enter: async (ctx) => {
+        const mv = await ctx.map();
+        mv?.setCentre(-30);
+      },
+      leave: async (ctx) => {
+        const mv = await ctx.map();
+        mv?.setCentre(DEFAULT_CENTRE);
       },
     },
     {
@@ -992,7 +1007,8 @@ export const REFINE_QUAKES: Tour = {
  * Zooms the map to `times` presses of the + button from the whole region, about its centre, in one
  * move (presses in a row would interrupt each other's animation).
  */
-async function zoomIn(ctx: StepContext, times: number): Promise<void> {
+/** Zooms the map on screen in by `times` zoom-button steps about its middle. */
+export async function zoomIn(ctx: StepContext, times: number): Promise<void> {
   const mv = await ctx.map();
   if (mv === null) return;
   const { width, height } = mv.view.value.frame;
@@ -1068,21 +1084,6 @@ export const MAP_NAV: Tour = {
       },
       leave: (ctx) => {
         ctx.clearSelection();
-      },
-    },
-    {
-      id: "centre",
-      title: "Centre",
-      body: "The global map is centred on 150°E, the Pacific rim together. The Centre control in its bottom-left corner turns it: ‹ and › by 15°, the slider anywhere (it catches at 150°E), ↺ back. A small globe shows where you are while you point at the control or use it, and it can be dragged left or right itself; the map follows when you let go, keeping your zoom, and a faint line marks the centre's meridian. The centre is kept in the address (lon=); the field grids draw at 150°E only. Here the Atlantic in the middle.",
-      targets: ["map.centre", "map.stage"],
-      enter: async (ctx) => {
-        const mv = await ctx.map();
-        mv?.reset();
-        mv?.setCentre(-30);
-      },
-      leave: async (ctx) => {
-        const mv = await ctx.map();
-        mv?.setCentre(DEFAULT_CENTRE);
       },
     },
     {
