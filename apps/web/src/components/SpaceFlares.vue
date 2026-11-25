@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import type { ApiSpaceFlare } from "@tectonic/shared";
 import { computed, ref } from "vue";
 import { fmtStamp } from "../lib/format.js";
@@ -75,7 +76,7 @@ function frame(f: ApiSpaceFlare): void {
 
 <template>
   <div class="panel spacepanel flares" data-tour="space.flares">
-    <h2>Flares<span>GOES X-ray</span></h2>
+    <h2>Flares<span>GOES X-ray</span><DiveMark area="Space" dive="space-flares" /></h2>
     <p v-if="rows.length === 0" class="cap note">No flares in this window.</p>
     <table v-else class="spacetable">
       <thead>

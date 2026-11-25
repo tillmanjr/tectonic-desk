@@ -967,8 +967,8 @@ export const REFINE_QUAKES: Tour = {
     {
       id: "done",
       title: "That's the refine bar",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -1093,7 +1093,7 @@ export const MAP_NAV: Tour = {
       id: "done",
       title: "That's the map",
       body: "The tools on the header (Section, Measure, Pin, Field) each have a step in the Map tools tour.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };

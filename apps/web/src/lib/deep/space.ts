@@ -77,7 +77,7 @@ export const SPACE_TILES: Tour = {
       id: "done",
       title: "That's the tiles",
       body: "The stack's rows each have a step in Space: The stack, row by row.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -157,7 +157,7 @@ export const SPACE_STACK: Tour = {
       id: "done",
       title: "That's the stack",
       body: "Space: Long history covers the rows a window past 93 days keeps.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -210,7 +210,7 @@ export const SPACE_FLARES: Tour = {
       id: "done",
       title: "That's flares and alerts",
       body: "The stack's alert ticks and flare bands mark the same events on the time axis.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -268,8 +268,8 @@ export const SPACE_AURORA: Tour = {
     {
       id: "done",
       title: "That's the aurora",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -321,7 +321,7 @@ export const SPACE_SUN: Tour = {
       id: "done",
       title: "That's the Sun",
       body: "The credits for every picture and movie are at the foot of the page and in the large view.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -391,7 +391,7 @@ export const SPACE_HISTORY_DIVE: Tour = {
       id: "done",
       title: "That's the long history",
       body: "The sources and their licences are credited at the foot of the page.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };

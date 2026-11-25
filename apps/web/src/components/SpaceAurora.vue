@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { AURORA_THRESHOLDS } from "@tectonic/shared";
 import { computed, onMounted, ref, shallowRef } from "vue";
 import AuroraMap from "./AuroraMap.vue";
@@ -52,7 +53,7 @@ const power = (gw: number | null): string =>
 
 <template>
   <section class="panel aurora" data-tour="space.aurora">
-    <h2>Aurora oval<span>OVATION Prime</span></h2>
+    <h2>Aurora oval<span>OVATION Prime</span><DiveMark area="Space" dive="space-aurora" /></h2>
     <p v-if="frame === null && store.error.value !== null" class="cap bad">
       {{ store.error.value }}
     </p>

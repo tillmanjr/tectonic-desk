@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import type { ApiEvent, SummaryBy } from "@tectonic/shared";
 import { scaleLinear, scaleTime, scaleUtc, type ScaleTime } from "d3-scale";
 import { computed } from "vue";
@@ -164,7 +165,7 @@ const caption = computed(
 
 <template>
   <div class="panel chart" data-tour="chart.magtime">
-    <h2>Magnitude through time</h2>
+    <h2>Magnitude through time<DiveMark area="Charts" dive="chart-magtime" /></h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(H)}`">
       <template v-if="overview !== null">
         <ChartAxes

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { computed } from "vue";
 import MarkButton from "./MarkButton.vue";
 import VolcanoDetailBody from "./VolcanoDetailBody.vue";
@@ -49,6 +50,7 @@ function close(): void {
           <template v-else>not in the GVP Holocene catalogue</template>
         </div>
       </div>
+      <DiveMark area="Volcano detail" />
       <button type="button" class="close" aria-label="Close volcano detail" @click="close">
         ×
       </button>

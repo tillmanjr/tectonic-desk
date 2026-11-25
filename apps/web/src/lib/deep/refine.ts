@@ -94,8 +94,8 @@ export const REFINE_VOLCANOES: Tour = {
     {
       id: "done",
       title: "That's the volcano refine bar",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -166,8 +166,8 @@ export const REFINE_SPACE: Tour = {
     {
       id: "done",
       title: "That's the Space window",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -222,8 +222,8 @@ export const REFINE_TABLES: Tour = {
     {
       id: "done",
       title: "That's the table filters",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };

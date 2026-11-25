@@ -76,6 +76,14 @@ export interface Tour {
   deep?: { area: string };
 }
 
+/** Where a tour starts from and what it offers at its end, for one started from the Field manual. */
+export interface StartFrom {
+  /** The view to run in, opened first; the end gives it back. */
+  view: string;
+  /** Offered at the end, beside staying in the view: the place in the manual the tour was taken from. */
+  returnTo: string;
+}
+
 /** The two kinds of tour, as the Help menu heads them and the card badges them. */
 export const GROUP_NAMES = { quick: "Quick tours", deep: "Deep dives" } as const;
 /** Which group a tour belongs to. */
@@ -256,7 +264,14 @@ export interface TourRunner {
   resumable: ComputedRef<{ tour: Tour; step: number } | null>;
   /** True while some step of the tours is yet to be shown; the Help button stands out until then. */
   unseen: ComputedRef<boolean>;
-  start: (id: TourId, step?: number) => Promise<void>;
+  /** `from`: a start from the Field manual, which runs in the reader's last view and offers the way back. */
+  start: (id: TourId, step?: number, from?: StartFrom) => Promise<void>;
+  /** After a tour started from the manual ends: where "Back to the Field manual" goes; null otherwise. */
+  returning: Readonly<Ref<string | null>>;
+  /** Goes back into the manual, to the place the ended tour was taken from. */
+  goBack: () => Promise<void>;
+  /** Stays in the view the tour gave back; the offer goes. */
+  stay: () => void;
   next: () => Promise<void>;
   back: () => Promise<void>;
   goTo: (index: number) => Promise<void>;
@@ -332,6 +347,9 @@ export function createTour(
   /** Restores for the maps a tour has touched; a map that unmounted takes its state with it. */
   const restores = new Map<MapView, () => void>();
   let origin: string | null = null;
+  /** The manual's place for a tour started there, offered as `returning` once it ends. */
+  let returnTo: string | null = null;
+  const returning = ref<string | null>(null);
   /** Bumped on every move, so a step whose set-up is overtaken stops acting. */
   let seq = 0;
 
@@ -420,6 +438,8 @@ export function createTour(
     if (back !== null && back !== stage.location()) await stage.restore(back);
     // After the route, so an overlay showing the examples has closed before they go.
     stage.clearDemoMarks();
+    returning.value = returnTo;
+    returnTo = null;
   }
 
   return {
@@ -445,12 +465,17 @@ export function createTour(
       if (tour === undefined || r === undefined || r.done) return null;
       return { tour, step: Math.min(r.step, tour.steps.length - 1) };
     }),
-    async start(id, step = 0) {
+    async start(id, step = 0, from) {
       const tour = byId(id);
       if (tour === undefined) return;
       progress.dismissOffer();
       const was = current.value;
       if (was !== null && was.tour.id !== id) await end(false);
+      returning.value = null;
+      if (from !== undefined) {
+        returnTo = from.returnTo;
+        if (origin === null) await stage.restore(from.view);
+      }
       origin ??= stage.location();
       const index = Math.max(0, Math.min(step, tour.steps.length - 1));
       await enter(tour, index, was?.tour.id === id ? was.index : null, null);
@@ -492,8 +517,18 @@ export function createTour(
       await enter(side, 0, null, { tour: c.tour, index: c.index });
     },
     exit: () => end(false),
+    returning,
+    async goBack() {
+      const to = returning.value;
+      returning.value = null;
+      if (to !== null) await stage.go(to);
+    },
+    stay() {
+      returning.value = null;
+    },
     async reset() {
       await end(false);
+      returning.value = null;
       progress.reset();
     },
     attachMap(mv) {

@@ -67,8 +67,8 @@ export const VOLCANO_STATUS: Tour = {
     {
       id: "done",
       title: "That's volcano status",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -120,7 +120,7 @@ export const VOLCANO_ERUPTIONS: Tour = {
       id: "done",
       title: "That's the eruption record",
       body: "The GVP number in the record links to the volcano's full page at the Smithsonian.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -176,8 +176,8 @@ export const VOLCANO_NEARBY: Tour = {
     {
       id: "done",
       title: "That's earthquakes nearby",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
