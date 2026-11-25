@@ -122,6 +122,14 @@ describe("QuakeMap", () => {
     ctx.catalog.select("missing");
     await flushPromises();
     expect(w.find("svg.map > g").attributes("transform")).toContain("scale(6)");
+    // with Auto-zoom event off, a selection leaves the view where the reader put it
+    await w.get('[aria-label="Reset view"]').trigger("click");
+    ctx.catalog.select(null);
+    await flushPromises();
+    ctx.settings.set({ ...ctx.settings.current.value, autoZoom: false });
+    ctx.catalog.select("us1");
+    await flushPromises();
+    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
   });
 
   it("switches to the region basemap, resets the zoom, caches it, and logs basemap and plate failures", async () => {

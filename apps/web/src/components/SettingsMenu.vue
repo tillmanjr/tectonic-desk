@@ -7,8 +7,8 @@ import { vHint } from "../lib/hint.js";
 import { SETTINGS, useInjected } from "../lib/keys.js";
 
 /**
- * The header's settings menu: the time zone, the theme, the panel's beachball, the ◆ deep dive
- * marks and the glossary's underlines and trigger, behind one button. The menu stays in the page while closed (v-show) so a tour can flip
+ * The header's settings menu: the time zone, the theme, the panel's beachball, auto-zoom to a
+ * selected event, the ◆ deep dive marks and the glossary's underlines and trigger, behind one button. The menu stays in the page while closed (v-show) so a tour can flip
  * its switches by name and give them back at the end.
  */
 defineProps<{ zone: Zone }>();
@@ -22,6 +22,10 @@ function toggleDiveMarks(): void {
 const bowl = computed(() => settings.current.value.beachball === "bowl");
 function toggleBeachball(): void {
   settings.set({ ...settings.current.value, beachball: bowl.value ? "flat" : "bowl" });
+}
+const autoZoom = computed(() => settings.current.value.autoZoom);
+function toggleAutoZoom(): void {
+  settings.set({ ...settings.current.value, autoZoom: !autoZoom.value });
 }
 const underlines = computed(() => settings.current.value.glossaryUnderlines);
 function toggleUnderlines(): void {
@@ -59,7 +63,7 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="settings" data-tour="settings" @keydown="onKey">
     <button
-      v-hint="'Settings: time zone, theme, beachball, deep dive marks and the glossary'"
+      v-hint="'Settings: time zone, theme, beachball, auto-zoom, deep dive marks and the glossary'"
       type="button"
       class="settings-btn"
       aria-haspopup="true"
@@ -105,6 +109,21 @@ onUnmounted(() => {
           @click="toggleBeachball"
         >
           {{ bowl ? "Bowl" : "Flat" }}
+        </button>
+      </div>
+      <div class="srow">
+        <span class="slabel">Auto-zoom event</span>
+        <button
+          v-hint="
+            'Pans and zooms the map to an earthquake or volcano when you select it; off leaves the map where you put it and only opens the panel'
+          "
+          type="button"
+          class="theme-btn fixed"
+          data-tour="settings.autozoom"
+          :aria-pressed="autoZoom"
+          @click="toggleAutoZoom"
+        >
+          {{ autoZoom ? "On" : "Off" }}
         </button>
       </div>
       <div class="srow">

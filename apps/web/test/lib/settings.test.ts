@@ -27,6 +27,8 @@ describe("settings", () => {
     expect(parseSettings('{"glossaryUnderlines":0}').glossaryUnderlines).toBe(true);
     expect(parseSettings('{"glossaryOpen":"click"}').glossaryOpen).toBe("click");
     expect(parseSettings('{"glossaryOpen":"hover"}').glossaryOpen).toBe("dblclick");
+    expect(parseSettings('{"autoZoom":false}').autoZoom).toBe(false);
+    expect(parseSettings('{"autoZoom":"off"}').autoZoom).toBe(true);
   });
   it("reads storage once, writes on set, and survives storage that throws", () => {
     const store = new Map<string, string>([[SETTINGS_KEY, '{"cardRows":{"alone":5}}']]);
@@ -42,9 +44,10 @@ describe("settings", () => {
       beachball: "bowl",
       glossaryUnderlines: false,
       glossaryOpen: "off",
+      autoZoom: false,
     });
     expect(store.get(SETTINGS_KEY)).toBe(
-      '{"cardRows":{"alone":2,"combined":2},"diveMarks":false,"beachball":"bowl","glossaryUnderlines":false,"glossaryOpen":"off"}',
+      '{"cardRows":{"alone":2,"combined":2},"diveMarks":false,"beachball":"bowl","glossaryUnderlines":false,"glossaryOpen":"off","autoZoom":false}',
     );
     const broken = {
       getItem: vi.fn(() => {
