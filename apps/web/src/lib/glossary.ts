@@ -796,6 +796,14 @@ export const GLOSSARY = {
     see: ["compare"],
     dive: "marks-groups",
   },
+  "map-centre": {
+    term: "Centre longitude",
+    area: "maps",
+    short: "The meridian the global map is centred on: 150°E unless you turn it.",
+    long: "Natural Earth centred on 150°E keeps the Pacific rim whole and puts the seam down the Atlantic. The Centre control over the map's corner turns it east or west, keeping your zoom; the address carries it as lon=, a faint line marks it, and the field grids draw at 150°E only.",
+    see: ["region"],
+    dive: "map-centre",
+  },
   pin: {
     term: "Pin",
     area: "desk",
