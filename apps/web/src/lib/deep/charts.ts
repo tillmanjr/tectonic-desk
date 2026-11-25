@@ -61,8 +61,8 @@ export const CHART_MAGTIME: Tour = {
     {
       id: "done",
       title: "That's the time chart",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -112,8 +112,8 @@ export const CHART_FM: Tour = {
     {
       id: "done",
       title: "That's frequency–magnitude",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -156,8 +156,8 @@ export const CHART_DEPTH: Tour = {
     {
       id: "done",
       title: "That's the depth chart",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };

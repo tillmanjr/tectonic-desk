@@ -19,6 +19,8 @@ describe("settings", () => {
       alone: 3,
       combined: 1,
     });
+    expect(parseSettings('{"diveMarks":false}').diveMarks).toBe(false);
+    expect(parseSettings('{"diveMarks":"no"}').diveMarks).toBe(true);
   });
   it("reads storage once, writes on set, and survives storage that throws", () => {
     const store = new Map<string, string>([[SETTINGS_KEY, '{"cardRows":{"alone":5}}']]);
@@ -28,8 +30,8 @@ describe("settings", () => {
     };
     const s = createSettings(storage);
     expect(s.current.value.cardRows).toEqual({ alone: 5, combined: 1 });
-    s.set({ cardRows: { alone: 2, combined: 2 } });
-    expect(store.get(SETTINGS_KEY)).toBe('{"cardRows":{"alone":2,"combined":2}}');
+    s.set({ cardRows: { alone: 2, combined: 2 }, diveMarks: false });
+    expect(store.get(SETTINGS_KEY)).toBe('{"cardRows":{"alone":2,"combined":2},"diveMarks":false}');
     const broken = {
       getItem: vi.fn(() => {
         throw new Error("blocked");
@@ -40,7 +42,7 @@ describe("settings", () => {
     };
     const b = createSettings(broken);
     expect(b.current.value).toEqual(DEFAULT_SETTINGS);
-    b.set({ cardRows: { alone: 1, combined: 1 } });
+    b.set({ cardRows: { alone: 1, combined: 1 }, diveMarks: true });
     expect(b.current.value.cardRows.alone).toBe(1);
     expect(createSettings(null).current.value).toEqual(DEFAULT_SETTINGS);
   });

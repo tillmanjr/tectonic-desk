@@ -73,8 +73,8 @@ export const MAP_LAYERS: Tour = {
     {
       id: "done",
       title: "That's the reference layers",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -134,7 +134,7 @@ export const MAP_FIELDS: Tour = {
       id: "done",
       title: "That's the fields",
       body: "The sources are credited in full at the foot of the page.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -224,8 +224,8 @@ export const MAP_SECTION: Tour = {
     {
       id: "done",
       title: "That's the cross-section",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -314,8 +314,8 @@ export const MAP_MEASURE: Tour = {
     {
       id: "done",
       title: "That's measuring",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -379,8 +379,8 @@ export const MAP_PIN: Tour = {
     {
       id: "done",
       title: "That's the pin",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -450,7 +450,7 @@ export const MAP_SHAKE: Tour = {
       id: "done",
       title: "That's ShakeMap",
       body: "The event panel's Impact section gives the maximum intensity too, beside the felt reports and PAGER.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };
@@ -520,8 +520,8 @@ export const MAP_ANIMATE: Tour = {
     {
       id: "done",
       title: "That's the replay",
-      body: "Every deep dive is in the Help menu, under Deep dives.",
-      targets: ["help"],
+      body: "Every deep dive is in the Field manual, a chapter to each part of the desk.",
+      targets: ["manual"],
     },
   ],
 };
@@ -600,7 +600,7 @@ export const MAP_DENSITY: Tour = {
       id: "done",
       title: "That's the raised floor",
       body: "Refine: Earthquakes covers the window and magnitude controls themselves.",
-      targets: ["help"],
+      targets: ["manual"],
     },
   ],
 };

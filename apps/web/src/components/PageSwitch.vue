@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Page } from "../router.js";
 
-defineProps<{ page: Page }>();
+/** `page` is null off the four pages (the Field manual), when none is current. */
+defineProps<{ page: Page | null }>();
 const emit = defineEmits<{ pick: [page: Page] }>();
 const PAGES: { id: Page; label: string }[] = [
   { id: "active", label: "Active Earth" },

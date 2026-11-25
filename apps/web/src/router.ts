@@ -7,6 +7,7 @@ export type Page = "earthquakes" | "volcanoes" | "active" | "space";
  * The shell renders every route; the page comes from the route's meta, the region from its param.
  * `/` lands on Active Earth. Links from before 2026-10-22 named the earthquakes page by region alone
  * (`/wc`), and saved marks may still, so a bare region redirects there with its query intact.
+ * `/manual` is the Field manual, outside the four pages: its route carries `meta.manual` and no page.
  */
 export function createAppRouter(history: RouterHistory = createWebHistory()): Router {
   return createRouter({
@@ -16,6 +17,7 @@ export function createAppRouter(history: RouterHistory = createWebHistory()): Ro
       { path: "/volcanoes/:region?", component: App, meta: { page: "volcanoes" } },
       { path: "/earthquakes/:region?", component: App, meta: { page: "earthquakes" } },
       { path: "/space", component: App, meta: { page: "space" } },
+      { path: "/manual", component: App, meta: { manual: true } },
       { path: "/", redirect: "/active" },
       {
         path: "/:region",

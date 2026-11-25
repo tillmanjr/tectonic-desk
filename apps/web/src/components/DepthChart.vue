@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import type { ApiEvent } from "@tectonic/shared";
 import { scaleLinear } from "d3-scale";
 import { computed } from "vue";
@@ -84,7 +85,7 @@ const data = computed<Data>(() => {
 
 <template>
   <div class="panel chart" data-tour="chart.depth">
-    <h2>Depth distribution</h2>
+    <h2>Depth distribution<DiveMark area="Charts" dive="chart-depth" /></h2>
     <svg :viewBox="`0 0 ${String(W)} ${String(data.H)}`">
       <template v-if="data.marks.length > 0">
         <ChartAxes

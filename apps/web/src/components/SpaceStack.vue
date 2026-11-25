@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { SPACE_SERIES, type SpaceSeries } from "@tectonic/shared";
 import { scaleLinear, scaleLog, scaleTime, scaleUtc, type ScaleTime } from "d3-scale";
 import { computed, ref } from "vue";
@@ -326,7 +327,7 @@ const cross = computed<{ x: number; stamp: string; rows: CrossRow[] } | null>(()
 
 <template>
   <div class="panel chart spacestack" data-tour="space.stack">
-    <h2>Series<span>one time axis</span></h2>
+    <h2>Series<span>one time axis</span><DiveMark area="Space" dive="space-stack" /></h2>
     <svg
       v-if="data !== null"
       class="stacksvg"

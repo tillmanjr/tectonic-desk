@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import ThemeToggle from "./ThemeToggle.vue";
 import type { Zone } from "../lib/format.js";
 import { vHint } from "../lib/hint.js";
+import { SETTINGS, useInjected } from "../lib/keys.js";
 
-/** The header's settings menu: the time zone and the theme, behind one button. */
+/** The header's settings menu: the time zone, the theme and the ◆ deep dive marks, behind one button. */
 defineProps<{ zone: Zone }>();
 const emit = defineEmits<{ toggleZone: [] }>();
 const open = ref(false);
+const settings = useInjected(SETTINGS);
+const diveMarks = computed(() => settings.current.value.diveMarks);
+function toggleDiveMarks(): void {
+  settings.set({ ...settings.current.value, diveMarks: !diveMarks.value });
+}
 const root = ref<HTMLElement | null>(null);
 
 function onPointerDown(e: Event): void {
@@ -32,7 +38,7 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="settings" data-tour="settings" @keydown="onKey">
     <button
-      v-hint="'Settings: time zone and theme'"
+      v-hint="'Settings: time zone, theme and deep dive marks'"
       type="button"
       class="settings-btn"
       aria-haspopup="true"
@@ -64,6 +70,19 @@ onUnmounted(() => {
       <div class="srow">
         <span class="slabel">Theme</span>
         <ThemeToggle />
+      </div>
+      <div class="srow">
+        <span class="slabel">Deep dive marks</span>
+        <button
+          v-hint="'Shows or hides the ◆ on each part of the desk that lists its deep dives'"
+          type="button"
+          class="theme-btn fixed"
+          data-tour="settings.marks"
+          :aria-pressed="diveMarks"
+          @click="toggleDiveMarks"
+        >
+          {{ diveMarks ? "On" : "Off" }}
+        </button>
       </div>
     </div>
   </div>

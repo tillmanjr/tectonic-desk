@@ -62,9 +62,24 @@ function byId(id: string): Tour {
   return t;
 }
 
-/** Starts a tour from its entry in the Help menu, found by its name. */
+/**
+ * Starts a tour from its entry in the Help menu, found by its name; a deep dive from its card in the
+ * Field manual, which runs it in the view the test opened.
+ */
 async function startFromHelp(m: Mounted, id: string): Promise<void> {
   const t = byId(id);
+  if (t.deep !== undefined) {
+    await m.wrapper.find('[data-tour="manual"]').trigger("click");
+    await flushPromises();
+    const chapter = m.wrapper
+      .findAll(".mtoc button")
+      .find((b) => b.text().includes(t.deep?.area ?? ""));
+    await chapter?.trigger("click");
+    await flushPromises();
+    await m.wrapper.find(`#card-${t.id} .mtake`).trigger("click");
+    await flushPromises();
+    return;
+  }
   await m.wrapper.find(".help-btn").trigger("click");
   const entry = m.wrapper.findAll(".htour").find((e) => e.find("b").text() === tourTitle(t));
   await entry?.find(".tourbtn.primary").trigger("click");
@@ -339,7 +354,7 @@ describe("quick tours in the app", () => {
     await startFromHelp(m, "earthquakes");
     await m.wrapper.findAll(".tourdot")[3]?.trigger("click");
     await flushPromises();
-    expect(m.wrapper.find(".tourmore").text()).toContain("as Refine: Earthquakes");
+    expect(m.wrapper.find(".tourmore").text()).toContain("in the chapter Refine");
     await m.wrapper.find(".tourdetour").trigger("click");
     await flushPromises();
     expect(m.wrapper.find(".tourpath").text()).toBe("Earthquakes › Refine: Earthquakes · 1 of 12");
@@ -443,5 +458,131 @@ describe("quick tours in the app", () => {
     await flushPromises();
     expect(empty.router.currentRoute.value.query.event).toBeUndefined();
     empty.wrapper.unmount();
+  });
+});
+
+describe("the Field manual in the app", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    document.body.innerHTML = "";
+  });
+
+  it("opens at the card the address names, ready to take, with its progress", async () => {
+    const progress = createTourProgress(null, () => NOW);
+    progress.record("map-fields", 2, false);
+    progress.record("map-layers", 0, true);
+    const m = await mountApp("/manual#map/map-fields", fakeApi(), createMarks(null), progress);
+    expect(m.wrapper.find('[data-tour="manual"]').attributes("aria-current")).toBe("page");
+    expect(m.wrapper.find(".pages:not(.manualnav) [aria-current]").exists()).toBe(false);
+    expect(m.wrapper.find(".mchapter.current h2").text()).toBe("4 · Map");
+    // Every chapter is laid in the page, the rest hidden and inert, so the page keeps the height
+    // of the longest.
+    const laid = m.wrapper.findAll(".mstack .mchapter");
+    expect(laid.length).toBe(10);
+    expect(laid.filter((c) => c.attributes("inert") !== undefined).length).toBe(9);
+    expect(m.wrapper.find(".mchapter.current").attributes("aria-hidden")).toBeUndefined();
+    expect(m.wrapper.find(".mtoc [aria-current]").text()).toContain("Map");
+    expect(m.wrapper.find(".mtoc [aria-current] .mcount").text()).toBe("1/9");
+    const card = m.wrapper.find("#card-map-fields");
+    expect(card.classes()).toContain("focus");
+    expect(document.activeElement).toBe(card.find(".mtake").element);
+    expect(card.find(".mstate").text()).toBe("Step 3 of 6");
+    expect(card.find(".mtake").text()).toBe("Resume");
+    expect(card.findAll(".mcover li").length).toBe(4);
+    expect(m.wrapper.find("#card-map-layers .mstate").text()).toBe("✓ Taken");
+    expect(m.wrapper.find("#card-map-layers .mtake").text()).toBe("Again");
+    expect(m.wrapper.find("#card-map-pin .mtake").text()).toBe("Take it");
+    expect(m.wrapper.find(".mchapter.current .mintro").text()).toBe(
+      "Introduced in the quick tour Map tools",
+    );
+    await card.find(".mtake").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourpath").text()).toBe("Map: Fields · 3 of 6");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    await m.wrapper.find(".tourreturn .tourbtn.primary").trigger("click");
+    await flushPromises();
+    // The introduction: the pages, and the quick tours as cards.
+    await m.wrapper.findAll(".mtoc button")[0]?.trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#intro");
+    expect(m.wrapper.find(".mchapter.current h2").text()).toBe("1 · Introduction to Tectonic Desk");
+    expect(m.wrapper.find(".mchapter.current .mintro").exists()).toBe(false);
+    expect(m.wrapper.findAll(".mstack .mchapter").length).toBe(10);
+    expect(m.wrapper.findAll(".mpages dt").map((d) => d.text())).toEqual([
+      "Active Earth",
+      "Earthquakes",
+      "Volcanoes",
+      "Space",
+    ]);
+    expect(m.wrapper.find(".mchapter.current .mcount").exists()).toBe(false);
+    expect(m.wrapper.find(".mtoc button:first-child .mcount").exists()).toBe(false);
+    // On to the introductory tours: the quick tours as cards, on the shared page.
+    await m.wrapper.find(".mnext").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#tours");
+    expect(m.wrapper.find(".mchapter.current h2").text()).toBe("2 · Introductory tours");
+    expect(m.wrapper.find(".mchapter.current .mcount").text()).toBe("6 quick tours · 0 taken");
+    expect(m.wrapper.findAll(".mchapter.current .mancard .tourkind").length).toBe(6);
+    m.wrapper.unmount();
+  });
+
+  it("takes a deep dive in the last view of the desk and offers the way back to its card", async () => {
+    const m = await mountApp("/volcanoes/wc");
+    await m.wrapper.find('[data-tour="manual"]').trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#intro");
+    expect(m.wrapper.find('[data-tour="regions"]').attributes("aria-hidden")).toBe("true");
+    await m.wrapper.findAll(".mtoc button")[3]?.trigger("click");
+    await flushPromises();
+    await m.wrapper.find("#card-map-pin .mtake").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.path).toBe("/volcanoes/wc");
+    expect(m.wrapper.find(".tourpath").text()).toBe("Map: Pin · 1 of 7");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/volcanoes/wc");
+    expect(m.wrapper.find(".tourreturn").exists()).toBe(true);
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#map/map-pin");
+    expect(m.wrapper.find("#card-map-pin").classes()).toContain("focus");
+    // From the start, and the chapter's quick tour; Escape stays in the view.
+    m.progress.record("map-pin", 3, false);
+    await flushPromises();
+    await m.wrapper.find("#card-map-pin .tourbtn:not(.primary)").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourpath").text()).toBe("Map: Pin · 1 of 7");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await flushPromises();
+    expect(m.wrapper.find(".tourreturn").exists()).toBe(false);
+    expect(m.router.currentRoute.value.fullPath).toBe("/volcanoes/wc");
+    await m.router.push("/manual#map");
+    await flushPromises();
+    await m.wrapper.find(".mchapter.current .mintro").trigger("click");
+    await flushPromises();
+    expect(m.wrapper.find(".tourpath").text()).toContain("Map tools · ");
+    await m.wrapper.find(".tourexit").trigger("click");
+    await flushPromises();
+    m.wrapper.unmount();
+  });
+
+  it("marks each part of the desk, and opens the part's chapter from its ◆", async () => {
+    const m = await mountApp("/earthquakes");
+    const areas = m.wrapper.findAll(".divebtn").map((b) => b.attributes("aria-label"));
+    expect(areas).toEqual(
+      expect.arrayContaining(["Deep dives on Refine", "Deep dives on Map", "Deep dives on Charts"]),
+    );
+    const map = m.wrapper
+      .findAll(".divebtn")
+      .find((b) => b.attributes("aria-label")?.includes("Map"));
+    await map?.trigger("click");
+    await m.wrapper.find(".divechapter").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#map");
+    m.wrapper.unmount();
   });
 });

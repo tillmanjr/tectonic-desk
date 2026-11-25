@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { vHint } from "../lib/hint.js";
 import { UPDATED_MS, type SummaryPart } from "../lib/refine.js";
@@ -95,6 +96,10 @@ function onHeadKey(ev: KeyboardEvent): void {
         ><template v-else-if="updated">✓ Updated</template></span
       >
       <slot name="info"></slot>
+      <DiveMark
+        area="Refine"
+        :dive="dataset === 'earthquakes' ? 'refine-quakes' : 'refine-volcanoes'"
+      />
     </div>
     <template v-if="expanded">
       <span class="rbreak"></span>

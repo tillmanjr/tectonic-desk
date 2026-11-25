@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DiveMark from "./DiveMark.vue";
 import { SUN_FRAMES, type SunKey } from "@tectonic/shared";
 import { computed } from "vue";
 import { fmtClock } from "../lib/format.js";
@@ -32,7 +33,9 @@ const thumbs = computed(() => {
 </script>
 
 <template>
-  <p class="sectionlabel" data-tour="space.sun">The Sun · SDO and SOHO</p>
+  <p class="sectionlabel" data-tour="space.sun">
+    The Sun · SDO and SOHO<DiveMark area="Space" dive="space-sun" />
+  </p>
   <section class="sunstrip" aria-label="Latest Sun frames" data-tour="space.sun">
     <p v-if="thumbs === null" class="note">No frames yet.</p>
     <button

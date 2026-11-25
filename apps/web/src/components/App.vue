@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, provide, watch } from "vue";
+import { computed, inject, onMounted, onUnmounted, provide, ref, watch } from "vue";
 import { useRoute, useRouter, type LocationQuery } from "vue-router";
 import ActiveEarthPage from "./ActiveEarthPage.vue";
 import DetailPanel from "./DetailPanel.vue";
 import EarthquakesPage from "./EarthquakesPage.vue";
 import HelpMenu from "./HelpMenu.vue";
+import ManualPage from "./ManualPage.vue";
 import MarksOverlay from "./MarksOverlay.vue";
 import PageSwitch from "./PageSwitch.vue";
 import RegionTabs from "./RegionTabs.vue";
@@ -14,6 +15,7 @@ import SpaceStatus from "./SpaceStatus.vue";
 import StatusLine from "./StatusLine.vue";
 import TourCard from "./TourCard.vue";
 import TourOffer from "./TourOffer.vue";
+import TourReturn from "./TourReturn.vue";
 import VolcanoDetail from "./VolcanoDetail.vue";
 import VolcanoesPage from "./VolcanoesPage.vue";
 import { createApiClient } from "../lib/api.js";
@@ -55,6 +57,7 @@ import {
   type MarksNav,
 } from "../lib/keys.js";
 import { createAuroraStore } from "../lib/aurora.js";
+import { chaptersOf, MANUAL, manualHash, parseManualHash, type ManualNav } from "../lib/manual.js";
 import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
@@ -122,6 +125,8 @@ const zone = computed<Zone>(() => (route.query.tz === "local" ? "local" : "utc")
 provide(ZONE, zone);
 
 const page = computed(() => pageOf(route.meta.page));
+/** The Field manual stands outside the four pages; `page` still names one for the stores. */
+const inManual = computed(() => route.meta.manual === true);
 
 /** Query keys that address the marks overlay; never part of a saved view. */
 const OVERLAY_KEYS = ["marks", "show"];
@@ -309,6 +314,32 @@ const tour = createTour(TOURS, tourProgress, {
   clearDemoMarks,
 });
 provide(TOUR, tour);
+/** The reader's last view of the desk, which a tour taken from the manual runs in. */
+const lastView = ref("/active");
+watch(
+  () => route.fullPath,
+  (p) => {
+    if (!inManual.value) lastView.value = p;
+  },
+  { immediate: true },
+);
+const manualChapters = chaptersOf(TOURS);
+const manual: ManualNav = {
+  open: inManual,
+  at: computed(() => parseManualHash(route.hash, manualChapters)),
+  show: (chapter = "intro", card = null) => {
+    const to = `/manual${manualHash(chapter, card)}`;
+    if (inManual.value) void router.replace(to);
+    else void router.push(to);
+  },
+  take: (id, step, chapter) => {
+    void tour.start(id, step, {
+      view: lastView.value,
+      returnTo: `/manual${manualHash(chapter, id)}`,
+    });
+  },
+};
+provide(MANUAL, manual);
 /** A plain visit (no query) may be offered the tour; a shared link goes straight to what it names. */
 const plainVisit = Object.keys(route.query).length === 0;
 function toggleZone(): void {
@@ -395,7 +426,18 @@ onUnmounted(() => {
         </div>
         <nav class="tools" aria-label="Controls">
           <div class="grp">
-            <PageSwitch :page="page" @pick="pickPage" />
+            <PageSwitch :page="inManual ? null : page" @pick="pickPage" />
+            <nav class="pages manualnav" aria-label="Field manual">
+              <button
+                v-hint="'Every deep dive, a chapter to each part of the desk, with the quick tours'"
+                type="button"
+                data-tour="manual"
+                :aria-current="inManual ? 'page' : undefined"
+                @click="manual.show()"
+              >
+                Field manual
+              </button>
+            </nav>
             <nav class="pages" :aria-label="MARK_TERMS.title">
               <button
                 v-hint="`Your marked ${MARK_TERMS.things}, over the current page`"
@@ -414,8 +456,8 @@ onUnmounted(() => {
           <div class="grp">
             <!-- The Space page has no region; the tabs stay in the layout, unseen, so the page switch does not shift. -->
             <RegionTabs
-              :class="{ ghost: page === 'space' }"
-              :aria-hidden="page === 'space' ? 'true' : undefined"
+              :class="{ ghost: page === 'space' || inManual }"
+              :aria-hidden="page === 'space' || inManual ? 'true' : undefined"
               @pick="pickRegion"
             />
             <HelpMenu />
@@ -434,7 +476,8 @@ onUnmounted(() => {
       Showing the newest {{ EVENT_LIMIT }} events; the window holds more. Narrow the window or raise
       the limit.
     </div>
-    <SpacePage v-if="page === 'space'" />
+    <ManualPage v-if="inManual" />
+    <SpacePage v-else-if="page === 'space'" />
     <template v-else-if="region !== null">
       <EarthquakesPage v-if="page === 'earthquakes'" />
       <VolcanoesPage v-else-if="page === 'volcanoes'" />
@@ -554,6 +597,7 @@ onUnmounted(() => {
   <MarksOverlay v-if="overlay !== null" />
   <TourOffer :eligible="plainVisit" :location="route.fullPath" />
   <TourCard />
+  <TourReturn />
   <Transition name="notice">
     <div v-if="notice.current.value !== null" class="notice" role="status">
       {{ notice.current.value }}
