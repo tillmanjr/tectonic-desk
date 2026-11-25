@@ -40,6 +40,8 @@ import {
   MARKS_NAV,
   NOTICE,
   SECTION,
+  CENTRE,
+  SET_CENTRE,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -62,6 +64,7 @@ import { chaptersOf, MANUAL, manualHash, parseManualHash, type ManualNav } from 
 import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
 import { createNotice } from "../lib/notice.js";
+import { centreQuery, parseCentre } from "../lib/centre.js";
 import { parseSection, sectionQuery, type Section } from "../lib/section.js";
 import { createPins } from "../lib/pins.js";
 import { createSettings } from "../lib/settings.js";
@@ -259,6 +262,12 @@ function setSection(s: Section | null): void {
   });
 }
 provide(SET_SECTION, setSection);
+const routeCentre = computed(() => parseCentre(route.query.lon));
+provide(CENTRE, routeCentre);
+function setCentre(lon: number): void {
+  void router.replace({ query: { ...route.query, lon: centreQuery(lon) } });
+}
+provide(SET_CENTRE, setCentre);
 
 /** The largest event in the window the catalogue holds, for the orientation's detail step. */
 function largestEvent(): string | null {

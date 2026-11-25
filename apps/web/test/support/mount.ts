@@ -17,6 +17,8 @@ import {
   NOTICE,
   PINS,
   SECTION,
+  CENTRE,
+  SET_CENTRE,
   SELECT,
   SELECT_VOLCANO,
   SET_FILTER,
@@ -35,6 +37,7 @@ import {
 import { createMarks, type MarksStore } from "../../src/lib/marks.js";
 import { createNotice, type NoticeStore } from "../../src/lib/notice.js";
 import { createPins, type PinsStore } from "../../src/lib/pins.js";
+import { DEFAULT_CENTRE } from "../../src/lib/centre.js";
 import type { Section } from "../../src/lib/section.js";
 import { createSettings, type SettingsStore } from "../../src/lib/settings.js";
 import { createSpaceStore, type SpaceRange, type SpaceStore } from "../../src/lib/space.js";
@@ -63,6 +66,8 @@ export interface Context {
   pins: PinsStore;
   notice: NoticeStore;
   section: Ref<Section | null>;
+  centre: Ref<number>;
+  setCentre: (lon: number) => void;
   setSection: Mock<(s: Section | null) => void>;
   space: SpaceStore;
   aurora: AuroraStore;
@@ -132,6 +137,7 @@ export async function makeContext(
     await aurora.load();
   }
   const overlay = ref<{ group: string; mode: MarksMode } | null>(null);
+  const centre = ref(DEFAULT_CENTRE);
   return {
     api,
     catalog,
@@ -149,6 +155,10 @@ export async function makeContext(
     notice: createNotice(),
     section: ref<Section | null>(null),
     setSection: vi.fn(),
+    centre,
+    setCentre: vi.fn((lon: number) => {
+      centre.value = lon;
+    }),
     space,
     aurora,
     setSpaceRange: vi.fn(),
@@ -194,6 +204,8 @@ export function mountWith(
       provide(NOTICE, ctx.notice);
       provide(SECTION, ctx.section);
       provide(SET_SECTION, ctx.setSection);
+      provide(CENTRE, ctx.centre);
+      provide(SET_CENTRE, ctx.setCentre);
       provide(SPACE, ctx.space);
       provide(AURORA, ctx.aurora);
       provide(SET_SPACE_RANGE, ctx.setSpaceRange);

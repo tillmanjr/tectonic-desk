@@ -23,6 +23,11 @@ describe("frameFor", () => {
     expect([f.width, f.height]).toEqual([1000, 520]);
     expect(f.projection([0, 0])).not.toBeNull();
     expect(graticuleFor(f).type).toBe("MultiLineString");
+    // centred on 150°E unless told otherwise; the middle of the frame is the centre's meridian
+    expect(f.projection([150, 0])?.[0]).toBeCloseTo(500, 6);
+    expect(frameFor(GLOBAL, -30).projection([-30, 0])?.[0]).toBeCloseTo(500, 6);
+    // a regional frame ignores it
+    expect(frameFor(WC, -30).projection([-122, 45])).toEqual(frameFor(WC).projection([-122, 45]));
   });
   it("fits a conic projection to the region's frame points or its bbox", () => {
     const wc = frameFor(WC);

@@ -426,6 +426,127 @@ a:focus-visible,
   opacity: 0.6;
   mix-blend-mode: multiply;
 }
+/* The global map's Centre control, faded over the map's bottom-left corner as the theater button is
+   over the right, and the globe that turns with it while in use. */
+.mapwrap .centrepick {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  font-size: 13px;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+.mapwrap .centrepick:hover,
+.mapwrap .centrepick:focus-within,
+.mapwrap .centrepick.active {
+  opacity: 1;
+}
+.centrepick .clabel {
+  margin-right: 2px;
+}
+.centrepick .cnudge {
+  font: 600 14px var(--f-data);
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+.centrepick .cnudge:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.centrepick .ctrack {
+  position: relative;
+  display: flex;
+}
+.centrepick .ctrack input {
+  width: 110px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+/* The detent at 150°E: a tick under the middle of the track. */
+.centrepick .ctrack::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 1px;
+  height: 5px;
+  background: var(--muted);
+  pointer-events: none;
+}
+.centrepick .cvalue {
+  min-width: 3.6em;
+  font: 600 12.5px var(--f-data);
+  text-align: right;
+}
+.cglobe {
+  position: fixed;
+  transform: translateY(-100%);
+  z-index: 37;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+.cglobe .gsea {
+  fill: var(--ocean);
+}
+.cglobe .ggrat {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 0.6;
+}
+.cglobe .gland {
+  fill: var(--muted);
+  fill-opacity: 0.45;
+  stroke: none;
+}
+.cglobe .ghome {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 2;
+}
+.cglobe .gnow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.cglobe .grim {
+  fill: none;
+  stroke: var(--border);
+}
+.cglobe .gcap {
+  font: 12px var(--f-data);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.cglobe .gcap b {
+  color: var(--accent);
+}
+.maptools .fieldpick select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .maptools .fieldpick select {
   font: inherit;
   font-size: 13px;

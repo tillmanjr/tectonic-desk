@@ -7,6 +7,8 @@ import {
   CATALOG,
   PINS,
   SECTION,
+  CENTRE,
+  SET_CENTRE,
   SELECT_VOLCANO,
   SET_SECTION,
   useInjected,
@@ -28,6 +30,8 @@ const mv = useMapView({
   animate: () => props.animate,
   section: useInjected(SECTION),
   setSection: useInjected(SET_SECTION),
+  centre: useInjected(CENTRE),
+  setCentre: useInjected(SET_CENTRE),
   pins: useInjected(PINS),
 });
 const v = useVolcanoLayer({ store, mv });

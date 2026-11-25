@@ -1,5 +1,6 @@
 import type { BBox } from "@tectonic/shared";
 import { geoConicConformal, geoNaturalEarth1, geoPath, type GeoProjection } from "d3-geo";
+import { DEFAULT_CENTRE } from "./centre.js";
 import type { Basemap } from "./geo.js";
 import type { ThumbFrame } from "./marks.js";
 
@@ -14,7 +15,7 @@ const EXTENT: [[number, number], [number, number]] = [
 /** The projection a thumbnail draws with: the world, or the bbox of the West Coast preset. */
 export function thumbProjection(frame: ThumbFrame, bbox: BBox | null): GeoProjection {
   if (frame === "world" || bbox === null) {
-    return geoNaturalEarth1().rotate([-150, 0]).fitExtent(EXTENT, { type: "Sphere" });
+    return geoNaturalEarth1().rotate([-DEFAULT_CENTRE, 0]).fitExtent(EXTENT, { type: "Sphere" });
   }
   const span = bbox.maxLat - bbox.minLat;
   return geoConicConformal()

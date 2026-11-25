@@ -211,7 +211,9 @@ describe("tour content", () => {
       ["map.theater", false],
     ]);
     expect(mv.transform.value.k).toBeCloseTo(1.8 ** 3);
-    expect(reset).toHaveBeenCalledTimes(1);
+    // the Centre and Readouts steps start from the whole map; Centre turns it and back
+    expect(reset).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(mv.setCentre).mock.calls).toEqual([[-30], [150]]);
     expect(ctx.selectLargest).toHaveBeenCalled();
     expect(ctx.clearSelection).toHaveBeenCalled();
     const none = fakeContext(null);

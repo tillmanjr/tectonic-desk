@@ -37,6 +37,7 @@ import {
 import {
   frameFor,
   invertPoint,
+  projectPoint,
   plateFeature,
   zoomTransformFor,
   type Basemap,
@@ -46,6 +47,7 @@ import {
   type Topo,
 } from "./geo.js";
 import { IN_THEATER } from "./theater.js";
+import { DEFAULT_CENTRE } from "./centre.js";
 import type { Tip } from "./tip.js";
 import {
   coarsePointer,
@@ -74,6 +76,9 @@ export interface MapViewOptions {
   setSection: (s: Section | null) => void;
   /** The reader's pins, one per map view. */
   pins: PinsStore;
+  /** The global frame's centre longitude in the route and its setter; regional frames ignore it. */
+  centre: Readonly<Ref<number>>;
+  setCentre: (lon: number) => void;
 }
 
 export interface MapViewFrame {
@@ -103,6 +108,11 @@ export interface MapView {
   field: Ref<FieldChoice>;
   /** The raster for the choice and the current frame; null while none, loading, failed or missing. */
   fieldRaster: ComputedRef<FieldRaster | null>;
+  /** Whether the fields can be drawn: they are rendered for the global map at 150°E only. */
+  fieldAvailable: ComputedRef<boolean>;
+  /** The global map's centre longitude, and the setter that turns it. */
+  centre: Readonly<Ref<number>>;
+  setCentre: (lon: number) => void;
   /** True after the rasters file failed to load; the next choice retries. */
   fieldError: Ref<boolean>;
   /** The section tool: arming, placing and dragging the line. */
@@ -187,7 +197,7 @@ export function useMapView(opts: MapViewOptions): MapView {
   const { api } = opts;
   const view = computed<MapViewFrame>(() => {
     const r = opts.region();
-    const frame = frameFor(r);
+    const frame = frameFor(r, opts.centre.value);
     return { region: r, frame, path: geoPath(frame.projection), minMag: r.minMag };
   });
 
@@ -211,8 +221,13 @@ export function useMapView(opts: MapViewOptions): MapView {
         fieldError.value = true;
       });
   });
+  const fieldAvailable = computed(
+    () => !view.value.frame.global || opts.centre.value === DEFAULT_CENTRE,
+  );
   const fieldRaster = computed(() =>
-    rasterFor(fields.value, field.value, viewOf(view.value.frame.global)),
+    fieldAvailable.value
+      ? rasterFor(fields.value, field.value, viewOf(view.value.frame.global))
+      : null,
   );
   const section = useSectionTool(opts.section, opts.setSection);
   const pin = usePinTool(opts.pins, () => viewOf(view.value.frame.global));
@@ -606,6 +621,23 @@ export function useMapView(opts: MapViewOptions): MapView {
       void loadBasemap(r);
     },
   );
+  // A new centre re-projects the map; keep the zoom and the place under the middle of the view.
+  watch(view, (v, old) => {
+    if (v.region !== old.region) return;
+    const t = transform.value;
+    if (t.k === 1 && t.x === 0 && t.y === 0) return;
+    const { width, height } = v.frame;
+    const ll = invertPoint(old.frame.projection, t.invert([width / 2, height / 2]));
+    if (ll === null) {
+      zoomBehavior.transform(svgSelection(), zoomIdentity);
+      return;
+    }
+    const [x, y] = projectPoint(v.frame.projection, ll);
+    zoomBehavior.transform(
+      svgSelection(),
+      zoomIdentity.translate(width / 2 - t.k * x, height / 2 - t.k * y).scale(t.k),
+    );
+  });
   onMounted(() => {
     document.addEventListener("mousedown", closePickOnOutside);
     window.addEventListener("resize", measure);
@@ -642,7 +674,10 @@ export function useMapView(opts: MapViewOptions): MapView {
     showAurora,
     field,
     fieldRaster,
+    fieldAvailable,
     fieldError,
+    centre: opts.centre,
+    setCentre: opts.setCentre,
     plateSegments,
     plates,
     hoveredPlate,
