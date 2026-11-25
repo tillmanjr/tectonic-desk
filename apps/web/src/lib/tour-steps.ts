@@ -1038,7 +1038,7 @@ export const MAP_NAV: Tour = {
     {
       id: "header",
       title: "The header",
-      body: "From the left: the page's own layers (Focal mechanisms, ShakeMap, Density when a long window raised the floor), the reference layers (plate boundaries, subduction teeth, aurora, and on the West Coast the Quaternary faults), the Field select, the tools (Section, Measure, Pin), then zoom in, zoom out, Reset and Animate. Rest on any control for a second, or hold a finger on it, for what it does. On a narrow screen the header wraps onto more lines.",
+      body: "From the left: the page's own layers (Mechanisms for the focal mechanisms, ShakeMap, Density when a long window raised the floor), the reference layers (Plates, Teeth for the subduction teeth, Aurora, and on the West Coast the Quaternary faults), the Field select, the tools (Section, Measure, Pin), then zoom in, zoom out, Reset and Animate. Rest on any control for a second, or hold a finger on it, for what it does. On a narrow screen the header wraps onto more lines.",
       targets: ["map.tools"],
     },
     {

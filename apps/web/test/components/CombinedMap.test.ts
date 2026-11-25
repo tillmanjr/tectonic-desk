@@ -84,7 +84,7 @@ describe("CombinedMap", () => {
     expect(w.findComponent({ name: "MapDensity" }).exists()).toBe(true);
     expect(w.text()).toContain("events per 2° cell");
     expect(w.findComponent({ name: "MapEvents" }).props("showMech")).toBe(false);
-    await toggle("Focal mechanisms")?.find("input").setValue(true);
+    await toggle("Mechanisms")?.find("input").setValue(true);
     expect(w.findComponent({ name: "MapEvents" }).props("showMech")).toBe(true);
     w.unmount();
   });

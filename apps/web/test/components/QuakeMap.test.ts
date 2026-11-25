@@ -35,19 +35,22 @@ describe("QuakeMap", () => {
     await buttons[1]?.trigger("click");
     await buttons[2]?.trigger("click");
     expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
-    const box = (text: string) =>
+    // the short labels carry their full names as the boxes' accessible names
+    const box = (text: string) => w.find(`.maptools input[aria-label="${text}"]`);
+    expect(
       w
         .findAll(".maptools label")
-        .find((l) => l.text().includes(text))
-        ?.find("input");
+        .map((l) => l.text())
+        .filter((t) => ["Mechanisms", "Plates", "Teeth"].includes(t)),
+    ).toEqual(["Mechanisms", "Plates", "Teeth"]);
     // Focal mechanisms start off: dots, no beachballs, until the reader turns them on.
-    expect((box("Focal mechanisms")?.element as HTMLInputElement | undefined)?.checked).toBe(false);
-    await box("Plate boundaries")?.setValue(false);
+    expect(box("Focal mechanisms").element).toHaveProperty("checked", false);
+    await box("Plate boundaries").setValue(false);
     expect(w.findComponent({ name: "MapPlates" }).exists()).toBe(false);
     expect(w.findComponent({ name: "MapEvents" }).findAll("circle")).toHaveLength(1);
-    await box("Focal mechanisms")?.setValue(true);
+    await box("Focal mechanisms").setValue(true);
     expect(w.findComponent({ name: "MapEvents" }).props("showMech")).toBe(true);
-    await box("Subduction teeth")?.setValue(false);
+    await box("Subduction teeth").setValue(false);
     expect(w.findComponent({ name: "MapTeeth" }).exists()).toBe(false);
   });
 

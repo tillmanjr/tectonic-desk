@@ -90,17 +90,19 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
       <slot name="tools"></slot>
       <label
         v-hint="
-          'Draws the PB2002 plate boundaries (Bird 2003), coloured by boundary class. Hover a segment for the plate pair and its class.'
+          'Plate boundaries: draws the PB2002 plate boundaries (Bird 2003), coloured by boundary class. Hover a segment for the plate pair and its class.'
         "
         data-tour="map.layers"
-        ><input v-model="mv.showPlates.value" type="checkbox" /> Plate boundaries</label
+        ><input v-model="mv.showPlates.value" type="checkbox" aria-label="Plate boundaries" />
+        Plates</label
       >
       <label
         v-hint="
-          'Adds teeth along the PB2002 subduction boundaries, on the overriding plate and pointing down-dip. Drawn whether or not the boundaries are on.'
+          'Subduction teeth: adds teeth along the PB2002 subduction boundaries, on the overriding plate and pointing down-dip. Drawn whether or not the boundaries are on.'
         "
         data-tour="map.layers"
-        ><input v-model="mv.showTeeth.value" type="checkbox" /> Subduction teeth</label
+        ><input v-model="mv.showTeeth.value" type="checkbox" aria-label="Subduction teeth" />
+        Teeth</label
       >
       <label
         v-hint="

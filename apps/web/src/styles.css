@@ -405,7 +405,7 @@ a:focus-visible,
 .maptools {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
+  gap: 6px 10px;
   align-items: center;
   padding: 8px 12px;
   border-bottom: 1px solid var(--line);

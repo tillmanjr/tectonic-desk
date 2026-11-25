@@ -65,10 +65,11 @@ const shake = useShakeLayer({ api, catalog, mv });
       >
       <label
         v-hint="
-          'Draws a lower-hemisphere beachball (compressional quadrants filled) in place of the dot for events with a moment tensor or focal mechanism.'
+          'Focal mechanisms: draws a lower-hemisphere beachball (compressional quadrants filled) in place of the dot for events with a moment tensor or focal mechanism.'
         "
         data-tour="map.page map.mech"
-        ><input v-model="q.showMech.value" type="checkbox" /> Focal mechanisms</label
+        ><input v-model="q.showMech.value" type="checkbox" aria-label="Focal mechanisms" />
+        Mechanisms</label
       >
       <ShakeToggle :shake="shake" data-tour="map.page map.shake" />
     </template>
