@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { detailDocumentSchema, type DetailDocument } from "../../src/usgs/schema.js";
 import {
   COVERAGE_FILE,
+  epicentreOf,
   parseCoverage,
   pickShakeProduct,
   shakeMapOf,
@@ -106,7 +107,7 @@ describe("shakeMapOf", () => {
     const p = pickShakeProduct(detail);
     if (p === null) throw new Error("no product");
     const grid = parseCoverage(coverage);
-    const m = shakeMapOf("us6000u1z5", p, grid);
+    const m = shakeMapOf("us6000u1z5", p, grid, epicentreOf(detail));
     expect(m).toEqual({
       eventId: "us6000u1z5",
       source: "us",
@@ -114,7 +115,12 @@ describe("shakeMapOf", () => {
       mapStatus: "automatic",
       processed: p.processed,
       maxMmi: null,
+      epicentre: { longitude: -19.122, latitude: -0.5314 },
       grid,
     });
+  });
+  it("has no epicentre when the detail's point lacks a coordinate", () => {
+    expect(epicentreOf({ ...detail, geometry: { coordinates: [null, -0.5, 10] } })).toBeNull();
+    expect(epicentreOf({ ...detail, geometry: { coordinates: [-19.1] } })).toBeNull();
   });
 });
