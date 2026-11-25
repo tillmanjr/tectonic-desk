@@ -76,6 +76,11 @@ describe("bowl beachball", () => {
     ).toBeNull();
     expect(bowlScene(mech({ tAzimuth: null }), 20, bowlColors)?.axes.t.plunge).toBeCloseTo(16, -1);
   });
+  it("letters the marks in a colour that reads on the ink in either theme", () => {
+    expect(bowlScene(mech(), 20, bowlColors)?.paper).toBe("#ffffff");
+    const dark = { ...bowlColors, tension: "#e9eef1", ink: "#e3e9ed" };
+    expect(bowlScene(mech(), 20, dark)?.paper).toBe("#0c1216");
+  });
   it("draws the plan view near 0° and the tilted bowl otherwise, with both axes", () => {
     const s = stubCanvas();
     const g = context();
