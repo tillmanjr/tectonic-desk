@@ -1,6 +1,6 @@
 import type { StepContext, Tour } from "../tour.js";
 
-/** The settings and the app-wide conventions: time zone, theme, hints, the ◆ marks and where help lives. */
+/** The settings and the app-wide conventions: time zone, theme, hints, the ◆ marks, the glossary and where help lives. */
 
 const openSettings = (ctx: StepContext): void => {
   ctx.setSwitch("settings", true);
@@ -10,7 +10,7 @@ export const SETTINGS_DIVE: Tour = {
   id: "settings",
   title: "Time zone, theme and hints",
   blurb:
-    "UTC or local time, the theme, the beachball, the ◆ marks, how hints appear with a mouse, a keyboard or a finger, and where help lives.",
+    "UTC or local time, the theme, the beachball, the ◆ marks, the glossary, how hints appear with a mouse, a keyboard or a finger, and where help lives.",
   deep: { area: "Settings" },
   pageFor: (p) => (p === "space" ? "active" : p),
   steps: [
@@ -50,6 +50,13 @@ export const SETTINGS_DIVE: Tour = {
       enter: openSettings,
     },
     {
+      id: "glossary",
+      title: "Glossary",
+      body: "Terms the Field manual's Glossary explains (Kp, MMI, the T axis, the floor) carry a faint dotted underline; Glossary underlines turns it off. Resting on one shows its line from the glossary. Open glossary on picks what opens its entry: a double click (the default, so a stray click never leaves the page), a single click, or nothing. Enter on a focused term opens it too. On a touch screen, under Double click, tap a term for its hint and tap it again to open the entry.",
+      targets: ["settings"],
+      enter: openSettings,
+    },
+    {
       id: "hints",
       title: "Hints",
       body: "Almost every control explains itself. With a mouse, rest on it for a second and the hint appears below the pointer; with the keyboard, it appears under the control you move to. On a touch screen, hold a finger on the control for half a second: the hint shows above it, and lifting the finger does not press it. A tap on an ⓘ or a label shows its hint at once; the next touch dismisses it.",
@@ -65,7 +72,7 @@ export const SETTINGS_DIVE: Tour = {
     {
       id: "help",
       title: "Help and the Field manual",
-      body: "The ? holds the quick tours, each with how far you got; it stands out in colour while one has a step you have not seen, and Reset tour progress at its foot starts everything afresh. The Field manual, at the end of the page links, holds every deep dive, a chapter to each part of the desk, with the quick tours in its introduction.",
+      body: "The ? holds the quick tours, each with how far you got; it stands out in colour while one has a step you have not seen, and Reset tour progress at its foot starts everything afresh. The Field manual, at the end of the page links, holds every deep dive, a chapter to each part of the desk, with the quick tours in its introduction and the Glossary at its end.",
       targets: ["help", "manual"],
     },
     {

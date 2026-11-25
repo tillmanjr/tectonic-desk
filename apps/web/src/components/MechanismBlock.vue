@@ -14,6 +14,7 @@ import BeachballImage from "./BeachballImage.vue";
 import BowlBeachball from "./BowlBeachball.vue";
 import { fmtMoment } from "../lib/format.js";
 import { SETTINGS, useInjected } from "../lib/keys.js";
+import { vTerm } from "../lib/term.js";
 
 const props = defineProps<{ mechanism: ApiMechanism; depthKm: number | null }>();
 
@@ -51,7 +52,8 @@ const dc = computed(() => {
 
 <template>
   <div v-if="geo !== null">
-    <h3>{{ mechanism.kind === "mt" ? "Moment tensor" : "Focal mechanism (first motion)" }}</h3>
+    <h3 v-if="mechanism.kind === 'mt'"><span v-term="'moment-tensor'">Moment tensor</span></h3>
+    <h3 v-else><span v-term="'beachball'">Focal mechanism</span> (first motion)</h3>
     <div class="mechbox">
       <BowlBeachball
         v-if="bowl"
@@ -70,7 +72,9 @@ const dc = computed(() => {
         alt="Beachball diagram"
       />
       <div>
-        <div class="style" data-tour="mech.style">{{ geo.style }}</div>
+        <div class="style" data-tour="mech.style">
+          <span v-term="'mechanism-class'">{{ geo.style }}</span>
+        </div>
         <p v-if="geo.sense !== null" data-tour="mech.style">{{ geo.sense }}</p>
         <p v-if="bowl">
           Lower hemisphere, equal area at 0°, seen as the inside of the focal sphere. Shaded
@@ -84,9 +88,9 @@ const dc = computed(() => {
       </div>
     </div>
     <dl class="kv">
-      <dt data-tour="mech.planes">Nodal plane 1</dt>
+      <dt data-tour="mech.planes"><span v-term="'nodal-plane'">Nodal plane 1</span></dt>
       <dd data-tour="mech.planes">{{ pf(geo.p1) }}</dd>
-      <dt data-tour="mech.planes">Nodal plane 2</dt>
+      <dt data-tour="mech.planes"><span v-term="'nodal-plane'">Nodal plane 2</span></dt>
       <dd data-tour="mech.planes">{{ pf(geo.p2) }}</dd>
       <dt></dt>
       <dd class="hint" data-tour="mech.planes">
@@ -94,31 +98,33 @@ const dc = computed(() => {
           · reconstructed from P/T axes</template
         >
       </dd>
-      <dt data-tour="mech.axes">T axis</dt>
+      <dt data-tour="mech.axes"><span v-term="'t-axis'">T axis</span></dt>
       <dd data-tour="mech.axes">
         az {{ Math.round(geo.axes.t.azimuth) }}° · plunge {{ Math.round(geo.axes.t.plunge) }}°
       </dd>
-      <dt data-tour="mech.axes">P axis</dt>
+      <dt data-tour="mech.axes"><span v-term="'p-axis'">P axis</span></dt>
       <dd data-tour="mech.axes">
         az {{ Math.round(geo.axes.p.azimuth) }}° · plunge {{ Math.round(geo.axes.p.plunge) }}°
       </dd>
       <template v-if="mechanism.kind === 'mt'">
-        <dt data-tour="mech.moment">Scalar moment</dt>
+        <dt data-tour="mech.moment"><span v-term="'scalar-moment'">Scalar moment</span></dt>
         <dd data-tour="mech.moment">
           <template v-if="moment !== null"
             >{{ moment.mantissa }} × 10<sup>{{ moment.exponent }}</sup> N·m</template
           >
           <template v-else>—</template>
         </dd>
-        <dt data-tour="mech.moment">Moment magnitude</dt>
+        <dt data-tour="mech.moment">
+          <span v-term="'moment-magnitude'">Moment magnitude</span>
+        </dt>
         <dd data-tour="mech.moment">
           {{ mechanism.mw === null ? "—" : `Mw ${String(mechanism.mw)}` }}
         </dd>
-        <dt data-tour="mech.moment">Centroid depth</dt>
+        <dt data-tour="mech.moment"><span v-term="'centroid-depth'">Centroid depth</span></dt>
         <dd data-tour="mech.moment">
           {{ mechanism.depthKm === null ? "—" : `${String(mechanism.depthKm)} km` }}
         </dd>
-        <dt data-tour="mech.moment">Double couple</dt>
+        <dt data-tour="mech.moment"><span v-term="'double-couple'">Double couple</span></dt>
         <dd data-tour="mech.moment">{{ dc }}</dd>
       </template>
       <dt>Solution source</dt>

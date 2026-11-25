@@ -4067,3 +4067,240 @@ table.matrix {
   font: 11px var(--f-data);
   opacity: 0.75;
 }
+
+/* Glossary: linked terms on the desk, faintly underlined while Settings keeps underlines on. */
+.gterm {
+  cursor: help;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.gunder .gterm {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, var(--muted) 70%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.gterm:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+/* Settings: a three-way choice, one pill split in parts. */
+.sseg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.sseg button {
+  font: 600 13px var(--f-ui);
+  border: 0;
+  background: var(--panel);
+  color: var(--muted);
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.sseg button + button {
+  border-left: 1px solid var(--line);
+}
+.sseg button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+  color: var(--ink);
+}
+/* The Glossary chapter: A to Z under a strip of tools; a letter lands clear of the sticky top bar. */
+.manual .mlink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+.manual .mlink:hover {
+  text-decoration: underline;
+}
+.glossary {
+  --g-earthquakes: var(--shallow);
+  --g-volcanoes: var(--av-orange);
+  --g-space: var(--space);
+  --g-maps: var(--plate);
+  --g-desk: var(--muted);
+}
+.glossary .gtools {
+  display: grid;
+  gap: 8px;
+  padding: 8px 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.glossary .grow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.glossary .gfilter {
+  width: 220px;
+  max-width: 100%;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 14px var(--f-ui);
+}
+.glossary .gchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: none;
+  color: var(--ink);
+  font: 13px var(--f-ui);
+  cursor: pointer;
+}
+.glossary .gchip::before,
+.glossary .gtag::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--g);
+}
+.glossary .gchip.all::before {
+  display: none;
+}
+.glossary .gchip[aria-pressed="true"] {
+  border-color: var(--g, var(--accent));
+  background: color-mix(in srgb, var(--g, var(--accent)) 16%, transparent);
+}
+.glossary .earthquakes {
+  --g: var(--g-earthquakes);
+}
+.glossary .volcanoes {
+  --g: var(--g-volcanoes);
+}
+.glossary .space {
+  --g: var(--g-space);
+}
+.glossary .maps {
+  --g: var(--g-maps);
+}
+.glossary .desk {
+  --g: var(--g-desk);
+}
+.glossary .gletters {
+  display: flex;
+  flex-wrap: wrap;
+}
+.glossary .gletters button {
+  padding: 1px 5px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: var(--accent);
+  font: 12px var(--f-data);
+  cursor: pointer;
+}
+.glossary .gletters button:disabled {
+  color: var(--line);
+  cursor: default;
+}
+.glossary .gletters button:not(:disabled):hover {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.glossary .gcount {
+  margin-left: auto;
+  color: var(--muted);
+  font: 11px var(--f-data);
+}
+.glossary .gletter {
+  margin: 0;
+  padding: 14px 0 2px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font: 600 12px var(--f-data);
+  scroll-margin-top: 140px;
+}
+.glossary .gentry {
+  display: grid;
+  gap: 4px;
+  padding: 10px 6px 12px;
+  border-bottom: 1px dotted var(--line);
+}
+.glossary .gentry.focus {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.glossary .ghead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.glossary .ghead b {
+  font: 600 17px var(--f-ui);
+}
+.glossary .gtag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font: 10.5px var(--f-data);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.glossary .gshort,
+.glossary .glong {
+  margin: 0;
+  max-width: 72ch;
+}
+.glossary .gshort {
+  font-weight: 500;
+}
+.glossary .glong {
+  color: var(--muted);
+}
+.glossary .gscale {
+  border-collapse: collapse;
+  font: 12px var(--f-data);
+  font-variant-numeric: tabular-nums;
+}
+.glossary .gscale td {
+  padding: 1px 12px 1px 0;
+}
+.glossary .gscale td:first-child {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.glossary .grefs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.glossary .glink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+.glossary .glink:hover {
+  text-decoration: underline;
+}
+.glossary .gdive {
+  color: var(--tour-deep);
+}
+.glossary .gback {
+  margin-top: 4px;
+}
+.glossary .gsrc {
+  font: 11px var(--f-data);
+}
