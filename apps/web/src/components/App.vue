@@ -325,6 +325,11 @@ watch(
   { immediate: true },
 );
 const manualChapters = chaptersOf(TOURS);
+/** The entry a term on the desk opened, with the view to go back to. */
+const fromDesk = ref<{ term: string; view: string } | null>(null);
+watch(inManual, (on) => {
+  if (!on) fromDesk.value = null;
+});
 const manual: ManualNav = {
   open: inManual,
   at: computed(() => parseManualHash(route.hash, manualChapters)),
@@ -338,6 +343,10 @@ const manual: ManualNav = {
       view: lastView.value,
       returnTo: `/manual${manualHash(chapter, id)}`,
     });
+  },
+  fromDesk: computed(() => fromDesk.value),
+  backToDesk: (view) => {
+    void router.push(view);
   },
 };
 provide(MANUAL, manual);
@@ -353,6 +362,8 @@ watchEffect(() => {
 /** A linked term asked for its Glossary entry. */
 function openTerm(ev: Event): void {
   if (ev instanceof CustomEvent && typeof ev.detail === "string") {
+    // a term inside the manual keeps the way back to where the reader first came from
+    if (!inManual.value) fromDesk.value = { term: ev.detail, view: route.fullPath };
     manual.show(GLOSSARY_CHAPTER, ev.detail);
   }
 }

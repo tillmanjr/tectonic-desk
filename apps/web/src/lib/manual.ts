@@ -169,6 +169,13 @@ export interface ManualNav {
    * the way back to `chapter`, at its card.
    */
   take: (id: TourId, step: number, chapter: string) => void;
+  /**
+   * The Glossary entry a term on the desk opened, and the view it was opened from; null when the
+   * manual was reached any other way, and cleared once the reader leaves the manual.
+   */
+  fromDesk: ComputedRef<{ term: string; view: string } | null>;
+  /** Goes back to the view the Glossary was opened from (`fromDesk`'s view). */
+  backToDesk: (view: string) => void;
 }
 
 export const MANUAL: InjectionKey<ManualNav> = Symbol("manual");

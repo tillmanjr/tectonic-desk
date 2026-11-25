@@ -12,6 +12,7 @@ import {
   type GlossaryArea,
   type GlossaryItem,
 } from "../lib/glossary.js";
+import { vHint } from "../lib/hint.js";
 import { useInjected } from "../lib/keys.js";
 import { areaSlug, MANUAL } from "../lib/manual.js";
 import { TOUR } from "../lib/tour.js";
@@ -19,7 +20,8 @@ import { TOUR } from "../lib/tour.js";
 /**
  * The Glossary chapter: A to Z with a letter strip, a filter box and area chips. The entry the
  * address names (`#glossary/<id>`) is brought into view and lit, the filters cleared first if they
- * hide it. See-also links stay in the chapter; the ◆ link opens the deep dive's card.
+ * hide it. See-also links stay in the chapter; the ◆ link opens the deep dive's card. An entry a
+ * term on the desk opened offers the way back to that view.
  */
 const manual = useInjected(MANUAL);
 const tour = useInjected(TOUR);
@@ -49,6 +51,8 @@ const rows = computed(() =>
     return { e, letter: first ? letterOf(e) : null, see: seeAlso(e), dives: diveOf(e) };
   }),
 );
+/** The way back, when a term on the desk opened this chapter. */
+const back = computed(() => manual.fromDesk.value);
 const target = computed(() =>
   manual.at.value.chapter === GLOSSARY_CHAPTER ? manual.at.value.card : null,
 );
@@ -161,6 +165,16 @@ onMounted(focusEntry);
               ◆ {{ t.title }}
             </button>
             <span v-if="e.source !== undefined" class="gsrc">{{ e.source }}</span>
+          </div>
+          <div v-if="back !== null && back.term === e.id" class="gback">
+            <button
+              v-hint="'Returns to the view you opened this entry from'"
+              type="button"
+              class="tourbtn primary"
+              @click="manual.backToDesk(back.view)"
+            >
+              ← Back to the desk
+            </button>
           </div>
         </article>
       </template>

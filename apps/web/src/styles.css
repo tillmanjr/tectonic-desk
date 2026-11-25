@@ -4298,6 +4298,9 @@ table.matrix {
 .glossary .gdive {
   color: var(--tour-deep);
 }
+.glossary .gback {
+  margin-top: 4px;
+}
 .glossary .gsrc {
   font: 11px var(--f-data);
 }

@@ -9,17 +9,20 @@ import { TOURS } from "../../src/lib/tour-catalog.js";
 
 function mounted(hash = { chapter: "glossary", card: null as string | null }, attach = false) {
   const at = ref(hash);
+  const from = ref<{ term: string; view: string } | null>(null);
   const manual: ManualNav = {
     open: computed(() => true),
     at: computed(() => at.value),
     show: vi.fn(),
     take: vi.fn(),
+    fromDesk: computed(() => from.value),
+    backToDesk: vi.fn(),
   };
   const w = mount(GlossaryChapter, {
     ...(attach ? { attachTo: document.body } : {}),
     global: { provide: { [MANUAL]: manual, [TOUR]: { tours: TOURS } } },
   });
-  return { w, at, manual };
+  return { w, at, from, manual };
 }
 const ids = (w: VueWrapper): string[] => w.findAll(".gentry").map((e) => e.element.id.slice(5));
 
@@ -110,6 +113,19 @@ describe("GlossaryChapter", () => {
     await flushPromises();
     expect(w.find(".gentry.focus").exists()).toBe(false);
     w.unmount();
+  });
+
+  it("offers the way back on the entry a term on the desk opened, and only there", async () => {
+    const { w, from, manual } = mounted({ chapter: "glossary", card: "kp" });
+    expect(w.find(".gback").exists()).toBe(false);
+    from.value = { term: "kp", view: "/space?window=7d" };
+    await flushPromises();
+    expect(w.findAll(".gback")).toHaveLength(1);
+    const back = w.get("#term-kp .gback button");
+    expect(back.text()).toBe("← Back to the desk");
+    expect(back.attributes("data-hint")).toBe("Returns to the view you opened this entry from");
+    await back.trigger("click");
+    expect(manual.backToDesk).toHaveBeenCalledWith("/space?window=7d");
   });
 
   it("lights nothing when mounted out of the page", async () => {

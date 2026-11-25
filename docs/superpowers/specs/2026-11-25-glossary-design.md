@@ -45,3 +45,6 @@ plus a way to reach an entry from the label on the desk.
   block (heading, class, planes, axes, moment, Mw, centroid depth, double couple), the volcano panel (type,
   setting, last eruption, GVP number, status, weekly report), the Space tiles and the stack's row names.
 - The Settings deep dive gains a Glossary step; the manual's introduction mentions the chapter.
+- Revised at the reader's request: an entry opened from a term on the desk carries "← Back to the desk", which
+  returns to that view (event and all). `ManualNav.fromDesk` holds the term and view, set only when the term was
+  outside the manual and cleared when the reader leaves it; reached any other way, the Glossary has no such button.

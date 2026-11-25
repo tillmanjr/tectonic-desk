@@ -588,6 +588,19 @@ describe("the Field manual in the app", () => {
     expect(m.wrapper.find(".mstack").isVisible()).toBe(false);
     expect(m.wrapper.find(".mtoc [aria-current]").text()).toContain("Glossary");
     expect(m.wrapper.find("#term-dst").classes()).toContain("focus");
+    // the way back to the desk, kept when a term inside the manual asks for another entry
+    expect(m.wrapper.find("#term-dst .gback").exists()).toBe(true);
+    root.dispatchEvent(new CustomEvent("glossary-open", { bubbles: true, detail: "kp" }));
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#glossary/kp");
+    expect(m.wrapper.find("#term-kp .gback").exists()).toBe(false);
+    await m.wrapper.find("#term-dst .gback button").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/earthquakes");
+    // reached any other way, the Glossary offers no way back
+    await m.router.push("/manual#glossary/dst");
+    await flushPromises();
+    expect(m.wrapper.find(".gback").exists()).toBe(false);
     // the introduction points to it
     await m.router.push("/manual#intro");
     await flushPromises();
