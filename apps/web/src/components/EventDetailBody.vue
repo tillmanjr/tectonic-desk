@@ -6,14 +6,18 @@ import { ApiRequestError, errorMessage } from "../lib/api.js";
 import { depthClass, depthColor, DEPTH_LABEL } from "../lib/depth.js";
 import { mustRef } from "../lib/dom.js";
 import { ago, fmtCoord, fmtMag, fmtStamp, type Zone } from "../lib/format.js";
+import type { TermId } from "../lib/glossary.js";
 import { API, CATALOG, CLOCK, SELECT, useInjected, ZONE } from "../lib/keys.js";
 import { parentOf, sequenceOf } from "../lib/sequence.js";
 import { preferredMechanism } from "../lib/stats.js";
+import { vTerm } from "../lib/term.js";
 
 interface ImpactRow {
   k: string;
   v: string;
   color?: string;
+  /** The glossary entry its label links to. */
+  term: TermId;
 }
 
 /** The body of an event's detail: fetched by id, rendered in the side panel and in a marked-events card. */
@@ -68,17 +72,24 @@ const derived = computed(() => {
   const d = mustRef(detail, "event detail");
   const preferred = preferredMechanism(d);
   const impact: ImpactRow[] = [];
-  if (d.sig !== null) impact.push({ k: "Significance", v: String(d.sig) });
-  if (d.felt !== null) impact.push({ k: "DYFI reports", v: d.felt.toLocaleString("en-US") });
-  if (d.cdi !== null) impact.push({ k: "Max CDI (DYFI)", v: d.cdi.toFixed(1) });
-  if (d.mmi !== null) impact.push({ k: "Max MMI (ShakeMap)", v: d.mmi.toFixed(1) });
+  if (d.sig !== null) impact.push({ k: "Significance", v: String(d.sig), term: "significance" });
+  if (d.felt !== null)
+    impact.push({ k: "DYFI reports", v: d.felt.toLocaleString("en-US"), term: "dyfi-reports" });
+  if (d.cdi !== null) impact.push({ k: "Max CDI (DYFI)", v: d.cdi.toFixed(1), term: "cdi" });
+  if (d.mmi !== null) impact.push({ k: "Max MMI (ShakeMap)", v: d.mmi.toFixed(1), term: "mmi" });
   if (d.alert !== null) {
-    impact.push({ k: "PAGER alert", v: d.alert.toUpperCase(), color: `var(--sev-${d.alert})` });
+    impact.push({
+      k: "PAGER alert",
+      v: d.alert.toUpperCase(),
+      color: `var(--sev-${d.alert})`,
+      term: "pager",
+    });
   }
   if (d.tsunami) {
     impact.push({
       k: "Tsunami flag",
       v: "Set (NTWC/PTWC information exists; not itself a warning)",
+      term: "tsunami",
     });
   }
   return {
@@ -119,16 +130,16 @@ function describe(m: ApiMechanism): string {
         <dd>
           {{ fmtStamp(derived.d.time, otherZone) }} · {{ ago(derived.d.time, clock.now.value) }} ago
         </dd>
-        <dt>Epicenter</dt>
+        <dt><span v-term="'epicentre'">Epicenter</span></dt>
         <dd>{{ fmtCoord(derived.d.latitude, derived.d.longitude) }}</dd>
-        <dt>Depth</dt>
+        <dt><span v-term="'depth'">Depth</span></dt>
         <dd>
           <span class="dchip" :style="{ background: depthColor(derived.d.depthKm) }"></span>
           <template v-if="derived.d.depthKm !== null"
             >{{ derived.d.depthKm.toFixed(1) }} km · </template
           >{{ DEPTH_LABEL[depthClass(derived.d.depthKm)] }}
         </dd>
-        <dt>Event ID</dt>
+        <dt><span v-term="'event-id'">Event ID</span></dt>
         <dd>{{ derived.d.id }}</dd>
       </dl>
       <MechanismBlock
@@ -157,7 +168,9 @@ function describe(m: ApiMechanism): string {
         <h3>Impact</h3>
         <dl class="kv">
           <template v-for="row in derived.impact" :key="row.k">
-            <dt>{{ row.k }}</dt>
+            <dt>
+              <span v-term="row.term">{{ row.k }}</span>
+            </dt>
             <dd
               :style="row.color === undefined ? undefined : { color: row.color, fontWeight: 600 }"
             >
@@ -189,7 +202,7 @@ function describe(m: ApiMechanism): string {
       <div data-tour="detail.catalog">
         <h3>Catalog</h3>
         <dl class="kv">
-          <dt>Review status</dt>
+          <dt><span v-term="'review-status'">Review status</span></dt>
           <dd>{{ derived.d.status ?? "—" }}</dd>
           <dt>USGS updated</dt>
           <dd>{{ fmtStamp(derived.d.updated, zone, { seconds: true }) }}</dd>

@@ -530,6 +530,8 @@ function inApp() {
     at: computed(() => ({ chapter: "intro", card: null })),
     show: vi.fn(),
     take: vi.fn(),
+    fromDesk: computed(() => null),
+    backToDesk: vi.fn(),
   };
   const mountApp = (c: Component, props: Record<string, unknown> = {}) =>
     mount(

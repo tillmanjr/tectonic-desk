@@ -23,6 +23,10 @@ describe("settings", () => {
     expect(parseSettings('{"diveMarks":"no"}').diveMarks).toBe(true);
     expect(parseSettings('{"beachball":"bowl"}').beachball).toBe("bowl");
     expect(parseSettings('{"beachball":"dome"}').beachball).toBe("flat");
+    expect(parseSettings('{"glossaryUnderlines":false}').glossaryUnderlines).toBe(false);
+    expect(parseSettings('{"glossaryUnderlines":0}').glossaryUnderlines).toBe(true);
+    expect(parseSettings('{"glossaryOpen":"click"}').glossaryOpen).toBe("click");
+    expect(parseSettings('{"glossaryOpen":"hover"}').glossaryOpen).toBe("dblclick");
   });
   it("reads storage once, writes on set, and survives storage that throws", () => {
     const store = new Map<string, string>([[SETTINGS_KEY, '{"cardRows":{"alone":5}}']]);
@@ -32,9 +36,15 @@ describe("settings", () => {
     };
     const s = createSettings(storage);
     expect(s.current.value.cardRows).toEqual({ alone: 5, combined: 1 });
-    s.set({ cardRows: { alone: 2, combined: 2 }, diveMarks: false, beachball: "bowl" });
+    s.set({
+      cardRows: { alone: 2, combined: 2 },
+      diveMarks: false,
+      beachball: "bowl",
+      glossaryUnderlines: false,
+      glossaryOpen: "off",
+    });
     expect(store.get(SETTINGS_KEY)).toBe(
-      '{"cardRows":{"alone":2,"combined":2},"diveMarks":false,"beachball":"bowl"}',
+      '{"cardRows":{"alone":2,"combined":2},"diveMarks":false,"beachball":"bowl","glossaryUnderlines":false,"glossaryOpen":"off"}',
     );
     const broken = {
       getItem: vi.fn(() => {
@@ -46,7 +56,7 @@ describe("settings", () => {
     };
     const b = createSettings(broken);
     expect(b.current.value).toEqual(DEFAULT_SETTINGS);
-    b.set({ cardRows: { alone: 1, combined: 1 }, diveMarks: true, beachball: "flat" });
+    b.set({ ...DEFAULT_SETTINGS, cardRows: { alone: 1, combined: 1 } });
     expect(b.current.value.cardRows.alone).toBe(1);
     expect(createSettings(null).current.value).toEqual(DEFAULT_SETTINGS);
   });

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, watch } from "vue";
+import GlossaryChapter from "./GlossaryChapter.vue";
+import { GLOSSARY_CHAPTER } from "../lib/glossary.js";
 import { useInjected } from "../lib/keys.js";
 import {
   chapterById,
@@ -18,11 +20,14 @@ import { TOUR, tourState, type Tour } from "../lib/tour.js";
  * the introductory tours are the quick tours; every other chapter is one part of the desk, a card to
  * each of its deep dives. Every chapter shares one page: all of them sit in the same cell, the one
  * on view above the others, which are hidden and inert, so the page is as tall as the longest at
- * any width and keeps its height as the reader turns from one to the next.
+ * any width and keeps its height as the reader turns from one to the next. The Glossary, far
+ * longer than any, stands apart: the stack hides while it shows.
  */
 const tour = useInjected(TOUR);
 const manual = useInjected(MANUAL);
 const chapters = chaptersOf(tour.tours);
+const stacked = chapters.filter((c) => c.id !== GLOSSARY_CHAPTER);
+const inGlossary = computed(() => chapter.value.id === GLOSSARY_CHAPTER);
 const chapter = computed(() => chapterById(chapters, manual.at.value.chapter));
 const number = (id: string): number => chapters.findIndex((c) => c.id === id) + 1;
 const doc = computed(() => tour.progress.doc.value);
@@ -48,7 +53,7 @@ function take(t: Tour, c: Chapter, fromTop = false): void {
 /** Brings the card the address names into view, its button ready for Enter. */
 async function focusCard(): Promise<void> {
   const id = manual.at.value.card;
-  if (id === null) return;
+  if (id === null || inGlossary.value) return;
   await nextTick();
   const card = document.getElementById(`card-${id}`);
   card?.scrollIntoView({ block: "center" });
@@ -76,9 +81,22 @@ onMounted(focusCard);
           >
         </button>
       </nav>
-      <div class="mstack">
+      <section
+        v-if="inGlossary"
+        class="mchapter current mglossary"
+        :aria-labelledby="`ch-${GLOSSARY_CHAPTER}`"
+      >
+        <div class="mhead">
+          <h2 :id="`ch-${GLOSSARY_CHAPTER}`">
+            {{ number(GLOSSARY_CHAPTER) }} · {{ chapter.title }}
+          </h2>
+        </div>
+        <p class="mblurb">{{ chapter.blurb }}</p>
+        <GlossaryChapter />
+      </section>
+      <div v-show="!inGlossary" class="mstack">
         <section
-          v-for="chapter in chapters"
+          v-for="chapter in stacked"
           :key="chapter.id"
           class="mchapter"
           :class="{ current: onView(chapter) }"
@@ -140,6 +158,14 @@ onMounted(focusCard);
               Both work the real app on real examples and give your view back when they end. A
               <span class="mdiamond" aria-hidden="true">◆</span> on a part of the desk lists the
               deep dives about it.
+            </p>
+            <p>
+              The last chapter, the
+              <button type="button" class="mlink" @click="manual.show(GLOSSARY_CHAPTER)">
+                Glossary</button
+              >, explains the terms the desk shows and the words it uses for its own tools. On the
+              desk a term with a faint dotted underline shows its line from the glossary as its
+              hint, and a double click opens its entry; Settings changes both.
             </p>
             <p>
               <button type="button" class="mnext" @click="manual.show(TOURS_CHAPTER)">

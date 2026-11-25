@@ -2,12 +2,13 @@
 import { computed, onUnmounted, ref, watch } from "vue";
 import ThemeToggle from "./ThemeToggle.vue";
 import type { Zone } from "../lib/format.js";
+import type { GlossaryOpen } from "../lib/glossary.js";
 import { vHint } from "../lib/hint.js";
 import { SETTINGS, useInjected } from "../lib/keys.js";
 
 /**
- * The header's settings menu: the time zone, the theme, the panel's beachball and the ◆ deep dive
- * marks, behind one button. The menu stays in the page while closed (v-show) so a tour can flip
+ * The header's settings menu: the time zone, the theme, the panel's beachball, the ◆ deep dive
+ * marks and the glossary's underlines and trigger, behind one button. The menu stays in the page while closed (v-show) so a tour can flip
  * its switches by name and give them back at the end.
  */
 defineProps<{ zone: Zone }>();
@@ -21,6 +22,18 @@ function toggleDiveMarks(): void {
 const bowl = computed(() => settings.current.value.beachball === "bowl");
 function toggleBeachball(): void {
   settings.set({ ...settings.current.value, beachball: bowl.value ? "flat" : "bowl" });
+}
+const underlines = computed(() => settings.current.value.glossaryUnderlines);
+function toggleUnderlines(): void {
+  settings.set({ ...settings.current.value, glossaryUnderlines: !underlines.value });
+}
+const OPENS: readonly { id: GlossaryOpen; label: string; hint: string }[] = [
+  { id: "dblclick", label: "Double click", hint: "A double click on a term opens its entry" },
+  { id: "click", label: "Click", hint: "A click on a term opens its entry" },
+  { id: "off", label: "Off", hint: "Terms show their hint only" },
+];
+function pickOpen(mode: GlossaryOpen): void {
+  settings.set({ ...settings.current.value, glossaryOpen: mode });
 }
 const root = ref<HTMLElement | null>(null);
 
@@ -46,7 +59,7 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="settings" data-tour="settings" @keydown="onKey">
     <button
-      v-hint="'Settings: time zone, theme, beachball and deep dive marks'"
+      v-hint="'Settings: time zone, theme, beachball, deep dive marks and the glossary'"
       type="button"
       class="settings-btn"
       aria-haspopup="true"
@@ -106,6 +119,36 @@ onUnmounted(() => {
         >
           {{ diveMarks ? "On" : "Off" }}
         </button>
+      </div>
+      <div class="srow">
+        <span class="slabel">Glossary underlines</span>
+        <button
+          v-hint="
+            'Draws a faint dotted underline under the terms the Glossary in the Field manual explains'
+          "
+          type="button"
+          class="theme-btn fixed"
+          data-tour="settings.underlines"
+          :aria-pressed="underlines"
+          @click="toggleUnderlines"
+        >
+          {{ underlines ? "On" : "Off" }}
+        </button>
+      </div>
+      <div class="srow">
+        <span class="slabel">Open glossary on</span>
+        <span class="sseg" role="group" aria-label="Open glossary on" data-tour="settings.glossary">
+          <button
+            v-for="o in OPENS"
+            :key="o.id"
+            v-hint="o.hint"
+            type="button"
+            :aria-pressed="settings.current.value.glossaryOpen === o.id"
+            @click="pickOpen(o.id)"
+          >
+            {{ o.label }}
+          </button>
+        </span>
       </div>
     </div>
   </div>

@@ -1,17 +1,30 @@
 <script setup lang="ts">
-import type { RowData } from "../lib/space-chart.js";
+import type { TermId } from "../lib/glossary.js";
+import type { RowData, RowId } from "../lib/space-chart.js";
 import { vHint } from "../lib/hint.js";
+import { vTerm } from "../lib/term.js";
 
 /** One row of the stack: its own y axis, reference lines, Kp bars, flare bands and series lines. */
 defineProps<{ row: RowData; left: number; right: number }>();
+/** The glossary entry each row's name links to. */
+const ROW_TERMS: Record<RowId, TermId> = {
+  kp: "kp",
+  dst: "dst",
+  power: "hemispheric-power",
+  mag: "bz",
+  wind: "solar-wind",
+  xray: "goes-class",
+  protons: "protons",
+  sun: "sunspot-number",
+};
 </script>
 
 <template>
   <g class="srow" :class="row.id" :data-tour="`space.row.${row.id}`">
     <line class="rowbase" :x1="left" :x2="right" :y1="row.bottom" :y2="row.bottom" />
     <text class="rowlabel" :x="left + 4" :y="row.top + 9">
-      {{ row.label
-      }}<tspan v-if="row.unit !== '' || row.rightUnit !== null" class="rowunit">
+      <tspan v-term="ROW_TERMS[row.id]">{{ row.label }}</tspan
+      ><tspan v-if="row.unit !== '' || row.rightUnit !== null" class="rowunit">
         · {{ [row.unit, row.rightUnit ?? ""].filter((u) => u !== "").join(" · ") }}</tspan
       >
     </text>

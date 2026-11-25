@@ -1,10 +1,12 @@
 import type { ComputedRef, InjectionKey } from "vue";
+import { GLOSSARY_CHAPTER, isTermId } from "./glossary.js";
 import type { Tour, TourId, TourProgressDocument } from "./tour.js";
 
 /**
  * The Field manual: an introduction, the quick tours as the introductory tours, then the deep
- * dives filed in chapters, one to each part of the desk. A chapter and a card are named in the address's hash,
- * `#<chapter>` or `#<chapter>/<tour id>`, so the way back from a deep dive lands on its card.
+ * dives filed in chapters, one to each part of the desk, and the Glossary last. A chapter and a card
+ * are named in the address's hash, `#<chapter>` or `#<chapter>/<tour id>`, so the way back from a
+ * deep dive lands on its card; in the Glossary the card is an entry, `#glossary/<term id>`.
  */
 
 export interface Chapter {
@@ -66,7 +68,7 @@ const AREAS: Record<string, { blurb: string; introducedBy: TourId }> = {
   },
   Settings: {
     blurb:
-      "Time zone, theme, the panel's beachball, these ◆ marks, and how hints show with a mouse, a keyboard or a finger.",
+      "Time zone, theme, the panel's beachball, these ◆ marks, the glossary's underlines and trigger, and how hints show with a mouse, a keyboard or a finger.",
     introducedBy: "orientation",
   },
 };
@@ -115,6 +117,14 @@ export function chaptersOf(tours: readonly Tour[]): Chapters {
       tours: [t],
     });
   }
+  out.push({
+    id: GLOSSARY_CHAPTER,
+    title: "Glossary",
+    blurb:
+      "The terms the desk shows and the words it uses for its own tools. Each entry starts with the line a linked term's hint shows, then says how the desk uses it.",
+    introducedBy: null,
+    tours: [],
+  });
   return out;
 }
 
@@ -122,7 +132,7 @@ export function chaptersOf(tours: readonly Tour[]): Chapters {
 export const chapterById = (chapters: Chapters, id: string): Chapter =>
   chapters.find((c) => c.id === id) ?? chapters[0];
 
-/** The chapter and card a hash names; anything unknown opens the introduction. */
+/** The chapter and card (a Glossary entry in the Glossary) a hash names; anything unknown opens the introduction. */
 export function parseManualHash(
   hash: string,
   chapters: readonly Chapter[],
@@ -130,7 +140,8 @@ export function parseManualHash(
   const [chapter = "", card = ""] = hash.replace(/^#/, "").split("/");
   const ch = chapters.find((c) => c.id === chapter);
   if (ch === undefined) return { chapter: INTRO_CHAPTER, card: null };
-  return { chapter: ch.id, card: ch.tours.some((t) => t.id === card) ? card : null };
+  const known = ch.id === GLOSSARY_CHAPTER ? isTermId(card) : ch.tours.some((t) => t.id === card);
+  return { chapter: ch.id, card: known ? card : null };
 }
 
 /** The hash for a chapter, or for a card in it. */
@@ -158,6 +169,13 @@ export interface ManualNav {
    * the way back to `chapter`, at its card.
    */
   take: (id: TourId, step: number, chapter: string) => void;
+  /**
+   * The Glossary entry a term on the desk opened, and the view it was opened from; null when the
+   * manual was reached any other way, and cleared once the reader leaves the manual.
+   */
+  fromDesk: ComputedRef<{ term: string; view: string } | null>;
+  /** Goes back to the view the Glossary was opened from (`fromDesk`'s view). */
+  backToDesk: (view: string) => void;
 }
 
 export const MANUAL: InjectionKey<ManualNav> = Symbol("manual");

@@ -15,6 +15,7 @@ import {
   typeGroup,
 } from "../lib/volcanoes.js";
 import { vHint } from "../lib/hint.js";
+import { vTerm } from "../lib/term.js";
 
 const STRIP_FROM = 1800;
 
@@ -98,9 +99,9 @@ const gvpUrl = (number: number): string =>
   <div class="panelbody">
     <template v-if="v !== null">
       <dl class="kv" data-tour="volcano.record">
-        <dt>Type</dt>
+        <dt><span v-term="'volcano-type'">Type</span></dt>
         <dd>{{ v.type }} · {{ TYPE_GROUPS[typeGroup(v.type)] }}</dd>
-        <dt>Setting</dt>
+        <dt><span v-term="'tectonic-setting'">Setting</span></dt>
         <dd>{{ v.tectonicSetting ?? SETTING_GROUPS[settingGroup(v.tectonicSetting)] }}</dd>
         <dt>Summit</dt>
         <dd>
@@ -109,13 +110,13 @@ const gvpUrl = (number: number): string =>
         </dd>
         <dt v-if="v.rockType !== null">Rock</dt>
         <dd v-if="v.rockType !== null">{{ v.rockType }}</dd>
-        <dt>Last eruption</dt>
+        <dt><span v-term="'last-eruption'">Last eruption</span></dt>
         <dd>
           <template v-if="v.lastEruptionYear !== null">{{ v.lastEruptionYear }}</template>
           <template v-else>unknown</template>
           <template v-if="v.evidence !== null"> · {{ v.evidence }}</template>
         </dd>
-        <dt>GVP number</dt>
+        <dt><span v-term="'gvp-number'">GVP number</span></dt>
         <dd>
           <a :href="gvpUrl(v.number)" target="_blank" rel="noopener">{{ v.number }}</a>
         </dd>
@@ -123,7 +124,7 @@ const gvpUrl = (number: number): string =>
       <p v-if="v.summary !== null" class="summary" data-tour="volcano.record">{{ v.summary }}</p>
 
       <div data-tour="volcano.status">
-        <h3>Status</h3>
+        <h3><span v-term="'alert-level'">Status</span></h3>
         <p v-if="loading" class="note">Loading…</p>
         <p v-else-if="error !== null" class="note">{{ error }}</p>
         <template v-else-if="detail !== null">
@@ -141,7 +142,7 @@ const gvpUrl = (number: number): string =>
             </li>
           </ul>
           <template v-if="detail.reports.length > 0">
-            <h3>Weekly report</h3>
+            <h3><span v-term="'weekly-report'">Weekly report</span></h3>
             <div v-for="r in detail.reports" :key="r.id" class="report">
               <b>{{ fmtStamp(r.week, zone, { label: false }) }}</b> ·
               {{ r.category === "new" ? "new activity" : "ongoing activity" }}
