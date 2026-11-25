@@ -37,6 +37,16 @@ pixel: about 1.2 M cheap operations for a 1536 px image, tens of milliseconds in
 worker if needed, or a WebGL shader). The real work is in `geo:fields`, which would ship plain
 longitude–latitude rasters for the browser to re-project.
 
+## Revised after use
+
+- A faint dashed line down the centre's meridian on the global map (`path.centreline`, accent at 45%,
+  a hairline at any zoom through `vector-effect`).
+- The globe shows on hover too, and stays `HOVER_GRACE_MS` (300 ms) after the pointer leaves so it
+  can cross to the globe.
+- The globe can be grabbed and dragged left or right: its width spans the visible hemisphere, so a
+  drag of the full width turns 180°; dragging the surface right brings the west into the middle; the
+  detent at 150°E catches it; the map follows on release.
+
 ## As built
 
 - `src/lib/centre.ts` (`DEFAULT_CENTRE`, `parseCentre`/`centreQuery`, `fmtLon`, `offsetOf`/`lonOfOffset`,

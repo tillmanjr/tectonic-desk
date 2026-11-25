@@ -1073,7 +1073,7 @@ export const MAP_NAV: Tour = {
     {
       id: "centre",
       title: "Centre",
-      body: "The global map is centred on 150°E, the Pacific rim together. The Centre control in its bottom-left corner turns it: ‹ and › by 15°, the slider anywhere (it catches at 150°E), ↺ back. A small globe shows where you are while you use it, and the map follows when you let go, keeping your zoom. The centre is kept in the address (lon=); the field grids draw at 150°E only. Here the Atlantic in the middle.",
+      body: "The global map is centred on 150°E, the Pacific rim together. The Centre control in its bottom-left corner turns it: ‹ and › by 15°, the slider anywhere (it catches at 150°E), ↺ back. A small globe shows where you are while you point at the control or use it, and it can be dragged left or right itself; the map follows when you let go, keeping your zoom, and a faint line marks the centre's meridian. The centre is kept in the address (lon=); the field grids draw at 150°E only. Here the Atlantic in the middle.",
       targets: ["map.centre", "map.stage"],
       enter: async (ctx) => {
         const mv = await ctx.map();

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import MapCentre from "../../src/components/MapCentre.vue";
 import { resetBasemapCache } from "../../src/lib/basemap-cache.js";
-import { DEFAULT_CENTRE } from "../../src/lib/centre.js";
+import { DEFAULT_CENTRE, HOVER_GRACE_MS } from "../../src/lib/centre.js";
 import type { MapView } from "../../src/lib/mapview.js";
 import { stubWorld } from "../support/world.js";
 
@@ -109,6 +109,66 @@ describe("MapCentre", () => {
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
     await root.trigger("pointerdown");
     w.unmount();
+  });
+
+  it("shows the globe on hover, long enough for the pointer to cross to it", async () => {
+    stubWorld();
+    vi.useFakeTimers();
+    const { w } = mounted();
+    const root = w.get(".centrepick");
+    await root.trigger("pointerenter");
+    expect(globe()).not.toBeNull();
+    await root.trigger("pointerleave");
+    vi.advanceTimersByTime(HOVER_GRACE_MS - 1);
+    await flushPromises();
+    expect(globe()).not.toBeNull();
+    // reaching the globe keeps it; leaving it starts the grace again
+    globe()?.dispatchEvent(new Event("pointerenter"));
+    vi.advanceTimersByTime(HOVER_GRACE_MS);
+    await flushPromises();
+    expect(globe()).not.toBeNull();
+    globe()?.dispatchEvent(new Event("pointerleave"));
+    vi.advanceTimersByTime(HOVER_GRACE_MS);
+    await flushPromises();
+    expect(globe()).toBeNull();
+    vi.useRealTimers();
+    w.unmount();
+  });
+
+  it("turns the map by dragging the globe, catching at 150°E", async () => {
+    stubWorld();
+    const { w, setCentre } = mounted();
+    await w.get(".centrepick").trigger("pointerenter");
+    const svg = globe()?.querySelector("svg");
+    if (!svg) throw new Error("no globe");
+    const at = (type: string, x: number): void => {
+      (type === "pointerdown" ? svg : document).dispatchEvent(
+        new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x }),
+      );
+    };
+    at("pointerdown", 100);
+    await flushPromises();
+    expect(globe()?.classList.contains("dragging")).toBe(true);
+    // right by 7 px turns the middle about 10° west; within the detent it stays at 150°E
+    at("pointermove", 103);
+    await flushPromises();
+    expect(value(w)).toBe("150°E");
+    at("pointermove", 170);
+    await flushPromises();
+    expect(value(w)).toBe("50°E");
+    expect(setCentre).not.toHaveBeenCalled();
+    at("pointerup", 170);
+    await flushPromises();
+    expect(setCentre).toHaveBeenCalledWith(50);
+    expect(globe()?.classList.contains("dragging")).toBe(false);
+    // left past the antimeridian
+    at("pointerdown", 100);
+    at("pointermove", 0);
+    await flushPromises();
+    expect(value(w)).toBe("167°W");
+    // a drag still open when the control goes commits it
+    w.unmount();
+    expect(setCentre).toHaveBeenLastCalledWith(-167);
   });
 
   it("draws the globe without land when it cannot be read", async () => {

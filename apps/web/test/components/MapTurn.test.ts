@@ -24,6 +24,8 @@ describe("turning the global map", () => {
     await flushPromises();
     const g = (): string | undefined => w.find("svg.map > g").attributes("transform");
     expect(w.find(".mapwrap .centrepick").exists()).toBe(true);
+    // a faint line down the centre's meridian, the middle of the frame
+    expect(w.get("path.centreline").attributes("d")).toMatch(/^M500,/);
     // the whole view stays the whole view
     await w.findAll(".centrepick .cnudge")[0]?.trigger("click");
     await flushPromises();

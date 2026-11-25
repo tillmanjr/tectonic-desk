@@ -4,6 +4,7 @@ import {
   DEFAULT_CENTRE,
   fmtLon,
   lonOfOffset,
+  meridianLine,
   offsetOf,
   parseCentre,
   snapOffset,
@@ -48,5 +49,12 @@ describe("the global map's centre", () => {
     expect(snapOffset(4)).toBe(0);
     expect(snapOffset(-5)).toBe(0);
     expect(snapOffset(6)).toBe(6);
+  });
+
+  it("draws a meridian pole to pole", () => {
+    const m = meridianLine(-30);
+    expect(m.coordinates).toHaveLength(37);
+    expect(m.coordinates[0]).toEqual([-30, -90]);
+    expect(m.coordinates[36]).toEqual([-30, 90]);
   });
 });

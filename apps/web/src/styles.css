@@ -426,6 +426,16 @@ a:focus-visible,
   opacity: 0.6;
   mix-blend-mode: multiply;
 }
+/* The global map's centre meridian: faint, dashed, a hairline at any zoom. */
+.map .centreline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-opacity: 0.45;
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
 /* The global map's Centre control, faded over the map's bottom-left corner as the theater button is
    over the right, and the globe that turns with it while in use. */
 .mapwrap .centrepick {
@@ -505,7 +515,17 @@ a:focus-visible,
   border-radius: 8px;
   background: var(--panel);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-  pointer-events: none;
+}
+.cglobe svg {
+  cursor: grab;
+  touch-action: none;
+}
+.cglobe.dragging svg {
+  cursor: grabbing;
+}
+.cglobe .gtip {
+  font: 11px var(--f-ui);
+  color: var(--muted);
 }
 .cglobe .gsea {
   fill: var(--ocean);
