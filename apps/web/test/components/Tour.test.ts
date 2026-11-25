@@ -242,7 +242,7 @@ describe("quick tours in the app", () => {
     const m = await mountApp("/earthquakes", exampleApi());
     expect(m.wrapper.find(".help-btn").classes()).toContain("fresh");
     expect(await walk(m, "mechanism")).toEqual([]);
-    expect(m.wrapper.find(".tourpath").text()).toBe("Earthquake detail: Focal mechanism · 7 of 7");
+    expect(m.wrapper.find(".tourpath").text()).toBe("Earthquake detail: Focal mechanism · 8 of 8");
     m.wrapper.unmount();
   });
 
