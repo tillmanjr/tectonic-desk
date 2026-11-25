@@ -11,7 +11,9 @@ import {
 } from "@tectonic/shared";
 import { computed } from "vue";
 import BeachballImage from "./BeachballImage.vue";
+import BowlBeachball from "./BowlBeachball.vue";
 import { fmtMoment } from "../lib/format.js";
+import { SETTINGS, useInjected } from "../lib/keys.js";
 
 const props = defineProps<{ mechanism: ApiMechanism; depthKm: number | null }>();
 
@@ -37,6 +39,8 @@ const geo = computed(() => {
     reconstructed: m.planesReconstructed || solved.reconstructed,
   };
 });
+const settings = useInjected(SETTINGS);
+const bowl = computed(() => settings.current.value.beachball === "bowl");
 const moment = computed(() => fmtMoment(props.mechanism.scalarMoment));
 const dc = computed(() => {
   const v = props.mechanism.percentDc;
@@ -49,7 +53,15 @@ const dc = computed(() => {
   <div v-if="geo !== null">
     <h3>{{ mechanism.kind === "mt" ? "Moment tensor" : "Focal mechanism (first motion)" }}</h3>
     <div class="mechbox">
+      <BowlBeachball
+        v-if="bowl"
+        :mechanism="mechanism"
+        :px="150"
+        :depth-km="depthKm"
+        alt="Beachball diagram, drawn as the inside of a bowl"
+      />
       <BeachballImage
+        v-else
         data-tour="mech.ball"
         :mechanism="mechanism"
         :px="150"
@@ -60,7 +72,12 @@ const dc = computed(() => {
       <div>
         <div class="style" data-tour="mech.style">{{ geo.style }}</div>
         <p v-if="geo.sense !== null" data-tour="mech.style">{{ geo.sense }}</p>
-        <p>
+        <p v-if="bowl">
+          Lower hemisphere, equal area at 0°, seen as the inside of the focal sphere. Shaded
+          quadrants are compressional; T and P mark the tension and pressure axes, a dashed ring
+          where the rim hides one.
+        </p>
+        <p v-else>
           Lower hemisphere, equal area. Shaded quadrants are compressional; T and P mark the tension
           and pressure axes.
         </p>

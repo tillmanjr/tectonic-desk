@@ -66,7 +66,7 @@ const AREAS: Record<string, { blurb: string; introducedBy: TourId }> = {
   },
   Settings: {
     blurb:
-      "Time zone, theme, these ◆ marks, and how hints show with a mouse, a keyboard or a finger.",
+      "Time zone, theme, the panel's beachball, these ◆ marks, and how hints show with a mouse, a keyboard or a finger.",
     introducedBy: "orientation",
   },
 };

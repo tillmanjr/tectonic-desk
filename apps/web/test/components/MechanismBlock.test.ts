@@ -33,6 +33,16 @@ describe("MechanismBlock", () => {
     expect(t).toContain("us network · us_1");
     expect(t).not.toContain("reconstructed");
   });
+  it("draws the ball as a bowl when Settings asks for it", async () => {
+    stubCanvas();
+    vi.spyOn(window, "matchMedia").mockReturnValue({ matches: true } as unknown as MediaQueryList);
+    const ctx = await makeContext();
+    ctx.settings.set({ ...ctx.settings.current.value, beachball: "bowl" });
+    const w = mountWith(MechanismBlock, ctx, { mechanism: mech(), depthKm: 190 });
+    expect(w.find("img").exists()).toBe(false);
+    expect(w.find(".bowlball canvas").attributes("width")).toBe("300");
+    expect(text(w)).toContain("equal area at 0°, seen as the inside of the focal sphere");
+  });
   it("renders a first-motion solution with strike-slip sense and the reconstructed flag", async () => {
     stubCanvas();
     const ss = mech({

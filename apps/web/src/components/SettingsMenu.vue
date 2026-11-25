@@ -5,7 +5,11 @@ import type { Zone } from "../lib/format.js";
 import { vHint } from "../lib/hint.js";
 import { SETTINGS, useInjected } from "../lib/keys.js";
 
-/** The header's settings menu: the time zone, the theme and the ◆ deep dive marks, behind one button. */
+/**
+ * The header's settings menu: the time zone, the theme, the panel's beachball and the ◆ deep dive
+ * marks, behind one button. The menu stays in the page while closed (v-show) so a tour can flip
+ * its switches by name and give them back at the end.
+ */
 defineProps<{ zone: Zone }>();
 const emit = defineEmits<{ toggleZone: [] }>();
 const open = ref(false);
@@ -13,6 +17,10 @@ const settings = useInjected(SETTINGS);
 const diveMarks = computed(() => settings.current.value.diveMarks);
 function toggleDiveMarks(): void {
   settings.set({ ...settings.current.value, diveMarks: !diveMarks.value });
+}
+const bowl = computed(() => settings.current.value.beachball === "bowl");
+function toggleBeachball(): void {
+  settings.set({ ...settings.current.value, beachball: bowl.value ? "flat" : "bowl" });
 }
 const root = ref<HTMLElement | null>(null);
 
@@ -38,7 +46,7 @@ onUnmounted(() => {
 <template>
   <div ref="root" class="settings" data-tour="settings" @keydown="onKey">
     <button
-      v-hint="'Settings: time zone, theme and deep dive marks'"
+      v-hint="'Settings: time zone, theme, beachball and deep dive marks'"
       type="button"
       class="settings-btn"
       aria-haspopup="true"
@@ -50,7 +58,7 @@ onUnmounted(() => {
       ⚙
     </button>
     <div
-      v-if="open"
+      v-show="open"
       id="settings-menu"
       class="settings-menu"
       data-tour="settings"
@@ -70,6 +78,21 @@ onUnmounted(() => {
       <div class="srow">
         <span class="slabel">Theme</span>
         <ThemeToggle />
+      </div>
+      <div class="srow">
+        <span class="slabel">Beachball</span>
+        <button
+          v-hint="
+            'Draws the event panel\'s beachball flat, or as the inside of the focal sphere: a bowl that opens tilted, settles to the equal-area plot and tilts again with a slider'
+          "
+          type="button"
+          class="theme-btn fixed"
+          data-tour="settings.beachball"
+          :aria-pressed="bowl"
+          @click="toggleBeachball"
+        >
+          {{ bowl ? "Bowl" : "Flat" }}
+        </button>
       </div>
       <div class="srow">
         <span class="slabel">Deep dive marks</span>

@@ -21,6 +21,10 @@ export function stubCanvas(): Fake2d {
       state.arcs += 1;
     },
     stroke: () => undefined,
+    moveTo: () => undefined,
+    lineTo: () => undefined,
+    setLineDash: () => undefined,
+    clearRect: () => undefined,
     fill: () => undefined,
     fillText: (t: string) => {
       state.texts.push(t);
