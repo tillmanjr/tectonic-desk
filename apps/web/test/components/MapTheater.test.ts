@@ -46,6 +46,7 @@ describe("theater mode", () => {
     expect(w.find(".legend").exists()).toBe(false);
     expect(w.find(".maplock").attributes("aria-pressed")).toBe("false");
     expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body.classList.contains("in-theater")).toBe(true);
     // Leaving gives the lock and the page back.
     await btn.trigger("click");
     await flushPromises();
@@ -53,6 +54,7 @@ describe("theater mode", () => {
     expect(w.find("svg.map").attributes("preserveAspectRatio")).toBeUndefined();
     expect(w.find(".maplock").attributes("aria-pressed")).toBe("true");
     expect(document.body.style.overflow).toBe("");
+    expect(document.body.classList.contains("in-theater")).toBe(false);
     expect(w.find(".legend").exists()).toBe(true);
     w.unmount();
   });
@@ -84,6 +86,12 @@ describe("theater mode", () => {
     await escape();
     expect(w.find(".measurebtn").attributes("aria-pressed")).toBe("false");
     expect(w.find(".mapcard").classes()).toContain("theater");
+    // an Escape a side panel over the theater already took leaves the theater be
+    const taken = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+    taken.preventDefault();
+    document.dispatchEvent(taken);
+    await flushPromises();
+    expect(w.find(".mapcard").classes()).toContain("theater");
     await escape();
     expect(w.find(".mapcard").classes()).not.toContain("theater");
     expect(w.find(".maplock").attributes("aria-pressed")).toBe("false");
@@ -96,5 +104,6 @@ describe("theater mode", () => {
     expect(document.body.style.overflow).toBe("hidden");
     w.unmount();
     expect(document.body.style.overflow).toBe("");
+    expect(document.body.classList.contains("in-theater")).toBe(false);
   });
 });

@@ -7,6 +7,7 @@ import MarkButton from "./MarkButton.vue";
 import { fmtMag, placeOf } from "../lib/format.js";
 import { CATALOG, SELECT, useInjected } from "../lib/keys.js";
 import type { MarkSubject } from "../lib/marks.js";
+import { panelsOverTheater } from "../lib/theater.js";
 
 /** The event side panel: header, mark row and the fetched body; open while an event is selected. */
 const catalog = useInjected(CATALOG);
@@ -43,7 +44,10 @@ function close(): void {
   select(null);
 }
 function onKey(e: KeyboardEvent): void {
-  if (e.key === "Escape" && open.value) close();
+  if (e.key !== "Escape" || !open.value) return;
+  // Over a theater-mode map this Escape closes only the panel; the next one leaves theater mode.
+  if (panelsOverTheater()) e.preventDefault();
+  close();
 }
 onMounted(() => {
   document.addEventListener("keydown", onKey);
