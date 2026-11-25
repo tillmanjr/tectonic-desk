@@ -96,6 +96,13 @@ describe("VolcanoMap", () => {
     expect(helens?.find("circle.ring").exists()).toBe(false);
     await kilauea?.trigger("click");
     expect(ctx.selectVolcano).toHaveBeenCalledWith(332010);
+    ctx.settings.set({ ...ctx.settings.current.value, autoZoom: false });
+    ctx.volcanoes.select(332010);
+    await flushPromises();
+    // with Auto-zoom event off, the view stays put
+    expect(w.find("svg.map > g").attributes("transform")).toBe("translate(0,0) scale(1)");
+    ctx.settings.set({ ...ctx.settings.current.value, autoZoom: true });
+    ctx.volcanoes.select(null);
     ctx.volcanoes.select(332010);
     await flushPromises();
     expect(w.find("svg.map > g").attributes("transform")).toContain("scale(");

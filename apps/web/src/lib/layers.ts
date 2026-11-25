@@ -15,6 +15,7 @@ import type { Catalog } from "./catalog.js";
 import type { Clock } from "./clock.js";
 import { densityLegendFor, type DensityLegend } from "./density.js";
 import { fmtFloor, fmtInt, fmtMag, fmtShort, placeOf, type Zone } from "./format.js";
+import { SETTINGS, useInjected } from "./keys.js";
 import { TIP_LIFT, type MapView } from "./mapview.js";
 import { distanceKm } from "./sequence.js";
 import { hasShakeMap, loadShakeMap, mmiAt, mmiText } from "./shakemap.js";
@@ -43,7 +44,7 @@ export interface QuakeLayer {
   onHover(payload: { e: ApiEvent; x: number; y: number }): void;
 }
 
-/** The earthquake half of a map: density, animation, count line, tips and zoom-to-selection. Call inside setup. */
+/** The earthquake half of a map: density, animation, count line, tips and zoom-to-selection (Settings → Auto-zoom event). Call inside setup. */
 export function useQuakeLayer(o: {
   catalog: Catalog;
   clock: Clock;
@@ -85,8 +86,9 @@ export function useQuakeLayer(o: {
     const t = c.getTime();
     return events.value.filter((e) => Date.parse(e.time) <= t);
   });
+  const settings = useInjected(SETTINGS);
   watch(catalog.selected, (e) => {
-    if (e !== null) mv.zoomTo(e.longitude, e.latitude);
+    if (e !== null && settings.current.value.autoZoom) mv.zoomTo(e.longitude, e.latitude);
   });
   onUnmounted(() => {
     anim.close();
@@ -207,7 +209,7 @@ export interface VolcanoLayer {
   onHover(payload: { v: Volcano; x: number; y: number }): void;
 }
 
-/** The volcano half of a map: count line, status rings, tips and zoom-to-selection. Call inside setup. */
+/** The volcano half of a map: count line, status rings, tips and zoom-to-selection (Settings → Auto-zoom event). Call inside setup. */
 export function useVolcanoLayer(o: { store: VolcanoStore; mv: MapView }): VolcanoLayer {
   const { store, mv } = o;
   const countLine = computed(
@@ -219,8 +221,9 @@ export function useVolcanoLayer(o: { store: VolcanoStore; mv: MapView }): Volcan
     const list = store.statusesOf.value.get(number) ?? [];
     return [...list].sort((a, b) => statusRank(b) - statusRank(a))[0] ?? null;
   }
+  const settings = useInjected(SETTINGS);
   watch(store.selected, (v) => {
-    if (v !== null) mv.zoomTo(v.lon, v.lat);
+    if (v !== null && settings.current.value.autoZoom) mv.zoomTo(v.lon, v.lat);
   });
   return {
     countLine,

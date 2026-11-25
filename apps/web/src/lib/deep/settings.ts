@@ -10,7 +10,7 @@ export const SETTINGS_DIVE: Tour = {
   id: "settings",
   title: "Time zone, theme and hints",
   blurb:
-    "UTC or local time, the theme, the beachball, the ◆ marks, the glossary, how hints appear with a mouse, a keyboard or a finger, and where help lives.",
+    "UTC or local time, the theme, the beachball, auto-zoom, the ◆ marks, the glossary, how hints appear with a mouse, a keyboard or a finger, and where help lives.",
   deep: { area: "Settings" },
   pageFor: (p) => (p === "space" ? "active" : p),
   steps: [
@@ -40,6 +40,13 @@ export const SETTINGS_DIVE: Tour = {
       title: "Beachball",
       body: "Flat draws the event panel's mechanism as the usual lower-hemisphere, equal-area plot. Bowl shades it as the inside of the focal sphere, so it reads as looking down into it rather than at a dome: it opens tilted 30°, settles to the plan view, and a slider under it tilts it again. Only the panel changes; the map's beachballs, the cards and the mark thumbnails stay flat. The choice is kept in this browser.",
       targets: ["settings"],
+      enter: openSettings,
+    },
+    {
+      id: "autozoom",
+      title: "Auto-zoom event",
+      body: "Selecting an earthquake or a volcano, on the map, in a table or from a card, pans and zooms the map to it. Turn Auto-zoom event off to keep the view you have set, say a close look at Iceland's volcanoes: a selection then only opens its panel. The choice is kept in this browser.",
+      targets: ["settings.autozoom"],
       enter: openSettings,
     },
     {
