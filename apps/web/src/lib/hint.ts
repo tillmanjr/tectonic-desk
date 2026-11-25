@@ -260,27 +260,49 @@ function setText(el: Hinted, text: string): void {
   place(el, b);
 }
 
+/** Gives an element a hint and, for the first, starts listening; `detachHint` undoes it. */
+export function attachHint(el: Hinted, text: string): void {
+  setText(el, text);
+  if (users++ === 0) listen();
+}
+
+/** Changes an element's hint text, the shown hint with it. */
+export const setHint = setText;
+
+export function detachHint(el: Hinted): void {
+  if (el === owner || el === pending) hide();
+  if (hold?.el === el) cancelHold();
+  if (--users === 0) {
+    unlisten();
+    cancelHold();
+    box?.remove();
+    box = null;
+    pressed = false;
+    swallowClick = false;
+    anchor = { kind: "control" };
+    touchAt = Number.NEGATIVE_INFINITY;
+  }
+}
+
+/** Whether this element's hint is the one showing. */
+export const hintShownFor = (el: Hinted): boolean => el === owner && box !== null && !box.hidden;
+
+/** Drops the hint and any hold in progress, and lets the click that follows act. */
+export function dropHint(): void {
+  hide();
+  cancelHold();
+  swallowClick = false;
+}
+
 export const vHint: Directive<Hinted, string> = {
   mounted(el, binding) {
-    setText(el, binding.value);
-    if (users++ === 0) listen();
+    attachHint(el, binding.value);
   },
   updated(el, binding) {
     if (binding.value !== binding.oldValue) setText(el, binding.value);
   },
   beforeUnmount(el) {
-    if (el === owner || el === pending) hide();
-    if (hold?.el === el) cancelHold();
-    if (--users === 0) {
-      unlisten();
-      cancelHold();
-      box?.remove();
-      box = null;
-      pressed = false;
-      swallowClick = false;
-      anchor = { kind: "control" };
-      touchAt = Number.NEGATIVE_INFINITY;
-    }
+    detachHint(el);
   },
 };
 

@@ -1,4 +1,5 @@
 import { ref, type Ref } from "vue";
+import type { GlossaryOpen } from "./glossary.js";
 
 export interface Settings {
   /** Rows of major-event and volcano cards shown before "… N more": alone on a page, or with the other dataset. */
@@ -7,6 +8,10 @@ export interface Settings {
   diveMarks: boolean;
   /** How the event panel draws its beachball: the flat equal-area plot, or as the inside of a bowl. */
   beachball: BeachballView;
+  /** Whether terms the glossary explains carry a faint dotted underline. */
+  glossaryUnderlines: boolean;
+  /** What opens a linked term's glossary entry; off leaves its hint alone. */
+  glossaryOpen: GlossaryOpen;
 }
 
 export type BeachballView = "flat" | "bowl";
@@ -15,7 +20,11 @@ export const DEFAULT_SETTINGS: Settings = {
   cardRows: { alone: 3, combined: 1 },
   diveMarks: true,
   beachball: "flat",
+  glossaryUnderlines: true,
+  glossaryOpen: "dblclick",
 };
+const OPENS: readonly GlossaryOpen[] = ["dblclick", "click", "off"];
+const isOpen = (v: unknown): v is GlossaryOpen => OPENS.some((o) => o === v);
 export const SETTINGS_KEY = "tectonic.settings";
 const MAX_ROWS = 20;
 
@@ -44,6 +53,11 @@ export function parseSettings(raw: string | null): Settings {
     },
     diveMarks: typeof root.diveMarks === "boolean" ? root.diveMarks : DEFAULT_SETTINGS.diveMarks,
     beachball: root.beachball === "bowl" ? "bowl" : DEFAULT_SETTINGS.beachball,
+    glossaryUnderlines:
+      typeof root.glossaryUnderlines === "boolean"
+        ? root.glossaryUnderlines
+        : DEFAULT_SETTINGS.glossaryUnderlines,
+    glossaryOpen: isOpen(root.glossaryOpen) ? root.glossaryOpen : DEFAULT_SETTINGS.glossaryOpen,
   };
 }
 
@@ -60,7 +74,7 @@ function readRaw(storage: StorageLike | null): string | null {
   }
 }
 
-/** Reader-tunable settings, persisted in localStorage; the ◆ marks and beachball switches are in the settings menu. */
+/** Reader-tunable settings, persisted in localStorage; the ◆ marks, beachball and glossary switches are in the settings menu. */
 export function createSettings(storage: StorageLike | null = localStorage): SettingsStore {
   const current = ref<Settings>(parseSettings(readRaw(storage)));
   return {

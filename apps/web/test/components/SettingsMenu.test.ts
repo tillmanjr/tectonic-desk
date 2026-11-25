@@ -4,7 +4,7 @@ import SettingsMenu from "../../src/components/SettingsMenu.vue";
 import { makeContext, mountWith } from "../support/mount.js";
 
 describe("SettingsMenu", () => {
-  it("opens to the zone, theme, beachball and marks controls, emits the zone toggle, and closes on Escape or an outside press", async () => {
+  it("opens to the zone, theme, beachball, marks and glossary controls, emits the zone toggle, and closes on Escape or an outside press", async () => {
     const ctx = await makeContext();
     const w = mountWith(SettingsMenu, ctx, { zone: "utc" });
     expect(w.find(".settings-menu").isVisible()).toBe(false);
@@ -17,6 +17,8 @@ describe("SettingsMenu", () => {
       "Theme",
       "Beachball",
       "Deep dive marks",
+      "Glossary underlines",
+      "Open glossary on",
     ]);
     expect(rows[0]?.find("button").text()).toBe("UTC");
     await rows[0]?.find("button").trigger("click");
@@ -40,6 +42,21 @@ describe("SettingsMenu", () => {
     expect(marks?.text()).toBe("Off");
     await marks?.trigger("click");
     expect(ctx.settings.current.value.diveMarks).toBe(true);
+    const under = rows[4]?.find("button");
+    expect(under?.text()).toBe("On");
+    await under?.trigger("click");
+    expect(ctx.settings.current.value.glossaryUnderlines).toBe(false);
+    expect(under?.text()).toBe("Off");
+    await under?.trigger("click");
+    expect(ctx.settings.current.value.glossaryUnderlines).toBe(true);
+    const opens = rows[5]?.findAll("button") ?? [];
+    expect(opens.map((b) => b.text())).toEqual(["Double click", "Click", "Off"]);
+    expect(opens.map((b) => b.attributes("aria-pressed"))).toEqual(["true", "false", "false"]);
+    await opens[2]?.trigger("click");
+    expect(ctx.settings.current.value.glossaryOpen).toBe("off");
+    expect(opens[2]?.attributes("aria-pressed")).toBe("true");
+    await opens[0]?.trigger("click");
+    expect(ctx.settings.current.value.glossaryOpen).toBe("dblclick");
     // a press inside keeps it open; one outside closes it
     w.find(".settings-menu").element.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     await nextTick();

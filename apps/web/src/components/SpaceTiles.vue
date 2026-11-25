@@ -2,9 +2,11 @@
 import DiveMark from "./DiveMark.vue";
 import type { ApiSpaceReading, ApiSpaceScales, SpaceSeries } from "@tectonic/shared";
 import { computed } from "vue";
+import type { TermId } from "../lib/glossary.js";
 import { SPACE, useInjected } from "../lib/keys.js";
 import { linePath, type Points } from "../lib/space-chart.js";
 import { fmtKp, fmtValue, scaleClass, xrayClass } from "../lib/space-format.js";
+import { vTerm } from "../lib/term.js";
 
 /** The six summary tiles: the latest reading of each headline series over a sparkline of the window. */
 const store = useInjected(SPACE);
@@ -33,6 +35,8 @@ interface Chip {
 interface Tile {
   id: string;
   k: string;
+  /** The glossary entry its name links to. */
+  term: TermId;
   /** The headline value; an em dash when the series has no reading. */
   v: string;
   small: string;
@@ -68,6 +72,7 @@ function scalesTile(scales: ApiSpaceScales[]): Tile {
       : `D+1 G${String(tomorrow.g ?? "?")} · R1+ ${pct(tomorrow.rMinorProb)} · S1+ ${pct(tomorrow.sProb)}`;
   return {
     id: "scales",
+    term: "noaa-scales",
     k: "NOAA scales",
     v: chips.length === 0 ? DASH : "",
     small: "",
@@ -92,6 +97,7 @@ const tiles = computed<Tile[]>(() => {
   return [
     {
       id: "kp",
+      term: "kp",
       k: "Kp",
       v: kp === null ? DASH : fmtValue(kp.value, 2),
       small: "1-min estimate",
@@ -102,6 +108,7 @@ const tiles = computed<Tile[]>(() => {
     scalesTile(n?.scales ?? []),
     {
       id: "mag",
+      term: "bz",
       k: "Bz · Bt (GSM)",
       v: bz === null ? DASH : fmtValue(bz.value, 1),
       small: "nT",
@@ -111,6 +118,7 @@ const tiles = computed<Tile[]>(() => {
     },
     {
       id: "wind",
+      term: "solar-wind",
       k: "Speed · density",
       v: speed === null ? DASH : String(Math.round(speed.value)),
       small: "km/s",
@@ -123,6 +131,7 @@ const tiles = computed<Tile[]>(() => {
     },
     {
       id: "xray",
+      term: "goes-class",
       k: "X-ray 0.1–0.8 nm",
       v: xray === null ? DASH : xrayClass(xray.value),
       small: "GOES class",
@@ -132,6 +141,7 @@ const tiles = computed<Tile[]>(() => {
     },
     {
       id: "protons",
+      term: "protons",
       k: "Protons ≥10 MeV",
       v: p10 === null ? DASH : fmtValue(p10.value, 2),
       small: "pfu",
@@ -156,7 +166,9 @@ const tiles = computed<Tile[]>(() => {
       :class="t.id"
       :data-tour="`space.tile.${t.id}`"
     >
-      <div class="k">{{ t.k }}</div>
+      <div class="k">
+        <span v-term="t.term">{{ t.k }}</span>
+      </div>
       <div class="v num">
         <template v-if="t.chips.length > 0">
           <span v-for="c in t.chips" :key="c.label" class="sc" :class="c.cls">{{ c.label }}</span>

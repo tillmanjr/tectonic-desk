@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, provide, ref, watch } from "vue";
+import { computed, inject, onMounted, onUnmounted, provide, ref, watch, watchEffect } from "vue";
 import { useRoute, useRouter, type LocationQuery } from "vue-router";
 import ActiveEarthPage from "./ActiveEarthPage.vue";
 import DetailPanel from "./DetailPanel.vue";
@@ -57,6 +57,7 @@ import {
   type MarksNav,
 } from "../lib/keys.js";
 import { createAuroraStore } from "../lib/aurora.js";
+import { GLOSSARY_CHAPTER, TERM_OPEN_EVENT } from "../lib/glossary.js";
 import { chaptersOf, MANUAL, manualHash, parseManualHash, type ManualNav } from "../lib/manual.js";
 import { hereTarget } from "../lib/marks-nav.js";
 import { ALL_GROUP, createMarks, MARK_TERMS } from "../lib/marks.js";
@@ -340,6 +341,21 @@ const manual: ManualNav = {
   },
 };
 provide(MANUAL, manual);
+/**
+ * The glossary settings sit on the document's root, since the panels are siblings of the page,
+ * not inside it: the underline class, and the trigger every linked term reads when it is used.
+ */
+watchEffect(() => {
+  const root = document.documentElement;
+  root.classList.toggle("gunder", settings.current.value.glossaryUnderlines);
+  root.dataset.glossaryOpen = settings.current.value.glossaryOpen;
+});
+/** A linked term asked for its Glossary entry. */
+function openTerm(ev: Event): void {
+  if (ev instanceof CustomEvent && typeof ev.detail === "string") {
+    manual.show(GLOSSARY_CHAPTER, ev.detail);
+  }
+}
 /** A plain visit (no query) may be offered the tour; a shared link goes straight to what it names. */
 const plainVisit = Object.keys(route.query).length === 0;
 function toggleZone(): void {
@@ -403,6 +419,7 @@ watch(theme.resolved, () => {
   clearBeachballCache();
 });
 onMounted(() => {
+  document.addEventListener(TERM_OPEN_EVENT, openTerm);
   clock.start();
   status.start();
   space.setRange(routeSpaceRange.value);
@@ -410,6 +427,7 @@ onMounted(() => {
   void boot();
 });
 onUnmounted(() => {
+  document.removeEventListener(TERM_OPEN_EVENT, openTerm);
   clock.stop();
   status.stop();
   space.stop();

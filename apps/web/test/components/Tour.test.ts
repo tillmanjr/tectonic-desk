@@ -570,6 +570,34 @@ describe("the Field manual in the app", () => {
     m.wrapper.unmount();
   });
 
+  it("keeps the Glossary apart from the shared page, and opens it from a term on the desk", async () => {
+    const m = await mountApp("/earthquakes");
+    const root = document.documentElement;
+    expect(root.classList.contains("gunder")).toBe(true);
+    expect(root.dataset.glossaryOpen).toBe("dblclick");
+    // a term asks for its entry; anything else sent the same way is ignored
+    root.dispatchEvent(new CustomEvent("glossary-open", { bubbles: true, detail: 3 }));
+    await flushPromises();
+    expect(m.router.currentRoute.value.path).toBe("/earthquakes");
+    m.wrapper
+      .find(".topbar")
+      .element.dispatchEvent(new CustomEvent("glossary-open", { bubbles: true, detail: "dst" }));
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#glossary/dst");
+    expect(m.wrapper.find(".mglossary h2").text()).toBe("11 · Glossary");
+    expect(m.wrapper.find(".mstack").isVisible()).toBe(false);
+    expect(m.wrapper.find(".mtoc [aria-current]").text()).toContain("Glossary");
+    expect(m.wrapper.find("#term-dst").classes()).toContain("focus");
+    // the introduction points to it
+    await m.router.push("/manual#intro");
+    await flushPromises();
+    expect(m.wrapper.find(".mstack").isVisible()).toBe(true);
+    await m.wrapper.find(".mchapter.current .mlink").trigger("click");
+    await flushPromises();
+    expect(m.router.currentRoute.value.fullPath).toBe("/manual#glossary");
+    m.wrapper.unmount();
+  });
+
   it("marks each part of the desk, and opens the part's chapter from its ◆", async () => {
     const m = await mountApp("/earthquakes");
     const areas = m.wrapper.findAll(".divebtn").map((b) => b.attributes("aria-label"));

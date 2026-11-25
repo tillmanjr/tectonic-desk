@@ -46,6 +46,7 @@ describe("the Field manual's chapters", () => {
       "marks",
       "space",
       "settings",
+      "glossary",
     ]);
     const [intro, quick, refine] = chapters;
     expect(intro.tours).toEqual([]);
@@ -85,6 +86,12 @@ describe("the Field manual's chapters", () => {
     });
     // A card filed in another chapter is not this one's.
     expect(parseManualHash("#map/space-sun", chapters)).toEqual({ chapter: "map", card: null });
+    // The Glossary's card is an entry.
+    expect(parseManualHash("#glossary/kp", chapters)).toEqual({ chapter: "glossary", card: "kp" });
+    expect(parseManualHash("#glossary/map-fields", chapters)).toEqual({
+      chapter: "glossary",
+      card: null,
+    });
     expect(chapterById(chapters, "map").title).toBe("Map");
     expect(chapterById(chapters, "nowhere").id).toBe(INTRO_CHAPTER);
     expect(manualHash("map")).toBe("#map");
