@@ -41,6 +41,7 @@ export function fakeMap(global = true): MapView {
     toggleTheater: () => {
       theater.value = !theater.value;
     },
+    setCentre: vi.fn(),
   };
   return mv as unknown as MapView;
 }

@@ -1,6 +1,14 @@
 import type { ApiRegion } from "@tectonic/shared";
 import type { ApiClient } from "./api.js";
-import { loadWorld, regionBasemap, worldBasemap, type Basemap, type Topo } from "./geo.js";
+import type { FeatureCollection } from "geojson";
+import {
+  loadGlobeLand,
+  loadWorld,
+  regionBasemap,
+  worldBasemap,
+  type Basemap,
+  type Topo,
+} from "./geo.js";
 
 const pending = new Map<string, Promise<Basemap>>();
 
@@ -32,7 +40,20 @@ export function loadBasemapFor(api: ApiClient, region: ApiRegion): Promise<Basem
   });
 }
 
+let globe: Promise<FeatureCollection> | null = null;
+/** The centre globe's schematic land, fetched once; a failed load is forgotten so the next call retries. */
+export function loadGlobeLandOnce(): Promise<FeatureCollection> {
+  if (globe !== null) return globe;
+  const p = loadGlobeLand();
+  globe = p;
+  p.catch(() => {
+    globe = null;
+  });
+  return p;
+}
+
 /** Drops the cache; for tests. */
 export function resetBasemapCache(): void {
   pending.clear();
+  globe = null;
 }

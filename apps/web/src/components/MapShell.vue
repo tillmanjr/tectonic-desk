@@ -3,6 +3,7 @@ import DiveMark from "./DiveMark.vue";
 import { computed, inject, onBeforeUnmount, onMounted, watch } from "vue";
 import MapAurora from "./MapAurora.vue";
 import MapBasemap from "./MapBasemap.vue";
+import MapCentre from "./MapCentre.vue";
 import MapFaults from "./MapFaults.vue";
 import MapField from "./MapField.vue";
 import MapLegend from "./MapLegend.vue";
@@ -16,7 +17,9 @@ import PinBar from "./PinBar.vue";
 import type { AuroraLegend } from "../lib/aurora-map.js";
 import type { DensityLegend } from "../lib/density.js";
 import { AGE_CODES, FAULT_AGES } from "../lib/faults.js";
+import { meridianLine } from "../lib/centre.js";
 import { FIELD_CHOICES, viewOf } from "../lib/fields.js";
+import { pathOf } from "../lib/geo.js";
 import { fmtClock } from "../lib/format.js";
 import { vHint } from "../lib/hint.js";
 import { AURORA, useInjected, ZONE } from "../lib/keys.js";
@@ -154,12 +157,18 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
       </div>
       <label
         v-hint="
-          'Underlays a potential-field anomaly grid: free-air gravity (isostatic residual onshore in the West Coast view) or the EMAG2v3 total-field magnetic anomaly. The legend gives the source and the colour ramp.'
+          mv.fieldAvailable.value
+            ? 'Underlays a potential-field anomaly grid: free-air gravity (isostatic residual onshore in the West Coast view) or the EMAG2v3 total-field magnetic anomaly. The legend gives the source and the colour ramp.'
+            : 'The field grids are drawn for the map centred on 150°E only. Turn the Centre back to 150°E (↺) to see them; your choice is kept.'
         "
         class="fieldpick"
         data-tour="map.field"
         >Field
-        <select v-model="mv.field.value" aria-label="Field overlay">
+        <select
+          v-model="mv.field.value"
+          aria-label="Field overlay"
+          :disabled="!mv.fieldAvailable.value"
+        >
           <option v-for="c in FIELD_CHOICES" :key="c.id" :value="c.id">{{ c.label }}</option>
         </select>
         <span v-if="mv.fieldError.value" class="fielderr">unavailable</span>
@@ -275,6 +284,7 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
           </svg>
         </button>
 
+        <MapCentre v-if="mv.view.value.frame.global" :mv="mv" />
         <span v-if="busy !== null" class="mapbusy" role="status"
           ><span class="spin" aria-hidden="true"></span>{{ busy }}</span
         >
@@ -345,6 +355,12 @@ const auroraLegend = computed<AuroraLegend | null>(() => {
               :frame="mv.view.value.frame"
               :path="mv.view.value.path"
               :basemap="mv.basemap.value"
+            />
+            <!-- The centre's meridian, faint, so the reader sees where the map is turned to. -->
+            <path
+              v-if="mv.view.value.frame.global"
+              class="centreline"
+              :d="pathOf(mv.view.value.path, meridianLine(mv.centre.value))"
             />
             <MapField
               v-if="mv.fieldRaster.value !== null"

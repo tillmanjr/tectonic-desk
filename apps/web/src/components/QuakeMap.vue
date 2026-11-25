@@ -12,6 +12,8 @@ import {
   CLOCK,
   PINS,
   SECTION,
+  CENTRE,
+  SET_CENTRE,
   SELECT,
   SET_SECTION,
   useInjected,
@@ -35,6 +37,8 @@ const mv = useMapView({
   animate: () => props.animate,
   section: useInjected(SECTION),
   setSection: useInjected(SET_SECTION),
+  centre: useInjected(CENTRE),
+  setCentre: useInjected(SET_CENTRE),
   pins: useInjected(PINS),
 });
 const q = useQuakeLayer({ catalog, clock, zone, mv });

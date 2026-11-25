@@ -17,6 +17,8 @@ import type { Objects, Topology } from "topojson-specification";
 export type Topo = Topology<Objects<Record<string, unknown>>>;
 type TopoObject = Topo["objects"][string];
 import worldUrl from "world-atlas/countries-50m.json?url";
+import landUrl from "world-atlas/land-110m.json?url";
+import { DEFAULT_CENTRE } from "./centre.js";
 import { polarity, type Overriding } from "./teeth.js";
 
 export { worldUrl };
@@ -39,12 +41,13 @@ const FIT_POINTS: Record<string, [number, number][]> = {
   ],
 };
 
-export function frameFor(region: ApiRegion): MapFrame {
+/** The frame for a region; a global one is centred on `centre` (degrees east), a regional one ignores it. */
+export function frameFor(region: ApiRegion, centre = DEFAULT_CENTRE): MapFrame {
   if (region.bbox === null) {
     const width = 1000;
     const height = 520;
     const projection = geoNaturalEarth1()
-      .rotate([-150, 0])
+      .rotate([-centre, 0])
       .fitExtent(
         [
           [6, 6],
@@ -236,6 +239,16 @@ export function worldBasemap(topo: Topo): Basemap {
   const land = objectNamed(topo, "land");
   const countries = objectNamed(topo, "countries");
   return { land: collection(topo, land), borders: mesh(topo, countries, (a, b) => a !== b) };
+}
+
+/** The schematic land of the centre control's globe, from world-atlas `land-110m.json`. */
+export async function loadGlobeLand(
+  fetchFn: FetchLike = (u) => fetch(u),
+): Promise<FeatureCollection> {
+  const res = await fetchFn(landUrl);
+  if (!res.ok) throw new Error(`globe land: HTTP ${String(res.status)}`);
+  const topo = (await res.json()) as Topo;
+  return collection(topo, objectNamed(topo, "land"));
 }
 
 /** Land and state borders from the clipped Natural Earth files served by the API. */
